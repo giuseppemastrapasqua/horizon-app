@@ -1,0 +1,546 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  MANAGER
+  FINANCE_ADMIN
+  OWNER
+  OPERATOR
+  SYSTEM_AI
+}
+
+enum RecordStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  ARCHIVED
+}
+
+enum PropertyStatus {
+  DRAFT
+  ACTIVE
+  MAINTENANCE
+  OFFLINE
+  ARCHIVED
+}
+
+enum PropertyCommercialClass {
+  PREMIUM_PERFORMER
+  SOLID_PERFORMER
+  VOLUME_PERFORMER
+  RECOVERY_REPOSITIONING
+}
+
+enum PropertyVictoryModel {
+  ADR_WINNER
+  OCCUPANCY_WINNER
+  BALANCED_WINNER
+  RECOVERY_WINNER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+enum BookingChannel {
+  AIRBNB
+  BOOKING
+  DIRECT
+  VRBO
+  OTHER
+}
+
+enum BookingOperationalStatus {
+  OK
+  DOCUMENTS_PENDING
+  PAYMENT_PENDING
+  CLEANING_PENDING
+  ISSUE_OPEN
+}
+
+enum TaskType {
+  CLEANING
+  MAINTENANCE
+  GUEST_DOCUMENTS
+  CHECK_IN
+  CHECK_OUT
+  ADMIN
+  ISSUE
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum DocumentType {
+  MONTHLY_REPORT
+  COMMISSION_INVOICE
+  MAINTENANCE_REPORT
+  PROPERTY_REPORT
+  PROPERTY_STATEMENT
+  PORTFOLIO_REPORT
+}
+
+enum DocumentStatus {
+  DRAFT
+  FINAL
+  ISSUED
+  ARCHIVED
+}
+
+enum SystemEventStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum SystemEventSource {
+  HORIZON
+  BOOKING_COM
+  AIRBNB
+  VRBO
+  STRIPE
+  ALLOGGIATI_WEB
+  ISTAT
+  EMAIL
+  WHATSAPP
+  API
+  MANUAL
+}
+
+enum FinanceFormulaStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum FinanceFormulaScope {
+  SINGLE_PROPERTY
+  ALL_PROPERTIES
+}
+
+enum FinanceRuleOperation {
+  ADD
+  SUBTRACT
+}
+
+enum FinanceRuleValueType {
+  FIXED
+  PERCENTAGE
+  FORMULA
+}
+
+enum FinanceRuleBase {
+  GROSS_REVENUE
+  CURRENT_TOTAL
+}
+
+enum FinanceRuleCategory {
+  OTA_COMMISSION
+  VAT
+  CLEANING
+  MANAGEMENT_COMMISSION
+  TAX
+  OTHER
+}
+
+model SystemEvent {
+  id String @id @default(cuid())
+
+  eventType String
+
+  aggregateType String
+  aggregateId   String?
+
+  source SystemEventSource @default(HORIZON)
+  status SystemEventStatus @default(PENDING)
+
+  payload Json
+
+  idempotencyKey String @unique
+
+  externalEventId String?
+  correlationId   String?
+  causationId     String?
+
+  attempts  Int     @default(0)
+  lastError String?
+
+  availableAt  DateTime  @default(now())
+  processingAt DateTime?
+  processedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, availableAt])
+  @@index([eventType])
+  @@index([aggregateType, aggregateId])
+  @@index([source])
+  @@index([externalEventId])
+  @@index([correlationId])
+  @@index([createdAt])
+}
+
+model User {
+  id       String       @id @default(cuid())
+  fullName String
+  email    String       @unique
+  phone    String?
+  role     UserRole
+  status   RecordStatus @default(ACTIVE)
+
+  properties Property[]
+  bookings   Booking[]
+  tasks      Task[]
+  documents  Document[]
+
+  ownedFinanceReports   FinanceReport[] @relation("FinanceReportOwner")
+  createdFinanceReports FinanceReport[] @relation("FinanceReportCreatedBy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([status])
+}
+
+model Property {
+  id String @id @default(cuid())
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  name    String
+  address String
+  city    String  @default("Milano")
+  zone    String?
+
+  maxGuests Int
+  bedrooms  Int?
+  bathrooms Int?
+
+  status PropertyStatus @default(DRAFT)
+
+  commercialClass PropertyCommercialClass @default(SOLID_PERFORMER)
+  victoryModel    PropertyVictoryModel    @default(BALANCED_WINNER)
+
+    initialScore Int @default(70)
+  currentScore Int @default(70)
+
+  description String? @db.Text
+  notes String?
+
+  cleaningCost Decimal @default(0) @db.Decimal(10, 2)
+  bookings        Booking[]
+  tasks           Task[]
+  documents       Document[]
+  financeFormulas FinanceFormula[]
+  financeReports  FinanceReport[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([city])
+  @@index([zone])
+}
+
+model Booking {
+  id String @id @default(cuid())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  guestId String?
+  guest   Guest?  @relation(fields: [guestId], references: [id])
+
+  tasks Task[]
+
+  channel           BookingChannel
+  externalBookingId String?
+
+  guestName  String
+  guestEmail String?
+  guestPhone String?
+
+  checkIn  DateTime
+  checkOut DateTime
+  nights   Int
+  guests   Int
+
+  grossAmount Decimal @db.Decimal(10, 2)
+  currency    String  @default("EUR")
+
+  bookingStatus     BookingStatus            @default(CONFIRMED)
+  operationalStatus BookingOperationalStatus @default(OK)
+
+  internalNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId])
+  @@index([ownerId])
+  @@index([channel])
+  @@index([checkIn])
+  @@index([checkOut])
+  @@index([bookingStatus])
+  @@index([operationalStatus])
+  @@index([externalBookingId])
+  @@index([guestId])
+}
+
+model Task {
+  id String @id @default(cuid())
+
+  title       String
+  description String?
+
+  type   TaskType
+  status TaskStatus @default(TODO)
+
+  dueDate DateTime?
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId])
+  @@index([bookingId])
+  @@index([ownerId])
+  @@index([type])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model Document {
+  id String @id @default(cuid())
+
+  documentKey String @unique
+
+  type   DocumentType
+  status DocumentStatus @default(DRAFT)
+
+  documentNumber String?
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id])
+
+  propertyId String?
+  property   Property? @relation(fields: [propertyId], references: [id])
+
+  referenceMonth DateTime?
+
+  title    String
+  subtitle String?
+
+  content        Json
+  currentVersion Int  @default(1)
+
+  versions DocumentVersion[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  finalizedAt DateTime?
+
+  @@index([ownerId])
+  @@index([propertyId])
+  @@index([type])
+  @@index([status])
+  @@index([referenceMonth])
+  @@index([updatedAt])
+}
+
+model DocumentVersion {
+  id String @id @default(cuid())
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  version Int
+  content Json
+
+  note          String?
+  createdByName String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([documentId, version])
+  @@index([documentId])
+  @@index([createdAt])
+}
+
+model Guest {
+  id String @id @default(cuid())
+
+  fullName String
+  email    String?
+  phone    String?
+
+  notes String?
+
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([fullName])
+  @@index([email])
+  @@index([phone])
+}
+
+model FinanceFormula {
+  id String @id @default(cuid())
+
+  scope FinanceFormulaScope @default(SINGLE_PROPERTY)
+
+  propertyId String?
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
+  name        String
+  description String?
+
+  status FinanceFormulaStatus @default(DRAFT)
+
+  rules FinanceFormulaRule[] @relation("FormulaRules")
+
+  referencedByRules FinanceFormulaRule[] @relation("ReferencedFormula")
+
+  financeReports FinanceReport[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([scope])
+  @@index([propertyId])
+  @@index([status])
+}
+
+model FinanceFormulaRule {
+  id String @id @default(cuid())
+
+  formulaId String
+  formula   FinanceFormula @relation("FormulaRules", fields: [formulaId], references: [id], onDelete: Cascade)
+
+  referencedFormulaId String?
+  referencedFormula   FinanceFormula? @relation("ReferencedFormula", fields: [referencedFormulaId], references: [id], onDelete: SetNull)
+
+  order Int
+
+  name        String
+  description String?
+
+  isEnabled Boolean @default(true)
+
+  operation FinanceRuleOperation
+  valueType FinanceRuleValueType
+  base      FinanceRuleBase
+  category  FinanceRuleCategory  @default(OTHER)
+  value     Decimal              @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([formulaId])
+  @@index([referencedFormulaId])
+  @@index([order])
+}
+
+model FinanceReport {
+  id String @id @default(cuid())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+
+  ownerId String
+  owner   User   @relation("FinanceReportOwner", fields: [ownerId], references: [id])
+
+  formulaId String?
+  formula   FinanceFormula? @relation(fields: [formulaId], references: [id], onDelete: SetNull)
+
+  createdById String?
+  createdBy   User?   @relation("FinanceReportCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  referenceMonth DateTime
+
+  title String
+
+  currency String @default("EUR")
+
+  grossRevenue Decimal @db.Decimal(12, 2)
+  finalAmount  Decimal @db.Decimal(12, 2)
+
+  formulaName     String
+  formulaSnapshot Json
+
+  rules FinanceReportRule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([propertyId])
+  @@index([ownerId])
+  @@index([formulaId])
+  @@index([createdById])
+  @@index([referenceMonth])
+  @@index([createdAt])
+}
+
+model FinanceReportRule {
+  id String @id @default(cuid())
+
+  reportId String
+  report   FinanceReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  sourceRuleId String?
+
+  order Int
+
+  ruleName String
+
+  operation FinanceRuleOperation
+  valueType FinanceRuleValueType
+  category  FinanceRuleCategory  @default(OTHER)
+
+  baseAmount       Decimal @db.Decimal(12, 2)
+  configuredValue  Decimal @db.Decimal(12, 2)
+  calculatedAmount Decimal @db.Decimal(12, 2)
+
+  totalBefore Decimal @db.Decimal(12, 2)
+  totalAfter  Decimal @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+
+  @@index([reportId])
+  @@index([sourceRuleId])
+  @@index([order])
+}
