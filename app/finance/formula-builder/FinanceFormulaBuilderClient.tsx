@@ -15,20 +15,15 @@ import {
   useFormulaCalculation,
   useFormulaRules,
 } from "@/components/finance/formula";
-
-import type { FinanceFormulaScope } from "@/components/finance/formula/FormulaSettingsPanel";
-
 import { FormulaSelect } from "@/components/finance/formula/FormulaSelect";
-
+import type { FinanceFormulaScope } from "@/components/finance/formula/FormulaSettingsPanel";
 import { useDeleteFinanceFormula } from "@/components/finance/formula/hooks/useDeleteFinanceFormula";
 import { useFinanceFormulas } from "@/components/finance/formula/hooks/useFinanceFormulas";
 import { useSaveFinanceFormula } from "@/components/finance/formula/hooks/useSaveFinanceFormula";
-
 import {
   PropertySelect,
   type PropertyOption,
 } from "@/components/finance/formula/PropertySelect";
-
 import type {
   FinanceRule,
   FinanceRuleBase,
@@ -88,7 +83,7 @@ export function FinanceFormulaBuilderClient() {
 
   const [formulaScope, setFormulaScope] =
     useState<FinanceFormulaScope>(
-      DEFAULT_FORMULA_SCOPE
+      DEFAULT_FORMULA_SCOPE,
     );
 
   const [propertyId, setPropertyId] =
@@ -183,7 +178,7 @@ export function FinanceFormulaBuilderClient() {
           "/api/properties",
           {
             signal: controller.signal,
-          }
+          },
         );
 
         const data =
@@ -192,12 +187,12 @@ export function FinanceFormulaBuilderClient() {
         if (!response.ok) {
           throw new Error(
             data.error ??
-              "Non è stato possibile caricare gli immobili."
+              "Non è stato possibile caricare gli immobili.",
           );
         }
 
         setProperties(
-          data.properties ?? []
+          data.properties ?? [],
         );
       } catch (error) {
         if (
@@ -210,7 +205,7 @@ export function FinanceFormulaBuilderClient() {
         setPropertiesError(
           error instanceof Error
             ? error.message
-            : "Non è stato possibile caricare gli immobili."
+            : "Non è stato possibile caricare gli immobili.",
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -226,22 +221,40 @@ export function FinanceFormulaBuilderClient() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!selectedFormulaId) {
+  const resetFormulaEditor =
+    useCallback(() => {
+      setSelectedFormulaId("");
+
       setFormulaName(
-        DEFAULT_FORMULA_NAME
+        DEFAULT_FORMULA_NAME,
       );
 
       setFormulaDescription("");
 
       setFormulaScope(
-        DEFAULT_FORMULA_SCOPE
+        DEFAULT_FORMULA_SCOPE,
       );
 
       setPropertyId("");
 
       resetRules();
+    }, [resetRules]);
 
+  const handleFormulaSelectionChange =
+    useCallback(
+      (formulaId: string) => {
+        if (!formulaId) {
+          resetFormulaEditor();
+          return;
+        }
+
+        setSelectedFormulaId(formulaId);
+      },
+      [resetFormulaEditor],
+    );
+
+  useEffect(() => {
+    if (!selectedFormulaId) {
       return;
     }
 
@@ -256,7 +269,7 @@ export function FinanceFormulaBuilderClient() {
           `/api/finance/formulas/${selectedFormulaId}`,
           {
             signal: controller.signal,
-          }
+          },
         );
 
         const responseText =
@@ -267,11 +280,11 @@ export function FinanceFormulaBuilderClient() {
         if (responseText.trim()) {
           try {
             data = JSON.parse(
-              responseText
+              responseText,
             ) as FormulaResponse;
           } catch {
             throw new Error(
-              "Il server ha restituito una risposta non valida durante il caricamento della formula."
+              "Il server ha restituito una risposta non valida durante il caricamento della formula.",
             );
           }
         }
@@ -282,7 +295,7 @@ export function FinanceFormulaBuilderClient() {
         ) {
           throw new Error(
             data.error ??
-              "Non è stato possibile caricare la formula."
+              "Non è stato possibile caricare la formula.",
           );
         }
 
@@ -304,13 +317,13 @@ export function FinanceFormulaBuilderClient() {
               valueType:
                 rule.valueType,
               value: Number(
-                rule.value
+                rule.value,
               ),
               base: rule.base,
               referencedFormulaId:
                 rule.referencedFormulaId ??
                 null,
-            })
+            }),
           );
 
         const loadedScope =
@@ -320,19 +333,19 @@ export function FinanceFormulaBuilderClient() {
             : "ALL_PROPERTIES");
 
         setFormulaName(
-          loadedFormula.name
+          loadedFormula.name,
         );
 
         setFormulaDescription(
-          loadedFormula.description ?? ""
+          loadedFormula.description ?? "",
         );
 
         setFormulaScope(
-          loadedScope
+          loadedScope,
         );
 
         setPropertyId(
-          loadedFormula.propertyId ?? ""
+          loadedFormula.propertyId ?? "",
         );
 
         replaceRules(loadedRules);
@@ -347,14 +360,14 @@ export function FinanceFormulaBuilderClient() {
         alert(
           error instanceof Error
             ? error.message
-            : "Non è stato possibile caricare la formula."
+            : "Non è stato possibile caricare la formula.",
         );
 
-        setSelectedFormulaId("");
+        resetFormulaEditor();
       } finally {
         if (!controller.signal.aborted) {
           setIsLoadingSelectedFormula(
-            false
+            false,
           );
         }
       }
@@ -368,13 +381,13 @@ export function FinanceFormulaBuilderClient() {
   }, [
     selectedFormulaId,
     replaceRules,
-    resetRules,
+    resetFormulaEditor,
   ]);
 
   const handleFormulaScopeChange =
     useCallback(
       (
-        nextScope: FinanceFormulaScope
+        nextScope: FinanceFormulaScope,
       ) => {
         setFormulaScope(nextScope);
 
@@ -385,80 +398,80 @@ export function FinanceFormulaBuilderClient() {
           setPropertyId("");
         }
       },
-      []
+      [],
     );
 
   const handleSave =
-  useCallback(async () => {
-    if (
-      formulaScope ===
-        "SINGLE_PROPERTY" &&
-      !propertyId
-    ) {
-      alert("Seleziona un immobile.");
-      return;
-    }
-
-    if (!formulaName.trim()) {
-      alert(
-        "Inserisci il nome della formula."
-      );
-
-      return;
-    }
-
-    try {
-      const result =
-        await saveFormula({
-          formulaId:
-            selectedFormulaId ||
-            undefined,
-
-          scope: formulaScope,
-
-          propertyId:
-            formulaScope ===
-            "ALL_PROPERTIES"
-              ? null
-              : propertyId,
-
-          name: formulaName,
-
-          description:
-            formulaDescription,
-
-          rules: orderedRules,
-        });
-
+    useCallback(async () => {
       if (
-        result.mode === "created"
+        formulaScope ===
+          "SINGLE_PROPERTY" &&
+        !propertyId
       ) {
-        setSelectedFormulaId(
-          result.formulaId
-        );
+        alert("Seleziona un immobile.");
+        return;
       }
 
-      alert(
-        result.mode === "created"
-          ? "Formula creata."
-          : "Formula aggiornata."
-      );
-    } catch (error) {
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Errore durante il salvataggio."
-      );
-    }
-  }, [
-    formulaScope,
-    propertyId,
-    formulaName,
-    formulaDescription,
-    orderedRules,
-    selectedFormulaId,
-    saveFormula,
-  ]);
+      if (!formulaName.trim()) {
+        alert(
+          "Inserisci il nome della formula.",
+        );
+
+        return;
+      }
+
+      try {
+        const result =
+          await saveFormula({
+            formulaId:
+              selectedFormulaId ||
+              undefined,
+
+            scope: formulaScope,
+
+            propertyId:
+              formulaScope ===
+              "ALL_PROPERTIES"
+                ? null
+                : propertyId,
+
+            name: formulaName,
+
+            description:
+              formulaDescription,
+
+            rules: orderedRules,
+          });
+
+        if (
+          result.mode === "created"
+        ) {
+          setSelectedFormulaId(
+            result.formulaId,
+          );
+        }
+
+        alert(
+          result.mode === "created"
+            ? "Formula creata."
+            : "Formula aggiornata.",
+        );
+      } catch (error) {
+        alert(
+          error instanceof Error
+            ? error.message
+            : "Errore durante il salvataggio.",
+        );
+      }
+    }, [
+      formulaScope,
+      propertyId,
+      formulaName,
+      formulaDescription,
+      orderedRules,
+      selectedFormulaId,
+      saveFormula,
+    ]);
 
   const handleDelete =
     useCallback(async () => {
@@ -468,7 +481,7 @@ export function FinanceFormulaBuilderClient() {
 
       const confirmed =
         window.confirm(
-          `Vuoi eliminare definitivamente la formula "${formulaName}"?`
+          `Vuoi eliminare definitivamente la formula "${formulaName}"?`,
         );
 
       if (!confirmed) {
@@ -477,23 +490,24 @@ export function FinanceFormulaBuilderClient() {
 
       try {
         await deleteFormula(
-          selectedFormulaId
+          selectedFormulaId,
         );
 
-        setSelectedFormulaId("");
+        resetFormulaEditor();
 
         alert("Formula eliminata.");
       } catch (error) {
         alert(
           error instanceof Error
             ? error.message
-            : "Errore durante l'eliminazione."
+            : "Errore durante l'eliminazione.",
         );
       }
     }, [
       selectedFormulaId,
       formulaName,
       deleteFormula,
+      resetFormulaEditor,
     ]);
 
   return (
@@ -507,7 +521,7 @@ export function FinanceFormulaBuilderClient() {
         }
         error={formulasError}
         onChange={
-          setSelectedFormulaId
+          handleFormulaSelectionChange
         }
       />
 

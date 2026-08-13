@@ -1,9 +1,11 @@
 import {
+  AuditAction,
   FinanceFormulaScope,
   FinanceFormulaStatus,
 } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { AuditService } from "@/services/audit/AuditService";
 
 import {
   type CreateFormulaPayload,
@@ -14,14 +16,15 @@ export type UpdateFormulaPayload =
   CreateFormulaPayload;
 
 export function validateUpdateFormulaPayload(
-  payload: Partial<UpdateFormulaPayload>
+  payload: Partial<UpdateFormulaPayload>,
 ): string | null {
   return validateCreateFormulaPayload(payload);
 }
 
 export async function updateFinanceFormula(
   formulaId: string,
-  payload: UpdateFormulaPayload
+  payload: UpdateFormulaPayload,
+  actorId: string | null = null,
 ) {
   const normalizedPropertyId =
     payload.scope ===
@@ -29,13 +32,41 @@ export async function updateFinanceFormula(
       ? null
       : payload.propertyId?.trim() ?? null;
 
+  const normalizedActorId =
+    actorId?.trim() || null;
+
   const formula =
     await prisma.financeFormula.findUnique({
       where: {
         id: formulaId,
       },
+
       select: {
         id: true,
+        propertyId: true,
+        scope: true,
+        name: true,
+        description: true,
+        status: true,
+
+        rules: {
+          orderBy: {
+            order: "asc",
+          },
+
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            order: true,
+            isEnabled: true,
+            operation: true,
+            valueType: true,
+            base: true,
+            value: true,
+            referencedFormulaId: true,
+          },
+        },
       },
     });
 
@@ -64,6 +95,7 @@ export async function updateFinanceFormula(
         where: {
           id: normalizedPropertyId,
         },
+
         select: {
           id: true,
         },
@@ -78,6 +110,16 @@ export async function updateFinanceFormula(
     }
   }
 
+  const normalizedName =
+    payload.name.trim();
+
+  const normalizedDescription =
+    payload.description?.trim() || null;
+
+  const normalizedStatus =
+    payload.status ??
+    FinanceFormulaStatus.DRAFT;
+
   const updatedFormula =
     await prisma.$transaction(
       async (transaction) => {
@@ -86,11 +128,11 @@ export async function updateFinanceFormula(
             where: {
               formulaId,
             },
-          }
+          },
         );
 
-        return transaction.financeFormula.update(
-          {
+        const savedFormula =
+          await transaction.financeFormula.update({
             where: {
               id: formulaId,
             },
@@ -101,15 +143,14 @@ export async function updateFinanceFormula(
               propertyId:
                 normalizedPropertyId,
 
-              name: payload.name.trim(),
+              name:
+                normalizedName,
 
               description:
-                payload.description?.trim() ||
-                null,
+                normalizedDescription,
 
               status:
-                payload.status ??
-                FinanceFormulaStatus.DRAFT,
+                normalizedStatus,
 
               rules: {
                 create: payload.rules.map(
@@ -121,7 +162,8 @@ export async function updateFinanceFormula(
                       rule.description?.trim() ||
                       null,
 
-                    order: rule.order,
+                    order:
+                      rule.order,
 
                     isEnabled:
                       rule.isEnabled,
@@ -132,14 +174,16 @@ export async function updateFinanceFormula(
                     valueType:
                       rule.valueType,
 
-                    base: rule.base,
+                    base:
+                      rule.base,
 
-                    value: rule.value,
+                    value:
+                      rule.value,
 
                     referencedFormulaId:
                       rule.referencedFormulaId ??
                       null,
-                  })
+                  }),
                 ),
               },
             },
@@ -151,9 +195,108 @@ export async function updateFinanceFormula(
                 },
               },
             },
-          }
+          });
+
+        await AuditService.log(
+          {
+            actorId:
+              normalizedActorId,
+            action: AuditAction.UPDATE,
+            propertyId:
+              savedFormula.propertyId,
+            entityType:
+              "FINANCE_FORMULA",
+            entityId:
+              savedFormula.id,
+            description:
+              "Formula finanziaria aggiornata.",
+            metadata: {
+              previous: {
+                propertyId:
+                  formula.propertyId,
+                scope:
+                  formula.scope,
+                name:
+                  formula.name,
+                description:
+                  formula.description,
+                status:
+                  formula.status,
+                rulesCount:
+                  formula.rules.length,
+                rules:
+                  formula.rules.map(
+                    (rule) => ({
+                      id:
+                        rule.id,
+                      name:
+                        rule.name,
+                      description:
+                        rule.description,
+                      order:
+                        rule.order,
+                      isEnabled:
+                        rule.isEnabled,
+                      operation:
+                        rule.operation,
+                      valueType:
+                        rule.valueType,
+                      base:
+                        rule.base,
+                      value:
+                        Number(rule.value),
+                      referencedFormulaId:
+                        rule.referencedFormulaId,
+                    }),
+                  ),
+              },
+
+              current: {
+                propertyId:
+                  savedFormula.propertyId,
+                scope:
+                  savedFormula.scope,
+                name:
+                  savedFormula.name,
+                description:
+                  savedFormula.description,
+                status:
+                  savedFormula.status,
+                rulesCount:
+                  savedFormula.rules.length,
+                rules:
+                  savedFormula.rules.map(
+                    (rule) => ({
+                      id:
+                        rule.id,
+                      name:
+                        rule.name,
+                      description:
+                        rule.description,
+                      order:
+                        rule.order,
+                      isEnabled:
+                        rule.isEnabled,
+                      operation:
+                        rule.operation,
+                      valueType:
+                        rule.valueType,
+                      base:
+                        rule.base,
+                      value:
+                        Number(rule.value),
+                      referencedFormulaId:
+                        rule.referencedFormulaId,
+                    }),
+                  ),
+              },
+            },
+          },
+          transaction,
         );
-      }
+
+        return savedFormula;
+      },
     );
 
   return {

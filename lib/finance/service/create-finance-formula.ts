@@ -1,4 +1,5 @@
 import {
+  AuditAction,
   FinanceFormulaScope,
   FinanceFormulaStatus,
   FinanceRuleBase,
@@ -7,6 +8,7 @@ import {
 } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { AuditService } from "@/services/audit/AuditService";
 
 export type FormulaRulePayload = {
   name: string;
@@ -32,27 +34,27 @@ export type CreateFormulaPayload = {
 };
 
 const formulaScopes = Object.values(
-  FinanceFormulaScope
+  FinanceFormulaScope,
 );
 
 const formulaStatuses = Object.values(
-  FinanceFormulaStatus
+  FinanceFormulaStatus,
 );
 
 const ruleOperations = Object.values(
-  FinanceRuleOperation
+  FinanceRuleOperation,
 );
 
 const ruleValueTypes = Object.values(
-  FinanceRuleValueType
+  FinanceRuleValueType,
 );
 
 const ruleBases = Object.values(
-  FinanceRuleBase
+  FinanceRuleBase,
 );
 
 export function validateCreateFormulaPayload(
-  payload: Partial<CreateFormulaPayload>
+  payload: Partial<CreateFormulaPayload>,
 ): string | null {
   if (
     payload.scope === undefined ||
@@ -126,7 +128,7 @@ export function validateCreateFormulaPayload(
 
     if (
       !ruleOperations.includes(
-        rule.operation
+        rule.operation,
       )
     ) {
       return "L'operazione della regola non è valida.";
@@ -134,15 +136,13 @@ export function validateCreateFormulaPayload(
 
     if (
       !ruleValueTypes.includes(
-        rule.valueType
+        rule.valueType,
       )
     ) {
       return "Il tipo di valore della regola non è valido.";
     }
 
-    if (
-      !ruleBases.includes(rule.base)
-    ) {
+    if (!ruleBases.includes(rule.base)) {
       return "La base di calcolo non è valida.";
     }
 
@@ -159,7 +159,7 @@ export function validateCreateFormulaPayload(
 }
 
 export async function createFinanceFormula(
-  payload: CreateFormulaPayload
+  payload: CreateFormulaPayload,
 ) {
   const normalizedPropertyId =
     payload.scope ===
@@ -190,56 +190,113 @@ export async function createFinanceFormula(
     }
   }
 
-  return prisma.financeFormula.create({
-    data: {
-      scope: payload.scope,
-      propertyId: normalizedPropertyId,
-      name: payload.name.trim(),
-      description:
-        payload.description?.trim() ||
-        null,
-      status:
-        payload.status ??
-        FinanceFormulaStatus.DRAFT,
+  const normalizedName =
+    payload.name.trim();
 
-      rules: {
-        create: payload.rules.map(
-          (rule) => ({
-            name: rule.name.trim(),
+  const normalizedDescription =
+    payload.description?.trim() || null;
 
+  const status =
+    payload.status ??
+    FinanceFormulaStatus.DRAFT;
+
+  return prisma.$transaction(
+    async (transaction) => {
+      const formula =
+        await transaction.financeFormula.create({
+          data: {
+            scope: payload.scope,
+            propertyId:
+              normalizedPropertyId,
+            name: normalizedName,
             description:
-              rule.description?.trim() ||
-              null,
+              normalizedDescription,
+            status,
 
-            order: rule.order,
+            rules: {
+              create: payload.rules.map(
+                (rule) => ({
+                  name: rule.name.trim(),
 
-            isEnabled:
-              rule.isEnabled,
+                  description:
+                    rule.description?.trim() ||
+                    null,
 
-            operation:
-              rule.operation,
+                  order: rule.order,
 
-            valueType:
-              rule.valueType,
+                  isEnabled:
+                    rule.isEnabled,
 
-            base: rule.base,
+                  operation:
+                    rule.operation,
 
-            value: rule.value,
+                  valueType:
+                    rule.valueType,
 
-            referencedFormulaId:
-              rule.referencedFormulaId ??
-              null,
-          })
-        ),
-      },
-    },
+                  base: rule.base,
 
-    include: {
-      rules: {
-        orderBy: {
-          order: "asc",
+                  value: rule.value,
+
+                  referencedFormulaId:
+                    rule.referencedFormulaId ??
+                    null,
+                }),
+              ),
+            },
+          },
+
+          include: {
+            rules: {
+              orderBy: {
+                order: "asc",
+              },
+            },
+          },
+        });
+
+      await AuditService.log(
+        {
+          action: AuditAction.CREATE,
+          propertyId:
+            formula.propertyId,
+          entityType:
+            "FINANCE_FORMULA",
+          entityId: formula.id,
+          description:
+            "Formula finanziaria creata.",
+          metadata: {
+            name: formula.name,
+            description:
+              formula.description,
+            scope: formula.scope,
+            status: formula.status,
+            propertyId:
+              formula.propertyId,
+            rulesCount:
+              formula.rules.length,
+            rules: formula.rules.map(
+              (rule) => ({
+                id: rule.id,
+                name: rule.name,
+                order: rule.order,
+                isEnabled:
+                  rule.isEnabled,
+                operation:
+                  rule.operation,
+                valueType:
+                  rule.valueType,
+                base: rule.base,
+                value: rule.value,
+                referencedFormulaId:
+                  rule.referencedFormulaId,
+              }),
+            ),
+          },
         },
-      },
+        transaction,
+      );
+
+      return formula;
     },
-  });
+  );
 }

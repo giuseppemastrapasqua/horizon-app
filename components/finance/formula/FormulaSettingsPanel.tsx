@@ -138,10 +138,10 @@ export function FormulaSettingsPanel({
                 Tutte le strutture
               </strong>
 
-              <span style={scopeDescriptionStyle}>
-                Rende la formula disponibile per
-                l'intero portafoglio.
-              </span>
+             <span style={scopeDescriptionStyle}>
+  Rende la formula disponibile per
+  l&apos;intero portafoglio.
+</span>
             </span>
           </label>
         </fieldset>

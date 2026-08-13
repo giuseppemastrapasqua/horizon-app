@@ -7,13 +7,18 @@ import { uiTokens } from "@/components/ui/tokens";
 
 export type PropertyDocumentItem = {
   id: string;
-  title: string;
-  subtitle: string | null;
+  propertyId: string;
   type: string;
-  status: string;
+  title: string;
   documentNumber: string | null;
-  currentVersion: number;
-  referenceMonth: Date | null;
+  issuer: string | null;
+  issueDate: Date | null;
+  expiryDate: Date | null;
+  validity: string;
+  fileUrl: string | null;
+  filename: string | null;
+  notes: string | null;
+  createdAt: Date;
   updatedAt: Date;
 };
 
@@ -29,12 +34,12 @@ export function PropertyDocuments({
   return (
     <Panel>
       <SectionTitle
-        title="Documenti immobile"
-        subtitle="Rendiconti, report manutenzioni e documentazione collegata."
+        title="Documentazione immobile"
+        subtitle="Licenze, certificazioni, assicurazioni e documenti amministrativi."
         action={
           <ActionButton
-            label="Apri archivio"
-            href={`/documents?propertyId=${propertyId}`}
+            label="Gestisci documenti"
+            href={`/properties/${propertyId}/edit`}
             variant="secondary"
             compact
           />
@@ -43,15 +48,18 @@ export function PropertyDocuments({
 
       {documents.length === 0 ? (
         <EmptyState
-          title="Nessun documento disponibile"
-          description="I rendiconti e i report collegati all’immobile compariranno qui."
-          actionLabel="Crea rendiconto"
-          actionHref={`/reports/monthly/property?propertyId=${propertyId}`}
+          title="Nessun documento registrato"
+          description="Aggiungi certificazioni, licenze e altri documenti amministrativi dell’immobile."
+          actionLabel="Modifica immobile"
+          actionHref={`/properties/${propertyId}/edit`}
         />
       ) : (
         <div style={listStyle}>
           {documents.map((document) => (
-            <article key={document.id} style={documentCardStyle}>
+            <article
+              key={document.id}
+              style={documentCardStyle}
+            >
               <div style={headerStyle}>
                 <div>
                   <div style={titleRowStyle}>
@@ -60,78 +68,88 @@ export function PropertyDocuments({
                     </strong>
 
                     <StatusBadge
-                      label={document.type}
+                      label={formatValue(document.type)}
                       tone="blue"
                       compact
                     />
 
                     <StatusBadge
-                      label={document.status}
+                      label={formatValue(document.validity)}
                       compact
                     />
                   </div>
 
                   <p style={subtitleStyle}>
-                    {document.subtitle ?? "Nessun sottotitolo"}
+                    {document.issuer
+                      ? `Rilasciato da ${document.issuer}`
+                      : "Ente emittente non specificato"}
                   </p>
                 </div>
 
-                <div style={versionStyle}>
-                  <span style={versionLabelStyle}>VERSIONE</span>
-                  <strong style={versionValueStyle}>
-                    v{document.currentVersion}
-                  </strong>
-                </div>
+                {document.filename ? (
+                  <div style={fileStyle}>
+                    <span style={fileLabelStyle}>
+                      FILE
+                    </span>
+
+                    <strong style={fileValueStyle}>
+                      {document.filename}
+                    </strong>
+                  </div>
+                ) : null}
               </div>
 
               <div style={metricsGridStyle}>
                 <DocumentMetric
-                  label="Numero"
-                  value={document.documentNumber ?? "Non assegnato"}
-                />
-
-                <DocumentMetric
-                  label="Periodo"
+                  label="Numero documento"
                   value={
-                    document.referenceMonth
-                      ? document.referenceMonth.toLocaleDateString("it-IT", {
-                          month: "long",
-                          year: "numeric",
-                        })
-                      : "Non definito"
+                    document.documentNumber ??
+                    "Non assegnato"
                   }
                 />
 
                 <DocumentMetric
-                  label="Aggiornato"
-                  value={document.updatedAt.toLocaleDateString("it-IT")}
+                  label="Data rilascio"
+                  value={formatDate(document.issueDate)}
                 />
 
                 <DocumentMetric
-                  label="Stato"
-                  value={document.status.replaceAll("_", " ")}
+                  label="Data scadenza"
+                  value={formatDate(document.expiryDate)}
+                />
+
+                <DocumentMetric
+                  label="Ultimo aggiornamento"
+                  value={formatDate(document.updatedAt)}
                 />
               </div>
 
+              {document.notes ? (
+                <p style={notesStyle}>
+                  {document.notes}
+                </p>
+              ) : null}
+
               <div style={footerStyle}>
                 <div style={actionsStyle}>
-                  <ActionButton
-                    label="Apri documento"
-                    href={`/documents/${document.id}`}
-                    compact
-                  />
-
-                  <ActionButton
-                    label="Storico versioni"
-                    href={`/documents/${document.id}/versions`}
-                    variant="secondary"
-                    compact
-                  />
+                  {document.fileUrl ? (
+                    <ActionButton
+                      label="Apri file"
+                      href={document.fileUrl}
+                      compact
+                    />
+                  ) : (
+                    <span style={missingFileStyle}>
+                      Nessun file allegato
+                    </span>
+                  )}
                 </div>
 
                 <span style={updatedTextStyle}>
                   Ultima modifica:{" "}
-                  {document.updatedAt.toLocaleString("it-IT")}
+                  {document.updatedAt.toLocaleString(
+                    "it-IT",
+                  )}
                 </span>
               </div>
             </article>
@@ -152,9 +170,23 @@ function DocumentMetric({
   return (
     <div>
       <div style={metricLabelStyle}>{label}</div>
-      <strong style={metricValueStyle}>{value}</strong>
+      <strong style={metricValueStyle}>
+        {value}
+      </strong>
     </div>
   );
+}
+
+function formatDate(date: Date | null) {
+  if (!date) {
+    return "Non definita";
+  }
+
+  return date.toLocaleDateString("it-IT");
+}
+
+function formatValue(value: string) {
+  return value.replaceAll("_", " ");
 }
 
 const listStyle = {
@@ -196,30 +228,33 @@ const subtitleStyle = {
   fontSize: uiTokens.fontSize.sm,
 };
 
-const versionStyle = {
+const fileStyle = {
   display: "grid",
-  justifyItems: "center",
-  minWidth: "68px",
+  gap: "4px",
+  maxWidth: "220px",
   padding: uiTokens.spacing.sm,
   borderRadius: uiTokens.radius.md,
   background: uiTokens.colors.primary,
 };
 
-const versionLabelStyle = {
+const fileLabelStyle = {
   color: uiTokens.colors.textSubtle,
   fontSize: "9px",
   fontWeight: uiTokens.fontWeight.strong,
 };
 
-const versionValueStyle = {
-  marginTop: "4px",
+const fileValueStyle = {
+  overflow: "hidden",
   color: uiTokens.colors.primaryText,
-  fontSize: "18px",
+  fontSize: uiTokens.fontSize.xs,
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap" as const,
 };
 
 const metricsGridStyle = {
   display: "grid",
-  gridTemplateColumns: "repeat(4, minmax(110px, 1fr))",
+  gridTemplateColumns:
+    "repeat(4, minmax(110px, 1fr))",
   gap: uiTokens.spacing.md,
   marginTop: uiTokens.spacing.md,
   paddingTop: uiTokens.spacing.md,
@@ -237,6 +272,15 @@ const metricValueStyle = {
   fontSize: uiTokens.fontSize.sm,
 };
 
+const notesStyle = {
+  margin: `${uiTokens.spacing.md} 0 0`,
+  paddingTop: uiTokens.spacing.md,
+  borderTop: `1px solid ${uiTokens.colors.border}`,
+  color: uiTokens.colors.textMuted,
+  fontSize: uiTokens.fontSize.sm,
+  lineHeight: 1.6,
+};
+
 const footerStyle = {
   display: "flex",
   justifyContent: "space-between",
@@ -252,6 +296,11 @@ const actionsStyle = {
   display: "flex",
   gap: uiTokens.spacing.sm,
   flexWrap: "wrap" as const,
+};
+
+const missingFileStyle = {
+  color: uiTokens.colors.textSubtle,
+  fontSize: uiTokens.fontSize.xs,
 };
 
 const updatedTextStyle = {

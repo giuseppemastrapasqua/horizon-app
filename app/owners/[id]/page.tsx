@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 import { ActionButton } from "@/components/ui/ActionButton";
-import { uiTokens } from "@/components/ui/tokens";
 import { getOwnerWorkspace } from "@/lib/owners/get-owner-workspace";
 import { OwnerHero } from "./components/OwnerHero";
 import { OwnerKPIs } from "./components/OwnerKPIs";
@@ -30,14 +29,13 @@ export default async function OwnerDetailPage({
     notFound();
   }
 
-  const {
-    owner,
-    metrics,
-    properties,
-    documents,
-    timeline,
-    firstPropertyId,
-  } = workspace;
+ const {
+  owner,
+  metrics,
+  properties,
+  documents,
+  timeline,
+} = workspace;
 
   return (
     <>

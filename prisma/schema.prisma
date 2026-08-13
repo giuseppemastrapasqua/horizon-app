@@ -7,6 +7,694 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model SystemEvent {
+  id              String            @id @default(cuid())
+  eventType       String
+  aggregateType   String
+  aggregateId     String?
+  source          SystemEventSource @default(HORIZON)
+  status          SystemEventStatus @default(PENDING)
+  payload         Json
+  idempotencyKey  String            @unique
+  externalEventId String?
+  correlationId   String?
+  causationId     String?
+  attempts        Int               @default(0)
+  lastError       String?
+  availableAt     DateTime          @default(now())
+  processingAt    DateTime?
+  processedAt     DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([status, availableAt])
+  @@index([eventType])
+  @@index([aggregateType, aggregateId])
+  @@index([source])
+  @@index([externalEventId])
+  @@index([correlationId])
+  @@index([createdAt])
+}
+
+model BackgroundJob {
+  id               String              @id @default(cuid())
+  type             BackgroundJobType
+  status           BackgroundJobStatus @default(QUEUED)
+  payload          Json
+  attempts         Int                 @default(0)
+  maxAttempts      Int                 @default(3)
+  availableAt      DateTime            @default(now())
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  lastError        String?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  deduplicationKey String?
+  heartbeatAt      DateTime?
+
+  @@index([status, availableAt])
+  @@index([type])
+  @@index([type, deduplicationKey])
+  @@index([createdAt])
+}
+
+model User {
+  id                        String                      @id @default(cuid())
+  fullName                  String
+  email                     String                      @unique
+  phone                     String?
+  role                      UserRole
+  status                    RecordStatus                @default(ACTIVE)
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime                    @updatedAt
+  passwordHash              String?
+  auditLogs                 AuditLog[]
+  bookings                  Booking[]
+  documents                 Document[]
+  createdFinanceReports     FinanceReport[]             @relation("FinanceReportCreatedBy")
+  ownedFinanceReports       FinanceReport[]             @relation("FinanceReportOwner")
+  integrationConnections    IntegrationConnection[]
+  properties                Property[]
+  createdPriceOverrides     PropertyPriceOverride[]     @relation("PropertyPriceOverrideCreatedBy")
+  tasks                     Task[]
+  createdAvailabilityBlocks PropertyAvailabilityBlock[] @relation("PropertyAvailabilityBlockCreatedBy")
+
+  @@index([role])
+  @@index([status])
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  actorId     String?
+  action      AuditAction
+  entityType  String
+  entityId    String?
+  description String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime    @default(now())
+  propertyId  String?
+  actor       User?       @relation(fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([action])
+  @@index([propertyId])
+  @@index([entityType])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model Property {
+  id                        String                          @id @default(cuid())
+  name                      String
+  address                   String
+  city                      String                          @default("Milano")
+  zone                      String?
+  maxGuests                 Int
+  bedrooms                  Int?
+  bathrooms                 Int?
+  status                    PropertyStatus                  @default(DRAFT)
+  commercialClass           PropertyCommercialClass         @default(SOLID_PERFORMER)
+  victoryModel              PropertyVictoryModel            @default(BALANCED_WINNER)
+  initialScore              Int                             @default(70)
+  currentScore              Int                             @default(70)
+  notes                     String?
+  createdAt                 DateTime                        @default(now())
+  updatedAt                 DateTime                        @updatedAt
+  ownerId                   String
+  cleaningCost              Decimal                         @default(0) @db.Decimal(10, 2)
+  description               String?
+  /// *
+  ///    * Codici identificativi dell'alloggio.
+  ///    * La verifica incrociata verrà eseguita successivamente
+  ///    * dal servizio di verifica AI.
+  cin                       String?
+  cir                       String?
+  codeVerificationNotes     String?
+  codeVerificationStatus    PropertyCodeVerificationStatus  @default(NOT_VERIFIED)
+  codeVerifiedAt            DateTime?
+  bookings                  Booking[]
+  documents                 Document[]
+  financeFormulas           FinanceFormula[]
+  financeReports            FinanceReport[]
+  integrationConnections    IntegrationConnectionProperty[]
+  integrationMappings       IntegrationPropertyMapping[]
+  owner                     User                            @relation(fields: [ownerId], references: [id])
+  amenities                 PropertyAmenity[]
+  checkInConfiguration      PropertyCheckInConfiguration?
+  propertyCodeVerifications PropertyCodeVerification[]
+  propertyDocuments         PropertyDocument[]
+  houseRules                PropertyHouseRule[]
+  images                    PropertyImage[]
+  ratePlans                 PropertyRatePlan[]
+  rateRules                 PropertyRateRule[]
+  priceOverrides            PropertyPriceOverride[]
+  tasks                     Task[]
+  availabilityBlocks        PropertyAvailabilityBlock[]
+  revenueMarketSnapshots    RevenueMarketSnapshot[]
+  revenueComparables        RevenueComparable[]
+  revenueDailySignals       RevenueDailySignal[]
+  revenueRecommendations    RevenueRecommendation[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([city])
+  @@index([zone])
+  @@index([cin])
+  @@index([cir])
+  @@index([codeVerificationStatus])
+}
+
+model PropertyRatePlan {
+  id         String  @id @default(cuid())
+  propertyId String
+  name       String
+  code       String
+  active     Boolean @default(true)
+  isDefault  Boolean @default(false)
+
+  basePrice Decimal @db.Decimal(10, 2)
+  currency  String  @default("EUR")
+
+  minimumStay Int  @default(1)
+  maximumStay Int?
+
+  occupancyIncluded Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  occupancyPrices PropertyOccupancyPrice[]
+  rules           PropertyRateRule[]
+
+  @@unique([propertyId, code])
+  @@index([propertyId])
+  @@index([propertyId, active])
+}
+
+model PropertyOccupancyPrice {
+  id         String @id @default(cuid())
+  ratePlanId String
+  guests     Int
+
+  adjustmentType  PricingAdjustmentType
+  adjustmentValue Decimal               @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ratePlan PropertyRatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+
+  @@unique([ratePlanId, guests])
+  @@index([ratePlanId])
+}
+
+model PropertyRateRule {
+  id         String  @id @default(cuid())
+  propertyId String
+  ratePlanId String?
+
+  name     String
+  active   Boolean @default(true)
+  priority Int     @default(0)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  daysOfWeek Int[]
+
+  adjustmentType  PricingAdjustmentType?
+  adjustmentValue Decimal?               @db.Decimal(10, 2)
+
+  minimumStay Int?
+  maximumStay Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  ratePlan PropertyRatePlan? @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([ratePlanId])
+  @@index([propertyId, active])
+  @@index([startDate, endDate])
+}
+
+model PropertyPriceOverride {
+  id         String @id @default(cuid())
+  propertyId String
+
+  startDate DateTime
+  endDate   DateTime
+
+  nightlyPrice      Decimal? @db.Decimal(10, 2)
+  minimumStay       Int?
+  maximumStay       Int?
+  occupancyIncluded Int?
+
+  source PricingOverrideSource @default(MANUAL)
+
+  createdById String?
+
+  note String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdBy User? @relation("PropertyPriceOverrideCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([propertyId])
+  @@index([propertyId, startDate, endDate])
+  @@index([source])
+  @@index([createdById])
+}
+
+model IntegrationPropertyMapping {
+  id                 String              @id @default(cuid())
+  provider           IntegrationProvider
+  externalPropertyId String
+  propertyId         String
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  property           Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalPropertyId])
+  @@unique([provider, propertyId])
+  @@index([propertyId])
+}
+
+model PropertyCodeVerification {
+  id          String                         @id @default(cuid())
+  propertyId  String
+  provider    String
+  cin         String
+  cir         String
+  status      PropertyCodeVerificationStatus
+  notes       String?
+  rawResponse Json?
+  createdAt   DateTime                       @default(now())
+  property    Property                       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PropertyImage {
+  id         String   @id @default(cuid())
+  propertyId String
+  url        String
+  filename   String
+  caption    String?
+  sortOrder  Int      @default(0)
+  isCover    Boolean  @default(false)
+  width      Int?
+  height     Int?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([propertyId, sortOrder])
+  @@index([propertyId, isCover])
+}
+
+model Amenity {
+  id          String            @id @default(cuid())
+  key         String            @unique
+  label       String
+  category    String
+  description String?
+  isActive    Boolean           @default(true)
+  sortOrder   Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  properties  PropertyAmenity[]
+
+  @@index([category])
+  @@index([isActive])
+  @@index([category, sortOrder])
+}
+
+model PropertyAmenity {
+  id         String   @id @default(cuid())
+  propertyId String
+  amenityId  String
+  createdAt  DateTime @default(now())
+  amenity    Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, amenityId])
+  @@index([propertyId])
+  @@index([amenityId])
+}
+
+model HouseRule {
+  id          String              @id @default(cuid())
+  key         String              @unique
+  label       String
+  category    String
+  description String?
+  isActive    Boolean             @default(true)
+  sortOrder   Int                 @default(0)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  properties  PropertyHouseRule[]
+
+  @@index([category])
+  @@index([isActive])
+  @@index([category, sortOrder])
+}
+
+model PropertyHouseRule {
+  id          String    @id @default(cuid())
+  propertyId  String
+  houseRuleId String
+  createdAt   DateTime  @default(now())
+  houseRule   HouseRule @relation(fields: [houseRuleId], references: [id], onDelete: Cascade)
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, houseRuleId])
+  @@index([propertyId])
+  @@index([houseRuleId])
+}
+
+model PropertyCheckInConfiguration {
+  id                    String   @id @default(cuid())
+  propertyId            String   @unique
+  checkInType           String?
+  arrivalInstructions   String?
+  accessInstructions    String?
+  buildingAccessCode    String?
+  apartmentAccessCode   String?
+  wifiName              String?
+  wifiPassword          String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  parkingInstructions   String?
+  additionalNotes       String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  property              Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+}
+
+model PropertyDocument {
+  id                 String                    @id @default(cuid())
+  propertyId         String
+  type               PropertyDocumentType
+  title              String
+  documentNumber     String?
+  issuer             String?
+  issueDate          DateTime?
+  expiryDate         DateTime?
+  validity           PropertyDocumentValidity  @default(VALID)
+  fileUrl            String?
+  filename           String?
+  notes              String?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  ocrCompletedAt     DateTime?
+  ocrError           String?
+  ocrExtractedText   String?
+  ocrProvider        String?
+  ocrProviderVersion String?
+  ocrRequestedAt     DateTime?
+  ocrStartedAt       DateTime?
+  ocrStatus          PropertyDocumentOcrStatus @default(NOT_REQUESTED)
+  property           Property                  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([type])
+  @@index([validity])
+  @@index([expiryDate])
+  @@index([ocrStatus])
+}
+
+model Booking {
+  id                      String                   @id @default(cuid())
+  propertyId              String
+  ownerId                 String
+  channel                 BookingChannel
+  externalBookingId       String?
+  guestName               String
+  guestEmail              String?
+  guestPhone              String?
+  checkIn                 DateTime
+  checkOut                DateTime
+  nights                  Int
+  guests                  Int
+  grossAmount             Decimal                  @db.Decimal(10, 2)
+  currency                String                   @default("EUR")
+  bookingStatus           BookingStatus            @default(CONFIRMED)
+  operationalStatus       BookingOperationalStatus @default(OK)
+  internalNotes           String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  guestId                 String?
+  integrationConnectionId String?
+  guest                   Guest?                   @relation(fields: [guestId], references: [id])
+  integrationConnection   IntegrationConnection?   @relation(fields: [integrationConnectionId], references: [id])
+  owner                   User                     @relation(fields: [ownerId], references: [id])
+  property                Property                 @relation(fields: [propertyId], references: [id])
+  tasks                   Task[]
+
+  @@unique([integrationConnectionId, externalBookingId])
+  @@index([channel, externalBookingId])
+  @@index([propertyId])
+  @@index([ownerId])
+  @@index([channel])
+  @@index([checkIn])
+  @@index([checkOut])
+  @@index([bookingStatus])
+  @@index([operationalStatus])
+  @@index([externalBookingId])
+  @@index([guestId])
+  @@index([integrationConnectionId])
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  type        TaskType
+  status      TaskStatus @default(TODO)
+  dueDate     DateTime?
+  propertyId  String
+  bookingId   String?
+  ownerId     String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  booking     Booking?   @relation(fields: [bookingId], references: [id])
+  owner       User?      @relation(fields: [ownerId], references: [id])
+  property    Property   @relation(fields: [propertyId], references: [id])
+
+  @@index([propertyId])
+  @@index([bookingId])
+  @@index([ownerId])
+  @@index([type])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model Document {
+  id             String            @id @default(cuid())
+  type           DocumentType
+  status         DocumentStatus    @default(DRAFT)
+  documentNumber String?
+  ownerId        String?
+  referenceMonth DateTime?
+  title          String
+  subtitle       String?
+  content        Json
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  finalizedAt    DateTime?
+  currentVersion Int               @default(1)
+  documentKey    String            @unique
+  propertyId     String?
+  owner          User?             @relation(fields: [ownerId], references: [id])
+  property       Property?         @relation(fields: [propertyId], references: [id])
+  versions       DocumentVersion[]
+
+  @@index([ownerId])
+  @@index([propertyId])
+  @@index([type])
+  @@index([status])
+  @@index([referenceMonth])
+  @@index([updatedAt])
+}
+
+model DocumentVersion {
+  id            String   @id @default(cuid())
+  documentId    String
+  version       Int
+  content       Json
+  note          String?
+  createdByName String?
+  createdAt     DateTime @default(now())
+  document      Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, version])
+  @@index([documentId])
+  @@index([createdAt])
+}
+
+model Guest {
+  id        String    @id @default(cuid())
+  fullName  String
+  email     String?
+  phone     String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+
+  @@index([fullName])
+  @@index([email])
+  @@index([phone])
+}
+
+model FinanceFormula {
+  id                String               @id @default(cuid())
+  propertyId        String?
+  name              String
+  description       String?
+  status            FinanceFormulaStatus @default(DRAFT)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  scope             FinanceFormulaScope  @default(SINGLE_PROPERTY)
+  property          Property?            @relation(fields: [propertyId], references: [id])
+  rules             FinanceFormulaRule[] @relation("FormulaRules")
+  referencedByRules FinanceFormulaRule[] @relation("ReferencedFormula")
+  financeReports    FinanceReport[]
+
+  @@index([scope])
+  @@index([propertyId])
+  @@index([status])
+}
+
+model FinanceFormulaRule {
+  id                  String               @id @default(cuid())
+  formulaId           String
+  order               Int
+  name                String
+  description         String?
+  isEnabled           Boolean              @default(true)
+  operation           FinanceRuleOperation
+  valueType           FinanceRuleValueType
+  base                FinanceRuleBase
+  value               Decimal              @db.Decimal(10, 2)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  referencedFormulaId String?
+  category            FinanceRuleCategory  @default(OTHER)
+  formula             FinanceFormula       @relation("FormulaRules", fields: [formulaId], references: [id], onDelete: Cascade)
+  referencedFormula   FinanceFormula?      @relation("ReferencedFormula", fields: [referencedFormulaId], references: [id])
+
+  @@index([formulaId])
+  @@index([referencedFormulaId])
+  @@index([order])
+}
+
+model FinanceReport {
+  id              String              @id @default(cuid())
+  propertyId      String
+  ownerId         String
+  formulaId       String?
+  createdById     String?
+  referenceMonth  DateTime
+  title           String
+  currency        String              @default("EUR")
+  grossRevenue    Decimal             @db.Decimal(12, 2)
+  finalAmount     Decimal             @db.Decimal(12, 2)
+  formulaName     String
+  formulaSnapshot Json
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  createdBy       User?               @relation("FinanceReportCreatedBy", fields: [createdById], references: [id])
+  formula         FinanceFormula?     @relation(fields: [formulaId], references: [id])
+  owner           User                @relation("FinanceReportOwner", fields: [ownerId], references: [id])
+  property        Property            @relation(fields: [propertyId], references: [id])
+  rules           FinanceReportRule[]
+
+  @@index([propertyId])
+  @@index([ownerId])
+  @@index([formulaId])
+  @@index([createdById])
+  @@index([referenceMonth])
+  @@index([createdAt])
+}
+
+model FinanceReportRule {
+  id               String               @id @default(cuid())
+  reportId         String
+  sourceRuleId     String?
+  order            Int
+  ruleName         String
+  operation        FinanceRuleOperation
+  valueType        FinanceRuleValueType
+  baseAmount       Decimal              @db.Decimal(12, 2)
+  configuredValue  Decimal              @db.Decimal(12, 2)
+  calculatedAmount Decimal              @db.Decimal(12, 2)
+  totalBefore      Decimal              @db.Decimal(12, 2)
+  totalAfter       Decimal              @db.Decimal(12, 2)
+  createdAt        DateTime             @default(now())
+  category         FinanceRuleCategory  @default(OTHER)
+  report           FinanceReport        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([sourceRuleId])
+  @@index([order])
+}
+
+model IntegrationConnection {
+  id             String                          @id @default(cuid())
+  ownerId        String
+  connectorKey   String
+  transport      IntegrationTransport
+  name           String
+  enabled        Boolean                         @default(true)
+  config         Json?
+  lastSyncAt     DateTime?
+  lastSyncStatus String?
+  lastSyncError  String?
+  createdAt      DateTime                        @default(now())
+  updatedAt      DateTime                        @updatedAt
+  bookings       Booking[]
+  owner          User                            @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  properties     IntegrationConnectionProperty[]
+
+  @@index([ownerId])
+  @@index([connectorKey])
+  @@index([transport])
+  @@index([enabled])
+}
+
+model IntegrationConnectionProperty {
+  id                 String                @id @default(cuid())
+  connectionId       String
+  propertyId         String
+  externalPropertyId String?
+  config             Json?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  connection         IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  property           Property              @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([connectionId, propertyId])
+  @@index([propertyId])
+  @@index([externalPropertyId])
+}
+
 enum UserRole {
   SUPER_ADMIN
   MANAGER
@@ -21,6 +709,20 @@ enum RecordStatus {
   INACTIVE
   SUSPENDED
   ARCHIVED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGE
+  REQUEST
+  RETRY
+  COMPLETE
+  FAIL
+  LOGIN
+  LOGOUT
+  PERMISSION_CHANGE
 }
 
 enum PropertyStatus {
@@ -91,8 +793,8 @@ enum DocumentType {
   COMMISSION_INVOICE
   MAINTENANCE_REPORT
   PROPERTY_REPORT
-  PROPERTY_STATEMENT
   PORTFOLIO_REPORT
+  PROPERTY_STATEMENT
 }
 
 enum DocumentStatus {
@@ -160,387 +862,338 @@ enum FinanceRuleCategory {
   OTHER
 }
 
-model SystemEvent {
-  id String @id @default(cuid())
-
-  eventType String
-
-  aggregateType String
-  aggregateId   String?
-
-  source SystemEventSource @default(HORIZON)
-  status SystemEventStatus @default(PENDING)
-
-  payload Json
-
-  idempotencyKey String @unique
-
-  externalEventId String?
-  correlationId   String?
-  causationId     String?
-
-  attempts  Int     @default(0)
-  lastError String?
-
-  availableAt  DateTime  @default(now())
-  processingAt DateTime?
-  processedAt  DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([status, availableAt])
-  @@index([eventType])
-  @@index([aggregateType, aggregateId])
-  @@index([source])
-  @@index([externalEventId])
-  @@index([correlationId])
-  @@index([createdAt])
+enum PropertyDocumentType {
+  CIN
+  CIR
+  SCIA
+  ENERGY_CERTIFICATE
+  INSURANCE
+  IDENTITY_DOCUMENT
+  FLOOR_PLAN
+  CONTRACT
+  OTHER
 }
 
-model User {
-  id       String       @id @default(cuid())
-  fullName String
-  email    String       @unique
-  phone    String?
-  role     UserRole
-  status   RecordStatus @default(ACTIVE)
-
-  properties Property[]
-  bookings   Booking[]
-  tasks      Task[]
-  documents  Document[]
-
-  ownedFinanceReports   FinanceReport[] @relation("FinanceReportOwner")
-  createdFinanceReports FinanceReport[] @relation("FinanceReportCreatedBy")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([role])
-  @@index([status])
+enum IntegrationProvider {
+  BOOKING_COM
+  AIRBNB
+  VRBO
+  ALLOGGIATI_WEB
+  ISTAT
+  SOGGIORNIAMO
+  STRIPE
+  ICAL
 }
 
-model Property {
-  id String @id @default(cuid())
-
-  ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id])
-
-  name    String
-  address String
-  city    String  @default("Milano")
-  zone    String?
-
-  maxGuests Int
-  bedrooms  Int?
-  bathrooms Int?
-
-  status PropertyStatus @default(DRAFT)
-
-  commercialClass PropertyCommercialClass @default(SOLID_PERFORMER)
-  victoryModel    PropertyVictoryModel    @default(BALANCED_WINNER)
-
-    initialScore Int @default(70)
-  currentScore Int @default(70)
-
-  description String? @db.Text
-  notes String?
-
-  cleaningCost Decimal @default(0) @db.Decimal(10, 2)
-  bookings        Booking[]
-  tasks           Task[]
-  documents       Document[]
-  financeFormulas FinanceFormula[]
-  financeReports  FinanceReport[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([ownerId])
-  @@index([status])
-  @@index([city])
-  @@index([zone])
+enum PropertyCodeVerificationStatus {
+  NOT_VERIFIED
+  PENDING
+  VERIFIED
+  NOT_FOUND
+  MISMATCH
+  REVIEW_REQUIRED
 }
 
-model Booking {
-  id String @id @default(cuid())
+enum PropertyDocumentValidity {
+  VALID
+  EXPIRING
+  EXPIRED
+}
 
+enum PropertyDocumentOcrStatus {
+  NOT_REQUESTED
+  QUEUED
+  PROCESSING
+  COMPLETED
+  REVIEW_REQUIRED
+  FAILED
+}
+
+enum BackgroundJobType {
+  PROPERTY_CODE_VERIFICATION
+  PROPERTY_DOCUMENT_ANALYSIS
+  PROPERTY_DOCUMENT_OCR
+  PROPERTY_DOCUMENT_AI_REVIEW
+  PROPERTY_SYNC
+  BOOKING_SYNC
+  FINANCE_REPORT_GENERATION
+  REVENUE_AI_ANALYSIS
+  STORAGE_OBJECT_DELETE
+}
+
+enum BackgroundJobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum IntegrationTransport {
+  ICAL
+  API
+  WEBHOOK
+  FILE
+}
+
+enum PricingAdjustmentType {
+  FIXED
+  PERCENTAGE
+}
+
+enum PricingOverrideSource {
+  MANUAL
+  AI
+  RULE
+}
+
+model PropertyAvailabilityBlock {
+  id         String @id @default(cuid())
   propertyId String
-  property   Property @relation(fields: [propertyId], references: [id])
 
-  ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id])
+  startDate DateTime
+  endDate   DateTime
 
-  guestId String?
-  guest   Guest?  @relation(fields: [guestId], references: [id])
+  source AvailabilityBlockSource @default(MANUAL)
 
-  tasks Task[]
-
-  channel           BookingChannel
-  externalBookingId String?
-
-  guestName  String
-  guestEmail String?
-  guestPhone String?
-
-  checkIn  DateTime
-  checkOut DateTime
-  nights   Int
-  guests   Int
-
-  grossAmount Decimal @db.Decimal(10, 2)
-  currency    String  @default("EUR")
-
-  bookingStatus     BookingStatus            @default(CONFIRMED)
-  operationalStatus BookingOperationalStatus @default(OK)
-
-  internalNotes String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([propertyId])
-  @@index([ownerId])
-  @@index([channel])
-  @@index([checkIn])
-  @@index([checkOut])
-  @@index([bookingStatus])
-  @@index([operationalStatus])
-  @@index([externalBookingId])
-  @@index([guestId])
-}
-
-model Task {
-  id String @id @default(cuid())
-
-  title       String
-  description String?
-
-  type   TaskType
-  status TaskStatus @default(TODO)
-
-  dueDate DateTime?
-
-  propertyId String
-  property   Property @relation(fields: [propertyId], references: [id])
-
-  bookingId String?
-  booking   Booking? @relation(fields: [bookingId], references: [id])
-
-  ownerId String?
-  owner   User?   @relation(fields: [ownerId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([propertyId])
-  @@index([bookingId])
-  @@index([ownerId])
-  @@index([type])
-  @@index([status])
-  @@index([dueDate])
-}
-
-model Document {
-  id String @id @default(cuid())
-
-  documentKey String @unique
-
-  type   DocumentType
-  status DocumentStatus @default(DRAFT)
-
-  documentNumber String?
-
-  ownerId String?
-  owner   User?   @relation(fields: [ownerId], references: [id])
-
-  propertyId String?
-  property   Property? @relation(fields: [propertyId], references: [id])
-
-  referenceMonth DateTime?
-
-  title    String
-  subtitle String?
-
-  content        Json
-  currentVersion Int  @default(1)
-
-  versions DocumentVersion[]
-
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  finalizedAt DateTime?
-
-  @@index([ownerId])
-  @@index([propertyId])
-  @@index([type])
-  @@index([status])
-  @@index([referenceMonth])
-  @@index([updatedAt])
-}
-
-model DocumentVersion {
-  id String @id @default(cuid())
-
-  documentId String
-  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  version Int
-  content Json
-
-  note          String?
-  createdByName String?
-
-  createdAt DateTime @default(now())
-
-  @@unique([documentId, version])
-  @@index([documentId])
-  @@index([createdAt])
-}
-
-model Guest {
-  id String @id @default(cuid())
-
-  fullName String
-  email    String?
-  phone    String?
-
-  notes String?
-
-  bookings Booking[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([fullName])
-  @@index([email])
-  @@index([phone])
-}
-
-model FinanceFormula {
-  id String @id @default(cuid())
-
-  scope FinanceFormulaScope @default(SINGLE_PROPERTY)
-
-  propertyId String?
-  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
-
-  name        String
-  description String?
-
-  status FinanceFormulaStatus @default(DRAFT)
-
-  rules FinanceFormulaRule[] @relation("FormulaRules")
-
-  referencedByRules FinanceFormulaRule[] @relation("ReferencedFormula")
-
-  financeReports FinanceReport[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([scope])
-  @@index([propertyId])
-  @@index([status])
-}
-
-model FinanceFormulaRule {
-  id String @id @default(cuid())
-
-  formulaId String
-  formula   FinanceFormula @relation("FormulaRules", fields: [formulaId], references: [id], onDelete: Cascade)
-
-  referencedFormulaId String?
-  referencedFormula   FinanceFormula? @relation("ReferencedFormula", fields: [referencedFormulaId], references: [id], onDelete: SetNull)
-
-  order Int
-
-  name        String
-  description String?
-
-  isEnabled Boolean @default(true)
-
-  operation FinanceRuleOperation
-  valueType FinanceRuleValueType
-  base      FinanceRuleBase
-  category  FinanceRuleCategory  @default(OTHER)
-  value     Decimal              @db.Decimal(10, 2)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([formulaId])
-  @@index([referencedFormulaId])
-  @@index([order])
-}
-
-model FinanceReport {
-  id String @id @default(cuid())
-
-  propertyId String
-  property   Property @relation(fields: [propertyId], references: [id])
-
-  ownerId String
-  owner   User   @relation("FinanceReportOwner", fields: [ownerId], references: [id])
-
-  formulaId String?
-  formula   FinanceFormula? @relation(fields: [formulaId], references: [id], onDelete: SetNull)
+  note String?
 
   createdById String?
-  createdBy   User?   @relation("FinanceReportCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
-  referenceMonth DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  title String
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  createdBy User? @relation("PropertyAvailabilityBlockCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([propertyId])
+  @@index([propertyId, startDate, endDate])
+  @@index([source])
+  @@index([createdById])
+}
+
+enum AvailabilityBlockSource {
+  MANUAL
+  AI
+  OWNER
+  INTEGRATION
+}
+
+enum RevenueRecommendationStrategy {
+  OCCUPANCY
+  BALANCED
+  ADR
+}
+
+enum RevenueRecommendationStatus {
+  GENERATED
+  APPLIED
+  REJECTED
+  OVERRIDDEN
+  EXPIRED
+}
+
+model RevenueMarketSnapshot {
+  id         String @id @default(cuid())
+  propertyId String
+
+  /**
+   * Provider lasciato volutamente String.
+   * Horizon non deve essere vincolato
+   * permanentemente ad AirDNA o ad
+   * un singolo fornitore.
+   */
+  provider String
+
+  marketName String?
 
   currency String @default("EUR")
 
-  grossRevenue Decimal @db.Decimal(12, 2)
-  finalAmount  Decimal @db.Decimal(12, 2)
+  marketAdr       Decimal? @db.Decimal(10, 2)
+  marketOccupancy Decimal? @db.Decimal(5, 2)
+  marketRevenue   Decimal? @db.Decimal(12, 2)
 
-  formulaName     String
-  formulaSnapshot Json
+  demandIndex Decimal? @db.Decimal(8, 4)
+  bookingPace Decimal? @db.Decimal(8, 4)
 
-  rules FinanceReportRule[]
+  activeSupply Int?
+
+  /**
+   * Dato originale del provider.
+   * Utile per audit, debugging e
+   * future evoluzioni del motore.
+   */
+  rawData Json?
+
+  capturedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  recommendations RevenueRecommendation[]
+
+  @@index([propertyId])
+  @@index([propertyId, capturedAt])
+  @@index([provider])
+  @@index([capturedAt])
+}
+
+model RevenueComparable {
+  id         String @id @default(cuid())
+  propertyId String
+
+  provider          String
+  externalListingId String
+
+  name String?
+
+  latitude  Decimal? @db.Decimal(10, 7)
+  longitude Decimal? @db.Decimal(10, 7)
+
+  distanceKm Decimal? @db.Decimal(8, 3)
+
+  maxGuests Int?
+  bedrooms  Int?
+  bathrooms Int?
+
+  nightlyPrice  Decimal? @db.Decimal(10, 2)
+  adr           Decimal? @db.Decimal(10, 2)
+  occupancyRate Decimal? @db.Decimal(5, 2)
+
+  /**
+   * 0-100.
+   * Più è alto, più l'alloggio è
+   * realmente comparabile alla property.
+   */
+  similarityScore Decimal? @db.Decimal(5, 2)
+
+  rawData Json?
+
+  capturedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, provider, externalListingId])
+  @@index([propertyId])
+  @@index([propertyId, similarityScore])
+  @@index([provider])
+}
+
+model RevenueDailySignal {
+  id         String   @id @default(cuid())
+  propertyId String
+  date       DateTime @db.Date
+
+  provider String
+
+  currency String @default("EUR")
+
+  marketMedianPrice Decimal? @db.Decimal(10, 2)
+  marketLowPrice    Decimal? @db.Decimal(10, 2)
+  marketHighPrice   Decimal? @db.Decimal(10, 2)
+
+  marketOccupancy Decimal? @db.Decimal(5, 2)
+
+  competitorAvailability Int?
+
+  demandIndex Decimal? @db.Decimal(8, 4)
+
+  leadTimeDays Int?
+
+  /**
+   * Informazioni Horizon,
+   * non necessariamente provenienti
+   * dal provider di mercato.
+   */
+  propertyOccupancy Decimal? @db.Decimal(5, 2)
+  bookingPace       Decimal? @db.Decimal(8, 4)
+
+  gapBeforeNights Int?
+  gapAfterNights  Int?
+
+  eventScore Decimal? @db.Decimal(8, 4)
+
+  confidence Decimal? @db.Decimal(5, 2)
+
+  /**
+   * Breakdown completo dei segnali
+   * che hanno prodotto il valore.
+   */
+  factors Json?
+
+  capturedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([propertyId, date])
+  @@index([propertyId, date, capturedAt])
+  @@index([provider])
+}
+
+model RevenueRecommendation {
+  id         String   @id @default(cuid())
+  propertyId String
+  date       DateTime @db.Date
+
+  marketSnapshotId String?
+
+  strategy RevenueRecommendationStrategy
+  status   RevenueRecommendationStatus   @default(GENERATED)
+
+  currency String @default("EUR")
+
+  recommendedPrice Decimal @db.Decimal(10, 2)
+
+  lowPrice  Decimal? @db.Decimal(10, 2)
+  highPrice Decimal? @db.Decimal(10, 2)
+
+  minimumStay Int?
+
+  /**
+   * Confidenza 0-100.
+   * Horizon deve poter dichiarare
+   * esplicitamente quando i dati
+   * non sono sufficienti.
+   */
+  confidence Decimal? @db.Decimal(5, 2)
+
+  rationale String?
+
+  /**
+   * Snapshot dei fattori utilizzati
+   * dal motore per questa decisione.
+   */
+  factors Json?
+
+  /**
+   * Versione dell'algoritmo.
+   * Fondamentale per misurare nel tempo
+   * quale versione performa meglio.
+   */
+  engineVersion String
+
+  appliedPrice Decimal? @db.Decimal(10, 2)
+
+  generatedAt DateTime  @default(now())
+  appliedAt   DateTime?
+  decidedAt   DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  marketSnapshot RevenueMarketSnapshot? @relation(fields: [marketSnapshotId], references: [id], onDelete: SetNull)
+
   @@index([propertyId])
-  @@index([ownerId])
-  @@index([formulaId])
-  @@index([createdById])
-  @@index([referenceMonth])
-  @@index([createdAt])
-}
-
-model FinanceReportRule {
-  id String @id @default(cuid())
-
-  reportId String
-  report   FinanceReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
-
-  sourceRuleId String?
-
-  order Int
-
-  ruleName String
-
-  operation FinanceRuleOperation
-  valueType FinanceRuleValueType
-  category  FinanceRuleCategory  @default(OTHER)
-
-  baseAmount       Decimal @db.Decimal(12, 2)
-  configuredValue  Decimal @db.Decimal(12, 2)
-  calculatedAmount Decimal @db.Decimal(12, 2)
-
-  totalBefore Decimal @db.Decimal(12, 2)
-  totalAfter  Decimal @db.Decimal(12, 2)
-
-  createdAt DateTime @default(now())
-
-  @@index([reportId])
-  @@index([sourceRuleId])
-  @@index([order])
+  @@index([propertyId, date])
+  @@index([propertyId, date, strategy])
+  @@index([status])
+  @@index([generatedAt])
+  @@index([marketSnapshotId])
 }

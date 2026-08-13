@@ -1,7 +1,12 @@
-import { Prisma } from "@prisma/client";
+import {
+  AuditAction,
+  Prisma,
+} from "@prisma/client";
 import { NextResponse } from "next/server";
 
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { AuditService } from "@/services/audit/AuditService";
 
 import {
   updateFinanceFormula,
@@ -17,7 +22,7 @@ type RouteContext = {
 
 export async function GET(
   _request: Request,
-  context: RouteContext
+  context: RouteContext,
 ) {
   const { formulaId } = await context.params;
 
@@ -29,7 +34,7 @@ export async function GET(
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
@@ -77,7 +82,7 @@ export async function GET(
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
@@ -94,14 +99,14 @@ export async function GET(
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }
 
 export async function PUT(
   request: Request,
-  context: RouteContext
+  context: RouteContext,
 ) {
   const { formulaId } = await context.params;
 
@@ -113,7 +118,7 @@ export async function PUT(
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
@@ -130,7 +135,7 @@ export async function PUT(
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
@@ -144,7 +149,7 @@ export async function PUT(
       },
       {
         status: 400,
-      }
+      },
     );
   }
 
@@ -152,7 +157,7 @@ export async function PUT(
     const result =
       await updateFinanceFormula(
         formulaId,
-        payload as UpdateFormulaPayload
+        payload as UpdateFormulaPayload,
       );
 
     if (
@@ -166,7 +171,7 @@ export async function PUT(
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
@@ -181,7 +186,7 @@ export async function PUT(
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
@@ -202,7 +207,7 @@ export async function PUT(
         },
         {
           status: 400,
-        }
+        },
       );
     }
 
@@ -213,14 +218,14 @@ export async function PUT(
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }
 
 export async function DELETE(
   _request: Request,
-  context: RouteContext
+  context: RouteContext,
 ) {
   const { formulaId } = await context.params;
 
@@ -232,9 +237,11 @@ export async function DELETE(
       },
       {
         status: 400,
-      }
+      },
     );
   }
+
+  const session = await auth();
 
   try {
     const formula =
@@ -245,6 +252,27 @@ export async function DELETE(
 
         select: {
           id: true,
+          propertyId: true,
+          scope: true,
+          name: true,
+          description: true,
+          status: true,
+          rules: {
+            orderBy: {
+              order: "asc",
+            },
+            select: {
+              id: true,
+              name: true,
+              order: true,
+              isEnabled: true,
+              operation: true,
+              valueType: true,
+              base: true,
+              value: true,
+              referencedFormulaId: true,
+            },
+          },
         },
       });
 
@@ -256,15 +284,63 @@ export async function DELETE(
         },
         {
           status: 404,
-        }
+        },
       );
     }
 
-    await prisma.financeFormula.delete({
-      where: {
-        id: formulaId,
+    await prisma.$transaction(
+      async (transaction) => {
+        await transaction.financeFormula.delete({
+          where: {
+            id: formula.id,
+          },
+        });
+
+        await AuditService.log(
+          {
+            actorId:
+              session?.user?.id ?? null,
+            action: AuditAction.DELETE,
+            propertyId:
+              formula.propertyId,
+            entityType:
+              "FINANCE_FORMULA",
+            entityId: formula.id,
+            description:
+              "Formula finanziaria eliminata.",
+            metadata: {
+              name: formula.name,
+              description:
+                formula.description,
+              scope: formula.scope,
+              status: formula.status,
+              propertyId:
+                formula.propertyId,
+              rulesCount:
+                formula.rules.length,
+              rules: formula.rules.map(
+                (rule) => ({
+                  id: rule.id,
+                  name: rule.name,
+                  order: rule.order,
+                  isEnabled:
+                    rule.isEnabled,
+                  operation:
+                    rule.operation,
+                  valueType:
+                    rule.valueType,
+                  base: rule.base,
+                  value: rule.value,
+                  referencedFormulaId:
+                    rule.referencedFormulaId,
+                }),
+              ),
+            },
+          },
+          transaction,
+        );
       },
-    });
+    );
 
     return NextResponse.json({
       success: true,
@@ -283,7 +359,7 @@ export async function DELETE(
         },
         {
           status: 400,
-        }
+        },
       );
     }
 
@@ -294,7 +370,7 @@ export async function DELETE(
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }

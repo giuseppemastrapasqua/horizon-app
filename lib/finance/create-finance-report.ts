@@ -1,7 +1,10 @@
+import { AuditAction } from "@prisma/client";
+
 import {
   buildFinancePreview,
 } from "@/lib/finance/preview";
 import { prisma } from "@/lib/prisma";
+import { AuditService } from "@/services/audit/AuditService";
 
 type CreateFinanceReportParams = {
   propertyId: string;
@@ -21,7 +24,7 @@ export async function createFinanceReport({
 
   if (!normalizedPropertyId) {
     throw new Error(
-      "È necessario specificare l'immobile."
+      "È necessario specificare l'immobile.",
     );
   }
 
@@ -32,11 +35,11 @@ export async function createFinanceReport({
 
   if (
     Number.isNaN(
-      parsedReferenceMonth.getTime()
+      parsedReferenceMonth.getTime(),
     )
   ) {
     throw new Error(
-      "Il mese di riferimento non è valido."
+      "Il mese di riferimento non è valido.",
     );
   }
 
@@ -57,29 +60,32 @@ export async function createFinanceReport({
 
   if (!formula) {
     throw new Error(
-      "Non è disponibile alcuna formula finanziaria per questo immobile."
+      "Non è disponibile alcuna formula finanziaria per questo immobile.",
     );
   }
 
   if (!calculation) {
     throw new Error(
-      "Non è stato possibile calcolare il rendiconto finanziario."
+      "Non è stato possibile calcolare il rendiconto finanziario.",
     );
   }
 
   const currencies = Array.from(
     new Set(
       bookings.map(
-        (booking) => booking.currency
-      )
-    )
+        (booking) => booking.currency,
+      ),
+    ),
   );
 
   if (currencies.length > 1) {
     throw new Error(
-      "Il rendiconto contiene prenotazioni con valute differenti."
+      "Il rendiconto contiene prenotazioni con valute differenti.",
     );
   }
+
+  const normalizedCreatedById =
+    createdById?.trim() || null;
 
   const reportTitle =
     title?.trim() ||
@@ -117,120 +123,195 @@ export async function createFinanceReport({
         value: Number(rule.value),
         referencedFormulaId:
           rule.referencedFormulaId,
-      })
+      }),
     ),
   };
 
-  return prisma.financeReport.create({
-    data: {
-      propertyId: property.id,
-      ownerId: property.owner.id,
+  return prisma.$transaction(
+    async (transaction) => {
+      const report =
+        await transaction.financeReport.create({
+          data: {
+            propertyId: property.id,
+            ownerId: property.owner.id,
 
-      formulaId: formula.id,
+            formulaId: formula.id,
 
-      createdById:
-        createdById?.trim() || null,
+            createdById:
+              normalizedCreatedById,
 
-      referenceMonth: monthStart,
-      title: reportTitle,
+            referenceMonth: monthStart,
+            title: reportTitle,
 
-      currency:
-        calculation.currency,
+            currency:
+              calculation.currency,
 
-      grossRevenue:
-        calculation.grossRevenue,
+            grossRevenue:
+              calculation.grossRevenue,
 
-      finalAmount:
-        calculation.finalAmount,
+            finalAmount:
+              calculation.finalAmount,
 
-      formulaName:
-        calculation.formulaName,
+            formulaName:
+              calculation.formulaName,
 
-      formulaSnapshot,
+            formulaSnapshot,
 
-      rules: {
-        create:
-          calculation.rules.map(
-            (rule) => ({
-              sourceRuleId:
-                rule.ruleId,
+            rules: {
+              create:
+                calculation.rules.map(
+                  (rule) => ({
+                    sourceRuleId:
+                      rule.ruleId,
 
-              order: rule.order,
+                    order: rule.order,
 
-              ruleName:
-                rule.ruleName,
+                    ruleName:
+                      rule.ruleName,
 
-              operation:
-                rule.operation,
+                    operation:
+                      rule.operation,
 
-              valueType:
-                rule.valueType,
+                    valueType:
+                      rule.valueType,
 
-              category:
-                rule.category ?? "OTHER",
+                    category:
+                      rule.category ??
+                      "OTHER",
 
-              baseAmount:
-                rule.baseAmount,
+                    baseAmount:
+                      rule.baseAmount,
 
-              configuredValue:
-                rule.configuredValue,
+                    configuredValue:
+                      rule.configuredValue,
 
-              calculatedAmount:
-                rule.calculatedAmount,
+                    calculatedAmount:
+                      rule.calculatedAmount,
 
-              totalBefore:
-                rule.totalBefore,
+                    totalBefore:
+                      rule.totalBefore,
 
-              totalAfter:
-                rule.totalAfter,
-            })
-          ),
-      },
+                    totalAfter:
+                      rule.totalAfter,
+                  }),
+                ),
+            },
+          },
+
+          include: {
+            property: {
+              select: {
+                id: true,
+                name: true,
+                address: true,
+                city: true,
+                zone: true,
+              },
+            },
+
+            owner: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+              },
+            },
+
+            formula: {
+              select: {
+                id: true,
+                name: true,
+                scope: true,
+                status: true,
+              },
+            },
+
+            createdBy: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+              },
+            },
+
+            rules: {
+              orderBy: {
+                order: "asc",
+              },
+            },
+          },
+        });
+
+      await AuditService.log(
+        {
+          actorId:
+            normalizedCreatedById,
+          action: AuditAction.CREATE,
+          propertyId:
+            report.propertyId,
+          entityType:
+            "FINANCE_REPORT",
+          entityId: report.id,
+          description:
+            "Rendiconto finanziario creato.",
+          metadata: {
+            title: report.title,
+            referenceMonth:
+              report.referenceMonth.toISOString(),
+            currency:
+              report.currency,
+            grossRevenue:
+              Number(report.grossRevenue),
+            finalAmount:
+              Number(report.finalAmount),
+            ownerId:
+              report.ownerId,
+            formulaId:
+              report.formulaId,
+            formulaName:
+              report.formulaName,
+            bookingsCount:
+              bookings.length,
+            rulesCount:
+              report.rules.length,
+            rules: report.rules.map(
+              (rule) => ({
+                id: rule.id,
+                sourceRuleId:
+                  rule.sourceRuleId,
+                order: rule.order,
+                ruleName:
+                  rule.ruleName,
+                operation:
+                  rule.operation,
+                valueType:
+                  rule.valueType,
+                category:
+                  rule.category,
+                baseAmount:
+                  Number(rule.baseAmount),
+                configuredValue:
+                  Number(
+                    rule.configuredValue,
+                  ),
+                calculatedAmount:
+                  Number(
+                    rule.calculatedAmount,
+                  ),
+                totalBefore:
+                  Number(rule.totalBefore),
+                totalAfter:
+                  Number(rule.totalAfter),
+              }),
+            ),
+          },
+        },
+        transaction,
+      );
+
+      return report;
     },
-
-    include: {
-      property: {
-        select: {
-          id: true,
-          name: true,
-          address: true,
-          city: true,
-          zone: true,
-        },
-      },
-
-      owner: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-        },
-      },
-
-      formula: {
-        select: {
-          id: true,
-          name: true,
-          scope: true,
-          status: true,
-        },
-      },
-
-      createdBy: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-        },
-      },
-
-      rules: {
-        orderBy: {
-          order: "asc",
-        },
-      },
-    },
-  });
+  );
 }
 
 function createDefaultReportTitle({
@@ -239,7 +320,7 @@ function createDefaultReportTitle({
 }: {
   propertyName: string;
   referenceMonth: Date;
-}) {
+}): string {
   const formattedMonth =
     new Intl.DateTimeFormat("it-IT", {
       month: "long",
@@ -248,13 +329,13 @@ function createDefaultReportTitle({
     }).format(referenceMonth);
 
   return `Rendiconto ${propertyName} · ${capitalizeFirstLetter(
-    formattedMonth
+    formattedMonth,
   )}`;
 }
 
 function capitalizeFirstLetter(
-  value: string
-) {
+  value: string,
+): string {
   if (!value) {
     return value;
   }

@@ -1,4 +1,13 @@
-import { TaskStatus } from "@prisma/client";
+import {
+  BackgroundJobStatus,
+  TaskStatus,
+} from "@prisma/client";
+
+import {
+  getTodayCheckIns,
+  getTodayCheckOuts,
+} from "@/lib/dashboard/command-center-bookings";
+import { getPriorityTasks } from "@/lib/dashboard/command-center-task";
 import { prisma } from "@/lib/prisma";
 
 export async function getCommandCenter() {
@@ -17,6 +26,10 @@ export async function getCommandCenter() {
     overdueTasks,
     pendingEvents,
     failedEvents,
+    queuedBackgroundJobs,
+    runningBackgroundJobs,
+    completedBackgroundJobs,
+    failedBackgroundJobs,
   ] = await Promise.all([
     prisma.booking.findMany({
       where: {
@@ -119,67 +132,61 @@ export async function getCommandCenter() {
         status: "FAILED",
       },
     }),
+
+    prisma.backgroundJob.count({
+      where: {
+        status: BackgroundJobStatus.QUEUED,
+      },
+    }),
+
+    prisma.backgroundJob.count({
+      where: {
+        status: BackgroundJobStatus.RUNNING,
+      },
+    }),
+
+    prisma.backgroundJob.count({
+      where: {
+        status: BackgroundJobStatus.COMPLETED,
+      },
+    }),
+
+    prisma.backgroundJob.count({
+      where: {
+        status: BackgroundJobStatus.FAILED,
+      },
+    }),
   ]);
 
-  const priorityTasks = openTasks
-    .map((task) => ({
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      type: task.type,
-      status: task.status,
-      dueDate: task.dueDate,
-      property: task.property,
-      booking: task.booking,
-      isOverdue:
-        Boolean(task.dueDate) &&
-        task.dueDate! < now,
-    }))
-    .sort((first, second) => {
-      if (first.isOverdue && !second.isOverdue) return -1;
-      if (!first.isOverdue && second.isOverdue) return 1;
+  const priorityTasks = getPriorityTasks(
+    openTasks,
+    now
+  );
 
-      const firstDue =
-        first.dueDate?.getTime() ??
-        Number.MAX_SAFE_INTEGER;
+  const todayCheckIns =
+    getTodayCheckIns(checkInsToday);
 
-      const secondDue =
-        second.dueDate?.getTime() ??
-        Number.MAX_SAFE_INTEGER;
-
-      return firstDue - secondDue;
-    });
+  const todayCheckOuts =
+    getTodayCheckOuts(checkOutsToday);
 
   return {
     generatedAt: now,
 
     metrics: {
-      checkInsToday: checkInsToday.length,
-      checkOutsToday: checkOutsToday.length,
+      checkInsToday: todayCheckIns.length,
+      checkOutsToday: todayCheckOuts.length,
       openTasks: openTasks.length,
       overdueTasks,
       pendingEvents,
       failedEvents,
+      queuedBackgroundJobs,
+      runningBackgroundJobs,
+      completedBackgroundJobs,
+      failedBackgroundJobs,
     },
 
-    checkInsToday: checkInsToday.map((booking) => ({
-      id: booking.id,
-      guestName: booking.guestName,
-      checkIn: booking.checkIn,
-      operationalStatus: booking.operationalStatus,
-      channel: booking.channel,
-      property: booking.property,
-    })),
-
-    checkOutsToday: checkOutsToday.map((booking) => ({
-      id: booking.id,
-      guestName: booking.guestName,
-      checkOut: booking.checkOut,
-      operationalStatus: booking.operationalStatus,
-      channel: booking.channel,
-      property: booking.property,
-    })),
-
+    checkInsToday: todayCheckIns,
+    checkOutsToday: todayCheckOuts,
     priorityTasks,
   };
 }

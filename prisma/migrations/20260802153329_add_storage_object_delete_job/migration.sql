@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "BackgroundJobType" ADD VALUE 'STORAGE_OBJECT_DELETE';

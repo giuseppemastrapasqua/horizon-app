@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
   type CSSProperties,
+  type ChangeEvent,
 } from "react";
 import { useRouter } from "next/navigation";
 
@@ -31,89 +33,127 @@ export function CommandPalette({
   isOpen,
   onClose,
 }: CommandPaletteProps) {
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <CommandPaletteDialog
+      onClose={onClose}
+    />
+  );
+}
+
+type CommandPaletteDialogProps = {
+  onClose: () => void;
+};
+
+function CommandPaletteDialog({
+  onClose,
+}: CommandPaletteDialogProps) {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const inputRef =
+    useRef<HTMLInputElement>(null);
+
+  const [query, setQuery] =
+    useState("");
+
+  const [results, setResults] =
+    useState<SearchResult[]>([]);
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const [
+    selectedIndex,
+    setSelectedIndex,
+  ] = useState(0);
+
+  const openResult = useCallback(
+    (result: SearchResult) => {
+      onClose();
+      router.push(result.href);
+    },
+    [onClose, router],
+  );
 
   useEffect(() => {
-    if (!isOpen) {
+    const timeoutId =
+      window.setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    const normalizedQuery =
+      query.trim();
+
+    if (normalizedQuery.length < 2) {
       return;
     }
 
-    setQuery("");
-    setResults([]);
-    setSelectedIndex(0);
+    const controller =
+      new AbortController();
 
-    window.setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
-  }, [isOpen]);
+    const timeoutId =
+      window.setTimeout(async () => {
+        try {
+          setIsLoading(true);
 
-  useEffect(() => {
-    const normalizedQuery = query.trim();
+          const response = await fetch(
+            `/api/search?q=${encodeURIComponent(
+              normalizedQuery,
+            )}`,
+            {
+              signal: controller.signal,
+            },
+          );
 
-    setSelectedIndex(0);
-
-    if (!isOpen || normalizedQuery.length < 2) {
-      setResults([]);
-      setIsLoading(false);
-      return;
-    }
-
-    const controller = new AbortController();
-
-    const timeoutId = window.setTimeout(async () => {
-      try {
-        setIsLoading(true);
-
-        const response = await fetch(
-          `/api/search?q=${encodeURIComponent(normalizedQuery)}`,
-          {
-            signal: controller.signal,
+          if (!response.ok) {
+            throw new Error(
+              "Ricerca non disponibile.",
+            );
           }
-        );
 
-        if (!response.ok) {
-          throw new Error("Ricerca non disponibile.");
+          const data =
+            (await response.json()) as {
+              results: SearchResult[];
+            };
+
+          setResults(data.results);
+        } catch (error) {
+          if (
+            error instanceof DOMException &&
+            error.name === "AbortError"
+          ) {
+            return;
+          }
+
+          setResults([]);
+        } finally {
+          if (
+            !controller.signal.aborted
+          ) {
+            setIsLoading(false);
+          }
         }
-
-        const data = (await response.json()) as {
-          results: SearchResult[];
-        };
-
-        setResults(data.results);
-        setSelectedIndex(0);
-      } catch (error) {
-        if (
-          error instanceof DOMException &&
-          error.name === "AbortError"
-        ) {
-          return;
-        }
-
-        setResults([]);
-        setSelectedIndex(0);
-      } finally {
-        setIsLoading(false);
-      }
-    }, 250);
+      }, 250);
 
     return () => {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [isOpen, query]);
+  }, [query]);
 
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
+    function handleKeyDown(
+      event: KeyboardEvent,
+    ) {
       if (event.key === "Escape") {
         event.preventDefault();
         onClose();
@@ -127,10 +167,12 @@ export function CommandPalette({
       if (event.key === "ArrowDown") {
         event.preventDefault();
 
-        setSelectedIndex((currentIndex) =>
-          currentIndex >= results.length - 1
-            ? 0
-            : currentIndex + 1
+        setSelectedIndex(
+          (currentIndex) =>
+            currentIndex >=
+            results.length - 1
+              ? 0
+              : currentIndex + 1,
         );
 
         return;
@@ -139,10 +181,11 @@ export function CommandPalette({
       if (event.key === "ArrowUp") {
         event.preventDefault();
 
-        setSelectedIndex((currentIndex) =>
-          currentIndex <= 0
-            ? results.length - 1
-            : currentIndex - 1
+        setSelectedIndex(
+          (currentIndex) =>
+            currentIndex <= 0
+              ? results.length - 1
+              : currentIndex - 1,
         );
 
         return;
@@ -151,7 +194,8 @@ export function CommandPalette({
       if (event.key === "Enter") {
         event.preventDefault();
 
-        const selectedResult = results[selectedIndex];
+        const selectedResult =
+          results[selectedIndex];
 
         if (selectedResult) {
           openResult(selectedResult);
@@ -159,27 +203,47 @@ export function CommandPalette({
       }
     }
 
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener(
+      "keydown",
+      handleKeyDown,
+    );
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown,
+      );
     };
-  }, [isOpen, onClose, results, selectedIndex]);
+  }, [
+    onClose,
+    openResult,
+    results,
+    selectedIndex,
+  ]);
 
-  if (!isOpen) {
-    return null;
-  }
+  function handleQueryChange(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const nextQuery =
+      event.target.value;
 
-  function openResult(result: SearchResult) {
-    onClose();
-    router.push(result.href);
+    setQuery(nextQuery);
+    setSelectedIndex(0);
+
+    if (nextQuery.trim().length < 2) {
+      setResults([]);
+      setIsLoading(false);
+    }
   }
 
   return (
     <div
       style={overlayStyle}
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
           onClose();
         }
       }}
@@ -191,99 +255,147 @@ export function CommandPalette({
         style={dialogStyle}
       >
         <div style={searchRowStyle}>
-          <span style={searchIconStyle}>⌕</span>
+          <span style={searchIconStyle}>
+            ⌕
+          </span>
 
           <input
             ref={inputRef}
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={handleQueryChange}
             placeholder="Cerca ospiti, prenotazioni, immobili..."
             style={inputStyle}
           />
 
-          <kbd style={keyStyle}>Esc</kbd>
+          <kbd style={keyStyle}>
+            Esc
+          </kbd>
         </div>
 
         <div style={contentStyle}>
           {query.trim().length < 2 ? (
             <div style={messageStyle}>
-              Digita almeno due caratteri per iniziare.
+              Digita almeno due caratteri
+              per iniziare.
             </div>
           ) : isLoading ? (
-            <div style={messageStyle}>Ricerca in corso...</div>
+            <div style={messageStyle}>
+              Ricerca in corso...
+            </div>
           ) : results.length === 0 ? (
             <div style={messageStyle}>
               Nessun risultato trovato.
             </div>
           ) : (
             <div style={resultsStyle}>
-              {results.map((result, index) => {
-                const isSelected = index === selectedIndex;
+              {results.map(
+                (result, index) => {
+                  const isSelected =
+                    index ===
+                    selectedIndex;
 
-                return (
-                  <button
-                    key={`${result.type}-${result.id}`}
-                    type="button"
-                    onClick={() => openResult(result)}
-                    onMouseEnter={() => {
-                      setSelectedIndex(index);
-                    }}
-                    style={{
-                      ...resultButtonStyle,
-                      background: isSelected
-                        ? "#eef2ff"
-                        : "#ffffff",
-                      boxShadow: isSelected
-                        ? "inset 0 0 0 1px #c7d2fe"
-                        : "none",
-                    }}
-                    aria-selected={isSelected}
-                  >
-                    <span
+                  return (
+                    <button
+                      key={`${result.type}-${result.id}`}
+                      type="button"
+                      onClick={() =>
+                        openResult(result)
+                      }
+                      onMouseEnter={() => {
+                        setSelectedIndex(
+                          index,
+                        );
+                      }}
                       style={{
-                        ...typeBadgeStyle,
-                        background: isSelected
-                          ? "#e0e7ff"
-                          : "#eef2ff",
+                        ...resultButtonStyle,
+                        background:
+                          isSelected
+                            ? "#eef2ff"
+                            : "#ffffff",
+                        boxShadow:
+                          isSelected
+                            ? "inset 0 0 0 1px #c7d2fe"
+                            : "none",
                       }}
                     >
-                      {getResultLabel(result.type)}
-                    </span>
+                      <span
+                        style={{
+                          ...typeBadgeStyle,
+                          background:
+                            isSelected
+                              ? "#e0e7ff"
+                              : "#eef2ff",
+                        }}
+                      >
+                        {getResultLabel(
+                          result.type,
+                        )}
+                      </span>
 
-                    <span style={resultContentStyle}>
-                      <strong style={resultTitleStyle}>
-                        {result.title}
-                      </strong>
+                      <span
+                        style={
+                          resultContentStyle
+                        }
+                      >
+                        <strong
+                          style={
+                            resultTitleStyle
+                          }
+                        >
+                          {result.title}
+                        </strong>
 
-                      {result.subtitle ? (
-                        <span style={resultSubtitleStyle}>
-                          {result.subtitle}
-                        </span>
-                      ) : null}
-                    </span>
+                        {result.subtitle ? (
+                          <span
+                            style={
+                              resultSubtitleStyle
+                            }
+                          >
+                            {
+                              result.subtitle
+                            }
+                          </span>
+                        ) : null}
+                      </span>
 
-                    <span style={arrowStyle}>
-                      {isSelected ? "↵" : "→"}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span
+                        style={arrowStyle}
+                      >
+                        {isSelected
+                          ? "↵"
+                          : "→"}
+                      </span>
+                    </button>
+                  );
+                },
+              )}
             </div>
           )}
         </div>
 
         <footer style={footerStyle}>
-          <span>↑ ↓ per navigare</span>
-          <span>Invio per aprire · Esc per chiudere</span>
+          <span>
+            ↑ ↓ per navigare
+          </span>
+
+          <span>
+            Invio per aprire · Esc per
+            chiudere
+          </span>
         </footer>
       </section>
     </div>
   );
 }
 
-function getResultLabel(type: SearchResult["type"]) {
-  const labels: Record<SearchResult["type"], string> = {
+function getResultLabel(
+  type: SearchResult["type"],
+): string {
+  const labels: Record<
+    SearchResult["type"],
+    string
+  > = {
     BOOKING: "Booking",
     GUEST: "Ospite",
     PROPERTY: "Immobile",
@@ -303,7 +415,8 @@ const overlayStyle: CSSProperties = {
   alignItems: "flex-start",
   justifyContent: "center",
   padding: "12vh 20px 20px",
-  background: "rgba(15, 23, 42, 0.46)",
+  background:
+    "rgba(15, 23, 42, 0.46)",
   backdropFilter: "blur(6px)",
 };
 
@@ -313,7 +426,8 @@ const dialogStyle: CSSProperties = {
   border: "1px solid #e2e8f0",
   borderRadius: "20px",
   background: "#ffffff",
-  boxShadow: "0 30px 80px rgba(15, 23, 42, 0.24)",
+  boxShadow:
+    "0 30px 80px rgba(15, 23, 42, 0.24)",
 };
 
 const searchRowStyle: CSSProperties = {
@@ -321,7 +435,8 @@ const searchRowStyle: CSSProperties = {
   alignItems: "center",
   gap: "12px",
   padding: "16px 18px",
-  borderBottom: "1px solid #e2e8f0",
+  borderBottom:
+    "1px solid #e2e8f0",
 };
 
 const searchIconStyle: CSSProperties = {
@@ -346,7 +461,8 @@ const keyStyle: CSSProperties = {
   background: "#f8fafc",
   fontSize: "11px",
   color: "#64748b",
-  boxShadow: "inset 0 -1px 0 #cbd5e1",
+  boxShadow:
+    "inset 0 -1px 0 #cbd5e1",
 };
 
 const contentStyle: CSSProperties = {
@@ -369,7 +485,8 @@ const resultsStyle: CSSProperties = {
 
 const resultButtonStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "96px minmax(0, 1fr) auto",
+  gridTemplateColumns:
+    "96px minmax(0, 1fr) auto",
   alignItems: "center",
   gap: "12px",
   width: "100%",

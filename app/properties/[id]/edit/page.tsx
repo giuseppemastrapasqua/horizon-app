@@ -1,10 +1,43 @@
 import { notFound } from "next/navigation";
-import { Navigation } from "@/components/Navigation";
+
 import { AppShell } from "@/components/AppShell";
+import { Navigation } from "@/components/Navigation";
+import { PropertyAmenitiesSection } from "@/components/properties/PropertyAmenitiesSection";
+import { PropertyCheckInSection } from "@/components/properties/PropertyCheckInSection";
+import { PropertyCodeSection } from "@/components/properties/PropertyCodeSection";
+import { PropertyDocumentsSection } from "@/components/properties/PropertyDocumentsSection";
+import { PropertyHouseRulesSection } from "@/components/properties/PropertyHouseRulesSection";
+import { PropertyPhotosSection } from "@/components/properties/PropertyPhotosSection";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { WorkspaceTopBar } from "@/components/ui/WorkspaceTopBar";
+import { PropertyIntegrationsSection } from "@/components/properties/PropertyIntegrationsSection";
 import { getPropertyWorkspace } from "@/lib/properties/get-property-workspace";
+import { PropertyCodeVerificationHistory } from "@/components/properties/PropertyCodeVerificationHistory";
+import { AuditService } from "@/services/audit/AuditService";
+import { PropertyTimeline } from "@/components/properties/PropertyTimeline";
+
+import { updatePropertyAmenitiesAction } from "./amenity-actions";
+import {
+  synchronizePropertyIntegrationAction,
+  updatePropertyIntegrationAction,
+} from "./integration-actions";
 import { updatePropertyAction } from "./actions";
+import { updatePropertyRatePlanAction } from "./rate-plan-actions";
+import { updatePropertyCheckInAction } from "./check-in-actions";
+import { updatePropertyHouseRulesAction } from "./house-rule-actions";
+import {
+  deletePropertyImageAction,
+  reorderPropertyImagesAction,
+  setPropertyCoverImageAction,
+  uploadPropertyImageAction,
+} from "./photo-actions";
+import { updatePropertyCodesAction } from "./property-code-actions";
+import {
+  createPropertyDocumentAction,
+  deletePropertyDocumentAction,
+  retryPropertyDocumentOcrAction,
+  updatePropertyDocumentAction,
+} from "./property-document-actions";
 
 type PropertyEditPageProps = {
   params: Promise<{
@@ -27,12 +60,17 @@ export default async function PropertyEditPage({
   const { id } = await params;
 
   const workspace = await getPropertyWorkspace(id);
+  const timeline = await AuditService.getPropertyTimeline(id);
 
   if (!workspace) {
     notFound();
   }
 
-  const { property } = workspace;
+  const {
+    property,
+    propertyDocuments,
+    revenueRatePlan,
+  } = workspace;
 
   return (
     <>
@@ -88,9 +126,9 @@ export default async function PropertyEditPage({
                   </p>
 
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Horizon ottimizzerà automaticamente la tariffa
-                    considerando domanda, eventi, stagionalità e
-                    performance dell&apos;immobile.
+                    Horizon ottimizzerà automaticamente la tariffa considerando
+                    domanda, eventi, stagionalità e performance
+                    dell&apos;immobile.
                   </p>
                 </div>
               </div>
@@ -151,7 +189,7 @@ export default async function PropertyEditPage({
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
               <a
                 href="#informazioni"
                 className="rounded-2xl border border-slate-950 bg-slate-950 p-5 text-white shadow-sm transition hover:-translate-y-0.5"
@@ -175,14 +213,17 @@ export default async function PropertyEditPage({
                 </p>
               </a>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <a
+                href="#foto"
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">
                     02
                   </span>
 
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
-                    Prossimamente
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                    Attiva
                   </span>
                 </div>
 
@@ -193,16 +234,19 @@ export default async function PropertyEditPage({
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                   Galleria e copertina.
                 </p>
-              </div>
+              </a>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <a
+                href="#servizi"
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">
                     03
                   </span>
 
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
-                    Prossimamente
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                    Attiva
                   </span>
                 </div>
 
@@ -213,7 +257,30 @@ export default async function PropertyEditPage({
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                   Dotazioni e caratteristiche.
                 </p>
-              </div>
+              </a>
+
+              <a
+                href="#documentazione"
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">
+                    04
+                  </span>
+
+                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                    Attiva
+                  </span>
+                </div>
+
+                <p className="mt-6 font-semibold text-slate-900">
+                  Documenti
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Licenze e certificazioni.
+                </p>
+              </a>
 
               <a
                 href="#revenue-ai"
@@ -241,7 +308,7 @@ export default async function PropertyEditPage({
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">
-                    05
+                    06
                   </span>
 
                   <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
@@ -346,8 +413,8 @@ export default async function PropertyEditPage({
                   />
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Questo contenuto potrà essere ottimizzato
-                    automaticamente dall&apos;AI per il marketplace.
+                    Questo contenuto potrà essere ottimizzato automaticamente
+                    dall&apos;AI per il marketplace.
                   </p>
                 </div>
               </div>
@@ -358,8 +425,8 @@ export default async function PropertyEditPage({
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Informazioni utilizzate internamente dal gestionale
-                  Horizon e non mostrate agli ospiti.
+                  Informazioni utilizzate internamente dal gestionale Horizon
+                  e non mostrate agli ospiti.
                 </p>
 
                 <div className="mt-6">
@@ -394,6 +461,75 @@ export default async function PropertyEditPage({
             </form>
           </section>
 
+          <PropertyCodeSection
+            propertyId={property.id}
+            cin={property.cin}
+            cir={property.cir}
+            verificationStatus={
+              property.codeVerificationStatus
+            }
+            verifiedAt={property.codeVerifiedAt}
+            verificationNotes={
+              property.codeVerificationNotes
+            }
+            updateAction={updatePropertyCodesAction}
+          />
+
+    <PropertyCodeVerificationHistory
+  verifications={
+    property.propertyCodeVerifications
+  }
+/>
+
+<PropertyIntegrationsSection
+  propertyId={property.id}
+  mappings={workspace.integrationMappings}
+  updateAction={
+    updatePropertyIntegrationAction
+  }
+  synchronizeAction={
+    synchronizePropertyIntegrationAction
+  }
+/>
+          <PropertyPhotosSection
+            propertyId={property.id}
+            images={property.images}
+            uploadAction={uploadPropertyImageAction}
+            deleteAction={deletePropertyImageAction}
+            coverAction={setPropertyCoverImageAction}
+            reorderAction={reorderPropertyImagesAction}
+          />
+
+          <PropertyHouseRulesSection
+            propertyId={property.id}
+            houseRules={workspace.houseRules}
+            selectedHouseRuleIds={property.houseRuleIds}
+            updateAction={updatePropertyHouseRulesAction}
+          />
+
+          <PropertyCheckInSection
+            propertyId={property.id}
+            checkInConfiguration={property.checkInConfiguration}
+            updateAction={updatePropertyCheckInAction}
+          />
+
+          <PropertyAmenitiesSection
+            propertyId={property.id}
+            amenities={workspace.amenities}
+            selectedAmenityIds={property.amenityIds}
+            updateAction={updatePropertyAmenitiesAction}
+          />
+
+          <PropertyDocumentsSection
+  propertyId={property.id}
+  documents={propertyDocuments}
+  createAction={createPropertyDocumentAction}
+  updateAction={updatePropertyDocumentAction}
+  deleteAction={deletePropertyDocumentAction}
+  retryOcrAction={retryPropertyDocumentOcrAction}
+/>
+<PropertyTimeline timeline={timeline} />
+
           <section
             id="revenue-ai"
             className="scroll-mt-8 overflow-hidden rounded-3xl border border-violet-200 bg-white shadow-sm"
@@ -418,8 +554,8 @@ export default async function PropertyEditPage({
                   </div>
 
                   <p className="mt-6 max-w-2xl text-sm leading-6 text-slate-300">
-                    Horizon analizzerà mercato, domanda, stagionalità,
-                    eventi e andamento delle prenotazioni per determinare
+                    Horizon analizzerà mercato, domanda, stagionalità, eventi
+                    e andamento delle prenotazioni per determinare
                     automaticamente la tariffa più efficace.
                   </p>
                 </div>
@@ -464,21 +600,132 @@ export default async function PropertyEditPage({
                 </h3>
 
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Ogni decisione dell&apos;AI sarà accompagnata da una
-                  motivazione chiara. Il gestore potrà consultare le
-                  variazioni e mantenere il controllo finale.
+                  Ogni decisione del Revenue Engine sarà accompagnata da una
+                  motivazione chiara. Il gestore mantiene sempre il controllo finale.
                 </p>
 
                 <div className="mt-6 rounded-xl border border-violet-200 bg-white p-4">
                   <p className="text-xs text-slate-500">
-                    Stato attuale
+                    Baseline tariffaria
                   </p>
 
                   <p className="mt-1 text-sm font-semibold text-slate-900">
-                    Motore non ancora collegato
+                    {revenueRatePlan
+                      ? `${revenueRatePlan.basePrice} € · ${revenueRatePlan.name}`
+                      : "Da configurare"}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-500">
+                    {revenueRatePlan
+                      ? `Min ${revenueRatePlan.minimumStay} notti · ${revenueRatePlan.occupancyIncluded} ospiti inclusi`
+                      : "Configura una tariffa base ufficiale per attivare il Revenue Engine."}
                   </p>
                 </div>
               </aside>
+            </div>
+
+            <div className="border-t border-violet-100 bg-slate-50 p-8">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-slate-950">
+                  Piano tariffario base
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-600">
+                  Definisce la baseline ufficiale della struttura. Gli override del calendario restano separati.
+                </p>
+              </div>
+
+              <form
+                action={updatePropertyRatePlanAction}
+                className="grid gap-5 md:grid-cols-2 xl:grid-cols-5"
+              >
+                <input
+                  type="hidden"
+                  name="propertyId"
+                  value={property.id}
+                />
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-slate-600">
+                    Nome piano
+                  </label>
+                  <input
+                    name="name"
+                    required
+                    defaultValue={revenueRatePlan?.name ?? "Standard"}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-slate-600">
+                    Tariffa base €
+                  </label>
+                  <input
+                    name="basePrice"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    required
+                    defaultValue={revenueRatePlan?.basePrice ?? ""}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-slate-600">
+                    Min. notti
+                  </label>
+                  <input
+                    name="minimumStay"
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    defaultValue={revenueRatePlan?.minimumStay ?? 1}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-slate-600">
+                    Max. notti
+                  </label>
+                  <input
+                    name="maximumStay"
+                    type="number"
+                    min="1"
+                    step="1"
+                    defaultValue={revenueRatePlan?.maximumStay ?? ""}
+                    placeholder="Nessun limite"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold text-slate-600">
+                    Ospiti inclusi
+                  </label>
+                  <input
+                    name="occupancyIncluded"
+                    type="number"
+                    min="1"
+                    step="1"
+                    required
+                    defaultValue={revenueRatePlan?.occupancyIncluded ?? 1}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm"
+                  />
+                </div>
+
+                <div className="md:col-span-2 xl:col-span-5 flex justify-end">
+                  <button
+                    type="submit"
+                    className="rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-800"
+                  >
+                    Salva piano tariffario
+                  </button>
+                </div>
+              </form>
             </div>
           </section>
         </div>
@@ -486,3 +733,5 @@ export default async function PropertyEditPage({
     </>
   );
 }
+
+

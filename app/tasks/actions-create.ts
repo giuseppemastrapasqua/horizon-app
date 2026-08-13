@@ -1,35 +1,142 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
+import {
+  AuditAction,
+  TaskType,
+} from "@prisma/client";
 import { redirect } from "next/navigation";
 
-export async function createTask(formData: FormData) {
-  const propertyId = String(formData.get("propertyId") || "");
-  const bookingIdRaw = String(formData.get("bookingId") || "");
-  const ownerIdRaw = String(formData.get("ownerId") || "");
-  const dueDateRaw = String(formData.get("dueDate") || "");
+import { auth } from "@/auth";
+import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
+import { prisma } from "@/lib/prisma";
+import { AuditService } from "@/services/audit/AuditService";
 
-  const property = await prisma.property.findUnique({
-    where: { id: propertyId },
-    include: { owner: true },
-  });
+function parseTaskType(
+  value: FormDataEntryValue | null,
+): TaskType {
+  const taskType = String(
+    value ?? TaskType.ADMIN,
+  );
 
-  if (!property) {
-    throw new Error("Immobile non trovato.");
+  if (
+    Object.values(TaskType).includes(
+      taskType as TaskType,
+    )
+  ) {
+    return taskType as TaskType;
   }
 
-  await prisma.task.create({
-    data: {
-      title: String(formData.get("title") || ""),
-      description: String(formData.get("description") || ""),
-      type: String(formData.get("type") || "ADMIN") as any,
-      status: "TODO",
-      dueDate: dueDateRaw ? new Date(dueDateRaw) : null,
-      propertyId: property.id,
-      bookingId: bookingIdRaw || null,
-      ownerId: ownerIdRaw || property.ownerId,
-    },
-  });
+  throw new Error(
+    `Tipo di attività non valido: "${taskType}".`,
+  );
+}
 
-  redirect(`/properties/${property.id}`);
+export async function createTask(
+  formData: FormData,
+): Promise<void> {
+  const session = await auth();
+
+  const propertyId = String(
+    formData.get("propertyId") || "",
+  );
+
+  const bookingIdRaw = String(
+    formData.get("bookingId") || "",
+  );
+
+  const ownerIdRaw = String(
+    formData.get("ownerId") || "",
+  );
+
+  const dueDateRaw = String(
+    formData.get("dueDate") || "",
+  );
+
+  const property =
+    await prisma.property.findUnique({
+      where: {
+        id: propertyId,
+      },
+      include: {
+        owner: true,
+      },
+    });
+
+  if (!property) {
+    throw new Error(
+      "Immobile non trovato.",
+    );
+  }
+
+  const title = String(
+    formData.get("title") || "",
+  );
+
+  const description = String(
+    formData.get("description") || "",
+  );
+
+  const type = parseTaskType(
+    formData.get("type"),
+  );
+
+  const dueDate = dueDateRaw
+    ? new Date(dueDateRaw)
+    : null;
+
+  const bookingId =
+    bookingIdRaw || null;
+
+  const ownerId =
+    ownerIdRaw || property.ownerId;
+
+  await prisma.$transaction(
+    async (transaction) => {
+      const task =
+        await transaction.task.create({
+          data: {
+            title,
+            description,
+            type,
+            status: "TODO",
+            dueDate,
+            propertyId: property.id,
+            bookingId,
+            ownerId,
+          },
+        });
+
+      await AuditService.log(
+        {
+          actorId:
+            session?.user?.id ?? null,
+          action: AuditAction.CREATE,
+          propertyId: property.id,
+          entityType:
+            AUDIT_ENTITY_TYPES.TASK,
+          entityId: task.id,
+          description:
+            "Attività operativa creata manualmente.",
+          metadata: {
+            title: task.title,
+            description:
+              task.description,
+            type: task.type,
+            status: task.status,
+            dueDate:
+              task.dueDate?.toISOString() ??
+              null,
+            bookingId: task.bookingId,
+            ownerId: task.ownerId,
+            creationSource: "MANUAL",
+          },
+        },
+        transaction,
+      );
+    },
+  );
+
+  redirect(
+    `/properties/${property.id}`,
+  );
 }

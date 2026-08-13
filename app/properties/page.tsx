@@ -1,16 +1,33 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { Navigation } from "@/components/Navigation";
-import { AppShell } from "@/components/AppShell";
 
-export default async function PropertiesPage() {
-  const properties = await prisma.property.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      owner: true,
-      bookings: true,
-      tasks: true,
-    },
+import { AppShell } from "@/components/AppShell";
+import { Navigation } from "@/components/Navigation";
+import { PropertyCard } from "@/components/properties/PropertyCard";
+import { PropertySearchForm } from "@/components/properties/PropertySearchForm";
+import { PropertySortSelect } from "@/components/properties/PropertySortSelect";
+import {
+  getPropertiesPageData,
+  type PropertySortOption,
+} from "@/lib/properties/get-properties-page-data";
+
+type PropertiesPageProps = {
+  searchParams: Promise<{
+    search?: string;
+    sort?: PropertySortOption;
+  }>;
+};
+
+export default async function PropertiesPage({
+  searchParams,
+}: PropertiesPageProps) {
+  const {
+    search = "",
+    sort = "newest",
+  } = await searchParams;
+
+  const properties = await getPropertiesPageData({
+    search,
+    sort,
   });
 
   return (
@@ -21,173 +38,83 @@ export default async function PropertiesPage() {
         title="Immobili Horizon"
         subtitle="Portafoglio appartamenti, score e performance iniziale."
       >
-        <div style={{ marginBottom: "24px" }}>
+        <div
+          style={{
+            marginBottom: "24px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "16px",
+            flexWrap: "wrap",
+          }}
+        >
+          <form
+            action="/properties"
+            method="get"
+            style={{
+              display: "flex",
+              gap: "12px",
+              alignItems: "center",
+              flex: 1,
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ flex: 1, minWidth: "320px" }}>
+              <PropertySearchForm defaultValue={search} />
+            </div>
+
+            <PropertySortSelect defaultValue={sort} />
+          </form>
+
           <Link href="/properties/new" style={primaryButtonStyle}>
             + Nuovo immobile
           </Link>
         </div>
 
-        <div style={{ display: "grid", gap: "20px" }}>
-          {properties.map((property) => {
-            const totalRevenue = property.bookings.reduce(
-              (sum, booking) => sum + Number(booking.grossAmount),
-              0
-            );
+        {properties.length === 0 ? (
+          <div
+            style={{
+              padding: "56px 32px",
+              border: "1px solid #e2e8f0",
+              borderRadius: "24px",
+              background: "#ffffff",
+              textAlign: "center",
+            }}
+          >
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "22px",
+                fontWeight: 700,
+                color: "#0f172a",
+              }}
+            >
+              Nessun immobile trovato
+            </h2>
 
-            const openTasks = property.tasks.filter(
-              (task) => task.status !== "DONE"
-            );
-
-            return (
-              <section
+            <p
+              style={{
+                margin: "12px 0 0",
+                color: "#64748b",
+                lineHeight: 1.6,
+              }}
+            >
+              Nessun immobile corrisponde alla ricerca
+              {search ? ` "${search}"` : "."}
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: "20px" }}>
+            {properties.map((property) => (
+              <PropertyCard
                 key={property.id}
-                style={{
-                  background: "#fff",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: "22px",
-                  padding: "26px",
-                  boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: "24px",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <div>
-                    <h2
-                      style={{
-                        fontSize: "24px",
-                        margin: "0 0 8px 0",
-                        color: "#0f172a",
-                      }}
-                    >
-                      {property.name}
-                    </h2>
-
-                    <p style={{ margin: "0 0 4px 0", color: "#64748b" }}>
-                      {property.address} — {property.zone ?? property.city}
-                    </p>
-
-                    <p style={{ margin: 0, color: "#64748b" }}>
-                      Owner: <strong>{property.owner.fullName}</strong>
-                    </p>
-
-                    <Link
-                      href={`/properties/${property.id}`}
-                      style={{
-                        display: "inline-block",
-                        marginTop: "14px",
-                        color: "#0f172a",
-                        fontWeight: 800,
-                        textDecoration: "none",
-                      }}
-                    >
-                      Apri centro immobile →
-                    </Link>
-                  </div>
-
-                  <div
-                    style={{
-                      textAlign: "right",
-                      background: "#f8fafc",
-                      border: "1px solid #e2e8f0",
-                      borderRadius: "18px",
-                      padding: "16px 20px",
-                      minWidth: "130px",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", color: "#64748b" }}>
-                      Horizon Score
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "38px",
-                        fontWeight: 900,
-                        color: "#0f172a",
-                      }}
-                    >
-                      {property.currentScore}
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(4, minmax(140px, 1fr))",
-                    gap: "16px",
-                    marginTop: "28px",
-                  }}
-                >
-                  <MiniMetric title="Stato" value={property.status} />
-                  <MiniMetric
-                    title="Classe commerciale"
-                    value={property.commercialClass}
-                  />
-                  <MiniMetric
-                    title="Camere"
-                    value={property.bedrooms ?? "-"}
-                  />
-                  <MiniMetric
-                    title="Bagni"
-                    value={property.bathrooms ?? "-"}
-                  />
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(4, minmax(140px, 1fr))",
-                    gap: "16px",
-                    marginTop: "20px",
-                    paddingTop: "20px",
-                    borderTop: "1px solid #e2e8f0",
-                  }}
-                >
-                  <MiniMetric
-                    title="Prenotazioni"
-                    value={property.bookings.length}
-                  />
-                  <MiniMetric
-                    title="Task aperti"
-                    value={openTasks.length}
-                  />
-                  <MiniMetric
-                    title="Ricavo demo"
-                    value={`${totalRevenue.toFixed(2)} €`}
-                  />
-                  <MiniMetric
-                    title="Capacità"
-                    value={`${property.maxGuests} ospiti`}
-                  />
-                </div>
-              </section>
-            );
-          })}
-        </div>
+                property={property}
+              />
+            ))}
+          </div>
+        )}
       </AppShell>
     </>
-  );
-}
-
-function MiniMetric({
-  title,
-  value,
-}: {
-  title: string;
-  value: string | number;
-}) {
-  return (
-    <div>
-      <div style={{ fontSize: "13px", color: "#64748b", marginBottom: "5px" }}>
-        {title}
-      </div>
-      <strong style={{ color: "#0f172a" }}>{value}</strong>
-    </div>
   );
 }
 
@@ -196,7 +123,7 @@ const primaryButtonStyle = {
   padding: "11px 16px",
   borderRadius: "12px",
   background: "#0f172a",
-  color: "#fff",
+  color: "#ffffff",
   textDecoration: "none",
   fontWeight: 800,
 };

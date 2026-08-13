@@ -25,10 +25,13 @@ export function MoneyInput({
   min = 0,
 }: MoneyInputProps) {
   const [inputValue, setInputValue] = useState(
-    formatEditableValue(value)
+    formatEditableValue(value),
   );
 
   useEffect(() => {
+    // Sincronizzazione intenzionale della prop numerica
+    // con il valore editabile mostrato nell'input.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setInputValue(formatEditableValue(value));
   }, [value]);
 
@@ -58,17 +61,22 @@ export function MoneyInput({
   }
 
   function handleBlur(
-    event: FocusEvent<HTMLInputElement>
+    event: FocusEvent<HTMLInputElement>,
   ) {
     const parsedValue = Number(
-      event.currentTarget.value.replace(",", ".")
+      event.currentTarget.value.replace(",", "."),
     );
 
-    const normalizedValue = Number.isFinite(parsedValue)
+    const normalizedValue = Number.isFinite(
+      parsedValue,
+    )
       ? Math.max(min, parsedValue)
       : min;
 
-    setInputValue(formatEditableValue(normalizedValue));
+    setInputValue(
+      formatEditableValue(normalizedValue),
+    );
+
     onChange(normalizedValue);
   }
 
@@ -82,21 +90,29 @@ export function MoneyInput({
           handleChange(event.target.value)
         }
         onBlur={handleBlur}
-        onFocus={(event) => event.currentTarget.select()}
+        onFocus={(event) =>
+          event.currentTarget.select()
+        }
         aria-label={ariaLabel}
         disabled={disabled}
         style={{
           ...inputStyle,
-          cursor: disabled ? "not-allowed" : "text",
+          cursor: disabled
+            ? "not-allowed"
+            : "text",
         }}
       />
 
-      <span style={suffixStyle}>{suffix}</span>
+      <span style={suffixStyle}>
+        {suffix}
+      </span>
     </div>
   );
 }
 
-function formatEditableValue(value: number) {
+function formatEditableValue(
+  value: number,
+): string {
   if (!Number.isFinite(value)) {
     return "0";
   }

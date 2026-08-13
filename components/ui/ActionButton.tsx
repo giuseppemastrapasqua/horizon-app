@@ -1,5 +1,6 @@
+"use client";
+
 import Link from "next/link";
-import { uiTokens } from "./tokens";
 
 type ActionButtonProps = {
   label: string;
@@ -11,6 +12,23 @@ type ActionButtonProps = {
   onClick?: () => void;
 };
 
+const variantClasses = {
+  primary:
+    "border-blue-600 bg-blue-600 text-white shadow-sm shadow-blue-600/20 hover:border-blue-700 hover:bg-blue-700",
+
+  secondary:
+    "border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50",
+
+  danger:
+    "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100",
+
+  ghost:
+    "border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+} satisfies Record<
+  NonNullable<ActionButtonProps["variant"]>,
+  string
+>;
+
 export function ActionButton({
   label,
   href,
@@ -20,30 +38,21 @@ export function ActionButton({
   disabled = false,
   onClick,
 }: ActionButtonProps) {
-  const style = getVariantStyle(variant);
-
-  const sharedStyle = {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: compact ? "8px 11px" : "10px 14px",
-    borderRadius: uiTokens.radius.md,
-    background: style.background,
-    color: style.color,
-    border: `1px solid ${style.border}`,
-    textDecoration: "none",
-    fontSize: compact
-      ? uiTokens.fontSize.xs
-      : uiTokens.fontSize.sm,
-    fontWeight: uiTokens.fontWeight.bold,
-    cursor: disabled ? "not-allowed" : "pointer",
-    opacity: disabled ? 0.55 : 1,
-    whiteSpace: "nowrap" as const,
-  };
+  const className = [
+    "inline-flex items-center justify-center whitespace-nowrap rounded-xl border font-semibold transition",
+    "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/15",
+    compact
+      ? "min-h-9 px-3 py-2 text-xs"
+      : "min-h-11 px-4 py-2.5 text-sm",
+    variantClasses[variant],
+    disabled
+      ? "cursor-not-allowed opacity-50"
+      : "cursor-pointer active:translate-y-px",
+  ].join(" ");
 
   if (href && !disabled) {
     return (
-      <Link href={href} style={sharedStyle}>
+      <Link href={href} className={className}>
         {label}
       </Link>
     );
@@ -54,43 +63,9 @@ export function ActionButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      style={sharedStyle}
+      className={className}
     >
       {label}
     </button>
   );
-}
-
-function getVariantStyle(
-  variant: NonNullable<ActionButtonProps["variant"]>
-) {
-  if (variant === "secondary") {
-    return {
-      background: uiTokens.colors.surface,
-      color: uiTokens.colors.textSecondary,
-      border: uiTokens.colors.borderStrong,
-    };
-  }
-
-  if (variant === "danger") {
-    return {
-      background: uiTokens.colors.redBackground,
-      color: uiTokens.colors.redText,
-      border: uiTokens.colors.redBorder,
-    };
-  }
-
-  if (variant === "ghost") {
-    return {
-      background: "transparent",
-      color: uiTokens.colors.textSecondary,
-      border: "transparent",
-    };
-  }
-
-  return {
-    background: uiTokens.colors.primary,
-    color: uiTokens.colors.primaryText,
-    border: uiTokens.colors.primary,
-  };
 }

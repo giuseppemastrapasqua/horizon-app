@@ -1,4 +1,11 @@
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
+
+type GuestDatabaseClient = Pick<
+  Prisma.TransactionClient,
+  "guest"
+>;
 
 type FindOrCreateGuestInput = {
   fullName: string;
@@ -6,24 +13,32 @@ type FindOrCreateGuestInput = {
   phone?: string | null;
 };
 
-export async function findOrCreateGuest({
-  fullName,
-  email,
-  phone,
-}: FindOrCreateGuestInput) {
+export async function findOrCreateGuest(
+  {
+    fullName,
+    email,
+    phone,
+  }: FindOrCreateGuestInput,
+  database: GuestDatabaseClient = prisma,
+) {
   const normalizedName = normalizeName(fullName);
   const normalizedEmail = normalizeEmail(email);
   const normalizedPhone = normalizePhone(phone);
 
   if (!normalizedName) {
-    throw new Error("Il nome dell'ospite è obbligatorio.");
+    throw new Error(
+      "Il nome dell'ospite è obbligatorio.",
+    );
   }
 
-  const existingGuest = await findExistingGuest({
-    fullName: normalizedName,
-    email: normalizedEmail,
-    phone: normalizedPhone,
-  });
+  const existingGuest = await findExistingGuest(
+    {
+      fullName: normalizedName,
+      email: normalizedEmail,
+      phone: normalizedPhone,
+    },
+    database,
+  );
 
   if (existingGuest) {
     return {
@@ -32,7 +47,7 @@ export async function findOrCreateGuest({
     };
   }
 
-  const guest = await prisma.guest.create({
+  const guest = await database.guest.create({
     data: {
       fullName: fullName.trim(),
       email: email?.trim() || null,
@@ -46,24 +61,28 @@ export async function findOrCreateGuest({
   };
 }
 
-async function findExistingGuest({
-  fullName,
-  email,
-  phone,
-}: {
-  fullName: string;
-  email: string | null;
-  phone: string | null;
-}) {
+async function findExistingGuest(
+  {
+    fullName,
+    email,
+    phone,
+  }: {
+    fullName: string;
+    email: string | null;
+    phone: string | null;
+  },
+  database: GuestDatabaseClient,
+) {
   if (email) {
-    const guestByEmail = await prisma.guest.findFirst({
-      where: {
-        email: {
-          equals: email,
-          mode: "insensitive",
+    const guestByEmail =
+      await database.guest.findFirst({
+        where: {
+          email: {
+            equals: email,
+            mode: "insensitive",
+          },
         },
-      },
-    });
+      });
 
     if (guestByEmail) {
       return guestByEmail;
@@ -71,25 +90,27 @@ async function findExistingGuest({
   }
 
   if (phone) {
-    const guestsWithPhone = await prisma.guest.findMany({
-      where: {
-        phone: {
-          not: null,
+    const guestsWithPhone =
+      await database.guest.findMany({
+        where: {
+          phone: {
+            not: null,
+          },
         },
-      },
-    });
+      });
 
-    const guestByPhone = guestsWithPhone.find(
-      (guest) =>
-        normalizePhone(guest.phone) === phone
-    );
+    const guestByPhone =
+      guestsWithPhone.find(
+        (guest) =>
+          normalizePhone(guest.phone) === phone,
+      );
 
     if (guestByPhone) {
       return guestByPhone;
     }
   }
 
-  return prisma.guest.findFirst({
+  return database.guest.findFirst({
     where: {
       fullName: {
         equals: fullName,
@@ -110,14 +131,20 @@ function normalizeName(value: string) {
   return value.trim().replace(/\s+/g, " ");
 }
 
-function normalizeEmail(value?: string | null) {
-  const normalized = value?.trim().toLowerCase();
+function normalizeEmail(
+  value?: string | null,
+) {
+  const normalized =
+    value?.trim().toLowerCase();
 
   return normalized || null;
 }
 
-function normalizePhone(value?: string | null) {
-  const normalized = value?.replace(/\D/g, "");
+function normalizePhone(
+  value?: string | null,
+) {
+  const normalized =
+    value?.replace(/\D/g, "");
 
   return normalized || null;
 }

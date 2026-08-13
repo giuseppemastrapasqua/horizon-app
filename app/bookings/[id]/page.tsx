@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 import { ActionButton } from "@/components/ui/ActionButton";
-import { uiTokens } from "@/components/ui/tokens";
 
 import { getBookingWorkspace } from "@/lib/bookings/get-booking-workspace";
 

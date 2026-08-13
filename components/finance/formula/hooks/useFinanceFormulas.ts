@@ -32,7 +32,7 @@ type FormulasResponse = {
 };
 
 function parseResponse(
-  responseText: string
+  responseText: string,
 ): FormulasResponse {
   if (!responseText.trim()) {
     return {};
@@ -40,13 +40,65 @@ function parseResponse(
 
   try {
     return JSON.parse(
-      responseText
+      responseText,
     ) as FormulasResponse;
   } catch {
     throw new Error(
-      "Il server ha restituito una risposta non valida."
+      "Il server ha restituito una risposta non valida.",
     );
   }
+}
+
+async function fetchFormulas(
+  signal?: AbortSignal,
+): Promise<LoadedFormula[]> {
+  const response = await fetch(
+    "/api/finance/formulas?includeRules=true",
+    {
+      signal,
+    },
+  );
+
+  const responseText =
+    await response.text();
+
+  const data =
+    parseResponse(responseText);
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ??
+        `Non è stato possibile caricare le formule. Errore ${response.status}.`,
+    );
+  }
+
+  return (data.formulas ?? []).map(
+    (formula): LoadedFormula => ({
+      ...formula,
+      currency: "EUR",
+      rules: formula.rules.map(
+        (rule) => ({
+          ...rule,
+          value: Number(rule.value),
+        }),
+      ),
+    }),
+  );
+}
+
+function getErrorMessage(
+  error: unknown,
+): string {
+  if (
+    error instanceof DOMException &&
+    error.name === "AbortError"
+  ) {
+    return "";
+  }
+
+  return error instanceof Error
+    ? error.message
+    : "Non è stato possibile caricare le formule.";
 }
 
 export function useFinanceFormulas() {
@@ -65,40 +117,13 @@ export function useFinanceFormulas() {
       setError(null);
 
       try {
-        const response = await fetch(
-          "/api/finance/formulas?includeRules=true"
-        );
-
-        const responseText =
-          await response.text();
-
-        const data =
-          parseResponse(responseText);
-
-        if (!response.ok) {
-          throw new Error(
-            data.error ??
-              `Non è stato possibile caricare le formule. Errore ${response.status}.`
-          );
-        }
-
-        const loaded = (data.formulas ?? []).map(
-          (formula): LoadedFormula => ({
-            ...formula,
-            currency: "EUR",
-            rules: formula.rules.map((rule) => ({
-              ...rule,
-              value: Number(rule.value),
-            })),
-          })
-        );
+        const loaded =
+          await fetchFormulas();
 
         setFormulas(loaded);
-      } catch (error) {
+      } catch (loadError) {
         setError(
-          error instanceof Error
-            ? error.message
-            : "Non è stato possibile caricare le formule."
+          getErrorMessage(loadError),
         );
       } finally {
         setIsLoading(false);
@@ -106,8 +131,43 @@ export function useFinanceFormulas() {
     }, []);
 
   useEffect(() => {
-    void loadFormulas();
-  }, [loadFormulas]);
+    const controller =
+      new AbortController();
+
+    fetchFormulas(controller.signal)
+      .then((loaded) => {
+        if (
+          controller.signal.aborted
+        ) {
+          return;
+        }
+
+        setFormulas(loaded);
+        setError(null);
+      })
+      .catch((loadError: unknown) => {
+        if (
+          controller.signal.aborted
+        ) {
+          return;
+        }
+
+        setError(
+          getErrorMessage(loadError),
+        );
+      })
+      .finally(() => {
+        if (
+          !controller.signal.aborted
+        ) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, []);
 
   return {
     formulas,

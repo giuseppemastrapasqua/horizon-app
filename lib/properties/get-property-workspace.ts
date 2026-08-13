@@ -1,290 +1,383 @@
-import {
-  BookingOperationalStatus,
-  BookingStatus,
-  TaskStatus,
-} from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
-export async function getPropertyWorkspace(propertyId: string) {
-  const now = new Date();
+import { buildPropertyMetrics } from "@/lib/properties/build-property-metrics";
+import { buildPropertyTimeline } from "@/lib/properties/build-property-timeline";
+import { mapPropertyDocuments } from "@/lib/properties/map-property-documents";
+import { mapPropertyDocumentsSummary } from "@/lib/properties/map-property-documents-summary";
+import { mapRecentPropertyBookings } from "@/lib/properties/map-recent-property-bookings";
+import { mapWorkspaceProperty } from "@/lib/properties/map-property-workspace";
 
-  const monthStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    1
-  );
+export async function getPropertyWorkspace(
+  propertyId: string,
+) {
+  const propertyData =
+    await Promise.all([
+      prisma.property.findUnique({
+        where: {
+          id: propertyId,
+        },
 
-  const monthEnd = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    1
-  );
+        include: {
+          owner: true,
 
-  const property = await prisma.property.findUnique({
-    where: {
-      id: propertyId,
-    },
-    include: {
-      owner: true,
+          images: {
+            orderBy: [
+              {
+                sortOrder:
+                  "asc",
+              },
+              {
+                createdAt:
+                  "asc",
+              },
+            ],
+          },
+
+          amenities: {
+            include: {
+              amenity:
+                true,
+            },
+
+            orderBy: {
+              createdAt:
+                "asc",
+            },
+          },
+
+          houseRules: {
+            include: {
+              houseRule:
+                true,
+            },
+
+            orderBy: {
+              createdAt:
+                "asc",
+            },
+          },
+
+          checkInConfiguration:
+            true,
+
+          propertyCodeVerifications:
+            {
+              orderBy: {
+                createdAt:
+                  "desc",
+              },
+
+              take: 20,
+            },
+
+          integrationMappings:
+            {
+              orderBy: {
+                provider:
+                  "asc",
+              },
+            },
+      ratePlans: {
+        where: {
+          active: true,
+        },
+
+        orderBy: [
+          {
+            isDefault: "desc",
+          },
+          {
+            createdAt: "asc",
+          },
+        ],
+      },
 
       bookings: {
-        orderBy: {
-          checkIn: "desc",
-        },
-      },
+            orderBy: {
+              checkIn:
+                "desc",
+            },
+          },
 
-      tasks: {
-        orderBy: {
-          updatedAt: "desc",
-        },
-      },
+          tasks: {
+            orderBy: {
+              updatedAt:
+                "desc",
+            },
+          },
 
-      documents: {
-        orderBy: {
-          updatedAt: "desc",
+          documents: {
+            orderBy: {
+              updatedAt:
+                "desc",
+            },
+
+            take: 6,
+          },
+
+          propertyDocuments:
+            {
+              orderBy: [
+                {
+                  expiryDate:
+                    "asc",
+                },
+                {
+                  updatedAt:
+                    "desc",
+                },
+              ],
+            },
         },
-        take: 6,
-      },
-    },
-  });
+      }),
+
+      prisma.amenity.findMany({
+        orderBy: [
+          {
+            category:
+              "asc",
+          },
+          {
+            sortOrder:
+              "asc",
+          },
+          {
+            label:
+              "asc",
+          },
+        ],
+      }),
+
+      prisma.houseRule.findMany({
+        orderBy: [
+          {
+            category:
+              "asc",
+          },
+          {
+            sortOrder:
+              "asc",
+          },
+          {
+            label:
+              "asc",
+          },
+        ],
+      }),
+    ]);
+
+  const [
+    property,
+    amenities,
+    houseRules,
+  ] = propertyData;
 
   if (!property) {
     return null;
   }
 
-  const totalRevenue = property.bookings.reduce(
-    (sum, booking) => sum + Number(booking.grossAmount),
-    0
-  );
+  const workspaceProperty =
+    mapWorkspaceProperty(
+      property,
+    );
 
-  const currentMonthBookings = property.bookings.filter(
-    (booking) =>
-      booking.checkIn >= monthStart &&
-      booking.checkIn < monthEnd
-  );
+  const metrics =
+    buildPropertyMetrics({
+      bookings:
+        property.bookings,
 
-  const currentMonthRevenue = currentMonthBookings.reduce(
-    (sum, booking) => sum + Number(booking.grossAmount),
-    0
-  );
+      tasks:
+        property.tasks,
 
-  const futureBookings = property.bookings.filter(
-    (booking) => booking.checkIn > now
-  );
+      documents:
+        property.documents,
+    });
 
-  const currentBookings = property.bookings.filter(
-    (booking) =>
-      booking.checkIn <= now &&
-      booking.checkOut > now &&
-      booking.bookingStatus !== BookingStatus.CANCELLED
-  );
+  const recentBookings =
+    mapRecentPropertyBookings(
+      property.bookings,
+    );
 
-  const openTasks = property.tasks.filter(
-    (task) =>
-      task.status !== TaskStatus.DONE &&
-      task.status !== TaskStatus.CANCELLED
-  );
+  const documents =
+    mapPropertyDocumentsSummary(
+      property.documents,
+    );
 
-  const completedTasks = property.tasks.filter(
-    (task) => task.status === TaskStatus.DONE
-  );
+  const propertyDocuments =
+    mapPropertyDocuments(
+      property.propertyDocuments,
+    );
 
-  const operationalAlerts = property.bookings.filter(
-    (booking) =>
-      booking.operationalStatus !== BookingOperationalStatus.OK
-  );
+  const timeline =
+    buildPropertyTimeline({
+      bookings:
+        property.bookings.slice(
+          0,
+          5,
+        ),
 
-  const soldNights = currentMonthBookings.reduce(
-    (sum, booking) => sum + booking.nights,
-    0
-  );
+      tasks:
+        property.tasks.slice(
+          0,
+          5,
+        ),
 
-  const daysInMonth = new Date(
-    now.getFullYear(),
-    now.getMonth() + 1,
-    0
-  ).getDate();
+      documents:
+        property.documents.slice(
+          0,
+          5,
+        ),
+    });
 
-  const occupancyRate =
-    daysInMonth > 0
-      ? Math.min((soldNights / daysInMonth) * 100, 100)
-      : 0;
+  const integrationMappings =
+    property.integrationMappings.map(
+      (mapping) => ({
+        id:
+          mapping.id,
 
-  const averageBookingValue =
-    property.bookings.length > 0
-      ? totalRevenue / property.bookings.length
-      : 0;
+        provider:
+          mapping.provider,
 
-  const totalBookedNights = property.bookings.reduce(
-    (sum, booking) => sum + booking.nights,
-    0
-  );
+        externalPropertyId:
+          mapping.externalPropertyId,
 
-  const averageNightlyRate =
-    totalBookedNights > 0
-      ? totalRevenue / totalBookedNights
-      : 0;
+        createdAt:
+          mapping.createdAt,
 
-  const recentBookings = property.bookings
-    .slice(0, 8)
-    .map((booking) => ({
-      id: booking.id,
-      guestName: booking.guestName,
-      channel: booking.channel,
-      checkIn: booking.checkIn,
-      checkOut: booking.checkOut,
-      nights: booking.nights,
-      guests: booking.guests,
-      grossAmount: Number(booking.grossAmount),
-      bookingStatus: booking.bookingStatus,
-      operationalStatus: booking.operationalStatus,
-    }));
+        updatedAt:
+          mapping.updatedAt,
+      }),
+    );
 
-  const documents = property.documents.map((document) => ({
-    id: document.id,
-    title: document.title,
-    subtitle: document.subtitle,
-    type: document.type,
-    status: document.status,
-    documentNumber: document.documentNumber,
-    currentVersion: document.currentVersion,
-    referenceMonth: document.referenceMonth,
-    updatedAt: document.updatedAt,
-  }));
+  /*
+   * Dataset dedicato al calendario
+   * premium della singola property.
+   *
+   * Convertiamo Date e Decimal in
+   * valori serializzabili perché
+   * PropertyCalendar è un Client
+   * Component.
+   */
+  const revenueRatePlan =
+    property.ratePlans[0]
+      ? {
+          id:
+            property.ratePlans[0].id,
 
-  const timeline = buildPropertyTimeline({
-    bookings: property.bookings.slice(0, 5),
-    tasks: property.tasks.slice(0, 5),
-    documents: property.documents.slice(0, 5),
-  });
+          name:
+            property.ratePlans[0].name,
+
+          code:
+            property.ratePlans[0].code,
+
+          basePrice:
+            Number(
+              property.ratePlans[0].basePrice,
+            ),
+
+          currency:
+            property.ratePlans[0].currency,
+
+          minimumStay:
+            property.ratePlans[0].minimumStay,
+
+          maximumStay:
+            property.ratePlans[0].maximumStay,
+
+          occupancyIncluded:
+            property.ratePlans[0].occupancyIncluded,
+
+          isDefault:
+            property.ratePlans[0].isDefault,
+        }
+      : null;
+
+  const calendarBookings =
+    property.bookings.map(
+      (booking) => ({
+        id:
+          booking.id,
+
+        channel:
+          booking.channel,
+
+        guestName:
+          booking.guestName,
+
+        checkIn:
+          booking.checkIn.toISOString(),
+
+        checkOut:
+          booking.checkOut.toISOString(),
+
+        grossAmount:
+          Number(
+            booking.grossAmount,
+          ),
+
+        currency:
+          booking.currency,
+
+        bookingStatus:
+          booking.bookingStatus,
+
+        integrationConnectionId:
+          booking.integrationConnectionId,
+      }),
+    );
 
   return {
-    property: {
-      id: property.id,
-      name: property.name,
-      address: property.address,
-      city: property.city,
-      zone: property.zone,
-      description: property.description,
-      cleaningCost: property.cleaningCost,
-      status: property.status,
-      commercialClass: property.commercialClass,
-      victoryModel: property.victoryModel,
-      currentScore: property.currentScore,
-      initialScore: property.initialScore,
-      maxGuests: property.maxGuests,
-      bedrooms: property.bedrooms,
-      bathrooms: property.bathrooms,
-      createdAt: property.createdAt,
-      owner: {
-        id: property.owner.id,
-        fullName: property.owner.fullName,
-        email: property.owner.email,
-        phone: property.owner.phone,
-      },
-    },
+  property:
+    workspaceProperty,
 
-    metrics: {
-      totalRevenue,
-      currentMonthRevenue,
-      bookingsCount: property.bookings.length,
-      futureBookingsCount: futureBookings.length,
-      currentBookingsCount: currentBookings.length,
-      openTasksCount: openTasks.length,
-      completedTasksCount: completedTasks.length,
-      operationalAlertsCount: operationalAlerts.length,
-      occupancyRate,
-      averageBookingValue,
-      averageNightlyRate,
-      documentsCount: property.documents.length,
-      soldNights,
-    },
+  cleaningCost:
+    Number(
+      property.cleaningCost,
+    ),
 
-    recentBookings,
-    documents,
-    timeline,
-  };
-}
+  amenities:
+    amenities.map(
+      (amenity) => ({
+        id: amenity.id,
+        key: amenity.key,
+        label: amenity.label,
+        category:
+          amenity.category,
+        description:
+          amenity.description,
+        isActive:
+          amenity.isActive,
+        sortOrder:
+          amenity.sortOrder,
+      }),
+    ),
 
-type TimelineInput = {
-  bookings: Array<{
-    id: string;
-    guestName: string;
-    createdAt: Date;
-    operationalStatus: string;
-  }>;
+  houseRules:
+    houseRules.map(
+      (houseRule) => ({
+        id: houseRule.id,
+        key: houseRule.key,
+        label: houseRule.label,
+        category:
+          houseRule.category,
+        description:
+          houseRule.description,
+        isActive:
+          houseRule.isActive,
+        sortOrder:
+          houseRule.sortOrder,
+      }),
+    ),
 
-  tasks: Array<{
-    id: string;
-    title: string;
-    status: string;
-    updatedAt: Date;
-  }>;
-
-  documents: Array<{
-    id: string;
-    title: string;
-    status: string;
-    updatedAt: Date;
-  }>;
-};
-
-function buildPropertyTimeline({
-  bookings,
-  tasks,
+  integrationMappings,
+  metrics,
+  recentBookings,
+  calendarBookings,
+  revenueRatePlan,
   documents,
-}: TimelineInput) {
-  const bookingItems = bookings.map((booking) => ({
-    id: `booking-${booking.id}`,
-    title: `Prenotazione ${booking.guestName}`,
-    description: `Stato operativo: ${booking.operationalStatus}`,
-    occurredAt: booking.createdAt,
-    category: "BOOKING" as const,
-    href: `/bookings/${booking.id}`,
-    status:
-      booking.operationalStatus === "OK"
-        ? ("SUCCESS" as const)
-        : ("WARNING" as const),
-  }));
-
-  const taskItems = tasks.map((task) => ({
-    id: `task-${task.id}`,
-    title: task.title,
-    description: `Task · ${task.status}`,
-    occurredAt: task.updatedAt,
-    category: "TASK" as const,
-    href: `/tasks/${task.id}`,
-    status:
-      task.status === "DONE"
-        ? ("SUCCESS" as const)
-        : task.status === "IN_PROGRESS"
-          ? ("WARNING" as const)
-          : ("INFO" as const),
-  }));
-
-  const documentItems = documents.map((document) => ({
-    id: `document-${document.id}`,
-    title: document.title,
-    description: `Documento · ${document.status}`,
-    occurredAt: document.updatedAt,
-    category: "DOCUMENT" as const,
-    href: `/documents/${document.id}`,
-    status:
-      document.status === "FINAL" ||
-      document.status === "ISSUED"
-        ? ("SUCCESS" as const)
-        : ("INFO" as const),
-  }));
-
-  return [
-    ...bookingItems,
-    ...taskItems,
-    ...documentItems,
-  ]
-    .sort(
-      (first, second) =>
-        second.occurredAt.getTime() -
-        first.occurredAt.getTime()
-    )
-    .slice(0, 10);
+  propertyDocuments,
+   timeline,
+};
 }
+
+

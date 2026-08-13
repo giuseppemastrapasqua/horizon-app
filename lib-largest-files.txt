@@ -1,0 +1,45 @@
+
+Path                                                           Lines
+----                                                           -----
+lib\pdf\finance-report.ts                                       1351
+lib\finance\create-finance-report.ts                             347
+lib\bookings\get-booking-workspace.ts                            313
+lib\finance\formula\calculate-finance-formula.ts                 308
+lib\finance\service\update-finance-formula.ts                    306
+lib\finance\service\create-finance-formula.ts                    302
+lib\owners\get-owner-workspace.ts                                299
+lib\integrations\shared\prisma-booking-domain-service.ts         275
+lib\job\handlers\process-property-document-ocr-job.ts            271
+lib\properties\property-house-rules.ts                           240
+lib\integrations\booking-com\booking-com-mock-client.ts          236
+lib\properties\get-property-workspace.ts                         215
+lib\audit\timeline-presenter.ts                                  206
+lib\properties\map-property-workspace.ts                         201
+lib\imperium\actions\booking\create-documents-task.ts            194
+lib\imperium\actions\booking\create-checkout-task.ts             193
+lib\imperium\actions\booking\create-operational-task.ts          192
+lib\imperium\actions\booking\create-cleaning-task.ts             192
+lib\dashboard\get-command-center.ts                              192
+lib\properties\property-amenities.ts                             191
+lib\job\handlers\process-property-code-verification-job.ts       176
+lib\finance\build-finance-preview.ts                             167
+lib\guests\get-guest-workspace.ts                                167
+lib\ocr\mistral-document-ocr-provider.ts                         150
+lib\guests\find-or-create-guest.ts                               150
+lib\finance\calculate-property-finance-formula.ts                149
+lib\properties\build-property-metrics.ts                         143
+lib\finance\formula\calculate-finance-formula.test.ts            136
+lib\storage\local-storage-provider.ts                            134
+lib\integrations\booking-com\booking-com-mock.ts                 133
+lib\dashboard\get-dashboard-page-data.ts                         122
+lib\integrations\shared\upsert-integration-property-mapping.ts   120
+lib\bookings\get-booking-operational-insights.ts                 118
+lib\finance\calculations\calculate-booking-financial.ts          115
+lib\imperium\monitor\get-monitor-events.ts                       115
+lib\integrations\shared\synchronize-external-bookings.ts         112
+lib\integrations\booking-com\booking-com-api-client.ts           110
+lib\imperium\workflow\executor.ts                                109
+lib\finance\formula\types.ts                                     108
+lib\properties\delete-property-image.ts                          108
+
+
