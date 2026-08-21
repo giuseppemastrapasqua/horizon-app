@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import {
   ArrowLeft,
@@ -49,6 +49,14 @@ import {
 import {
   ChannelLogo,
 } from "../components/ChannelLogo";
+
+import {
+  RevenueIntelligenceInsights,
+} from "../components/RevenueIntelligenceInsights";
+
+import {
+  buildRevenueRecommendationInsights,
+} from "@/lib/intelligence";
 
 type RevenueAiPageProps = {
   searchParams: Promise<{
@@ -402,6 +410,22 @@ export default async function RevenueAiPage({
         ) * 100
       : null;
 
+  const intelligenceInsights =
+    recommendation
+      ? buildRevenueRecommendationInsights({
+          propertyId:
+            property.id,
+
+          propertyName:
+            property.name,
+
+          recommendation,
+
+          currentPrice:
+            standardPrice,
+        })
+      : [];
+
   const calendarHref =
     `/calendar?propertyId=${propertyId}` +
     `&from=${getParam(params.from)}` +
@@ -458,7 +482,7 @@ export default async function RevenueAiPage({
               {formatDate(
                 rangeFrom,
               )}
-              {" → "}
+              {" â†’ "}
               {formatDate(
                 rangeTo,
               )}
@@ -493,7 +517,7 @@ export default async function RevenueAiPage({
                     ? formatCurrency(
                         standardPrice,
                       )
-                    : "—"
+                    : "â€”"
                 }
                 detail="riferimento attuale"
               />
@@ -505,7 +529,7 @@ export default async function RevenueAiPage({
                     ? `${delta >= 0 ? "+" : ""}${formatCurrency(
                         delta,
                       )}`
-                    : "—"
+                    : "â€”"
                 }
                 detail={
                   deltaPercent !== null
@@ -554,7 +578,7 @@ export default async function RevenueAiPage({
               <div className="grid lg:grid-cols-[1.55fr_1fr]">
                 <div className="p-5 lg:border-r lg:border-slate-100">
                   <p className="text-[8px] font-black uppercase tracking-[0.13em] text-slate-400">
-                    Perché Horizon propone questo prezzo
+                    PerchÃ© Horizon propone questo prezzo
                   </p>
 
                   <p className="mt-3 max-w-3xl text-[13px] font-medium leading-6 text-slate-700">
@@ -587,7 +611,7 @@ export default async function RevenueAiPage({
                     </div>
 
                     <span className="flex h-7 w-7 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 text-[9px] font-black text-indigo-600">
-                      ✦
+                      âœ¦
                     </span>
                   </div>
 
@@ -653,6 +677,12 @@ export default async function RevenueAiPage({
                 </div>
               </div>
             </section>
+            <RevenueIntelligenceInsights
+              insights={
+                intelligenceInsights
+              }
+            />
+
             <section className="mt-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_10px_32px_rgba(15,23,42,0.05)]">
               <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 px-5 py-4">
                 <div>
@@ -671,7 +701,7 @@ export default async function RevenueAiPage({
 
                 <div className="flex items-center gap-1.5 rounded-xl border border-violet-100 bg-violet-50/70 px-2.5 py-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-[7px] font-black text-white shadow-sm">
-                    ✦
+                    âœ¦
                   </span>
 
                   <span className="text-[7px] font-black uppercase tracking-[0.1em] text-violet-600">
@@ -691,7 +721,7 @@ export default async function RevenueAiPage({
                       <th className="px-3 py-3">
                         <div className="flex items-center gap-1.5">
                           <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-[7px] font-black text-white">
-                            ✦
+                            âœ¦
                           </span>
 
                           <span className="text-[7px] font-black uppercase tracking-[0.1em] text-violet-600">
@@ -797,7 +827,7 @@ export default async function RevenueAiPage({
                                   </strong>
                                 ) : (
                                   <span className="text-[11px] font-semibold text-slate-300">
-                                    —
+                                    â€”
                                   </span>
                                 )}
                               </td>
@@ -922,6 +952,7 @@ function MetricCard({
     </div>
   );
 }
+
 
 
 

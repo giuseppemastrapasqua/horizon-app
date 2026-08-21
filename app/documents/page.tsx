@@ -5,6 +5,10 @@ import {
   Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+
+import {
+  buildDocumentInsights,
+} from "@/lib/intelligence";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 
@@ -145,6 +149,24 @@ export default async function DocumentsPage({
     (document) => document.status === DocumentStatus.ISSUED
   ).length;
 
+  const documentInsights =
+    buildDocumentInsights({
+      documents:
+        documents.map(
+          (document) => ({
+            id: document.id,
+            title: document.title,
+            type: document.type,
+            status: document.status,
+            referenceMonth: document.referenceMonth,
+            updatedAt: document.updatedAt,
+            propertyId: document.propertyId,
+            propertyName:
+              document.property?.name ?? null,
+          }),
+        ),
+    });
+
   return (
     <>
       <Navigation />
@@ -184,6 +206,91 @@ export default async function DocumentsPage({
             + Nuovo documento
           </Link>
         </div>
+
+        {documentInsights.length > 0 ? (
+          <section className="mb-5 overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+            <div className="flex items-center justify-between gap-4 border-b border-blue-100 bg-blue-50/60 px-4 py-3">
+              <div>
+                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                  Horizon Intelligence
+                </p>
+
+                <p className="mt-0.5 text-[11px] font-bold text-slate-900">
+                  Documenti che richiedono attenzione
+                </p>
+              </div>
+
+              <span className="rounded-full bg-white px-2.5 py-1 text-[8px] font-bold text-blue-700 shadow-sm">
+                {documentInsights.length}
+                {" "}
+                {documentInsights.length === 1
+                  ? "segnale"
+                  : "segnali"}
+              </span>
+            </div>
+
+            <div className="divide-y divide-slate-100">
+              {documentInsights.map(
+                (insight) => {
+                  const warning =
+                    insight.severity ===
+                    "WARNING";
+
+                  return (
+                    <div
+                      key={insight.id}
+                      className="flex flex-col gap-3 px-4 py-3.5 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-[10px] font-bold text-slate-900">
+                            {insight.title}
+                          </p>
+
+                          <span
+                            className={[
+                              "rounded-full px-2 py-0.5 text-[7px] font-bold uppercase tracking-[0.08em]",
+                              warning
+                                ? "bg-amber-50 text-amber-600"
+                                : "bg-blue-50 text-blue-600",
+                            ].join(" ")}
+                          >
+                            {warning
+                              ? "Attenzione"
+                              : "Informazione"}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 text-[9px] leading-4 text-slate-500">
+                          {insight.explanation}
+                        </p>
+
+                        <p className="mt-1 text-[8px] font-semibold text-slate-400">
+                          {insight.propertyName}
+                        </p>
+                      </div>
+
+                      {insight.action?.href ? (
+                        <Link
+                          href={
+                            insight.action
+                              .href
+                          }
+                          className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 px-3 text-[8px] font-bold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100"
+                        >
+                          {
+                            insight.action
+                              .label
+                          }
+                        </Link>
+                      ) : null}
+                    </div>
+                  );
+                },
+              )}
+            </div>
+          </section>
+        ) : null}
 
         <section className="mb-6 space-y-5 rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.045)]">
           <div>
@@ -726,5 +833,6 @@ function MiniMetric({
 function formatEnum(value: string) {
   return value.replaceAll("_", " ");
 }
+
 
 

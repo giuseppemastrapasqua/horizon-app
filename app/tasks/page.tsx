@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import {
   Prisma,
@@ -31,6 +31,10 @@ import {
 import {
   prisma,
 } from "@/lib/prisma";
+
+import {
+  buildTaskInsights,
+} from "@/lib/intelligence";
 
 import {
   markTaskDone,
@@ -249,13 +253,47 @@ export default async function TasksPage({
           startOfToday,
     ).length;
 
+  const taskInsights =
+    buildTaskInsights({
+      tasks:
+        tasks.map(
+          (task) => ({
+            id:
+              task.id,
+
+            title:
+              task.title,
+
+            type:
+              task.type,
+
+            status:
+              task.status,
+
+            dueDate:
+              task.dueDate,
+
+            ownerId:
+              task.ownerId,
+
+            propertyId:
+              task.propertyId,
+
+            propertyName:
+              task.property.name,
+          }),
+        ),
+
+      now,
+    });
+
   return (
     <>
       <Navigation />
 
       <AppShell
         title="Task operativi"
-        subtitle="Pulizie, manutenzioni e attività operative collegate a immobili e prenotazioni."
+        subtitle="Pulizie, manutenzioni e attivitÃ  operative collegate a immobili e prenotazioni."
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
@@ -302,6 +340,135 @@ export default async function TasksPage({
           </Link>
         </div>
 
+        {taskInsights.length > 0 ? (
+          <section className="mb-4 overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+            <div className="flex items-center justify-between gap-4 border-b border-blue-100 bg-blue-50/60 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0B3C98] text-white">
+                  <ClipboardCheck
+                    size={14}
+                  />
+                </span>
+
+                <div>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                    Horizon Intelligence
+                  </p>
+
+                  <p className="mt-0.5 text-[11px] font-bold text-slate-900">
+                    Attività che richiedono attenzione
+                  </p>
+                </div>
+              </div>
+
+              <span className="rounded-full bg-white px-2.5 py-1 text-[8px] font-bold text-blue-700 shadow-sm">
+                {taskInsights.length}
+                {" "}
+                {taskInsights.length === 1
+                  ? "segnale"
+                  : "segnali"}
+              </span>
+            </div>
+
+            <div className="divide-y divide-slate-100">
+              {taskInsights.map(
+                (insight) => {
+                  const critical =
+                    insight.severity ===
+                    "CRITICAL";
+
+                  const warning =
+                    insight.severity ===
+                    "WARNING";
+
+                  return (
+                    <div
+                      key={insight.id}
+                      className="flex flex-col gap-3 px-4 py-3.5 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="flex min-w-0 gap-3">
+                        <span
+                          className={[
+                            "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                            critical
+                              ? "bg-red-50 text-red-600"
+                              : warning
+                                ? "bg-amber-50 text-amber-600"
+                                : "bg-blue-50 text-blue-600",
+                          ].join(" ")}
+                        >
+                          {critical ||
+                          warning ? (
+                            <AlertTriangle
+                              size={13}
+                            />
+                          ) : (
+                            <CalendarClock
+                              size={13}
+                            />
+                          )}
+                        </span>
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-[10px] font-bold text-slate-900">
+                              {insight.title}
+                            </p>
+
+                            <span
+                              className={[
+                                "rounded-full px-2 py-0.5 text-[7px] font-bold uppercase tracking-[0.08em]",
+                                critical
+                                  ? "bg-red-50 text-red-600"
+                                  : warning
+                                    ? "bg-amber-50 text-amber-600"
+                                    : "bg-blue-50 text-blue-600",
+                              ].join(" ")}
+                            >
+                              {critical
+                                ? "Critico"
+                                : warning
+                                  ? "Attenzione"
+                                  : "Informazione"}
+                            </span>
+                          </div>
+
+                          <p className="mt-1 text-[9px] leading-4 text-slate-500">
+                            {insight.explanation}
+                          </p>
+
+                          <p className="mt-1 text-[8px] font-semibold text-slate-400">
+                            {insight.propertyName}
+                          </p>
+                        </div>
+                      </div>
+
+                      {insight.action?.href ? (
+                        <Link
+                          href={
+                            insight.action
+                              .href
+                          }
+                          className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50 px-3 text-[8px] font-bold text-blue-700 transition hover:border-blue-200 hover:bg-blue-100"
+                        >
+                          {
+                            insight.action
+                              .label
+                          }
+
+                          <ChevronRight
+                            size={11}
+                          />
+                        </Link>
+                      ) : null}
+                    </div>
+                  );
+                },
+              )}
+            </div>
+          </section>
+        ) : null}
+
         <section className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
           <div className="mb-4 flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-[#2563EB]">
@@ -316,7 +483,7 @@ export default async function TasksPage({
               </p>
 
               <p className="text-[10px] font-semibold text-slate-700">
-                Restringi le attività da visualizzare
+                Restringi le attivitÃ  da visualizzare
               </p>
             </div>
           </div>
@@ -1221,3 +1388,4 @@ function formatTaskType(
 
 const selectClass =
   "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[9px] font-semibold text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100";
+
