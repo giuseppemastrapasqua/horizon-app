@@ -100,6 +100,20 @@ export default async function FinanceReportsPage({
           },
         },
 
+        rules: {
+          orderBy: {
+            order: "asc",
+          },
+
+          select: {
+            id: true,
+            ruleName: true,
+            operation: true,
+            category: true,
+            calculatedAmount: true,
+          },
+        },
+
         _count: {
           select: {
             rules: true,
@@ -135,6 +149,21 @@ export default async function FinanceReportsPage({
                     adjustment.description,
                   amount:
                     Number(adjustment.amount),
+                }),
+              ),
+
+            rules:
+              report.rules.map(
+                (rule) => ({
+                  id: rule.id,
+                  ruleName:
+                    rule.ruleName,
+                  operation:
+                    rule.operation,
+                  category:
+                    rule.category,
+                  calculatedAmount:
+                    Number(rule.calculatedAmount),
                 }),
               ),
           }),

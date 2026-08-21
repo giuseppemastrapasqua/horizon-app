@@ -20,6 +20,25 @@ export type FinanceIntelligenceReportInput = {
     description: string;
     amount: number;
   }[];
+
+  rules: {
+    id: string;
+    ruleName: string;
+
+    operation:
+      | "ADD"
+      | "SUBTRACT";
+
+    category:
+      | "OTA_COMMISSION"
+      | "VAT"
+      | "CLEANING"
+      | "MANAGEMENT_COMMISSION"
+      | "TAX"
+      | "OTHER";
+
+    calculatedAmount: number;
+  }[];
 };
 
 export function buildFinanceInsights({
@@ -280,7 +299,161 @@ export function buildFinanceInsights({
       }
 
       /*
-       * 3. VARIAZIONE FORTE VS MESE PRECEDENTE
+       * 3. COSTI FINANZIARI RILEVANTI
+       *
+       * Consideriamo solo le regole
+       * SUBTRACT salvate nel rendiconto.
+       *
+       * L'insight compare solo quando
+       * il peso complessivo supera il 35%
+       * del lordo, per evitare rumore.
+       */
+      if (
+        report.grossRevenue > 0
+      ) {
+        const costRules =
+          report.rules.filter(
+            (rule) =>
+              rule.operation ===
+              "SUBTRACT",
+          );
+
+        const totalRuleCosts =
+          costRules.reduce(
+            (total, rule) =>
+              total +
+              Math.abs(
+                rule.calculatedAmount,
+              ),
+            0,
+          );
+
+        const costRatio =
+          totalRuleCosts /
+          report.grossRevenue;
+
+        if (
+          costRules.length > 0 &&
+          costRatio >= 0.35
+        ) {
+          const dominantRule =
+            costRules.reduce(
+              (largest, current) =>
+                Math.abs(
+                  current.calculatedAmount,
+                ) >
+                Math.abs(
+                  largest.calculatedAmount,
+                )
+                  ? current
+                  : largest,
+            );
+
+          const costPercent =
+            costRatio * 100;
+
+          const dominantPercent =
+            (
+              Math.abs(
+                dominantRule.calculatedAmount,
+              ) /
+              report.grossRevenue
+            ) *
+            100;
+
+          insights.push({
+            id:
+              `finance-cost-weight:${report.id}`,
+
+            propertyId:
+              report.propertyId,
+
+            propertyName:
+              report.propertyName,
+
+            category:
+              "FINANCE",
+
+            severity:
+              costRatio >= 0.5
+                ? "WARNING"
+                : "INFO",
+
+            title:
+              "Costi rilevanti nel rendiconto",
+
+            explanation:
+              `Le regole di costo incidono per circa ${costPercent.toFixed(
+                0,
+              )}% sul lordo. La voce principale è "${dominantRule.ruleName}", pari a circa ${dominantPercent.toFixed(
+                0,
+              )}% del lordo.`,
+
+            date:
+              dateKey(
+                report.referenceMonth,
+              ),
+
+            economicImpact: {
+              amount:
+                totalRuleCosts,
+
+              currency:
+                "EUR",
+
+              direction:
+                "NEGATIVE",
+            },
+
+            action: {
+              type:
+                "REVIEW_FINANCE",
+
+              label:
+                "Verifica costi",
+
+              href:
+                `/reports/monthly/${report.id}`,
+
+              propertyId:
+                report.propertyId,
+
+              requiresApproval:
+                false,
+            },
+
+            metadata: {
+              reportId:
+                report.id,
+
+              totalRuleCosts,
+
+              costPercent:
+                Number(
+                  costPercent.toFixed(
+                    2,
+                  ),
+                ),
+
+              dominantRule:
+                dominantRule.ruleName,
+
+              dominantCategory:
+                dominantRule.category,
+
+              dominantPercent:
+                Number(
+                  dominantPercent.toFixed(
+                    2,
+                  ),
+                ),
+            },
+          });
+        }
+      }
+
+      /*
+       * 4. VARIAZIONE FORTE VS MESE PRECEDENTE
        *
        * Richiede un precedente rendiconto
        * della stessa struttura.
@@ -447,3 +620,4 @@ function severityWeight(
       return 1;
   }
 }
+
