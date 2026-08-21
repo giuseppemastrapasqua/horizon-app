@@ -205,5 +205,289 @@ describe(
         );
       },
     );
+    it(
+      "mantiene coerenti contributi economici e aggiustamento finale",
+      () => {
+        const signals =
+          buildRevenueSignals({
+            propertyId:
+              "property-explainability",
+
+            date:
+              new Date(
+                "2026-08-21T00:00:00.000Z",
+              ),
+
+            market: {
+              medianPrice:
+                200,
+
+              occupancy:
+                82,
+
+              demandIndex:
+                88,
+
+              competitorAvailability:
+                8,
+
+              confidence:
+                95,
+            },
+
+            property: {
+              occupancy:
+                78,
+
+              bookingPace:
+                82,
+            },
+
+            calendar: {
+              leadTimeDays:
+                14,
+
+              gapBeforeNights:
+                2,
+
+              gapAfterNights:
+                3,
+            },
+
+            event: {
+              score:
+                80,
+            },
+          });
+
+        const result =
+          buildRevenuePricingDecision({
+            signalSet:
+              signals,
+
+            strategy:
+              "BALANCED",
+          });
+
+        const signalContributions =
+          result.contributions.filter(
+            (item) =>
+              item.code !==
+              "STRATEGY",
+          );
+
+        const rawPressure =
+          signalContributions.reduce(
+            (
+              total,
+              item,
+            ) =>
+              total +
+              item.contribution,
+            0,
+          );
+
+        const expectedAdjustmentPercent =
+          Math.round(
+            rawPressure *
+              20 *
+              10,
+          ) /
+          10;
+
+        expect(
+          result.contributions.length,
+        ).toBe(9);
+
+        expect(
+          result.contributions.find(
+            (item) =>
+              item.code ===
+              "STRATEGY",
+          )?.contribution,
+        ).toBe(0);
+
+        expect(
+          result.adjustmentPercent,
+        ).toBe(
+          expectedAdjustmentPercent,
+        );
+      },
+    );
+
+    it(
+      "produce contributi nulli quando i driver sono neutrali",
+      () => {
+        const signals =
+          buildRevenueSignals({
+            propertyId:
+              "property-neutral",
+
+            date:
+              new Date(
+                "2026-08-21T00:00:00.000Z",
+              ),
+
+            market: {
+              medianPrice:
+                200,
+
+              occupancy:
+                50,
+
+              demandIndex:
+                50,
+
+              competitorAvailability:
+                25,
+
+              confidence:
+                95,
+            },
+
+            property: {
+              occupancy:
+                50,
+
+              bookingPace:
+                0.75,
+            },
+
+            calendar: {
+              leadTimeDays:
+                30,
+
+              gapBeforeNights:
+                4,
+
+              gapAfterNights:
+                4,
+            },
+
+            event: {
+              score:
+                50,
+            },
+          });
+
+        const result =
+          buildRevenuePricingDecision({
+            signalSet:
+              signals,
+
+            strategy:
+              "BALANCED",
+          });
+
+        const economicDrivers =
+          result.contributions.filter(
+            (item) =>
+              item.code !==
+              "STRATEGY",
+          );
+
+        expect(
+          economicDrivers.every(
+            (item) =>
+              item.contribution ===
+              0,
+          ),
+        ).toBe(true);
+
+        expect(
+          result.adjustmentPercent,
+        ).toBe(0);
+
+        expect(
+          result.recommendedPrice,
+        ).toBe(200);
+      },
+    );
+    it(
+      "spiega il prezzo usando gli impatti economici reali",
+      () => {
+        const signals =
+          buildRevenueSignals({
+            propertyId:
+              "property-explanation",
+
+            date:
+              new Date(
+                "2026-08-21T00:00:00.000Z",
+              ),
+
+            market: {
+              medianPrice:
+                200,
+
+              occupancy:
+                85,
+
+              demandIndex:
+                90,
+
+              competitorAvailability:
+                5,
+
+              confidence:
+                95,
+            },
+
+            property: {
+              occupancy:
+                80,
+
+              bookingPace:
+                85,
+            },
+
+            calendar: {
+              leadTimeDays:
+                20,
+
+              gapBeforeNights:
+                4,
+
+              gapAfterNights:
+                4,
+            },
+
+            event: {
+              score:
+                80,
+            },
+          });
+
+        const result =
+          buildRevenuePricingDecision({
+            signalSet:
+              signals,
+
+            strategy:
+              "BALANCED",
+          });
+
+        expect(
+          result.explanation.some(
+            (text) =>
+              text.includes(
+                "% sul prezzo",
+              ),
+          ),
+        ).toBe(true);
+
+        expect(
+          result.explanation.some(
+            (text) =>
+              text.includes(
+                "Strategia Balanced",
+              ),
+          ),
+        ).toBe(true);
+      },
+    );
   },
 );
+
+
+

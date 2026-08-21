@@ -9,7 +9,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 
 export default function LoginPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500 text-white">
       <div className="grid min-h-screen lg:grid-cols-[1.1fr_0.9fr]">
         <section className="relative hidden overflow-hidden border-r border-white/10 lg:flex lg:flex-col lg:justify-between">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(37,99,235,0.28),transparent_42%)]" />
@@ -142,3 +142,4 @@ export default function LoginPage() {
     </main>
   );
 }
+

@@ -72,6 +72,12 @@ export type CalendarAvailabilityBlock = {
 };
 
 export type CalendarRevenueData = {
+  property: {
+    maxGuests: number;
+    bedrooms: number | null;
+    bathrooms: number | null;
+  };
+
   snapshot: {
     id: string;
     provider: string;
@@ -176,3 +182,4 @@ export type PropertyCalendarProps = {
       formData: FormData,
     ) => Promise<void>;
 };
+

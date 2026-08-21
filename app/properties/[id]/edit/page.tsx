@@ -1,5 +1,10 @@
 import { notFound } from "next/navigation";
 
+import {
+  PropertyTaskAssignmentRole,
+  RecordStatus,
+} from "@prisma/client";
+
 import { AppShell } from "@/components/AppShell";
 import { Navigation } from "@/components/Navigation";
 import { PropertyAmenitiesSection } from "@/components/properties/PropertyAmenitiesSection";
@@ -11,16 +16,26 @@ import { PropertyPhotosSection } from "@/components/properties/PropertyPhotosSec
 import { ActionButton } from "@/components/ui/ActionButton";
 import { WorkspaceTopBar } from "@/components/ui/WorkspaceTopBar";
 import { PropertyIntegrationsSection } from "@/components/properties/PropertyIntegrationsSection";
+import { PropertyChannelPricingSettings } from "@/components/properties/PropertyChannelPricingSettings";
+import { getPropertyChannelPricingSettings } from "@/lib/pricing/get-property-channel-pricing-settings";
 import { getPropertyWorkspace } from "@/lib/properties/get-property-workspace";
 import { PropertyCodeVerificationHistory } from "@/components/properties/PropertyCodeVerificationHistory";
 import { AuditService } from "@/services/audit/AuditService";
 import { PropertyTimeline } from "@/components/properties/PropertyTimeline";
+import { prisma } from "@/lib/prisma";
+import { PropertyFinanceReportSettings } from "@/components/properties/PropertyFinanceReportSettings";
+import {
+  resetFinanceReportTemplateAction,
+  updateFinanceReportTemplateAction,
+} from "./finance-report-template-actions";
 
 import { updatePropertyAmenitiesAction } from "./amenity-actions";
+import { updatePropertyTaskAssignmentsAction } from "./task-assignment-actions";
 import {
   synchronizePropertyIntegrationAction,
   updatePropertyIntegrationAction,
 } from "./integration-actions";
+import { updatePropertyChannelPricingAction } from "./channel-pricing-actions";
 import { updatePropertyAction } from "./actions";
 import { updatePropertyRatePlanAction } from "./rate-plan-actions";
 import { updatePropertyCheckInAction } from "./check-in-actions";
@@ -61,6 +76,36 @@ export default async function PropertyEditPage({
 
   const workspace = await getPropertyWorkspace(id);
   const timeline = await AuditService.getPropertyTimeline(id);
+  const [
+    activeUsers,
+    taskAssignments,
+  ] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        status: RecordStatus.ACTIVE,
+      },
+      orderBy: {
+        fullName: "asc",
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+      },
+    }),
+
+    prisma.propertyTaskAssignment.findMany({
+      where: {
+        propertyId: id,
+        active: true,
+      },
+      select: {
+        role: true,
+        userId: true,
+      },
+    }),
+  ]);
 
   if (!workspace) {
     notFound();
@@ -71,6 +116,57 @@ export default async function PropertyEditPage({
     propertyDocuments,
     revenueRatePlan,
   } = workspace;
+  const [
+    propertyFinanceTemplate,
+    defaultFinanceTemplate,
+  ] = await Promise.all([
+    prisma.financeReportTemplate.findUnique({
+      where: {
+        propertyId: property.id,
+      },
+    }),
+
+    prisma.financeReportTemplate.findFirst({
+      where: {
+        propertyId: null,
+        isDefault: true,
+      },
+
+      orderBy: {
+        createdAt: "asc",
+      },
+    }),
+  ]);
+
+  if (!defaultFinanceTemplate) {
+    throw new Error(
+      "Template Horizon Default non disponibile."
+    );
+  }
+
+  const effectiveFinanceTemplate =
+    propertyFinanceTemplate ??
+    defaultFinanceTemplate;
+  const cleaningUserId =
+    taskAssignments.find(
+      (assignment) =>
+        assignment.role ===
+        PropertyTaskAssignmentRole.CLEANING,
+    )?.userId ?? "";
+
+  const maintenanceUserId =
+    taskAssignments.find(
+      (assignment) =>
+        assignment.role ===
+        PropertyTaskAssignmentRole.MAINTENANCE,
+    )?.userId ?? "";
+
+  const operationsUserId =
+    taskAssignments.find(
+      (assignment) =>
+        assignment.role ===
+        PropertyTaskAssignmentRole.OPERATIONS,
+    )?.userId ?? "";
 
   return (
     <>
@@ -94,7 +190,7 @@ export default async function PropertyEditPage({
           />
 
           <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-800 px-8 py-10 text-white">
+            <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-sky-500 px-8 py-10 text-white">
               <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <div className="mb-4 flex flex-wrap gap-3">
@@ -192,7 +288,7 @@ export default async function PropertyEditPage({
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
               <a
                 href="#informazioni"
-                className="rounded-2xl border border-slate-950 bg-slate-950 p-5 text-white shadow-sm transition hover:-translate-y-0.5"
+                className="rounded-2xl border border-blue-600 bg-blue-600 p-5 text-white shadow-sm transition hover:-translate-y-0.5"
               >
                 <div className="flex items-start justify-between gap-3">
                   <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-lg">
@@ -284,14 +380,14 @@ export default async function PropertyEditPage({
 
               <a
                 href="#revenue-ai"
-                className="rounded-2xl border border-violet-200 bg-violet-50 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300"
+                className="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-sm font-semibold text-violet-700">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-sm font-semibold text-blue-700">
                     AI
                   </span>
 
-                  <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-medium text-violet-700">
+                  <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
                     Automatico
                   </span>
                 </div>
@@ -333,7 +429,7 @@ export default async function PropertyEditPage({
           >
             <div className="mb-8">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-sm font-semibold text-white">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white">
                   01
                 </span>
 
@@ -374,7 +470,7 @@ export default async function PropertyEditPage({
                     type="text"
                     required
                     defaultValue={property.name}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
                   />
                 </div>
 
@@ -392,7 +488,7 @@ export default async function PropertyEditPage({
                     type="text"
                     required
                     defaultValue={property.address}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
                   />
                 </div>
 
@@ -409,7 +505,7 @@ export default async function PropertyEditPage({
                     name="description"
                     rows={8}
                     defaultValue={property.description ?? ""}
-                    className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                    className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
                   />
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
@@ -445,7 +541,7 @@ export default async function PropertyEditPage({
                     step="0.01"
                     required
                     defaultValue={Number(property.cleaningCost)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
                   />
                 </div>
               </div>
@@ -453,7 +549,7 @@ export default async function PropertyEditPage({
               <div className="flex justify-end border-t border-slate-200 pt-6">
                 <button
                   type="submit"
-                  className="rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+                  className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   Salva modifiche
                 </button>
@@ -461,6 +557,153 @@ export default async function PropertyEditPage({
             </form>
           </section>
 
+          <section
+            id="responsabili-operativi"
+            className="scroll-mt-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
+          >
+            <div className="mb-8">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white">
+                  02
+                </span>
+
+                <div>
+                  <h2 className="text-2xl font-semibold text-slate-900">
+                    Responsabili operativi
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-600">
+                    Horizon assegnerà automaticamente i task alla persona configurata per ciascuna funzione.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <form
+              action={updatePropertyTaskAssignmentsAction}
+              className="space-y-6"
+            >
+              <input
+                type="hidden"
+                name="propertyId"
+                value={property.id}
+              />
+
+              <div className="grid gap-5 lg:grid-cols-3">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    Pulizie
+                  </span>
+
+                  <select
+                    name="cleaningUserId"
+                    defaultValue={cleaningUserId}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
+                  >
+                    <option value="">
+                      Nessun responsabile
+                    </option>
+
+                    {activeUsers.map(
+                      (user) => (
+                        <option
+                          key={user.id}
+                          value={user.id}
+                        >
+                          {user.fullName} · {user.email}
+                        </option>
+                      ),
+                    )}
+                  </select>
+
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Riceve automaticamente i task di pulizia.
+                  </p>
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    Manutenzione
+                  </span>
+
+                  <select
+                    name="maintenanceUserId"
+                    defaultValue={maintenanceUserId}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
+                  >
+                    <option value="">
+                      Nessun responsabile
+                    </option>
+
+                    {activeUsers.map(
+                      (user) => (
+                        <option
+                          key={user.id}
+                          value={user.id}
+                        >
+                          {user.fullName} · {user.email}
+                        </option>
+                      ),
+                    )}
+                  </select>
+
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Riceve automaticamente manutenzioni e interventi tecnici.
+                  </p>
+                </label>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    Operations / PM
+                  </span>
+
+                  <select
+                    name="operationsUserId"
+                    defaultValue={operationsUserId}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
+                  >
+                    <option value="">
+                      Nessun responsabile
+                    </option>
+
+                    {activeUsers.map(
+                      (user) => (
+                        <option
+                          key={user.id}
+                          value={user.id}
+                        >
+                          {user.fullName} · {user.email}
+                        </option>
+                      ),
+                    )}
+                  </select>
+
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    Riceve check-in, check-out, documenti ospite, issue e attività amministrative.
+                  </p>
+                </label>
+              </div>
+
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4">
+                <p className="text-sm font-medium text-blue-900">
+                  Una sola persona può essere responsabile di tutte le funzioni.
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-blue-700">
+                  Puoi selezionare lo stesso utente in Pulizie, Manutenzione e Operations.
+                </p>
+              </div>
+
+              <div className="flex justify-end border-t border-slate-200 pt-6">
+                <button
+                  type="submit"
+                  className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                >
+                  Salva responsabili
+                </button>
+              </div>
+            </form>
+          </section>
           <PropertyCodeSection
             propertyId={property.id}
             cin={property.cin}
@@ -489,6 +732,18 @@ export default async function PropertyEditPage({
   }
   synchronizeAction={
     synchronizePropertyIntegrationAction
+  }
+/>
+
+<PropertyChannelPricingSettings
+  propertyId={property.id}
+  settings={
+    await getPropertyChannelPricingSettings(
+      property.id,
+    )
+  }
+  updateAction={
+    updatePropertyChannelPricingAction
   }
 />
           <PropertyPhotosSection
@@ -528,13 +783,41 @@ export default async function PropertyEditPage({
   deleteAction={deletePropertyDocumentAction}
   retryOcrAction={retryPropertyDocumentOcrAction}
 />
+<PropertyFinanceReportSettings
+  propertyId={property.id}
+  template={effectiveFinanceTemplate}
+  isCustomized={Boolean(
+    propertyFinanceTemplate
+  )}
+  updateAction={
+    updateFinanceReportTemplateAction
+  }
+  resetAction={
+    resetFinanceReportTemplateAction
+  }
+/>
+
+<PropertyFinanceReportSettings
+  propertyId={property.id}
+  template={effectiveFinanceTemplate}
+  isCustomized={Boolean(
+    propertyFinanceTemplate
+  )}
+  updateAction={
+    updateFinanceReportTemplateAction
+  }
+  resetAction={
+    resetFinanceReportTemplateAction
+  }
+/>
+
 <PropertyTimeline timeline={timeline} />
 
           <section
             id="revenue-ai"
-            className="scroll-mt-8 overflow-hidden rounded-3xl border border-violet-200 bg-white shadow-sm"
+            className="scroll-mt-8 overflow-hidden rounded-3xl border border-blue-200 bg-white shadow-sm"
           >
-            <div className="border-b border-violet-100 bg-gradient-to-br from-violet-950 via-violet-900 to-slate-950 px-8 py-8 text-white">
+            <div className="border-b border-blue-100 bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500 px-8 py-8 text-white">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="flex items-center gap-3">
@@ -590,8 +873,8 @@ export default async function PropertyEditPage({
                 </div>
               </div>
 
-              <aside className="rounded-2xl border border-violet-200 bg-violet-50 p-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-violet-700">
+              <aside className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
                   Controllo umano
                 </p>
 
@@ -604,7 +887,7 @@ export default async function PropertyEditPage({
                   motivazione chiara. Il gestore mantiene sempre il controllo finale.
                 </p>
 
-                <div className="mt-6 rounded-xl border border-violet-200 bg-white p-4">
+                <div className="mt-6 rounded-xl border border-blue-200 bg-white p-4">
                   <p className="text-xs text-slate-500">
                     Baseline tariffaria
                   </p>
@@ -624,7 +907,7 @@ export default async function PropertyEditPage({
               </aside>
             </div>
 
-            <div className="border-t border-violet-100 bg-slate-50 p-8">
+            <div className="border-t border-blue-100 bg-slate-50 p-8">
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-slate-950">
                   Piano tariffario base
@@ -720,7 +1003,7 @@ export default async function PropertyEditPage({
                 <div className="md:col-span-2 xl:col-span-5 flex justify-end">
                   <button
                     type="submit"
-                    className="rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-800"
+                    className="rounded-xl bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-800"
                   >
                     Salva piano tariffario
                   </button>
@@ -733,5 +1016,24 @@ export default async function PropertyEditPage({
     </>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

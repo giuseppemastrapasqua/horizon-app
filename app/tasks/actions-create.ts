@@ -9,6 +9,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 import { prisma } from "@/lib/prisma";
+import { resolveTaskAssignee } from "@/lib/tasks/resolve-task-assignee";
 import { AuditService } from "@/services/audit/AuditService";
 
 function parseTaskType(
@@ -43,12 +44,7 @@ export async function createTask(
   const bookingIdRaw = String(
     formData.get("bookingId") || "",
   );
-
-  const ownerIdRaw = String(
-    formData.get("ownerId") || "",
-  );
-
-  const dueDateRaw = String(
+const dueDateRaw = String(
     formData.get("dueDate") || "",
   );
 
@@ -86,12 +82,14 @@ export async function createTask(
 
   const bookingId =
     bookingIdRaw || null;
-
-  const ownerId =
-    ownerIdRaw || property.ownerId;
-
-  await prisma.$transaction(
+await prisma.$transaction(
     async (transaction) => {
+      const ownerId =
+        await resolveTaskAssignee(
+          property.id,
+          type,
+          transaction,
+        );
       const task =
         await transaction.task.create({
           data: {
@@ -140,3 +138,8 @@ export async function createTask(
     `/properties/${property.id}`,
   );
 }
+
+
+
+
+

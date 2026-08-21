@@ -98,6 +98,15 @@ function calculateFormula({
   const results: FinanceRuleResult[] = [];
 
   for (const rule of enabledRules) {
+    if (
+      rule.category === "OTA_COMMISSION" &&
+      rule.channel &&
+      context.channel &&
+      rule.channel !== context.channel
+    ) {
+      continue;
+    }
+
     const baseAmount = resolveBaseAmount({
       rule,
       grossRevenue:
@@ -306,3 +315,4 @@ function calculateReferencedFormula({
 
   return nestedResult.finalAmount;
 }
+

@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+import type {
+  ReactNode,
+} from "react";
 
 type AppShellProps = {
   title: string;
@@ -12,22 +14,30 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <main className="ml-[280px] min-h-screen min-w-0 bg-slate-50 px-8 py-10 xl:px-12 xl:py-12">
-      <div className="mx-auto w-full max-w-[1440px]">
-        <header className="mb-8">
-          <h1 className="m-0 text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">
-            {title}
-          </h1>
+    <main className="min-h-screen min-w-0 bg-[#F8FAFC] px-4 py-5 sm:px-6 lg:ml-[220px] lg:px-7 lg:py-6 xl:px-8">
+      <div className="mx-auto w-full max-w-[1600px]">
+        {title || subtitle ? (
+          <header className="mb-6">
+            {title ? (
+              <h1 className="m-0 text-[28px] font-semibold tracking-[-0.03em] text-[#0F172A] md:text-[32px]">
+                {title}
+              </h1>
+            ) : null}
 
-          {subtitle ? (
-            <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-              {subtitle}
-            </p>
-          ) : null}
-        </header>
+            {subtitle ? (
+              <p className="mt-2 max-w-3xl text-[14px] leading-6 text-[#64748B]">
+                {subtitle}
+              </p>
+            ) : null}
+          </header>
+        ) : null}
 
-        <div className="min-w-0">{children}</div>
+        <div className="min-w-0">
+          {children}
+        </div>
       </div>
     </main>
   );
 }
+
+

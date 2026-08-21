@@ -180,16 +180,19 @@ export async function syncRevenueMarketData({
                 null,
 
               maxGuests:
-                comparable.maxGuests ??
-                null,
+                positiveIntOrNull(
+                  comparable.maxGuests,
+                ),
 
               bedrooms:
-                comparable.bedrooms ??
-                null,
+                positiveIntOrNull(
+                  comparable.bedrooms,
+                ),
 
               bathrooms:
-                comparable.bathrooms ??
-                null,
+                positiveIntOrNull(
+                  comparable.bathrooms,
+                ),
 
               nightlyPrice:
                 comparable.nightlyPrice ??
@@ -234,16 +237,19 @@ export async function syncRevenueMarketData({
                 null,
 
               maxGuests:
-                comparable.maxGuests ??
-                null,
+                positiveIntOrNull(
+                  comparable.maxGuests,
+                ),
 
               bedrooms:
-                comparable.bedrooms ??
-                null,
+                positiveIntOrNull(
+                  comparable.bedrooms,
+                ),
 
               bathrooms:
-                comparable.bathrooms ??
-                null,
+                positiveIntOrNull(
+                  comparable.bathrooms,
+                ),
 
               nightlyPrice:
                 comparable.nightlyPrice ??
@@ -293,6 +299,22 @@ export async function syncRevenueMarketData({
   );
 }
 
+function positiveIntOrNull(
+  value: number | null | undefined,
+) {
+  if (
+    value === null ||
+    value === undefined ||
+    !Number.isFinite(value) ||
+    value <= 0
+  ) {
+    return null;
+  }
+
+  return Math.round(
+    value,
+  );
+}
 function toJsonValue(
   value: unknown,
 ) {
@@ -313,3 +335,5 @@ function toJsonValue(
     ),
   );
 }
+
+

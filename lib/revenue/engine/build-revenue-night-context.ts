@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+﻿import { prisma } from "@/lib/prisma";
 
 import type {
   RevenueNightContext,
@@ -32,6 +32,7 @@ export async function buildRevenueNightContext(
   const [
     marketSignal,
     bookings,
+    property,
   ] = await Promise.all([
     prisma.revenueDailySignal.findFirst({
       where: {
@@ -68,6 +69,30 @@ export async function buildRevenueNightContext(
 
       orderBy: {
         checkIn: "asc",
+      },
+    }),
+
+    prisma.property.findUnique({
+      where: {
+        id:
+          propertyId,
+      },
+
+      select: {
+        maxGuests:
+          true,
+
+        bedrooms:
+          true,
+
+        bathrooms:
+          true,
+
+        city:
+          true,
+
+        zone:
+          true,
       },
     }),
   ]);
@@ -164,11 +189,31 @@ export async function buildRevenueNightContext(
 
       /*
        * Non lo inventiamo.
-       * Verrà calcolato quando
+       * VerrÃ  calcolato quando
        * implementeremo il pickup
        * storico della property.
        */
       bookingPace: null,
+
+      maxGuests:
+        property?.maxGuests ??
+        null,
+
+      bedrooms:
+        property?.bedrooms ??
+        null,
+
+      bathrooms:
+        property?.bathrooms ??
+        null,
+
+      city:
+        property?.city ??
+        null,
+
+      zone:
+        property?.zone ??
+        null,
     },
 
     calendar: {
@@ -395,3 +440,5 @@ function dateKey(
     .toISOString()
     .slice(0, 10);
 }
+
+

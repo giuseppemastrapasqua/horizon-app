@@ -61,9 +61,9 @@ const STATUS = {
   REVIEW_REQUIRED: {
     label: "Richiede revisione",
     badgeClassName:
-      "bg-violet-100 text-violet-700 ring-violet-200",
+      "bg-blue-100 text-blue-700 ring-violet-200",
     panelClassName:
-      "border-violet-200 bg-violet-50 text-violet-800",
+      "border-blue-200 bg-blue-50 text-violet-800",
   },
 } as const;
 
@@ -92,7 +92,7 @@ function VerificationButton({
     <button
       type="submit"
       disabled={disabled || pending}
-      className="rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+      className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
     >
       {pending
         ? "Richiesta in corso..."
@@ -139,7 +139,7 @@ export function PropertyCodeSection({
         <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-sm font-semibold text-white">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white">
                 ID
               </span>
 
@@ -197,7 +197,7 @@ export function PropertyCodeSection({
                 autoComplete="off"
                 defaultValue={cin ?? ""}
                 placeholder="Inserisci il CIN"
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm uppercase text-slate-950 outline-none transition placeholder:font-sans placeholder:normal-case placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm uppercase text-slate-950 outline-none transition placeholder:font-sans placeholder:normal-case placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
               />
 
               <p className="mt-2 text-xs leading-5 text-slate-500">
@@ -222,7 +222,7 @@ export function PropertyCodeSection({
                 autoComplete="off"
                 defaultValue={cir ?? ""}
                 placeholder="Inserisci il CIR"
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm uppercase text-slate-950 outline-none transition placeholder:font-sans placeholder:normal-case placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm uppercase text-slate-950 outline-none transition placeholder:font-sans placeholder:normal-case placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
               />
 
               <p className="mt-2 text-xs leading-5 text-slate-500">

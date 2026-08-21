@@ -1,9 +1,14 @@
-import { Panel } from "@/components/ui/Panel";
-import { SectionTitle } from "@/components/ui/SectionTitle";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { ActionButton } from "@/components/ui/ActionButton";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { uiTokens } from "@/components/ui/tokens";
+import Link from "next/link";
+
+import {
+  ArrowRight,
+  FileText,
+  FolderOpen,
+} from "lucide-react";
+
+import {
+  StatusBadge,
+} from "@/components/ui/StatusBadge";
 
 export type PropertyDocumentItem = {
   id: string;
@@ -24,7 +29,8 @@ export type PropertyDocumentItem = {
 
 type PropertyDocumentsProps = {
   propertyId: string;
-  documents: PropertyDocumentItem[];
+  documents:
+    PropertyDocumentItem[];
 };
 
 export function PropertyDocuments({
@@ -32,135 +38,172 @@ export function PropertyDocuments({
   documents,
 }: PropertyDocumentsProps) {
   return (
-    <Panel>
-      <SectionTitle
-        title="Documentazione immobile"
-        subtitle="Licenze, certificazioni, assicurazioni e documenti amministrativi."
-        action={
-          <ActionButton
-            label="Gestisci documenti"
-            href={`/properties/${propertyId}/edit`}
-            variant="secondary"
-            compact
-          />
-        }
-      />
+    <section className="h-full rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <FolderOpen size={14} />
+            </span>
+
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                Documenti
+              </p>
+
+              <h2 className="mt-0.5 text-base font-bold tracking-tight text-slate-900">
+                Documentazione immobile
+              </h2>
+            </div>
+          </div>
+
+          <p className="mt-2 text-[10px] text-slate-500">
+            Licenze, certificazioni e documenti amministrativi.
+          </p>
+        </div>
+
+        <Link
+          href={`/properties/${propertyId}/edit`}
+          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-[9px] font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+        >
+          Gestisci documenti
+        </Link>
+      </div>
 
       {documents.length === 0 ? (
-        <EmptyState
-          title="Nessun documento registrato"
-          description="Aggiungi certificazioni, licenze e altri documenti amministrativi dell’immobile."
-          actionLabel="Modifica immobile"
-          actionHref={`/properties/${propertyId}/edit`}
-        />
+        <div className="rounded-xl border border-dashed border-blue-200 bg-blue-50/40 p-5 text-center">
+          <FileText
+            size={18}
+            className="mx-auto text-blue-500"
+          />
+
+          <p className="mt-2 text-xs font-semibold text-slate-700">
+            Nessun documento registrato
+          </p>
+        </div>
       ) : (
-        <div style={listStyle}>
-          {documents.map((document) => (
-            <article
-              key={document.id}
-              style={documentCardStyle}
-            >
-              <div style={headerStyle}>
-                <div>
-                  <div style={titleRowStyle}>
-                    <strong style={documentTitleStyle}>
-                      {document.title}
-                    </strong>
+        <div className="space-y-2.5">
+          {documents.map(
+            (document) => (
+              <article
+                key={document.id}
+                className="rounded-xl border border-slate-200 bg-slate-50/45 p-3"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <p className="text-xs font-bold text-slate-900">
+                        {document.title}
+                      </p>
 
-                    <StatusBadge
-                      label={formatValue(document.type)}
-                      tone="blue"
-                      compact
-                    />
+                      <StatusBadge
+                        label={formatValue(
+                          document.type,
+                        )}
+                        tone="blue"
+                        compact
+                      />
 
-                    <StatusBadge
-                      label={formatValue(document.validity)}
-                      compact
-                    />
+                      <StatusBadge
+                        label={formatValue(
+                          document.validity,
+                        )}
+                        compact
+                      />
+                    </div>
+
+                    <p className="mt-1 text-[9px] text-slate-500">
+                      {document.issuer
+                        ? `Rilasciato da ${document.issuer}`
+                        : "Ente emittente non specificato"}
+                    </p>
                   </div>
 
-                  <p style={subtitleStyle}>
-                    {document.issuer
-                      ? `Rilasciato da ${document.issuer}`
-                      : "Ente emittente non specificato"}
-                  </p>
+                  {document.filename ? (
+                    <div className="max-w-[150px] rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5">
+                      <p className="text-[7px] font-bold uppercase tracking-wide text-blue-500">
+                        File
+                      </p>
+
+                      <p className="mt-0.5 truncate text-[8px] font-semibold text-blue-700">
+                        {document.filename}
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
 
-                {document.filename ? (
-                  <div style={fileStyle}>
-                    <span style={fileLabelStyle}>
-                      FILE
-                    </span>
+                <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200 pt-3 sm:grid-cols-4">
+                  <Metric
+                    label="Numero documento"
+                    value={
+                      document.documentNumber ??
+                      "Non assegnato"
+                    }
+                  />
 
-                    <strong style={fileValueStyle}>
-                      {document.filename}
-                    </strong>
-                  </div>
+                  <Metric
+                    label="Data rilascio"
+                    value={formatDate(
+                      document.issueDate,
+                    )}
+                  />
+
+                  <Metric
+                    label="Data scadenza"
+                    value={formatDate(
+                      document.expiryDate,
+                    )}
+                  />
+
+                  <Metric
+                    label="Ultimo aggiornamento"
+                    value={formatDate(
+                      document.updatedAt,
+                    )}
+                  />
+                </div>
+
+                {document.notes ? (
+                  <p className="mt-3 border-t border-slate-200 pt-2.5 text-[9px] leading-4 text-slate-500">
+                    {document.notes}
+                  </p>
                 ) : null}
-              </div>
 
-              <div style={metricsGridStyle}>
-                <DocumentMetric
-                  label="Numero documento"
-                  value={
-                    document.documentNumber ??
-                    "Non assegnato"
-                  }
-                />
-
-                <DocumentMetric
-                  label="Data rilascio"
-                  value={formatDate(document.issueDate)}
-                />
-
-                <DocumentMetric
-                  label="Data scadenza"
-                  value={formatDate(document.expiryDate)}
-                />
-
-                <DocumentMetric
-                  label="Ultimo aggiornamento"
-                  value={formatDate(document.updatedAt)}
-                />
-              </div>
-
-              {document.notes ? (
-                <p style={notesStyle}>
-                  {document.notes}
-                </p>
-              ) : null}
-
-              <div style={footerStyle}>
-                <div style={actionsStyle}>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-2.5">
                   {document.fileUrl ? (
-                    <ActionButton
-                      label="Apri file"
+                    <Link
                       href={document.fileUrl}
-                      compact
-                    />
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-2.5 py-1.5 text-[9px] font-semibold text-white transition hover:bg-blue-700"
+                    >
+                      <FileText size={11} />
+
+                      Apri file
+
+                      <ArrowRight size={10} />
+                    </Link>
                   ) : (
-                    <span style={missingFileStyle}>
+                    <span className="text-[8px] text-slate-400">
                       Nessun file allegato
                     </span>
                   )}
-                </div>
 
-                <span style={updatedTextStyle}>
-                  Ultima modifica:{" "}
-                  {document.updatedAt.toLocaleString(
-                    "it-IT",
-                  )}
-                </span>
-              </div>
-            </article>
-          ))}
+                  <span className="text-[8px] text-slate-400">
+                    Ultima modifica:{" "}
+                    {document.updatedAt.toLocaleString(
+                      "it-IT",
+                    )}
+                  </span>
+                </div>
+              </article>
+            ),
+          )}
         </div>
       )}
-    </Panel>
+    </section>
   );
 }
 
-function DocumentMetric({
+function Metric({
   label,
   value,
 }: {
@@ -169,141 +212,35 @@ function DocumentMetric({
 }) {
   return (
     <div>
-      <div style={metricLabelStyle}>{label}</div>
-      <strong style={metricValueStyle}>
+      <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-1 text-[9px] font-bold text-slate-800">
         {value}
-      </strong>
+      </p>
     </div>
   );
 }
 
-function formatDate(date: Date | null) {
+function formatDate(
+  date:
+    Date | null,
+) {
   if (!date) {
     return "Non definita";
   }
 
-  return date.toLocaleDateString("it-IT");
+  return date.toLocaleDateString(
+    "it-IT",
+  );
 }
 
-function formatValue(value: string) {
-  return value.replaceAll("_", " ");
+function formatValue(
+  value: string,
+) {
+  return value.replaceAll(
+    "_",
+    " ",
+  );
 }
-
-const listStyle = {
-  display: "grid",
-  gap: uiTokens.spacing.md,
-};
-
-const documentCardStyle = {
-  padding: uiTokens.spacing.md,
-  borderRadius: uiTokens.radius.lg,
-  background: uiTokens.colors.surfaceSoft,
-  border: `1px solid ${uiTokens.colors.border}`,
-};
-
-const headerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  gap: uiTokens.spacing.md,
-  flexWrap: "wrap" as const,
-};
-
-const titleRowStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: uiTokens.spacing.sm,
-  flexWrap: "wrap" as const,
-};
-
-const documentTitleStyle = {
-  color: uiTokens.colors.textPrimary,
-  fontSize: "16px",
-  fontWeight: uiTokens.fontWeight.strong,
-};
-
-const subtitleStyle = {
-  margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textMuted,
-  fontSize: uiTokens.fontSize.sm,
-};
-
-const fileStyle = {
-  display: "grid",
-  gap: "4px",
-  maxWidth: "220px",
-  padding: uiTokens.spacing.sm,
-  borderRadius: uiTokens.radius.md,
-  background: uiTokens.colors.primary,
-};
-
-const fileLabelStyle = {
-  color: uiTokens.colors.textSubtle,
-  fontSize: "9px",
-  fontWeight: uiTokens.fontWeight.strong,
-};
-
-const fileValueStyle = {
-  overflow: "hidden",
-  color: uiTokens.colors.primaryText,
-  fontSize: uiTokens.fontSize.xs,
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap" as const,
-};
-
-const metricsGridStyle = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(4, minmax(110px, 1fr))",
-  gap: uiTokens.spacing.md,
-  marginTop: uiTokens.spacing.md,
-  paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
-};
-
-const metricLabelStyle = {
-  marginBottom: "4px",
-  color: uiTokens.colors.textSubtle,
-  fontSize: uiTokens.fontSize.xs,
-};
-
-const metricValueStyle = {
-  color: uiTokens.colors.textPrimary,
-  fontSize: uiTokens.fontSize.sm,
-};
-
-const notesStyle = {
-  margin: `${uiTokens.spacing.md} 0 0`,
-  paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
-  color: uiTokens.colors.textMuted,
-  fontSize: uiTokens.fontSize.sm,
-  lineHeight: 1.6,
-};
-
-const footerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: uiTokens.spacing.md,
-  marginTop: uiTokens.spacing.md,
-  paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
-  flexWrap: "wrap" as const,
-};
-
-const actionsStyle = {
-  display: "flex",
-  gap: uiTokens.spacing.sm,
-  flexWrap: "wrap" as const,
-};
-
-const missingFileStyle = {
-  color: uiTokens.colors.textSubtle,
-  fontSize: uiTokens.fontSize.xs,
-};
-
-const updatedTextStyle = {
-  color: uiTokens.colors.textSubtle,
-  fontSize: uiTokens.fontSize.xs,
-};

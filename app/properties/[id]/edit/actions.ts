@@ -31,6 +31,18 @@ export async function updatePropertyAction(
     formData.get("cleaningCost") ?? 0,
   );
 
+  const propertyManagementCommissionPercent =
+    Number(
+      formData.get(
+        "propertyManagementCommissionPercent"
+      ) ?? 0
+    );
+  const horizonCommissionPercent = Number(
+    formData.get(
+      "horizonCommissionPercent",
+    ) ?? 0,
+  );
+
   if (!propertyId) {
     throw new Error(
       "Identificativo immobile mancante.",
@@ -58,6 +70,18 @@ export async function updatePropertyAction(
     );
   }
 
+  if (
+    !Number.isFinite(
+      horizonCommissionPercent,
+    ) ||
+    horizonCommissionPercent < 0 ||
+    horizonCommissionPercent >= 100
+  ) {
+    throw new Error(
+      "La commissione Horizon deve essere compresa tra 0 e 99,99.",
+    );
+  }
+
   const description =
     descriptionValue.length > 0
       ? descriptionValue
@@ -70,12 +94,15 @@ export async function updatePropertyAction(
           where: {
             id: propertyId,
           },
+
           select: {
             id: true,
             name: true,
             address: true,
             description: true,
             cleaningCost: true,
+            horizonCommissionPercent: true,
+            propertyManagementCommissionPercent: true,
           },
         });
 
@@ -87,72 +114,124 @@ export async function updatePropertyAction(
 
       const changedFields: string[] = [];
 
-      if (currentProperty.name !== name) {
-        changedFields.push("name");
+      if (
+        currentProperty.name !== name
+      ) {
+        changedFields.push(
+          "name",
+        );
       }
 
       if (
-        currentProperty.address !== address
+        currentProperty.address !==
+        address
       ) {
-        changedFields.push("address");
+        changedFields.push(
+          "address",
+        );
       }
 
       if (
         currentProperty.description !==
         description
       ) {
-        changedFields.push("description");
+        changedFields.push(
+          "description",
+        );
       }
 
       if (
-        Number(currentProperty.cleaningCost) !==
-        cleaningCostValue
+        Number(
+          currentProperty.cleaningCost,
+        ) !== cleaningCostValue
       ) {
-        changedFields.push("cleaningCost");
+        changedFields.push(
+          "cleaningCost",
+        );
+      }
+
+      if (
+        Number(
+          currentProperty.horizonCommissionPercent,
+        ) !== horizonCommissionPercent
+      ) {
+        changedFields.push(
+          "horizonCommissionPercent",
+        );
       }
 
       await transaction.property.update({
         where: {
           id: propertyId,
         },
+
         data: {
           name,
           address,
           description,
-          cleaningCost: cleaningCostValue,
+          cleaningCost:
+            cleaningCostValue,
+          horizonCommissionPercent,
+          propertyManagementCommissionPercent,
         },
       });
 
-      if (changedFields.length === 0) {
+      if (
+        changedFields.length === 0
+      ) {
         return;
       }
 
       await AuditService.log(
         {
-          action: AuditAction.UPDATE,
+          action:
+            AuditAction.UPDATE,
+
           propertyId,
+
           entityType:
             AUDIT_ENTITY_TYPES.PROPERTY,
-          entityId: propertyId,
+
+          entityId:
+            propertyId,
+
           description:
             "Dati principali dell’immobile aggiornati.",
+
           metadata: {
             changedFields,
+
             previousValues: {
-              name: currentProperty.name,
-              address: currentProperty.address,
+              name:
+                currentProperty.name,
+
+              address:
+                currentProperty.address,
+
               description:
                 currentProperty.description,
-              cleaningCost: Number(
-                currentProperty.cleaningCost,
-              ),
+
+              cleaningCost:
+                Number(
+                  currentProperty.cleaningCost,
+                ),
+
+              horizonCommissionPercent:
+                Number(
+                  currentProperty.horizonCommissionPercent,
+                ),
             },
+
             newValues: {
               name,
               address,
               description,
+
               cleaningCost:
                 cleaningCostValue,
+
+              horizonCommissionPercent,
+          propertyManagementCommissionPercent,
             },
           },
         },
@@ -164,10 +243,21 @@ export async function updatePropertyAction(
   revalidatePath(
     `/properties/${propertyId}`,
   );
+
   revalidatePath(
     `/properties/${propertyId}/edit`,
   );
-  revalidatePath("/properties");
 
-  redirect(`/properties/${propertyId}`);
+  revalidatePath(
+    "/properties",
+  );
+
+  revalidatePath(
+    "/calendar",
+  );
+
+  redirect(
+    `/properties/${propertyId}`,
+  );
 }
+

@@ -77,6 +77,7 @@ model User {
   properties                Property[]
   createdPriceOverrides     PropertyPriceOverride[]     @relation("PropertyPriceOverrideCreatedBy")
   tasks                     Task[]
+  taskAssignments           PropertyTaskAssignment[]
   createdAvailabilityBlocks PropertyAvailabilityBlock[] @relation("PropertyAvailabilityBlockCreatedBy")
 
   @@index([role])
@@ -106,56 +107,61 @@ model AuditLog {
 }
 
 model Property {
-  id                        String                          @id @default(cuid())
-  name                      String
-  address                   String
-  city                      String                          @default("Milano")
-  zone                      String?
-  maxGuests                 Int
-  bedrooms                  Int?
-  bathrooms                 Int?
-  status                    PropertyStatus                  @default(DRAFT)
-  commercialClass           PropertyCommercialClass         @default(SOLID_PERFORMER)
-  victoryModel              PropertyVictoryModel            @default(BALANCED_WINNER)
-  initialScore              Int                             @default(70)
-  currentScore              Int                             @default(70)
-  notes                     String?
-  createdAt                 DateTime                        @default(now())
-  updatedAt                 DateTime                        @updatedAt
-  ownerId                   String
-  cleaningCost              Decimal                         @default(0) @db.Decimal(10, 2)
-  description               String?
+  horizonCommissionPercent            Decimal                         @default(0) @db.Decimal(5, 2)
+  id                                  String                          @id @default(cuid())
+  name                                String
+  address                             String
+  city                                String                          @default("Milano")
+  zone                                String?
+  maxGuests                           Int
+  bedrooms                            Int?
+  bathrooms                           Int?
+  status                              PropertyStatus                  @default(DRAFT)
+  commercialClass                     PropertyCommercialClass         @default(SOLID_PERFORMER)
+  victoryModel                        PropertyVictoryModel            @default(BALANCED_WINNER)
+  initialScore                        Int                             @default(70)
+  currentScore                        Int                             @default(70)
+  notes                               String?
+  createdAt                           DateTime                        @default(now())
+  updatedAt                           DateTime                        @updatedAt
+  ownerId                             String
+  cleaningCost                        Decimal                         @default(0) @db.Decimal(10, 2)
+  propertyManagementCommissionPercent Decimal                         @default(0) @db.Decimal(5, 2)
+  description                         String?
   /// *
   ///    * Codici identificativi dell'alloggio.
   ///    * La verifica incrociata verrà eseguita successivamente
   ///    * dal servizio di verifica AI.
-  cin                       String?
-  cir                       String?
-  codeVerificationNotes     String?
-  codeVerificationStatus    PropertyCodeVerificationStatus  @default(NOT_VERIFIED)
-  codeVerifiedAt            DateTime?
-  bookings                  Booking[]
-  documents                 Document[]
-  financeFormulas           FinanceFormula[]
-  financeReports            FinanceReport[]
-  integrationConnections    IntegrationConnectionProperty[]
-  integrationMappings       IntegrationPropertyMapping[]
-  owner                     User                            @relation(fields: [ownerId], references: [id])
-  amenities                 PropertyAmenity[]
-  checkInConfiguration      PropertyCheckInConfiguration?
-  propertyCodeVerifications PropertyCodeVerification[]
-  propertyDocuments         PropertyDocument[]
-  houseRules                PropertyHouseRule[]
-  images                    PropertyImage[]
-  ratePlans                 PropertyRatePlan[]
-  rateRules                 PropertyRateRule[]
-  priceOverrides            PropertyPriceOverride[]
-  tasks                     Task[]
-  availabilityBlocks        PropertyAvailabilityBlock[]
-  revenueMarketSnapshots    RevenueMarketSnapshot[]
-  revenueComparables        RevenueComparable[]
-  revenueDailySignals       RevenueDailySignal[]
-  revenueRecommendations    RevenueRecommendation[]
+  cin                                 String?
+  cir                                 String?
+  codeVerificationNotes               String?
+  codeVerificationStatus              PropertyCodeVerificationStatus  @default(NOT_VERIFIED)
+  codeVerifiedAt                      DateTime?
+  bookings                            Booking[]
+  channelCommissions                  PropertyChannelCommission[]
+  documents                           Document[]
+  financeFormulas                     FinanceFormula[]
+  financeReports                      FinanceReport[]
+  integrationConnections              IntegrationConnectionProperty[]
+  integrationMappings                 IntegrationPropertyMapping[]
+  owner                               User                            @relation(fields: [ownerId], references: [id])
+  amenities                           PropertyAmenity[]
+  checkInConfiguration                PropertyCheckInConfiguration?
+  propertyCodeVerifications           PropertyCodeVerification[]
+  propertyDocuments                   PropertyDocument[]
+  houseRules                          PropertyHouseRule[]
+  images                              PropertyImage[]
+  ratePlans                           PropertyRatePlan[]
+  rateRules                           PropertyRateRule[]
+  priceOverrides                      PropertyPriceOverride[]
+  tasks                               Task[]
+  taskAssignments                     PropertyTaskAssignment[]
+  availabilityBlocks                  PropertyAvailabilityBlock[]
+  revenueMarketSnapshots              RevenueMarketSnapshot[]
+  revenueComparables                  RevenueComparable[]
+  revenueDailySignals                 RevenueDailySignal[]
+  revenueRecommendations              RevenueRecommendation[]
+  financeReportTemplate               FinanceReportTemplate?
 
   @@index([ownerId])
   @@index([status])
@@ -164,6 +170,21 @@ model Property {
   @@index([cin])
   @@index([cir])
   @@index([codeVerificationStatus])
+}
+
+model PropertyChannelCommission {
+  id                String         @id @default(cuid())
+  propertyId        String
+  channel           BookingChannel
+  commissionPercent Decimal        @default(0) @db.Decimal(5, 2)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, channel])
+  @@index([propertyId])
+  @@index([channel])
 }
 
 model PropertyRatePlan {
@@ -180,6 +201,7 @@ model PropertyRatePlan {
   minimumStay Int  @default(1)
   maximumStay Int?
 
+  minimumGuests     Int @default(1)
   occupancyIncluded Int @default(1)
 
   createdAt DateTime @default(now())
@@ -481,6 +503,31 @@ model Booking {
   @@index([integrationConnectionId])
 }
 
+enum PropertyTaskAssignmentRole {
+  CLEANING
+  MAINTENANCE
+  OPERATIONS
+}
+
+model PropertyTaskAssignment {
+  id         String                     @id @default(cuid())
+  propertyId String
+  userId     String
+  role       PropertyTaskAssignmentRole
+  active     Boolean                    @default(true)
+  createdAt  DateTime                   @default(now())
+  updatedAt  DateTime                   @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, role])
+  @@index([propertyId])
+  @@index([userId])
+  @@index([role])
+  @@index([active])
+}
+
 model Task {
   id          String     @id @default(cuid())
   title       String
@@ -597,6 +644,7 @@ model FinanceFormulaRule {
   updatedAt           DateTime             @updatedAt
   referencedFormulaId String?
   category            FinanceRuleCategory  @default(OTHER)
+  channel             BookingChannel?
   formula             FinanceFormula       @relation("FormulaRules", fields: [formulaId], references: [id], onDelete: Cascade)
   referencedFormula   FinanceFormula?      @relation("ReferencedFormula", fields: [referencedFormulaId], references: [id])
 
@@ -606,26 +654,28 @@ model FinanceFormulaRule {
 }
 
 model FinanceReport {
-  id              String              @id @default(cuid())
+  id              String                    @id @default(cuid())
   propertyId      String
   ownerId         String
   formulaId       String?
   createdById     String?
   referenceMonth  DateTime
   title           String
-  currency        String              @default("EUR")
-  grossRevenue    Decimal             @db.Decimal(12, 2)
-  finalAmount     Decimal             @db.Decimal(12, 2)
+  currency        String                    @default("EUR")
+  grossRevenue    Decimal                   @db.Decimal(12, 2)
+  finalAmount     Decimal                   @db.Decimal(12, 2)
   formulaName     String
   formulaSnapshot Json
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  createdBy       User?               @relation("FinanceReportCreatedBy", fields: [createdById], references: [id])
-  formula         FinanceFormula?     @relation(fields: [formulaId], references: [id])
-  owner           User                @relation("FinanceReportOwner", fields: [ownerId], references: [id])
-  property        Property            @relation(fields: [propertyId], references: [id])
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  createdBy       User?                     @relation("FinanceReportCreatedBy", fields: [createdById], references: [id])
+  formula         FinanceFormula?           @relation(fields: [formulaId], references: [id])
+  owner           User                      @relation("FinanceReportOwner", fields: [ownerId], references: [id])
+  property        Property                  @relation(fields: [propertyId], references: [id])
   rules           FinanceReportRule[]
+  adjustments     FinanceReportAdjustment[]
 
+  @@unique([propertyId, referenceMonth])
   @@index([propertyId])
   @@index([ownerId])
   @@index([formulaId])
@@ -654,6 +704,49 @@ model FinanceReportRule {
   @@index([reportId])
   @@index([sourceRuleId])
   @@index([order])
+}
+
+model FinanceReportAdjustment {
+  id          String   @id @default(cuid())
+  reportId    String
+  description String
+  amount      Decimal  @db.Decimal(12, 2)
+  createdAt   DateTime @default(now())
+
+  report FinanceReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+  @@index([createdAt])
+}
+
+model FinanceReportTemplate {
+  id String @id @default(cuid())
+
+  propertyId String? @unique
+
+  name      String  @default("Rendiconto Horizon")
+  isDefault Boolean @default(false)
+
+  headerTitle  String  @default("Rendiconto proprietario")
+  primaryColor String  @default("#2563EB")
+  logoUrl      String?
+
+  showBookingDetails    Boolean @default(true)
+  showOtaCommissions    Boolean @default(true)
+  showCleaningCosts     Boolean @default(true)
+  showManagementFees    Boolean @default(true)
+  showTaxes             Boolean @default(true)
+  showManualAdjustments Boolean @default(true)
+  showCategorySummary   Boolean @default(true)
+
+  footerText String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([isDefault])
 }
 
 model IntegrationConnection {

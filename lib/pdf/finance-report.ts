@@ -1,8 +1,12 @@
+﻿import { HORIZON_LOGO_BASE64 } from "./horizon-logo-data";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import {
   PDFDocument,
   StandardFonts,
   rgb,
   type PDFFont,
+  type PDFImage,
   type PDFPage,
 } from "pdf-lib";
 
@@ -14,8 +18,35 @@ export type FinanceReportPdfBooking = {
   nights: number;
   guests: number;
   channel: string;
-  grossAmount: number;
   currency: string;
+
+  grossBooking: number;
+
+  otaCommission:
+    | number
+    | null;
+
+  cleaningCost: number;
+
+  grossProperty:
+    | number
+    | null;
+
+  managementCommission:
+    | number
+    | null;
+
+  taxAmount:
+    | number
+    | null;
+
+  otherAmount:
+    | number
+    | null;
+
+  netProperty:
+    | number
+    | null;
 };
 
 export type FinanceReportPdfRuleCategory =
@@ -35,7 +66,24 @@ export type FinanceReportPdfRule = {
   calculatedAmount: number;
 };
 
+export type FinanceReportPdfTemplate = {
+  name: string;
+  headerTitle: string;
+  primaryColor: string;
+  logoUrl: string | null;
+  footerText: string | null;
+
+  showBookingDetails: boolean;
+  showOtaCommissions: boolean;
+  showCleaningCosts: boolean;
+  showManagementFees: boolean;
+  showTaxes: boolean;
+  showManualAdjustments: boolean;
+  showCategorySummary: boolean;
+};
 export type FinanceReportPdfInput = {
+  template: FinanceReportPdfTemplate;
+
   title: string;
   referenceMonth: Date;
   currency: string;
@@ -43,6 +91,12 @@ export type FinanceReportPdfInput = {
   finalAmount: number;
   formulaName: string;
   createdAt: Date;
+
+  adjustments: {
+    id: string;
+    description: string;
+    amount: number;
+  }[];
 
   property: {
     name: string;
@@ -72,11 +126,22 @@ type TableColumn = {
     | "checkOut"
     | "channel"
     | "nights"
-    | "guests"
-    | "gross";
+    | "grossBooking"
+    | "otaCommission"
+    | "cleaning"
+    | "grossProperty"
+    | "managementCommission"
+    | "tax"
+    | "other"
+    | "netProperty";
+
   label: string;
   width: number;
-  align?: "left" | "center" | "right";
+
+  align?:
+    | "left"
+    | "center"
+    | "right";
 };
 
 type CategorySummaryItem = {
@@ -93,7 +158,7 @@ const CONTENT_WIDTH =
   PAGE_WIDTH - PAGE_MARGIN * 2;
 
 const HEADER_HEIGHT = 82;
-const SUMMARY_HEIGHT = 114;
+const SUMMARY_HEIGHT = 150;
 const FOOTER_HEIGHT = 20;
 
 const CATEGORY_ORDER: FinanceReportPdfRuleCategory[] =
@@ -110,63 +175,214 @@ const TABLE_COLUMNS: TableColumn[] = [
   {
     key: "guest",
     label: "OSPITE",
-    width: 170,
+    width: 122,
   },
   {
     key: "checkIn",
     label: "IN",
-    width: 52,
+    width: 38,
     align: "center",
   },
   {
     key: "checkOut",
     label: "OUT",
-    width: 52,
+    width: 38,
     align: "center",
   },
   {
     key: "channel",
     label: "OTA",
-    width: 70,
+    width: 46,
     align: "center",
   },
   {
     key: "nights",
     label: "NT",
-    width: 38,
+    width: 25,
     align: "center",
   },
+
   {
-    key: "gross",
+    key: "grossBooking",
     label: "LORDO",
-    width: 95,
+    width: 64,
     align: "right",
   },
   {
-    key: "gross",
-    label: "COMM.",
-    width: 70,
+    key: "otaCommission",
+    label: "COMM. OTA",
+    width: 64,
     align: "right",
   },
   {
-    key: "gross",
-    label: "IVA",
+    key: "cleaning",
+    label: "PULIZIE",
+    width: 58,
+    align: "right",
+  },
+  {
+    key: "grossProperty",
+    label: "LORDO PROP.",
+    width: 68,
+    align: "right",
+  },
+  {
+    key: "managementCommission",
+    label: "COMM. PM",
+    width: 62,
+    align: "right",
+  },
+  {
+    key: "tax",
+    label: "CEDOLARE",
     width: 60,
     align: "right",
   },
   {
-    key: "gross",
-    label: "PULIZIE",
-    width: 82,
+    key: "other",
+    label: "VARIE",
+    width: 52,
     align: "right",
   },
   {
-    key: "gross",
-    label: "PROPRIETARIO",
-    width: 140,
+    key: "netProperty",
+    label: "NETTO PROP.",
+    width: 70,
     align: "right",
   },
 ];
+
+function hexToPdfRgb(
+  hex: string
+) {
+  const normalized =
+    /^#[0-9A-Fa-f]{6}$/.test(hex)
+      ? hex
+      : "#2563EB";
+
+  const red =
+    parseInt(
+      normalized.slice(1, 3),
+      16
+    ) / 255;
+
+  const green =
+    parseInt(
+      normalized.slice(3, 5),
+      16
+    ) / 255;
+
+  const blue =
+    parseInt(
+      normalized.slice(5, 7),
+      16
+    ) / 255;
+
+  return rgb(
+    red,
+    green,
+    blue
+  );
+}
+
+async function loadDefaultHorizonLogo(
+  pdfDocument: PDFDocument
+): Promise<PDFImage | null> {
+  try {
+    const bytes =
+      Uint8Array.from(
+        Buffer.from(
+          HORIZON_LOGO_BASE64,
+          "base64"
+        )
+      );
+
+    return await pdfDocument.embedPng(
+      bytes
+    );
+  } catch (error) {
+    console.error(
+      "[FINANCE PDF LOGO]",
+      error
+    );
+
+    return null;
+  }
+}
+
+async function loadTemplateLogo(
+  pdfDocument: PDFDocument,
+  logoUrl: string | null
+): Promise<PDFImage | null> {
+  if (!logoUrl) {
+    return null;
+  }
+
+  const normalizedUrl =
+    logoUrl.trim();
+
+  if (
+    !/^https?:\/\//i.test(
+      normalizedUrl
+    )
+  ) {
+    return null;
+  }
+
+  try {
+    const response =
+      await fetch(
+        normalizedUrl,
+        {
+          cache: "no-store",
+        }
+      );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const bytes =
+      new Uint8Array(
+        await response.arrayBuffer()
+      );
+
+    const contentType =
+      response.headers
+        .get("content-type")
+        ?.toLowerCase() ??
+      "";
+
+    if (
+      contentType.includes("png")
+    ) {
+      return await pdfDocument.embedPng(
+        bytes
+      );
+    }
+
+    if (
+      contentType.includes("jpeg") ||
+      contentType.includes("jpg")
+    ) {
+      return await pdfDocument.embedJpg(
+        bytes
+      );
+    }
+
+    try {
+      return await pdfDocument.embedPng(
+        bytes
+      );
+    } catch {
+      return await pdfDocument.embedJpg(
+        bytes
+      );
+    }
+  } catch {
+    return null;
+  }
+}
 
 export async function buildFinanceReportPdf(
   input: FinanceReportPdfInput
@@ -190,13 +406,29 @@ export async function buildFinanceReportPdf(
       PAGE_HEIGHT,
     ]);
 
-  drawPageBackground(page);
+  
+  
+  
+  const templateLogo =
+    (
+      await loadTemplateLogo(
+        pdfDocument,
+        input.template.logoUrl
+      )
+    ) ??
+    (
+      await loadDefaultHorizonLogo(
+        pdfDocument
+      )
+    );
+drawPageBackground(page);
 
   drawHeader({
     page,
     font,
     boldFont,
     input,
+    logo: templateLogo,
   });
 
   const tableTop =
@@ -209,14 +441,16 @@ export async function buildFinanceReportPdf(
     FOOTER_HEIGHT +
     SUMMARY_HEIGHT;
 
-  drawBookingsTable({
-    page,
-    font,
-    boldFont,
-    input,
-    tableTop,
-    tableBottom: summaryTop,
-  });
+  if (input.template.showBookingDetails) {
+    drawBookingsTable({
+      page,
+      font,
+      boldFont,
+      input,
+      tableTop,
+      tableBottom: summaryTop,
+    });
+  }
 
   drawSummary({
     page,
@@ -251,29 +485,65 @@ function drawHeader({
   font,
   boldFont,
   input,
+  logo,
 }: {
   page: PDFPage;
   font: PDFFont;
   boldFont: PDFFont;
   input: FinanceReportPdfInput;
+  logo: PDFImage | null;
 }) {
   const top =
     PAGE_HEIGHT - PAGE_MARGIN;
 
-  page.drawText("HORIZON", {
-    x: PAGE_MARGIN,
-    y: top - 14,
-    size: 12,
-    font: boldFont,
-    color: rgb(
-      0.11,
-      0.3,
-      0.72
-    ),
-  });
+  if (logo) {
+    const maxLogoWidth = 135;
+    const maxLogoHeight = 30;
+
+    const scale =
+      Math.min(
+        maxLogoWidth / logo.width,
+        maxLogoHeight / logo.height
+      );
+
+    page.drawImage(
+      logo,
+      {
+        x: PAGE_MARGIN,
+        y:
+          top -
+          logo.height * scale,
+        width:
+          logo.width * scale,
+        height:
+          logo.height * scale,
+      }
+    );
+  } else {
+    page.drawText(
+      "HORIZON",
+      {
+        x: PAGE_MARGIN,
+        y: top - 14,
+        size: 12,
+        font: boldFont,
+        color:
+          hexToPdfRgb(
+            input.template.primaryColor
+          ),
+      }
+    );
+  }
 
   page.drawText(
-    "RENDICONTO FINANZIARIO",
+    truncateText({
+      text: normalizePdfText(
+        input.template.headerTitle
+      ),
+      font: boldFont,
+      size: 8,
+      maxWidth: 320,
+    }),
     {
       x: PAGE_MARGIN,
       y: top - 34,
@@ -430,11 +700,7 @@ function drawBookingsTable({
     y: tableTop - headerHeight,
     width: CONTENT_WIDTH,
     height: headerHeight,
-    color: rgb(
-      0.11,
-      0.3,
-      0.72
-    ),
+    color: hexToPdfRgb(input.template.primaryColor),
   });
 
   let columnX = PAGE_MARGIN;
@@ -565,8 +831,7 @@ function drawBookingsTable({
           width: column.width,
           height: rowHeight,
           font:
-            column.key ===
-            "gross"
+            column.key === "grossBooking"
               ? boldFont
               : font,
           size: fontSize,
@@ -724,7 +989,12 @@ function drawSummary({
       input.rules
     );
 
-  if (
+  
+  const visibleCategorySummary =
+    input.template.showCategorySummary
+      ? categorySummary
+      : [];
+if (
     categorySummary.length === 0
   ) {
     page.drawText(
@@ -806,6 +1076,100 @@ function drawSummary({
     );
   }
 
+  if (
+    input.template.showManualAdjustments &&
+    input.adjustments.length > 0
+  ) {
+    const manualHeadingY =
+      summaryY +
+      SUMMARY_HEIGHT -
+      58 -
+      visibleCategorySummary.length * 13;
+
+    page.drawText(
+      "RETTIFICHE MANUALI",
+      {
+        x: PAGE_MARGIN + 12,
+        y: manualHeadingY,
+        size: 7.5,
+        font: boldFont,
+        color: hexToPdfRgb(input.template.primaryColor),
+      }
+    );
+
+    input.adjustments.forEach(
+      (adjustment, index) => {
+        const itemY =
+          manualHeadingY -
+          16 -
+          index * 13;
+
+        page.drawText(
+          truncateText({
+            text:
+              normalizePdfText(
+                adjustment.description
+              ),
+            font,
+            size: 7.5,
+            maxWidth: 270,
+          }),
+          {
+            x: PAGE_MARGIN + 12,
+            y: itemY,
+            size: 7.5,
+            font,
+            color: rgb(
+              0.2,
+              0.25,
+              0.33
+            ),
+          }
+        );
+
+        drawRightAlignedText({
+          page,
+          text:
+            formatSignedCurrency(
+              adjustment.amount,
+              input.currency
+            ),
+          xRight:
+            PAGE_MARGIN +
+            leftWidth -
+            12,
+          y: itemY,
+          size: 7.5,
+          font: boldFont,
+          color:
+            adjustment.amount >= 0
+              ? rgb(
+                  0.09,
+                  0.4,
+                  0.2
+                )
+              : rgb(
+                  0.75,
+                  0.08,
+                  0.18
+                ),
+        });
+      }
+    );
+  }
+
+  const manualAdjustmentsTotal =
+    input.adjustments.reduce(
+      (total, adjustment) =>
+        total +
+        adjustment.amount,
+      0
+    );
+
+  const adjustedFinalAmount =
+    input.finalAmount +
+    manualAdjustmentsTotal;
+
   const rightX =
     PAGE_MARGIN + leftWidth;
 
@@ -834,8 +1198,7 @@ function drawSummary({
     label: "Rettifiche",
     value:
       formatSignedCurrency(
-        input.finalAmount -
-          input.grossRevenue,
+        adjustedFinalAmount - input.grossRevenue,
         input.currency
       ),
     x: rightX,
@@ -879,18 +1242,14 @@ function drawSummary({
       y: summaryY + 23,
       size: 8,
       font: boldFont,
-      color: rgb(
-        0.11,
-        0.3,
-        0.72
-      ),
+      color: hexToPdfRgb(input.template.primaryColor),
     }
   );
 
   drawRightAlignedText({
     page,
     text: formatCurrency(
-      input.finalAmount,
+      adjustedFinalAmount,
       input.currency
     ),
     xRight:
@@ -1030,18 +1389,94 @@ function getBookingCellValue({
     );
   }
 
-  if (column.key === "guests") {
-    return String(
-      booking.guests
+  if (
+    column.key ===
+    "grossBooking"
+  ) {
+    return formatCurrency(
+      booking.grossBooking,
+      booking.currency
     );
   }
 
-  return formatCurrency(
-    booking.grossAmount,
-    booking.currency
-  );
-}
+  if (
+    column.key ===
+    "otaCommission"
+  ) {
+    return booking.otaCommission === null
+      ? "-"
+      : formatCurrency(
+          booking.otaCommission,
+          booking.currency
+        );
+  }
 
+  if (
+    column.key ===
+    "cleaning"
+  ) {
+    return formatCurrency(
+      booking.cleaningCost,
+      booking.currency
+    );
+  }
+
+  if (
+    column.key ===
+    "grossProperty"
+  ) {
+    return booking.grossProperty === null
+      ? "-"
+      : formatCurrency(
+          booking.grossProperty,
+          booking.currency
+        );
+  }
+
+  if (
+    column.key ===
+    "managementCommission"
+  ) {
+    return booking.managementCommission === null
+      ? "-"
+      : formatCurrency(
+          booking.managementCommission,
+          booking.currency
+        );
+  }
+
+  if (column.key === "tax") {
+    return booking.taxAmount === null
+      ? "-"
+      : formatCurrency(
+          booking.taxAmount,
+          booking.currency
+        );
+  }
+
+  if (column.key === "other") {
+    return booking.otherAmount === null
+      ? "-"
+      : formatSignedCurrency(
+          booking.otherAmount,
+          booking.currency
+        );
+  }
+
+  if (
+    column.key ===
+    "netProperty"
+  ) {
+    return booking.netProperty === null
+      ? "-"
+      : formatCurrency(
+          booking.netProperty,
+          booking.currency
+        );
+  }
+
+  return "-";
+}
 function drawCellText({
   page,
   text,
@@ -1344,8 +1779,41 @@ function normalizePdfText(
   value: string
 ) {
   return value
-    .replace(/[’‘]/g, "'")
-    .replace(/[“”]/g, '"')
-    .replace(/–|—/g, "-")
+    .replace(/[â€™â€˜]/g, "'")
+    .replace(/[â€œâ€]/g, '"')
+    .replace(/â€“|â€”/g, "-")
     .replace(/\u00a0/g, " ");
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

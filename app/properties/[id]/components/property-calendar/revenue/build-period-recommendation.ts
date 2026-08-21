@@ -2,6 +2,14 @@ import {
   buildRevenuePricingDecision,
 } from "@/lib/revenue/engine/build-revenue-pricing-decision";
 
+import type {
+  RevenuePricingDecision,
+} from "@/lib/revenue/engine/revenue-engine-types";
+
+import {
+  buildComparablePositioning,
+} from "@/lib/revenue/engine/build-comparable-positioning";
+
 import {
   buildRevenueSignals,
 } from "@/lib/revenue/engine/build-revenue-signals";
@@ -17,6 +25,17 @@ export type RevenueRecommendation = {
   analyzedNights: number;
   selectedNights: number;
   coveragePercent: number;
+
+  dailyPrices?: Array<{
+    date: string;
+    recommendedPrice: number;
+
+    contributions:
+      RevenuePricingDecision["contributions"];
+
+    explanation:
+      RevenuePricingDecision["explanation"];
+  }>;
 };
 
 type BuildPeriodRevenueRecommendationInput = {
@@ -52,7 +71,7 @@ function buildFallbackMarketBaseline({
    * 1. Snapshot mercato.
    *
    * Lo utilizziamo soltanto se contiene
-   * un ADR valido e se non è troppo vecchio.
+   * un ADR valido e se non Ã¨ troppo vecchio.
    *
    * Non vogliamo trasformare uno snapshot
    * storico in una previsione futura certa.
@@ -110,7 +129,7 @@ function buildFallbackMarketBaseline({
    * 2. Comparable properties.
    *
    * Se non abbiamo uno snapshot recente,
-   * costruiamo una baseline usando proprietà
+   * costruiamo una baseline usando proprietÃ 
    * comparabili che abbiano un prezzo valido.
    */
   const comparablePrices =
@@ -140,7 +159,7 @@ function buildFallbackMarketBaseline({
   }
 
   /*
-   * Usiamo la mediana anziché la media
+   * Usiamo la mediana anzichÃ© la media
    * per ridurre l'impatto degli outlier.
    */
   const middle =
@@ -324,6 +343,56 @@ export function buildPeriodRevenueRecommendation({
   const decisions =
     selectedDays.flatMap(
       (day) => {
+        /*
+         * Il Comparable Positioning descrive
+         * il posizionamento STRUTTURALE
+         * dell'alloggio rispetto al mercato.
+         *
+         * Non confrontiamo i comparables con
+         * il prezzo del singolo giorno, perché
+         * eventi e picchi di domanda renderebbero
+         * artificialmente economici i comparables.
+         *
+         * Usiamo quindi l'ADR generale dello
+         * snapshot di mercato come riferimento.
+         */
+        const positioning =
+          buildComparablePositioning({
+            marketReference:
+              revenueData.snapshot
+                ?.marketAdr ??
+              day.marketMedianPrice,
+
+            propertyProfile: {
+              maxGuests:
+                revenueData.property
+                  ?.maxGuests ??
+                null,
+
+              bedrooms:
+                revenueData.property
+                  ?.bedrooms ??
+                null,
+
+              bathrooms:
+                revenueData.property
+                  ?.bathrooms ??
+                null,
+            },
+
+            comparables:
+              revenueData.comparables,
+          });
+
+        const positionedMarketPrice =
+          day.marketMedianPrice ===
+            null
+            ? null
+            : Math.round(
+                day.marketMedianPrice *
+                  positioning.positioningFactor,
+              );
+
         const signalSet =
           buildRevenueSignals({
             propertyId,
@@ -335,7 +404,7 @@ export function buildPeriodRevenueRecommendation({
 
             market: {
               medianPrice:
-                day.marketMedianPrice,
+                positionedMarketPrice,
               occupancy:
                 day.marketOccupancy,
               demandIndex:
@@ -373,12 +442,88 @@ export function buildPeriodRevenueRecommendation({
         }
 
         try {
-          return [
+          const decision =
             buildRevenuePricingDecision({
               signalSet,
               strategy:
                 "BALANCED",
-            }),
+            });
+
+          /*
+           * MARKET GUARDRAIL
+           *
+           * Il Comparable Positioning e il Revenue Engine
+           * possono ottimizzare il prezzo, ma il risultato
+           * finale non deve allontanarsi eccessivamente
+           * dal mercato giornaliero originale.
+           *
+           * Prima versione:
+           * massimo +/-15% rispetto al marketMedianPrice.
+           */
+          const originalMarketPrice =
+            day.marketMedianPrice;
+
+          const marketGuardrailMin =
+            originalMarketPrice === null
+              ? null
+              : Math.round(
+                  originalMarketPrice *
+                    0.85,
+                );
+
+          const marketGuardrailMax =
+            originalMarketPrice === null
+              ? null
+              : Math.round(
+                  originalMarketPrice *
+                    1.15,
+                );
+
+          const guardedPrice =
+            marketGuardrailMin === null ||
+            marketGuardrailMax === null
+              ? decision.recommendedPrice
+              : Math.max(
+                  marketGuardrailMin,
+                  Math.min(
+                    marketGuardrailMax,
+                    decision.recommendedPrice,
+                  ),
+                );
+
+          const guardrailApplied =
+            guardedPrice !==
+            decision.recommendedPrice;
+
+          return [
+            {
+              ...decision,
+
+              recommendedPrice:
+                guardedPrice,
+
+              explanation: [
+                ...decision.explanation,
+
+                ...(positioning.usable
+                  ? [
+                      positioning.rationale,
+                    ]
+                  : []),
+
+                ...(guardrailApplied
+                  ? [
+                      `Market Guardrail applicato: prezzo AI limitato a ${guardedPrice} EUR per restare entro +/-15% dal mercato giornaliero.`,
+                    ]
+                  : []),
+              ],
+
+              date:
+                day.date.slice(
+                  0,
+                  10,
+                ),
+            },
           ];
         } catch {
           return [];
@@ -452,7 +597,7 @@ export function buildPeriodRevenueRecommendation({
     return {
       recommendation: null,
       message:
-        `Dati insufficienti: ${analyzedNights} notti affidabili su ${selectedNights} (${coveragePercent}%). Non è disponibile nemmeno una baseline di mercato affidabile.`,
+        `Dati insufficienti: ${analyzedNights} notti affidabili su ${selectedNights} (${coveragePercent}%). Non Ã¨ disponibile nemmeno una baseline di mercato affidabile.`,
     };
   }
 
@@ -470,6 +615,22 @@ export function buildPeriodRevenueRecommendation({
         decisions.length,
     );
 
+  const dailyPrices =
+    decisions.map(
+      (decision) => ({
+        date:
+          decision.date,
+
+        recommendedPrice:
+          decision.recommendedPrice,
+
+        contributions:
+          decision.contributions,
+
+        explanation:
+          decision.explanation,
+      }),
+    );
   const currentMinimumStay =
     Math.max(
       1,
@@ -502,6 +663,7 @@ export function buildPeriodRevenueRecommendation({
       analyzedNights,
       selectedNights,
       coveragePercent,
+      dailyPrices,
     },
 
     message:
@@ -510,6 +672,12 @@ export function buildPeriodRevenueRecommendation({
         : `Analisi basata su ${analyzedNights} notti affidabili su ${selectedNights} (${coveragePercent}% di copertura).`,
   };
 }
+
+
+
+
+
+
 
 
 

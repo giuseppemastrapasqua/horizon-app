@@ -34,7 +34,7 @@ export function CompactMetric({
       className={[
         "border-b border-r border-slate-200 px-3 py-2 last:border-r-0 lg:border-b-0",
         emphasized
-          ? "bg-slate-950 text-white"
+          ? "bg-blue-600 text-white"
           : "bg-white",
       ].join(" ")}
     >
@@ -81,4 +81,5 @@ export function Legend({
     </div>
   );
 }
+
 

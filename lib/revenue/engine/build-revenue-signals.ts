@@ -147,7 +147,7 @@ function marketPriceSignal(
         ? "Prezzo di mercato non disponibile."
         : `Mediana mercato ${Math.round(
             value,
-          )} €.`,
+          )} â‚¬.`,
 
     source:
       "MARKET",
@@ -205,27 +205,30 @@ function marketDemandSignal(
     normalizedValue:
       value === null
         ? null
-        : clamp01(
+        : normalizeIndex(
             value,
           ),
 
     strength:
       normalizedStrength(
-        value,
+        value === null
+          ? null
+          : normalizeIndex(
+              value,
+            ),
       ),
 
     explanation:
       value === null
         ? "Indice domanda non disponibile."
-        : `Indice domanda ${(value * 100).toFixed(
-            0,
-          )}%.`,
+        : `Indice domanda ${formatIndexScore(
+            value,
+          )}/100.`,
 
     source:
       "MARKET",
   });
 }
-
 function competitorAvailabilitySignal(
   value: number | null,
 ): RevenueSignal {
@@ -257,7 +260,7 @@ function competitorAvailabilitySignal(
       "COMPETITOR_AVAILABILITY",
 
     label:
-      "Disponibilità competitor",
+      "DisponibilitÃ  competitor",
 
     value,
 
@@ -273,10 +276,10 @@ function competitorAvailabilitySignal(
 
     explanation:
       value === null
-        ? "Disponibilità competitor non disponibile."
+        ? "DisponibilitÃ  competitor non disponibile."
         : `${Math.round(
             value,
-          )} disponibilità concorrenti rilevate.`,
+          )} disponibilitÃ  concorrenti rilevate.`,
 
     source:
       "MARKET",
@@ -322,23 +325,42 @@ function propertyOccupancySignal(
 function bookingPaceSignal(
   value: number | null,
 ): RevenueSignal {
+  const normalized =
+    value === null
+      ? null
+      : normalizeBookingPace(
+          value,
+        );
+
+  const percentValue =
+    normalized === null
+      ? null
+      : normalized * 100;
+
   let strength:
     RevenueSignalStrength =
-    "NEUTRAL";
+      "NEUTRAL";
 
   if (
-    value !== null
+    percentValue !== null
   ) {
-    if (value >= 1.25) {
+    if (
+      percentValue >= 90
+    ) {
       strength =
         "VERY_HIGH";
     } else if (
-      value >= 1.1
+      percentValue >= 75
     ) {
       strength =
         "HIGH";
     } else if (
-      value <= 0.75
+      percentValue < 45
+    ) {
+      strength =
+        "VERY_LOW";
+    } else if (
+      percentValue < 60
     ) {
       strength =
         "LOW";
@@ -355,26 +377,22 @@ function bookingPaceSignal(
     value,
 
     normalizedValue:
-      value === null
-        ? null
-        : clamp01(
-            value / 1.5,
-          ),
+      normalized,
 
     strength,
 
     explanation:
-      value === null
+      value === null ||
+      percentValue === null
         ? "Booking pace non disponibile."
-        : `Booking pace ${value.toFixed(
-            2,
-          )}x rispetto al riferimento.`,
+        : `Booking pace ${Math.round(
+            percentValue,
+          )}/100.`,
 
     source:
       "PROPERTY",
   });
 }
-
 function leadTimeSignal(
   value: number | null,
 ): RevenueSignal {
@@ -520,27 +538,41 @@ function eventSignal(
     normalizedValue:
       value === null
         ? null
-        : clamp01(
+        : normalizeIndex(
             value,
           ),
 
     strength:
       normalizedStrength(
-        value,
+        value === null
+          ? null
+          : normalizeIndex(
+              value,
+            ),
       ),
 
     explanation:
       value === null
         ? "Nessun segnale eventi disponibile."
-        : `Pressione eventi ${(value * 100).toFixed(
-            0,
-          )}%.`,
+        : `Pressione eventi ${formatIndexScore(
+            value,
+          )}/100.`,
 
     source:
       "EVENT",
   });
 }
 
+function formatIndexScore(
+  value: number,
+) {
+  return Math.round(
+    normalizeIndex(
+      value,
+    ) *
+      100,
+  );
+}
 function buildSignal(
   signal: RevenueSignal,
 ) {
@@ -591,6 +623,46 @@ function normalizedStrength(
   return "NEUTRAL";
 }
 
+/*
+ * Horizon può ricevere alcuni indici
+ * sia in formato 0..1 sia 0..100.
+ *
+ * Normalizziamo entrambi a 0..1.
+ */
+function normalizeIndex(
+  value: number,
+) {
+  return clamp01(
+    value > 1
+      ? value / 100
+      : value,
+  );
+}
+
+/*
+ * Booking pace può arrivare:
+ *
+ * - come rapporto (es. 1.18x)
+ * - come indice percentuale (es. 72)
+ *
+ * Convertiamo entrambi in una pressione
+ * normalizzata 0..1.
+ */
+function normalizeBookingPace(
+  value: number,
+) {
+  if (
+    value > 3
+  ) {
+    return clamp01(
+      value / 100,
+    );
+  }
+
+  return clamp01(
+    value / 1.5,
+  );
+}
 function clamp01(
   value: number,
 ) {
@@ -614,3 +686,6 @@ function clampPercent(
     ),
   );
 }
+
+
+

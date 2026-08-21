@@ -1,10 +1,18 @@
-import {
+﻿import {
   buildFinanceReportPdf,
   type FinanceReportPdfInput,
 } from "@/lib/pdf/finance-report";
 
 import { prisma } from "@/lib/prisma";
 
+import {
+  getPropertyOtaCommissionByChannel,
+  resolveOtaCommissionPercent,
+} from "@/lib/finance/get-property-ota-commissions";
+
+import {
+  buildBookingFinanceBreakdown,
+} from "@/lib/finance/calculations/build-booking-finance-breakdown";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -45,8 +53,21 @@ export async function GET(
         currency: true,
         grossRevenue: true,
         finalAmount: true,
+        formulaId: true,
         formulaName: true,
         createdAt: true,
+
+        adjustments: {
+          orderBy: {
+            createdAt: "asc",
+          },
+
+          select: {
+            id: true,
+            description: true,
+            amount: true,
+          },
+        },
 
         property: {
           select: {
@@ -55,6 +76,8 @@ export async function GET(
             address: true,
             city: true,
             zone: true,
+            cleaningCost: true,
+            propertyManagementCommissionPercent: true,
           },
         },
 
@@ -147,7 +170,159 @@ export async function GET(
       },
     });
 
+  const otaCommissionByChannel =
+    await getPropertyOtaCommissionByChannel(
+      report.property.id,
+    );
+
+  const bookingBreakdowns =
+    report.formulaId
+      ? await Promise.all(
+          bookings.map(
+            async (booking) => {
+              const breakdown =
+                await buildBookingFinanceBreakdown({
+                  formulaId:
+                    report.formulaId!,
+                  grossRevenue:
+                    Number(
+                      booking.grossAmount
+                    ),
+                  cleaningCost:
+                    Number(
+                      report.property.cleaningCost
+                    ),
+
+                  propertyManagementCommissionPercent:
+                    Number(
+                      report.property.propertyManagementCommissionPercent
+                    ),
+                  otaCommissionPercent:
+                    resolveOtaCommissionPercent({
+                      channel:
+                        booking.channel,
+
+                      commissions:
+                        otaCommissionByChannel,
+                    }),
+
+                  currency:
+                    booking.currency,
+                  channel:
+                    booking.channel,
+                });
+
+              return {
+                bookingId:
+                  booking.id,
+                ...breakdown,
+              };
+            },
+          ),
+        )
+      : [];
+
+  const bookingBreakdownById =
+    new Map(
+      bookingBreakdowns.map(
+        (item) => [
+          item.bookingId,
+          item,
+        ],
+      ),
+    );
+  const financeReportTemplate =
+    await prisma.financeReportTemplate.findFirst({
+      where: {
+        OR: [
+          {
+            propertyId:
+              report.property.id,
+          },
+          {
+            isDefault: true,
+            propertyId: null,
+          },
+        ],
+      },
+
+      orderBy: [
+        {
+          propertyId: "desc",
+        },
+        {
+          isDefault: "desc",
+        },
+      ],
+
+      select: {
+        name: true,
+        headerTitle: true,
+        primaryColor: true,
+        logoUrl: true,
+        footerText: true,
+        showBookingDetails: true,
+        showOtaCommissions: true,
+        showCleaningCosts: true,
+        showManagementFees: true,
+        showTaxes: true,
+        showManualAdjustments: true,
+        showCategorySummary: true,
+      },
+    });
+
+  const resolvedPdfTemplate = {
+    name:
+      financeReportTemplate?.name ??
+      "Rendiconto Horizon",
+
+    headerTitle:
+      financeReportTemplate?.headerTitle ??
+      "Rendiconto proprietario",
+
+    primaryColor:
+      financeReportTemplate?.primaryColor ??
+      "#2563EB",
+
+    logoUrl:
+      financeReportTemplate?.logoUrl ??
+      null,
+
+    footerText:
+      financeReportTemplate?.footerText ??
+      null,
+
+    showBookingDetails:
+      financeReportTemplate?.showBookingDetails ??
+      true,
+
+    showOtaCommissions:
+      financeReportTemplate?.showOtaCommissions ??
+      true,
+
+    showCleaningCosts:
+      financeReportTemplate?.showCleaningCosts ??
+      true,
+
+    showManagementFees:
+      financeReportTemplate?.showManagementFees ??
+      true,
+
+    showTaxes:
+      financeReportTemplate?.showTaxes ??
+      true,
+
+    showManualAdjustments:
+      financeReportTemplate?.showManualAdjustments ??
+      true,
+
+    showCategorySummary:
+      financeReportTemplate?.showCategorySummary ??
+      true,
+  };
   const pdfInput: FinanceReportPdfInput = {
+    template: resolvedPdfTemplate,
+
     title: report.title,
     referenceMonth:
       report.referenceMonth,
@@ -161,6 +336,22 @@ export async function GET(
     formulaName:
       report.formulaName,
     createdAt: report.createdAt,
+
+    adjustments:
+      report.adjustments.map(
+        (adjustment) => ({
+          id:
+            adjustment.id,
+
+          description:
+            adjustment.description,
+
+          amount:
+            Number(
+              adjustment.amount
+            ),
+        }),
+      ),
 
     property: {
       name: report.property.name,
@@ -185,25 +376,77 @@ export async function GET(
       : null,
 
     bookings: bookings.map(
-      (booking) => ({
-        id: booking.id,
-        guestName:
-          booking.guestName,
-        checkIn: booking.checkIn,
-        checkOut:
-          booking.checkOut,
-        nights: booking.nights,
-        guests: booking.guests,
-        channel: booking.channel,
-        grossAmount: Number(
-          booking.grossAmount
-        ),
-        currency:
-          booking.currency,
-      })
+      (booking) => {
+        const breakdown =
+          bookingBreakdownById.get(
+            booking.id
+          );
+
+        return {
+          id:
+            booking.id,
+
+          guestName:
+            booking.guestName,
+
+          checkIn:
+            booking.checkIn,
+
+          checkOut:
+            booking.checkOut,
+
+          nights:
+            booking.nights,
+
+          guests:
+            booking.guests,
+
+          channel:
+            booking.channel,
+
+          currency:
+            booking.currency,
+
+          grossBooking:
+            breakdown?.grossBooking ??
+            Number(
+              booking.grossAmount
+            ),
+
+          otaCommission:
+            breakdown?.otaCommission ??
+            null,
+
+          cleaningCost:
+            breakdown?.cleaningCost ??
+            Number(
+              report.property.cleaningCost
+            ),
+
+          grossProperty:
+            breakdown?.grossProperty ??
+            null,
+
+          managementCommission:
+            breakdown?.managementCommission ??
+            null,
+
+          taxAmount:
+            breakdown?.taxAmount ??
+            null,
+
+          otherAmount:
+            breakdown?.otherAmount ??
+            null,
+
+          netProperty:
+            breakdown?.netProperty ??
+            null,
+        };
+      }
     ),
 
-   rules: report.rules.map((rule) => ({
+    rules: report.rules.map((rule) => ({
   id: rule.id,
   order: rule.order,
   ruleName: rule.ruleName,
@@ -214,6 +457,26 @@ export async function GET(
   ),
 })),
   };
+
+  console.log(
+    "FINANCE PDF DEBUG",
+    {
+      reportId: report.id,
+
+      databaseAdjustments:
+        report.adjustments.map(
+          (adjustment) => ({
+            id: adjustment.id,
+            description: adjustment.description,
+            amount: Number(adjustment.amount),
+          }),
+        ),
+
+      pdfAdjustments: pdfInput.adjustments,
+      finalAmount: pdfInput.finalAmount,
+      grossRevenue: pdfInput.grossRevenue,
+    },
+  );
 
   const pdfBytes =
     await buildFinanceReportPdf(
@@ -284,3 +547,28 @@ function createPdfFilename({
     `-${year}-${month}.pdf`
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

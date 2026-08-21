@@ -1,7 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
+
 import {
   ChevronUp,
   LoaderCircle,
@@ -23,7 +24,9 @@ export function UserMenu({
   const [isOpen, setIsOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const displayName = name?.trim() || "Utente Horizon";
+  const displayName =
+    name?.trim() || "Utente Horizon";
+
   const displayRole = formatRole(role);
 
   async function handleSignOut() {
@@ -37,24 +40,21 @@ export function UserMenu({
   return (
     <div className="relative">
       {isOpen ? (
-        <div className="absolute bottom-full left-0 right-0 mb-2 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl shadow-black/30">
-          <div className="border-b border-white/10 px-4 py-3">
-            <p className="truncate text-sm font-medium text-white">
-              {displayName}
-            </p>
+        <div className="absolute bottom-full left-0 right-0 mb-2 overflow-hidden rounded-xl border border-white/[0.10] bg-[#072B70] shadow-[0_12px_32px_rgba(0,0,0,0.25)]">
 
-            {email ? (
-              <p className="mt-1 truncate text-xs text-slate-400">
+          {email ? (
+            <div className="border-b border-white/[0.08] px-3.5 py-3">
+              <p className="truncate text-[11px] text-blue-100/60">
                 {email}
               </p>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
           <button
             type="button"
             disabled={isSigningOut}
             onClick={handleSignOut}
-            className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-slate-300 transition hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-blue-500/20 disabled:cursor-not-allowed disabled:text-slate-500"
+            className="flex h-[42px] w-full items-center gap-2.5 px-3.5 text-left text-[12px] font-medium text-blue-50/80 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSigningOut ? (
               <LoaderCircle className="size-4 animate-spin" />
@@ -62,7 +62,9 @@ export function UserMenu({
               <LogOut className="size-4" />
             )}
 
-            {isSigningOut ? "Uscita in corso" : "Esci da Horizon"}
+            {isSigningOut
+              ? "Uscita in corso..."
+              : "Esci da Horizon"}
           </button>
         </div>
       ) : null}
@@ -71,26 +73,32 @@ export function UserMenu({
         type="button"
         aria-expanded={isOpen}
         aria-label="Apri menu utente"
-        onClick={() => setIsOpen((currentValue) => !currentValue)}
-        className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 text-left transition hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20"
+        onClick={() =>
+          setIsOpen((currentValue) => !currentValue)
+        }
+        className="flex w-full items-center gap-3 rounded-xl border border-white/[0.10] bg-white/[0.055] px-2.5 py-2 text-left transition hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/10"
       >
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white">
-          <UserRound className="size-5" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-[#1769FF] text-white shadow-sm">
+          <UserRound
+            size={18}
+            strokeWidth={1.9}
+          />
         </span>
 
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-slate-200">
+          <span className="block truncate text-[12px] font-semibold text-white">
             {displayName}
           </span>
 
-          <span className="mt-0.5 block truncate text-xs text-slate-500">
+          <span className="mt-[1px] block truncate text-[11px] text-blue-100/50">
             {displayRole}
           </span>
         </span>
 
         <ChevronUp
+          size={14}
           className={[
-            "size-4 shrink-0 text-slate-500 transition-transform",
+            "shrink-0 text-blue-100/40 transition-transform",
             isOpen ? "rotate-180" : "",
           ].join(" ")}
         />
@@ -107,6 +115,10 @@ function formatRole(role?: string | null) {
   return role
     .toLowerCase()
     .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map(
+      (word) =>
+        word.charAt(0).toUpperCase() +
+        word.slice(1)
+    )
     .join(" ");
 }

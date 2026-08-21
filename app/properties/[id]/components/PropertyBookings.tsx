@@ -1,12 +1,21 @@
 import Link from "next/link";
-import { Panel } from "@/components/ui/Panel";
-import { SectionTitle } from "@/components/ui/SectionTitle";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { ActionButton } from "@/components/ui/ActionButton";
-import { uiTokens } from "@/components/ui/tokens";
-import { formatCurrency } from "@/lib/format/currency";
-import { formatDate } from "@/lib/format/date";
+
+import {
+  ArrowRight,
+  CalendarPlus,
+} from "lucide-react";
+
+import {
+  StatusBadge,
+} from "@/components/ui/StatusBadge";
+
+import {
+  formatCurrency,
+} from "@/lib/format/currency";
+
+import {
+  formatDate,
+} from "@/lib/format/date";
 
 export type PropertyBookingItem = {
   id: string;
@@ -31,108 +40,142 @@ export function PropertyBookings({
   bookings,
 }: PropertyBookingsProps) {
   return (
-    <Panel>
-      <SectionTitle
-        title="Prenotazioni recenti"
-        subtitle="Soggiorni, importi e stato operativo dell’immobile."
-        action={
-          <ActionButton
-            label="Nuova prenotazione"
-            href={`/bookings/new?propertyId=${propertyId}`}
-            compact
-          />
-        }
-      />
+    <section className="h-full rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-blue-600">
+            Prenotazioni
+          </p>
+
+          <h2 className="mt-1 text-base font-bold tracking-tight text-slate-900">
+            Prenotazioni recenti
+          </h2>
+
+          <p className="mt-1 text-[10px] text-slate-500">
+            Soggiorni, importi e stato operativo.
+          </p>
+        </div>
+
+        <Link
+          href={`/bookings/new?propertyId=${propertyId}`}
+          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+        >
+          <CalendarPlus size={13} />
+
+          Nuova prenotazione
+        </Link>
+      </div>
 
       {bookings.length === 0 ? (
-        <EmptyState
-          title="Nessuna prenotazione registrata"
-          description="Le prenotazioni collegate all’immobile compariranno qui."
-          actionLabel="Crea prenotazione"
-          actionHref={`/bookings/new?propertyId=${propertyId}`}
-        />
+        <div className="rounded-xl border border-dashed border-blue-200 bg-blue-50/40 p-5 text-center">
+          <p className="text-xs font-semibold text-slate-700">
+            Nessuna prenotazione registrata
+          </p>
+
+          <p className="mt-1 text-[10px] text-slate-500">
+            Le prenotazioni dell&apos;immobile compariranno qui.
+          </p>
+        </div>
       ) : (
-        <div style={listStyle}>
-          {bookings.map((booking) => (
-            <article key={booking.id} style={bookingCardStyle}>
-              <div style={headerStyle}>
-                <div>
+        <div className="space-y-2.5">
+          {bookings.map(
+            (booking) => (
+              <article
+                key={booking.id}
+                className="rounded-xl border border-slate-200 bg-slate-50/45 p-3 transition hover:border-blue-200 hover:bg-blue-50/25"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <Link
+                      href={`/bookings/${booking.id}`}
+                      className="text-xs font-bold text-slate-900 transition hover:text-blue-700"
+                    >
+                      {booking.guestName}
+                    </Link>
+
+                    <p className="mt-1 text-[9px] font-medium text-slate-400">
+                      {formatDate(
+                        booking.checkIn,
+                      )}{" "}
+                      →{" "}
+                      {formatDate(
+                        booking.checkOut,
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    <StatusBadge
+                      label={booking.channel}
+                      tone="blue"
+                      compact
+                    />
+
+                    <StatusBadge
+                      label={booking.bookingStatus}
+                      compact
+                    />
+
+                    <StatusBadge
+                      label={booking.operationalStatus}
+                      compact
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200 pt-3 sm:grid-cols-5">
+                  <Metric
+                    label="Importo"
+                    value={formatCurrency(
+                      booking.grossAmount,
+                    )}
+                  />
+
+                  <Metric
+                    label="Notti"
+                    value={booking.nights}
+                  />
+
+                  <Metric
+                    label="Ospiti"
+                    value={booking.guests}
+                  />
+
+                  <Metric
+                    label="Check-in"
+                    value={booking.checkIn.toLocaleDateString(
+                      "it-IT",
+                    )}
+                  />
+
+                  <Metric
+                    label="Check-out"
+                    value={booking.checkOut.toLocaleDateString(
+                      "it-IT",
+                    )}
+                  />
+                </div>
+
+                <div className="mt-3 border-t border-slate-200 pt-2.5">
                   <Link
                     href={`/bookings/${booking.id}`}
-                    style={bookingTitleStyle}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-blue-100 bg-white px-2.5 py-1.5 text-[9px] font-semibold text-blue-700 transition hover:bg-blue-50"
                   >
-                    {booking.guestName}
+                    Apri prenotazione
+
+                    <ArrowRight size={11} />
                   </Link>
-
-                  <p style={dateStyle}>
-                    {formatDate(booking.checkIn)} →{" "}
-                    {formatDate(booking.checkOut)}
-                  </p>
                 </div>
-
-                <div style={badgesStyle}>
-                  <StatusBadge
-                    label={booking.channel}
-                    tone="blue"
-                    compact
-                  />
-
-                  <StatusBadge
-                    label={booking.bookingStatus}
-                    compact
-                  />
-
-                  <StatusBadge
-                    label={booking.operationalStatus}
-                    compact
-                  />
-                </div>
-              </div>
-
-              <div style={metricsGridStyle}>
-                <BookingMetric
-                  label="Importo"
-                  value={formatCurrency(booking.grossAmount)}
-                />
-
-                <BookingMetric
-                  label="Notti"
-                  value={booking.nights}
-                />
-
-                <BookingMetric
-                  label="Ospiti"
-                  value={booking.guests}
-                />
-
-                <BookingMetric
-                  label="Check-in"
-                  value={booking.checkIn.toLocaleDateString("it-IT")}
-                />
-
-                <BookingMetric
-                  label="Check-out"
-                  value={booking.checkOut.toLocaleDateString("it-IT")}
-                />
-              </div>
-
-              <div style={footerStyle}>
-                <ActionButton
-                  label="Apri prenotazione"
-                  href={`/bookings/${booking.id}`}
-                  variant="secondary"
-                  compact
-                />
-              </div>
-            </article>
-          ))}
+              </article>
+            ),
+          )}
         </div>
       )}
-    </Panel>
+    </section>
   );
 }
 
-function BookingMetric({
+function Metric({
   label,
   value,
 }: {
@@ -141,73 +184,14 @@ function BookingMetric({
 }) {
   return (
     <div>
-      <div style={metricLabelStyle}>{label}</div>
-      <strong style={metricValueStyle}>{value}</strong>
+      <p className="text-[8px] font-semibold uppercase tracking-wide text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-1 text-[10px] font-bold text-slate-800">
+        {value}
+      </p>
     </div>
   );
 }
 
-const listStyle = {
-  display: "grid",
-  gap: uiTokens.spacing.md,
-};
-
-const bookingCardStyle = {
-  padding: uiTokens.spacing.md,
-  borderRadius: uiTokens.radius.lg,
-  background: uiTokens.colors.surfaceSoft,
-  border: `1px solid ${uiTokens.colors.border}`,
-};
-
-const headerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  gap: uiTokens.spacing.md,
-  flexWrap: "wrap" as const,
-};
-
-const bookingTitleStyle = {
-  color: uiTokens.colors.textPrimary,
-  fontSize: "16px",
-  fontWeight: uiTokens.fontWeight.strong,
-  textDecoration: "none",
-};
-
-const dateStyle = {
-  margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textMuted,
-  fontSize: uiTokens.fontSize.sm,
-};
-
-const badgesStyle = {
-  display: "flex",
-  gap: uiTokens.spacing.sm,
-  flexWrap: "wrap" as const,
-};
-
-const metricsGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
-  gap: uiTokens.spacing.md,
-  marginTop: uiTokens.spacing.md,
-  paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
-};
-
-const metricLabelStyle = {
-  marginBottom: "4px",
-  color: uiTokens.colors.textSubtle,
-  fontSize: uiTokens.fontSize.xs,
-};
-
-const metricValueStyle = {
-  color: uiTokens.colors.textPrimary,
-  fontSize: uiTokens.fontSize.sm,
-};
-
-const footerStyle = {
-  marginTop: uiTokens.spacing.md,
-  paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
-};

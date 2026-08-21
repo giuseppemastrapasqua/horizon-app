@@ -1,18 +1,33 @@
 import Link from "next/link";
-import { Panel } from "@/components/ui/Panel";
-import { SectionTitle } from "@/components/ui/SectionTitle";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { uiTokens, type UiTone } from "@/components/ui/tokens";
+
+import {
+  Activity,
+} from "lucide-react";
+
+import {
+  StatusBadge,
+} from "@/components/ui/StatusBadge";
+
+import type {
+  UiTone,
+} from "@/components/ui/tokens";
 
 export type PropertyTimelineItem = {
   id: string;
   title: string;
   description: string;
   occurredAt: Date;
-  category: "BOOKING" | "TASK" | "DOCUMENT" | "SYSTEM";
+  category:
+    | "BOOKING"
+    | "TASK"
+    | "DOCUMENT"
+    | "SYSTEM";
   href?: string;
-  status?: "SUCCESS" | "WARNING" | "DANGER" | "INFO";
+  status?:
+    | "SUCCESS"
+    | "WARNING"
+    | "DANGER"
+    | "INFO";
 };
 
 type PropertyTimelineProps = {
@@ -23,183 +38,153 @@ export function PropertyTimeline({
   items,
 }: PropertyTimelineProps) {
   return (
-    <Panel>
-      <SectionTitle
-        title="Attività recenti"
-        subtitle="Ultimi eventi relativi a prenotazioni, task e documenti."
-        action={
-          <StatusBadge
-            label={`${items.length} eventi`}
-            tone="default"
-            compact
-          />
-        }
-      />
+    <section className="h-full rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <Activity size={14} />
+            </span>
+
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                Timeline
+              </p>
+
+              <h2 className="mt-0.5 text-base font-bold tracking-tight text-slate-900">
+                Attività recenti
+              </h2>
+            </div>
+          </div>
+
+          <p className="mt-2 text-[10px] text-slate-500">
+            Ultimi eventi operativi dell&apos;immobile.
+          </p>
+        </div>
+
+        <StatusBadge
+          label={`${items.length} eventi`}
+          tone="default"
+          compact
+        />
+      </div>
 
       {items.length === 0 ? (
-        <EmptyState
-          title="Nessuna attività recente"
-          description="Gli eventi operativi dell’immobile compariranno qui."
-        />
+        <div className="rounded-xl border border-dashed border-blue-200 bg-blue-50/40 p-5 text-center">
+          <p className="text-xs font-semibold text-slate-700">
+            Nessuna attività recente
+          </p>
+        </div>
       ) : (
-        <div style={timelineStyle}>
-          {items.map((item, index) => (
-            <div key={item.id} style={timelineItemStyle}>
-              <div style={timelineRailStyle}>
-                <div
-                  style={{
-                    ...timelineDotStyle,
-                    ...getStatusStyle(item.status ?? "INFO"),
-                  }}
-                />
+        <div>
+          {items.map(
+            (
+              item,
+              index,
+            ) => (
+              <div
+                key={item.id}
+                className="grid grid-cols-[18px_minmax(0,1fr)] gap-3"
+              >
+                <div className="flex flex-col items-center">
+                  <span
+                    className={[
+                      "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ring-4",
+                      getStatusClasses(
+                        item.status ??
+                          "INFO",
+                      ),
+                    ].join(" ")}
+                  />
 
-                {index < items.length - 1 ? (
-                  <div style={timelineLineStyle} />
-                ) : null}
-              </div>
+                  {index <
+                  items.length - 1 ? (
+                    <span className="mt-1 min-h-12 w-px flex-1 bg-slate-200" />
+                  ) : null}
+                </div>
 
-              <div style={contentStyle}>
-                <div style={contentHeaderStyle}>
-                  <div>
-                    {item.href ? (
-                      <Link
-                        href={item.href}
-                        style={eventTitleLinkStyle}
-                      >
-                        {item.title}
-                      </Link>
-                    ) : (
-                      <strong style={eventTitleStyle}>
-                        {item.title}
-                      </strong>
-                    )}
+                <div className="pb-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      {item.href ? (
+                        <Link
+                          href={item.href}
+                          className="text-[10px] font-bold text-slate-900 transition hover:text-blue-700"
+                        >
+                          {item.title}
+                        </Link>
+                      ) : (
+                        <p className="text-[10px] font-bold text-slate-900">
+                          {item.title}
+                        </p>
+                      )}
 
-                    <p style={descriptionStyle}>
-                      {item.description}
-                    </p>
+                      <p className="mt-1 text-[9px] leading-4 text-slate-500">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    <StatusBadge
+                      label={item.category}
+                      tone={getCategoryTone(
+                        item.category,
+                      )}
+                      compact
+                    />
                   </div>
 
-                  <StatusBadge
-                    label={item.category}
-                    tone={getCategoryTone(item.category)}
-                    compact
-                  />
-                </div>
-
-                <div style={dateStyle}>
-                  {item.occurredAt.toLocaleString("it-IT")}
+                  <p className="mt-1.5 text-[8px] font-medium text-slate-400">
+                    {item.occurredAt.toLocaleString(
+                      "it-IT",
+                    )}
+                  </p>
                 </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       )}
-    </Panel>
+    </section>
   );
 }
 
 function getCategoryTone(
-  category: PropertyTimelineItem["category"]
+  category:
+    PropertyTimelineItem["category"],
 ): UiTone {
-  if (category === "BOOKING") return "blue";
-  if (category === "TASK") return "yellow";
-  if (category === "DOCUMENT") return "violet";
+  if (category === "BOOKING") {
+    return "blue";
+  }
+
+  if (category === "TASK") {
+    return "yellow";
+  }
+
+  if (category === "DOCUMENT") {
+    return "blue";
+  }
 
   return "default";
 }
 
-function getStatusStyle(
-  status: NonNullable<PropertyTimelineItem["status"]>
+function getStatusClasses(
+  status:
+    NonNullable<
+      PropertyTimelineItem["status"]
+    >,
 ) {
   if (status === "SUCCESS") {
-    return {
-      background: "#22c55e",
-      border: "3px solid #dcfce7",
-    };
+    return "bg-emerald-500 ring-emerald-50";
   }
 
   if (status === "WARNING") {
-    return {
-      background: "#f59e0b",
-      border: "3px solid #fef3c7",
-    };
+    return "bg-amber-500 ring-amber-50";
   }
 
   if (status === "DANGER") {
-    return {
-      background: "#f43f5e",
-      border: "3px solid #ffe4e6",
-    };
+    return "bg-rose-500 ring-rose-50";
   }
 
-  return {
-    background: "#3b82f6",
-    border: "3px solid #dbeafe",
-  };
+  return "bg-blue-500 ring-blue-50";
 }
 
-const timelineStyle = {
-  display: "grid",
-};
-
-const timelineItemStyle = {
-  display: "grid",
-  gridTemplateColumns: "22px 1fr",
-  gap: uiTokens.spacing.md,
-};
-
-const timelineRailStyle = {
-  display: "grid",
-  gridTemplateRows: "18px 1fr",
-  justifyItems: "center",
-};
-
-const timelineDotStyle = {
-  width: "14px",
-  height: "14px",
-  borderRadius: uiTokens.radius.pill,
-  boxSizing: "border-box" as const,
-};
-
-const timelineLineStyle = {
-  width: "2px",
-  minHeight: "58px",
-  background: uiTokens.colors.border,
-};
-
-const contentStyle = {
-  paddingBottom: uiTokens.spacing.lg,
-};
-
-const contentHeaderStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  gap: uiTokens.spacing.md,
-};
-
-const eventTitleStyle = {
-  color: uiTokens.colors.textPrimary,
-  fontSize: uiTokens.fontSize.md,
-  fontWeight: uiTokens.fontWeight.bold,
-};
-
-const eventTitleLinkStyle = {
-  color: uiTokens.colors.textPrimary,
-  fontSize: uiTokens.fontSize.md,
-  fontWeight: uiTokens.fontWeight.bold,
-  textDecoration: "none",
-};
-
-const descriptionStyle = {
-  margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textMuted,
-  fontSize: uiTokens.fontSize.sm,
-  lineHeight: 1.45,
-};
-
-const dateStyle = {
-  marginTop: uiTokens.spacing.sm,
-  color: uiTokens.colors.textSubtle,
-  fontSize: uiTokens.fontSize.xs,
-};

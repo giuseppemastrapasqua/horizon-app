@@ -1,6 +1,11 @@
 import Link from "next/link";
 
 import {
+  Lock,
+  UserRound,
+} from "lucide-react";
+
+import {
   addDays,
   sameDay,
   startOfDay,
@@ -246,16 +251,16 @@ export function CalendarWeek({
                 "relative z-0 border-r border-slate-200 px-2 pt-1.5 text-left last:border-r-0",
                 "select-none transition-colors",
                 day.currentMonth
-                  ? "cursor-pointer hover:bg-violet-50/70"
+                  ? "cursor-pointer hover:bg-blue-50/60"
                   : "cursor-default opacity-40",
                 isInRange
-                  ? "bg-sky-50"
+                  ? "bg-blue-50/70"
                   : isWeekend
                     ? "bg-slate-50/65"
                     : "bg-white",
                 isRangeStart ||
                 isRangeEnd
-                  ? "ring-2 ring-inset ring-sky-500"
+                  ? "ring-2 ring-inset ring-blue-500"
                   : "",
               ].join(
                 " ",
@@ -267,9 +272,9 @@ export function CalendarWeek({
                     "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-semibold",
                     isRangeStart ||
                     isRangeEnd
-                      ? "bg-sky-600 text-white shadow-sm"
+                      ? "bg-blue-600 text-white shadow-sm"
                       : isToday
-                        ? "bg-slate-950 text-white"
+                        ? "bg-slate-900 text-white shadow-sm"
                         : "text-slate-600",
                   ].join(
                     " ",
@@ -281,7 +286,7 @@ export function CalendarWeek({
                 </span>
 
                 {dayPricing !== null ? (
-                  <span className="inline-flex items-center gap-1 rounded-md bg-violet-50 px-1.5 py-0.5 text-[8px] font-bold text-violet-700">
+                  <span className="inline-flex items-center gap-1 rounded-md border border-blue-100 bg-blue-50/80 px-1.5 py-0.5 text-[8px] font-bold text-blue-700">
                     <span>
                       {formatCompactMoney(
                         dayPricing.price,
@@ -289,8 +294,8 @@ export function CalendarWeek({
                     </span>
 
                     {dayPricing.guests !== null ? (
-                      <span className="whitespace-nowrap text-violet-600">
-                        👤{dayPricing.guests}
+                      <span className="inline-flex items-center gap-0.5 whitespace-nowrap text-blue-600">
+                        <UserRound size={8} />{dayPricing.guests}
                       </span>
                     ) : null}
                   </span>
@@ -307,14 +312,15 @@ export function CalendarWeek({
             (segment) => (
               <div
                 key={`availability-${segment.id}-${segment.startColumn}-${segment.endColumn}`}
-                className="mx-0.5 flex h-[18px] items-center overflow-hidden rounded-md border border-red-400 bg-red-500 px-2 text-[8px] font-bold text-white shadow-sm"
+                className="mx-0.5 flex h-[18px] items-center overflow-hidden rounded-md border border-rose-300 bg-rose-500/95 px-2 text-[8px] font-semibold text-white shadow-sm shadow-rose-200/40"
                 style={{
                   gridColumn: `${segment.startColumn + 1} / ${segment.endColumn + 2}`,
                 }}
                 title="Struttura chiusa"
               >
-                <span className="truncate">
-                  🔒 Chiuso
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <Lock size={9} className="shrink-0" />
+                  <span className="truncate">Chiuso</span>
                 </span>
               </div>
             ),
@@ -335,7 +341,7 @@ export function CalendarWeek({
                 key={`${segment.booking.id}-${segment.startColumn}-${segment.endColumn}`}
                 href={`/bookings/${segment.booking.id}`}
                 className={[
-                  "pointer-events-auto mx-0.5 flex h-[18px] items-center overflow-hidden rounded-md px-2 text-[8px] font-bold shadow-sm transition hover:shadow-md",
+                  "pointer-events-auto mx-0.5 flex h-[18px] items-center overflow-hidden rounded-md px-2 text-[8px] font-semibold shadow-sm transition-all hover:-translate-y-px hover:shadow-md",
                   presentation.className,
                 ].join(
                   " ",
@@ -389,6 +395,8 @@ export function CalendarWeek({
     </div>
   );
 }
+
+
 
 
 

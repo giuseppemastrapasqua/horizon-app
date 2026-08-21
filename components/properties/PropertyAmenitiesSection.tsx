@@ -68,7 +68,7 @@ export function PropertyAmenitiesSection({
     >
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-950 text-sm font-semibold text-white">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white">
             03
           </span>
 
@@ -134,7 +134,7 @@ export function PropertyAmenitiesSection({
                           defaultChecked={selectedIds.has(
                             amenity.id,
                           )}
-                          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-slate-950 focus:ring-slate-950"
+                          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-slate-950 focus:ring-blue-500"
                         />
 
                         <span className="min-w-0">
@@ -159,7 +159,7 @@ export function PropertyAmenitiesSection({
           <div className="flex justify-end border-t border-slate-200 pt-6">
             <button
               type="submit"
-              className="rounded-xl bg-slate-950 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+              className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Salva servizi
             </button>

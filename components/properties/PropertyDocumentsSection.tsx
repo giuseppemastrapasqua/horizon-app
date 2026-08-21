@@ -1,4 +1,4 @@
-﻿
+
 import type {
   PropertyDocumentType,
   PropertyDocumentValidity,
@@ -97,7 +97,7 @@ export function PropertyDocumentsSection({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-950 text-sm font-semibold text-white">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white">
                 DOC
               </span>
 
@@ -151,7 +151,7 @@ export function PropertyDocumentsSection({
             <div className="flex justify-end border-t border-slate-200 pt-6">
               <button
                 type="submit"
-                className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2"
+                className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Aggiungi documento
               </button>
@@ -296,7 +296,7 @@ attachment={
               document.ocrStatus === "QUEUED" ||
               document.ocrStatus === "PROCESSING"
             }
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
           >
             {document.ocrStatus === "QUEUED"
               ? "OCR in coda"
@@ -831,7 +831,7 @@ function getOcrStatusClassName(
       return "bg-sky-100 text-sky-700";
 
     case "PROCESSING":
-      return "bg-violet-100 text-violet-700";
+      return "bg-blue-100 text-blue-700";
 
     case "COMPLETED":
       return "bg-emerald-100 text-emerald-700";
@@ -873,4 +873,5 @@ function formatOcrDuration(
 }
 
 const inputClassName =
-  "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10";
+  "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10";
+

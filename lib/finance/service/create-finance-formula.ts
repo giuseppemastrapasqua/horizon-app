@@ -3,6 +3,7 @@ import {
   FinanceFormulaScope,
   FinanceFormulaStatus,
   FinanceRuleBase,
+  FinanceRuleCategory,
   FinanceRuleOperation,
   FinanceRuleValueType,
 } from "@prisma/client";
@@ -19,6 +20,8 @@ export type FormulaRulePayload = {
   valueType: FinanceRuleValueType;
   base: FinanceRuleBase;
   value: number;
+
+  category?: FinanceRuleCategory;
 
   baseRuleId?: string | null;
   referencedFormulaId?: string | null;
@@ -237,6 +240,10 @@ export async function createFinanceFormula(
 
                   value: rule.value,
 
+                  category:
+                    rule.category ??
+                    "OTHER",
+
                   referencedFormulaId:
                     rule.referencedFormulaId ??
                     null,
@@ -287,7 +294,11 @@ export async function createFinanceFormula(
                   rule.valueType,
                 base: rule.base,
                 value: rule.value,
-                referencedFormulaId:
+                category:
+                    rule.category ??
+                    "OTHER",
+
+                  referencedFormulaId:
                   rule.referencedFormulaId,
               }),
             ),
@@ -300,3 +311,7 @@ export async function createFinanceFormula(
     },
   );
 }
+
+
+
+

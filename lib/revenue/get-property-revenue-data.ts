@@ -10,10 +10,23 @@ export async function getPropertyRevenueData({
   endDate: Date;
 }) {
   const [
+    property,
     latestSnapshot,
     dailySignals,
     comparables,
   ] = await Promise.all([
+    prisma.property.findUnique({
+      where: {
+        id: propertyId,
+      },
+
+      select: {
+        maxGuests: true,
+        bedrooms: true,
+        bathrooms: true,
+      },
+    }),
+
     prisma.revenueMarketSnapshot.findFirst({
       where: {
         propertyId,
@@ -88,7 +101,24 @@ export async function getPropertyRevenueData({
     }
   }
 
+  if (!property) {
+    throw new Error(
+      "Property non trovata durante il caricamento Revenue.",
+    );
+  }
+
   return {
+    property: {
+      maxGuests:
+        property.maxGuests,
+
+      bedrooms:
+        property.bedrooms,
+
+      bathrooms:
+        property.bathrooms,
+    },
+
     snapshot:
       latestSnapshot
         ? {
@@ -316,3 +346,5 @@ export async function getPropertyRevenueData({
       ),
   };
 }
+
+

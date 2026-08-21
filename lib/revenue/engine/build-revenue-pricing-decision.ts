@@ -1,4 +1,5 @@
 import type {
+  RevenuePricingContribution,
   RevenuePricingDecision,
   RevenueSignal,
   RevenueSignalSet,
@@ -39,7 +40,7 @@ export function buildRevenuePricingDecision({
    * sul prezzo.
    *
    * Non partiamo dal prezzo del PM:
-   * la baseline è il mercato.
+   * la baseline Ã¨ il mercato.
    */
   const demandPressure =
     centeredSignal(
@@ -77,6 +78,12 @@ export function buildRevenuePricingDecision({
       "EVENT_PRESSURE",
     );
 
+  const leadTimePressure =
+    centeredSignal(
+      signalSet,
+      "LEAD_TIME",
+    );
+
   const gapPressure =
     calendarGapPressure(
       signalSet,
@@ -89,21 +96,139 @@ export function buildRevenuePricingDecision({
    * In futuro saranno calibrati
    * sui risultati reali Horizon.
    */
+  const contributions:
+    RevenuePricingContribution[] =
+      [
+        pricingContribution({
+          code:
+            "MARKET_DEMAND",
+
+          label:
+            "Domanda mercato",
+
+          pressure:
+            demandPressure,
+
+          weight:
+            0.22,
+        }),
+
+        pricingContribution({
+          code:
+            "MARKET_OCCUPANCY",
+
+          label:
+            "Occupazione mercato",
+
+          pressure:
+            marketOccupancyPressure,
+
+          weight:
+            0.18,
+        }),
+
+        pricingContribution({
+          code:
+            "COMPETITOR_AVAILABILITY",
+
+          label:
+            "Disponibilità competitor",
+
+          pressure:
+            competitorPressure,
+
+          weight:
+            0.13,
+        }),
+
+        pricingContribution({
+          code:
+            "PROPERTY_OCCUPANCY",
+
+          label:
+            "Occupazione struttura",
+
+          pressure:
+            propertyOccupancyPressure,
+
+          weight:
+            0.10,
+        }),
+
+        pricingContribution({
+          code:
+            "BOOKING_PACE",
+
+          label:
+            "Booking pace",
+
+          pressure:
+            bookingPacePressure,
+
+          weight:
+            0.12,
+        }),
+
+        pricingContribution({
+          code:
+            "EVENT_PRESSURE",
+
+          label:
+            "Pressione eventi",
+
+          pressure:
+            eventPressure,
+
+          weight:
+            0.10,
+        }),
+
+        pricingContribution({
+          code:
+            "LEAD_TIME",
+
+          label:
+            "Lead time",
+
+          pressure:
+            leadTimePressure,
+
+          weight:
+            0.10,
+        }),
+
+        pricingContribution({
+          code:
+            "CALENDAR_GAP",
+
+          label:
+            "Gap calendario",
+
+          pressure:
+            gapPressure,
+
+          weight:
+            0.05,
+        }),
+      ];
+
   const rawPressure =
-    demandPressure * 0.25 +
-    marketOccupancyPressure * 0.20 +
-    competitorPressure * 0.15 +
-    propertyOccupancyPressure * 0.10 +
-    bookingPacePressure * 0.15 +
-    eventPressure * 0.10 +
-    gapPressure * 0.05;
+    contributions.reduce(
+      (
+        total,
+        contribution,
+      ) =>
+        total +
+        contribution.contribution,
+      0,
+    );
 
   /*
    * Evitiamo movimenti estremi
    * nella prima versione.
    *
-   * Il motore può spostarsi
-   * al massimo ±20% rispetto
+   * Il motore puÃ² spostarsi
+   * al massimo Â±20% rispetto
    * al riferimento di mercato
    * prima della strategia.
    */
@@ -119,6 +244,29 @@ export function buildRevenuePricingDecision({
       strategy,
       rawPressure,
     );
+
+  contributions.push({
+    code:
+      "STRATEGY",
+
+    label:
+      `Strategia ${strategy}`,
+
+    pressure:
+      rawPressure,
+
+    weight:
+      1,
+
+    contribution:
+      strategyAdjustment,
+
+    adjustmentPercent:
+      roundPercent(
+        strategyAdjustment *
+          100,
+      ),
+  });
 
   const totalAdjustment =
     clamp(
@@ -177,10 +325,13 @@ export function buildRevenuePricingDecision({
           1000,
       ) / 10,
 
+    contributions,
+
     explanation:
       buildExplanation(
         signalSet,
         strategy,
+        contributions,
       ),
 
     signals:
@@ -188,6 +339,79 @@ export function buildRevenuePricingDecision({
   };
 }
 
+function pricingContribution({
+  code,
+  label,
+  pressure,
+  weight,
+}: {
+  code:
+    RevenueSignal["code"];
+
+  label:
+    string;
+
+  pressure:
+    number;
+
+  weight:
+    number;
+}): RevenuePricingContribution {
+  const contribution =
+    pressure *
+    weight;
+
+  return {
+    code,
+    label,
+    pressure:
+      roundNumber(
+        pressure,
+      ),
+
+    weight,
+
+    contribution:
+      roundNumber(
+        contribution,
+      ),
+
+    /*
+     * rawPressure viene successivamente
+     * trasformato in marketAdjustment
+     * moltiplicandolo per 20%.
+     *
+     * Questo valore mostra quindi
+     * l'impatto percentuale indicativo
+     * del singolo driver sul prezzo.
+     */
+    adjustmentPercent:
+      roundPercent(
+        contribution *
+          20,
+      ),
+  };
+}
+
+function roundNumber(
+  value: number,
+) {
+  return Math.round(
+    value *
+      10000,
+  ) /
+    10000;
+}
+
+function roundPercent(
+  value: number,
+) {
+  return Math.round(
+    value *
+      10,
+  ) /
+    10;
+}
 function getStrategyAdjustment(
   strategy: RevenueStrategy,
   pressure: number,
@@ -195,7 +419,7 @@ function getStrategyAdjustment(
   switch (strategy) {
     case "OCCUPANCY":
       /*
-       * Più conservativo sul prezzo,
+       * PiÃ¹ conservativo sul prezzo,
        * soprattutto con pressione
        * debole.
        */
@@ -338,57 +562,143 @@ function buildExplanation(
 
   strategy:
     RevenueStrategy,
+
+  contributions:
+    RevenuePricingContribution[],
 ) {
   const explanations:
     string[] = [];
 
-  const positiveSignals =
-    signalSet.signals.filter(
-      (signal) =>
-        signal.strength ===
-          "HIGH" ||
-        signal.strength ===
-          "VERY_HIGH",
-    );
+  /*
+   * L'explainability deve derivare
+   * dallo stesso calcolo che genera
+   * il prezzo.
+   *
+   * Ordiniamo quindi i driver per
+   * impatto economico assoluto,
+   * non per semplice HIGH / LOW.
+   */
+  const economicDrivers =
+    contributions
+      .filter(
+        (contribution) =>
+          contribution.code !==
+            "STRATEGY" &&
+          Math.abs(
+            contribution
+              .adjustmentPercent,
+          ) >= 0.1,
+      )
+      .sort(
+        (left, right) =>
+          Math.abs(
+            right.adjustmentPercent,
+          ) -
+          Math.abs(
+            left.adjustmentPercent,
+          ),
+      );
 
-  const negativeSignals =
-    signalSet.signals.filter(
-      (signal) =>
-        signal.strength ===
-          "LOW" ||
-        signal.strength ===
-          "VERY_LOW",
-    );
+  const positiveDrivers =
+    economicDrivers
+      .filter(
+        (contribution) =>
+          contribution
+            .adjustmentPercent >
+          0,
+      )
+      .slice(
+        0,
+        3,
+      );
+
+  const negativeDrivers =
+    economicDrivers
+      .filter(
+        (contribution) =>
+          contribution
+            .adjustmentPercent <
+          0,
+      )
+      .slice(
+        0,
+        2,
+      );
 
   for (
-    const signal
-    of positiveSignals.slice(
-      0,
-      3,
-    )
+    const contribution
+    of positiveDrivers
   ) {
+    const signal =
+      signalSet.signals.find(
+        (candidate) =>
+          candidate.code ===
+          contribution.code,
+      );
+
     explanations.push(
-      `${signal.label}: pressione positiva.`,
+      [
+        `${contribution.label}: ${formatExplanationPercent(
+          contribution
+            .adjustmentPercent,
+        )} sul prezzo.`,
+
+        signal?.explanation,
+      ]
+        .filter(Boolean)
+        .join(" "),
     );
   }
 
   for (
-    const signal
-    of negativeSignals.slice(
-      0,
-      2,
-    )
+    const contribution
+    of negativeDrivers
   ) {
+    const signal =
+      signalSet.signals.find(
+        (candidate) =>
+          candidate.code ===
+          contribution.code,
+      );
+
     explanations.push(
-      `${signal.label}: pressione negativa.`,
+      [
+        `${contribution.label}: ${formatExplanationPercent(
+          contribution
+            .adjustmentPercent,
+        )} sul prezzo.`,
+
+        signal?.explanation,
+      ]
+        .filter(Boolean)
+        .join(" "),
     );
   }
+
+  const strategyContribution =
+    contributions.find(
+      (contribution) =>
+        contribution.code ===
+        "STRATEGY",
+    );
+
+  const strategyEffect =
+    strategyContribution &&
+    Math.abs(
+      strategyContribution
+        .adjustmentPercent,
+    ) >= 0.1
+      ? ` Impatto strategia ${formatExplanationPercent(
+          strategyContribution
+            .adjustmentPercent,
+        )}.`
+      : "";
 
   if (
     strategy === "OCCUPANCY"
   ) {
     explanations.push(
-      "Strategia Occupancy: priorità alla probabilità di conversione.",
+      `Strategia Occupancy: priorità alla probabilità di conversione.${strategyEffect}`,
     );
   }
 
@@ -396,7 +706,7 @@ function buildExplanation(
     strategy === "BALANCED"
   ) {
     explanations.push(
-      "Strategia Balanced: equilibrio tra prezzo e probabilità di vendita.",
+      `Strategia Balanced: equilibrio tra prezzo e probabilità di vendita.${strategyEffect}`,
     );
   }
 
@@ -404,13 +714,24 @@ function buildExplanation(
     strategy === "ADR"
   ) {
     explanations.push(
-      "Strategia ADR: protezione del valore della notte in presenza di domanda sufficiente.",
+      `Strategia ADR: protezione del valore della notte in presenza di domanda sufficiente.${strategyEffect}`,
     );
   }
 
   return explanations;
 }
 
+function formatExplanationPercent(
+  value: number,
+) {
+  if (
+    value > 0
+  ) {
+    return `+${value}%`;
+  }
+
+  return `${value}%`;
+}
 function roundPrice(
   value: number,
 ) {
@@ -433,3 +754,6 @@ function clamp(
     ),
   );
 }
+
+
+

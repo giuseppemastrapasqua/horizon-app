@@ -41,6 +41,7 @@ export function addRule(
       valueType: "FIXED",
       value: 0,
       base: "CURRENT_TOTAL",
+      channel: null,
     },
   ];
 }

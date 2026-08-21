@@ -1,5 +1,7 @@
 import {
+  ArrowDownRight,
   ArrowRight,
+  ArrowUpRight,
   BrainCircuit,
   Clock3,
   Sparkles,
@@ -201,6 +203,155 @@ export function RevenuePanel({
           </div>
 
           {showAiPreview &&
+          recommendation?.dailyPrices?.length ? (
+            <div className="mt-4 border-t border-blue-100 pt-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-slate-500">
+                    Dettaglio pricing
+                  </p>
+
+                  <p className="mt-0.5 text-[9px] text-slate-400">
+                    Driver economici che hanno inciso sul prezzo giornaliero.
+                  </p>
+                </div>
+
+                <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[8px] font-bold text-blue-700">
+                  {recommendation.analyzedNights} notti
+                </span>
+              </div>
+
+              <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
+                {recommendation.dailyPrices.map(
+                  (daily) => {
+                    const drivers =
+                      daily.contributions
+                        .filter(
+                          (item) =>
+                            item.code !==
+                              "STRATEGY" &&
+                            Math.abs(
+                              item.adjustmentPercent,
+                            ) >= 0.1,
+                        )
+                        .sort(
+                          (left, right) =>
+                            Math.abs(
+                              right.adjustmentPercent,
+                            ) -
+                            Math.abs(
+                              left.adjustmentPercent,
+                            ),
+                        )
+                        .slice(
+                          0,
+                          5,
+                        );
+
+                    const guardrailExplanation =
+                      daily.explanation.find(
+                        (text) =>
+                          text.includes(
+                            "Market Guardrail",
+                          ),
+                      );
+
+                    return (
+                      <div
+                        key={daily.date}
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[8px] font-bold uppercase tracking-wide text-slate-400">
+                              {formatRevenueDate(
+                                daily.date,
+                              )}
+                            </p>
+
+                            <p className="mt-0.5 text-base font-bold tracking-tight text-slate-900">
+                              {
+                                daily.recommendedPrice
+                              }{" "}
+                              €
+                            </p>
+                          </div>
+
+                          {guardrailExplanation ? (
+                            <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[7px] font-bold uppercase tracking-wide text-amber-700">
+                              Guardrail
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="mt-2 space-y-1">
+                          {drivers.map(
+                            (driver) => {
+                              const positive =
+                                driver.adjustmentPercent >
+                                0;
+
+                              return (
+                                <div
+                                  key={`${daily.date}-${driver.code}`}
+                                  className="flex items-center justify-between gap-2 text-[8px]"
+                                >
+                                  <div className="flex min-w-0 items-center gap-1.5">
+                                    {positive ? (
+                                      <ArrowUpRight
+                                        size={
+                                          10
+                                        }
+                                        className="shrink-0 text-emerald-600"
+                                      />
+                                    ) : (
+                                      <ArrowDownRight
+                                        size={
+                                          10
+                                        }
+                                        className="shrink-0 text-rose-500"
+                                      />
+                                    )}
+
+                                    <span className="truncate text-slate-600">
+                                      {
+                                        driver.label
+                                      }
+                                    </span>
+                                  </div>
+
+                                  <span
+                                    className={
+                                      positive
+                                        ? "shrink-0 font-bold text-emerald-700"
+                                        : "shrink-0 font-bold text-rose-600"
+                                    }
+                                  >
+                                    {formatDriverPercent(
+                                      driver.adjustmentPercent,
+                                    )}
+                                  </span>
+                                </div>
+                              );
+                            },
+                          )}
+                        </div>
+
+                        {guardrailExplanation ? (
+                          <p className="mt-2 border-t border-amber-100 pt-2 text-[8px] leading-3.5 text-amber-700">
+                            {
+                              guardrailExplanation
+                            }
+                          </p>
+                        ) : null}
+                      </div>
+                    );
+                  },
+                )}
+              </div>
+            </div>
+          ) : null}
+          {showAiPreview &&
           recommendation &&
           message ? (
             <div className="mt-3 border-t border-blue-100 pt-2">
@@ -214,3 +365,38 @@ export function RevenuePanel({
     </section>
   );
 }
+function formatRevenueDate(
+  value: string,
+) {
+  const date =
+    new Date(
+      `${value}T00:00:00`,
+    );
+
+  return new Intl.DateTimeFormat(
+    "it-IT",
+    {
+      day:
+        "2-digit",
+
+      month:
+        "short",
+    },
+  ).format(
+    date,
+  );
+}
+
+function formatDriverPercent(
+  value: number,
+) {
+  if (
+    value > 0
+  ) {
+    return `+${value}%`;
+  }
+
+  return `${value}%`;
+}
+
+

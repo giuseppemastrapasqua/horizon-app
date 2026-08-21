@@ -187,7 +187,7 @@ export function PropertyIntegrationsSection({
                       ""
                     }
                     placeholder={`ID ${provider.label}`}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
                   />
                 </div>
 
@@ -203,7 +203,7 @@ export function PropertyIntegrationsSection({
                 <div className="mt-6 flex justify-end">
                   <button
                     type="submit"
-                    className="rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                   >
                     {mapping
                       ? "Aggiorna collegamento"

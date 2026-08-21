@@ -180,7 +180,11 @@ export async function updateFinanceFormula(
                     value:
                       rule.value,
 
-                    referencedFormulaId:
+                    category:
+                    rule.category ??
+                    "OTHER",
+
+                  referencedFormulaId:
                       rule.referencedFormulaId ??
                       null,
                   }),
@@ -304,3 +308,4 @@ export async function updateFinanceFormula(
     formula: updatedFormula,
   };
 }
+

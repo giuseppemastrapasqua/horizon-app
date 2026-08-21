@@ -236,7 +236,7 @@ export function AvailabilityPanel({
           onClick={
             handleProceed
           }
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isSaving ? (
             <>
@@ -280,4 +280,5 @@ export function AvailabilityPanel({
     </div>
   );
 }
+
 

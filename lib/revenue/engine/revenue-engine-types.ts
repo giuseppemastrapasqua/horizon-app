@@ -69,6 +69,21 @@ export type RevenueNightContext = {
 
     bookingPace:
       number | null;
+
+    maxGuests?:
+      number | null;
+
+    bedrooms?:
+      number | null;
+
+    bathrooms?:
+      number | null;
+
+    city?:
+      string | null;
+
+    zone?:
+      string | null;
   };
 
   calendar: {
@@ -114,6 +129,27 @@ export type RevenuePriceRange = {
   max: number;
 };
 
+export type RevenuePricingContribution = {
+  code:
+    RevenueSignalCode
+    | "STRATEGY";
+
+  label:
+    string;
+
+  pressure:
+    number;
+
+  weight:
+    number;
+
+  contribution:
+    number;
+
+  adjustmentPercent:
+    number;
+};
+
 export type RevenuePricingDecision = {
   date: Date;
 
@@ -135,9 +171,15 @@ export type RevenuePricingDecision = {
   adjustmentPercent:
     number;
 
+  contributions:
+    RevenuePricingContribution[];
+
   explanation:
     string[];
 
   signals:
     RevenueSignalSet;
 };
+
+
+

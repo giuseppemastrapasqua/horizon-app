@@ -23,7 +23,7 @@ const variantClasses = {
     "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100",
 
   ghost:
-    "border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-950",
+    "border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-blue-700",
 } satisfies Record<
   NonNullable<ActionButtonProps["variant"]>,
   string

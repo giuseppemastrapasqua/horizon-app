@@ -12,6 +12,14 @@ type CalculatePropertyFinanceFormulaParams = {
   bookingCount?: number;
   cleaningCost?: number;
   currency?: string;
+
+  channel?:
+    | "BOOKING"
+    | "AIRBNB"
+    | "VRBO"
+    | "DIRECT"
+    | "OTHER"
+    | null;
 };
 
 export async function calculatePropertyFinanceFormula({
@@ -19,6 +27,7 @@ export async function calculatePropertyFinanceFormula({
   grossRevenue,
   bookingCount = 0,
   cleaningCost = 0,
+  channel = null,
   currency = "EUR",
 }: CalculatePropertyFinanceFormulaParams): Promise<FinanceCalculationResult> {
   if (!formulaId.trim()) {
@@ -144,6 +153,9 @@ export async function calculatePropertyFinanceFormula({
         0,
         cleaningCost
       ),
+      channel,
     },
   });
 }
+
+

@@ -1,13 +1,41 @@
 import Link from "next/link";
+
 import {
   Prisma,
   TaskStatus,
   TaskType,
 } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
-import { Navigation } from "@/components/Navigation";
-import { AppShell } from "@/components/AppShell";
-import { markTaskDone, reopenTask } from "./actions";
+
+import {
+  AlertTriangle,
+  Building2,
+  CalendarClock,
+  CalendarDays,
+  CheckCircle2,
+  ChevronRight,
+  ClipboardCheck,
+  Filter,
+  Plus,
+  RotateCcw,
+  UserRound,
+} from "lucide-react";
+
+import {
+  AppShell,
+} from "@/components/AppShell";
+
+import {
+  Navigation,
+} from "@/components/Navigation";
+
+import {
+  prisma,
+} from "@/lib/prisma";
+
+import {
+  markTaskDone,
+  reopenTask,
+} from "./actions";
 
 type TasksPageProps = {
   searchParams?: Promise<{
@@ -22,127 +50,204 @@ type TasksPageProps = {
 export default async function TasksPage({
   searchParams,
 }: TasksPageProps) {
-  const params = await searchParams;
+  const params =
+    await searchParams;
 
-  const statusFilter = params?.status ?? "all";
-  const dueFilter = params?.due ?? "all";
-  const typeFilter = params?.type ?? "all";
-  const propertyFilter = params?.propertyId ?? "all";
-  const linkedFilter = params?.linked ?? "all";
+  const statusFilter =
+    params?.status ?? "all";
 
-  const now = new Date();
+  const dueFilter =
+    params?.due ?? "all";
 
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
+  const typeFilter =
+    params?.type ?? "all";
+
+  const propertyFilter =
+    params?.propertyId ?? "all";
+
+  const linkedFilter =
+    params?.linked ?? "all";
+
+  const now =
+    new Date();
+
+  const startOfToday =
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+
+  const startOfTomorrow =
+    new Date(startOfToday);
+
+  startOfTomorrow.setDate(
+    startOfTomorrow.getDate() +
+      1,
   );
 
-  const startOfTomorrow = new Date(startOfToday);
-  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+  const endOfNextThreeDays =
+    new Date(startOfToday);
 
-  const endOfNextThreeDays = new Date(startOfToday);
-  endOfNextThreeDays.setDate(endOfNextThreeDays.getDate() + 3);
+  endOfNextThreeDays.setDate(
+    endOfNextThreeDays.getDate() +
+      3,
+  );
 
-  const where: Prisma.TaskWhereInput = {};
+  const where:
+    Prisma.TaskWhereInput = {};
 
-  if (statusFilter === "open") {
+  if (
+    statusFilter === "open"
+  ) {
     where.status = {
-      in: [TaskStatus.TODO, TaskStatus.IN_PROGRESS],
+      in: [
+        TaskStatus.TODO,
+        TaskStatus.IN_PROGRESS,
+      ],
     };
   }
 
-  if (statusFilter === "done") {
-    where.status = TaskStatus.DONE;
+  if (
+    statusFilter === "done"
+  ) {
+    where.status =
+      TaskStatus.DONE;
   }
 
-  if (typeFilter !== "all" && isTaskType(typeFilter)) {
-    where.type = typeFilter;
+  if (
+    typeFilter !== "all" &&
+    isTaskType(typeFilter)
+  ) {
+    where.type =
+      typeFilter;
   }
 
-  if (propertyFilter !== "all") {
-    where.propertyId = propertyFilter;
+  if (
+    propertyFilter !== "all"
+  ) {
+    where.propertyId =
+      propertyFilter;
   }
 
-  if (linkedFilter === "booking") {
+  if (
+    linkedFilter ===
+    "booking"
+  ) {
     where.bookingId = {
       not: null,
     };
   }
 
-  if (linkedFilter === "manual") {
-    where.bookingId = null;
+  if (
+    linkedFilter ===
+    "manual"
+  ) {
+    where.bookingId =
+      null;
   }
 
-  if (dueFilter === "overdue") {
+  if (
+    dueFilter === "overdue"
+  ) {
     where.dueDate = {
       lt: startOfToday,
     };
 
     where.status = {
-      in: [TaskStatus.TODO, TaskStatus.IN_PROGRESS],
+      in: [
+        TaskStatus.TODO,
+        TaskStatus.IN_PROGRESS,
+      ],
     };
   }
 
-  if (dueFilter === "today") {
+  if (
+    dueFilter === "today"
+  ) {
     where.dueDate = {
       gte: startOfToday,
       lt: startOfTomorrow,
     };
   }
 
-  if (dueFilter === "3days") {
+  if (
+    dueFilter === "3days"
+  ) {
     where.dueDate = {
       gte: startOfToday,
       lt: endOfNextThreeDays,
     };
   }
 
-  if (dueFilter === "future") {
+  if (
+    dueFilter === "future"
+  ) {
     where.dueDate = {
       gte: startOfTomorrow,
     };
   }
 
-  const [tasks, properties] = await Promise.all([
-    prisma.task.findMany({
-      where,
-      orderBy: [
-        {
-          dueDate: "asc",
+  const [
+    tasks,
+    properties,
+  ] =
+    await Promise.all([
+      prisma.task.findMany({
+        where,
+
+        orderBy: [
+          {
+            dueDate: "asc",
+          },
+          {
+            createdAt:
+              "desc",
+          },
+        ],
+
+        include: {
+          property: true,
+          booking: true,
+          owner: true,
         },
-        {
-          createdAt: "desc",
+      }),
+
+      prisma.property.findMany({
+        orderBy: {
+          name: "asc",
         },
-      ],
-      include: {
-        property: true,
-        booking: true,
-        owner: true,
-      },
-    }),
 
-    prisma.property.findMany({
-      orderBy: {
-        name: "asc",
-      },
-      select: {
-        id: true,
-        name: true,
-      },
-    }),
-  ]);
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+    ]);
 
-  const openTaskCount = tasks.filter(
-    (task) => task.status !== TaskStatus.DONE
-  ).length;
+  const openTaskCount =
+    tasks.filter(
+      (task) =>
+        task.status !==
+        TaskStatus.DONE,
+    ).length;
 
-  const overdueTaskCount = tasks.filter(
-    (task) =>
-      task.status !== TaskStatus.DONE &&
-      task.dueDate &&
-      task.dueDate < startOfToday
-  ).length;
+  const inProgressCount =
+    tasks.filter(
+      (task) =>
+        task.status ===
+        TaskStatus.IN_PROGRESS,
+    ).length;
+
+  const overdueTaskCount =
+    tasks.filter(
+      (task) =>
+        task.status !==
+          TaskStatus.DONE &&
+        task.dueDate &&
+        task.dueDate <
+          startOfToday,
+    ).length;
 
   return (
     <>
@@ -150,392 +255,654 @@ export default async function TasksPage({
 
       <AppShell
         title="Task operativi"
-        subtitle="Pulizie, documenti, manutenzioni e attività operative collegate agli immobili."
+        subtitle="Pulizie, manutenzioni e attività operative collegate a immobili e prenotazioni."
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "16px",
-            alignItems: "center",
-            marginBottom: "22px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}
-          >
-            <SummaryBadge
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            <SummaryCard
               label="Risultati"
-              value={tasks.length}
-              tone="default"
+              value={
+                tasks.length
+              }
+              tone="blue"
             />
 
-            <SummaryBadge
+            <SummaryCard
               label="Aperti"
-              value={openTaskCount}
-              tone="yellow"
+              value={
+                openTaskCount
+              }
+              tone="slate"
             />
 
-            <SummaryBadge
+            <SummaryCard
+              label="In corso"
+              value={
+                inProgressCount
+              }
+              tone="amber"
+            />
+
+            <SummaryCard
               label="Scaduti"
-              value={overdueTaskCount}
-              tone="red"
+              value={
+                overdueTaskCount
+              }
+              tone="rose"
             />
           </div>
 
-          <Link href="/tasks/new" style={newTaskButtonStyle}>
-            + Nuovo task
+          <Link
+            href="/tasks/new"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#2563EB] px-4 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)] transition hover:bg-[#1D4ED8]"
+          >
+            <Plus size={14} />
+
+            Nuovo task
           </Link>
         </div>
 
-        <section style={filtersCardStyle}>
-          <div>
-            <div style={filterLabelStyle}>Stato</div>
+        <section className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
+          <div className="mb-4 flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-[#2563EB]">
+              <Filter
+                size={14}
+              />
+            </span>
 
-            <div style={filterRowStyle}>
+            <div>
+              <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                Filtri operativi
+              </p>
+
+              <p className="text-[10px] font-semibold text-slate-700">
+                Restringi le attività da visualizzare
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-3">
+            <FilterGroup
+              label="Stato"
+            >
               <FilterLink
-                href={buildTaskUrl(params, { status: "all" })}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    status:
+                      "all",
+                  },
+                )}
                 label="Tutti"
-                active={statusFilter === "all"}
+                active={
+                  statusFilter ===
+                  "all"
+                }
               />
 
               <FilterLink
-                href={buildTaskUrl(params, { status: "open" })}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    status:
+                      "open",
+                  },
+                )}
                 label="Aperti"
-                active={statusFilter === "open"}
+                active={
+                  statusFilter ===
+                  "open"
+                }
               />
 
               <FilterLink
-                href={buildTaskUrl(params, { status: "done" })}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    status:
+                      "done",
+                  },
+                )}
                 label="Completati"
-                active={statusFilter === "done"}
+                active={
+                  statusFilter ===
+                  "done"
+                }
               />
-            </div>
-          </div>
+            </FilterGroup>
 
-          <div>
-            <div style={filterLabelStyle}>Scadenza</div>
-
-            <div style={filterRowStyle}>
+            <FilterGroup
+              label="Scadenza"
+            >
               <FilterLink
-                href={buildTaskUrl(params, { due: "all" })}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    due: "all",
+                  },
+                )}
                 label="Tutte"
-                active={dueFilter === "all"}
+                active={
+                  dueFilter ===
+                  "all"
+                }
               />
 
               <FilterLink
-                href={buildTaskUrl(params, { due: "overdue" })}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    due:
+                      "overdue",
+                  },
+                )}
                 label="Scaduti"
-                active={dueFilter === "overdue"}
+                active={
+                  dueFilter ===
+                  "overdue"
+                }
               />
 
               <FilterLink
-                href={buildTaskUrl(params, { due: "today" })}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    due:
+                      "today",
+                  },
+                )}
                 label="Oggi"
-                active={dueFilter === "today"}
+                active={
+                  dueFilter ===
+                  "today"
+                }
               />
 
               <FilterLink
-                href={buildTaskUrl(params, { due: "3days" })}
-                label="Prossimi 3 giorni"
-                active={dueFilter === "3days"}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    due:
+                      "3days",
+                  },
+                )}
+                label="3 giorni"
+                active={
+                  dueFilter ===
+                  "3days"
+                }
               />
 
               <FilterLink
-                href={buildTaskUrl(params, { due: "future" })}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    due:
+                      "future",
+                  },
+                )}
                 label="Futuri"
-                active={dueFilter === "future"}
+                active={
+                  dueFilter ===
+                  "future"
+                }
               />
-            </div>
-          </div>
+            </FilterGroup>
 
-          <div>
-            <div style={filterLabelStyle}>Collegamento</div>
-
-            <div style={filterRowStyle}>
+            <FilterGroup
+              label="Collegamento"
+            >
               <FilterLink
-                href={buildTaskUrl(params, { linked: "all" })}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    linked:
+                      "all",
+                  },
+                )}
                 label="Tutti"
-                active={linkedFilter === "all"}
+                active={
+                  linkedFilter ===
+                  "all"
+                }
               />
 
               <FilterLink
-                href={buildTaskUrl(params, { linked: "booking" })}
-                label="Con prenotazione"
-                active={linkedFilter === "booking"}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    linked:
+                      "booking",
+                  },
+                )}
+                label="Prenotazione"
+                active={
+                  linkedFilter ===
+                  "booking"
+                }
               />
 
               <FilterLink
-                href={buildTaskUrl(params, { linked: "manual" })}
+                href={buildTaskUrl(
+                  params,
+                  {
+                    linked:
+                      "manual",
+                  },
+                )}
                 label="Solo immobile"
-                active={linkedFilter === "manual"}
+                active={
+                  linkedFilter ===
+                  "manual"
+                }
               />
-            </div>
+            </FilterGroup>
           </div>
 
-          <form method="GET" style={selectFiltersStyle}>
-            {statusFilter !== "all" && (
+          <form
+            method="GET"
+            className="mt-4 flex flex-wrap items-end gap-3 border-t border-slate-100 pt-4"
+          >
+            {statusFilter !==
+              "all" && (
               <input
                 type="hidden"
                 name="status"
-                value={statusFilter}
+                value={
+                  statusFilter
+                }
               />
             )}
 
-            {dueFilter !== "all" && (
+            {dueFilter !==
+              "all" && (
               <input
                 type="hidden"
                 name="due"
-                value={dueFilter}
+                value={
+                  dueFilter
+                }
               />
             )}
 
-            {linkedFilter !== "all" && (
+            {linkedFilter !==
+              "all" && (
               <input
                 type="hidden"
                 name="linked"
-                value={linkedFilter}
+                value={
+                  linkedFilter
+                }
               />
             )}
 
-            <label style={selectLabelStyle}>
-              Immobile
+            <label className="grid min-w-[220px] gap-1.5">
+              <span className="text-[8px] font-semibold text-slate-500">
+                Immobile
+              </span>
 
               <select
                 name="propertyId"
-                defaultValue={propertyFilter}
-                style={selectStyle}
+                defaultValue={
+                  propertyFilter
+                }
+                className={selectClass}
               >
-                <option value="all">Tutti gli immobili</option>
+                <option value="all">
+                  Tutti gli immobili
+                </option>
 
-                {properties.map((property) => (
-                  <option key={property.id} value={property.id}>
-                    {property.name}
-                  </option>
-                ))}
+                {properties.map(
+                  (property) => (
+                    <option
+                      key={
+                        property.id
+                      }
+                      value={
+                        property.id
+                      }
+                    >
+                      {
+                        property.name
+                      }
+                    </option>
+                  ),
+                )}
               </select>
             </label>
 
-            <label style={selectLabelStyle}>
-              Tipo task
+            <label className="grid min-w-[210px] gap-1.5">
+              <span className="text-[8px] font-semibold text-slate-500">
+                Tipo task
+              </span>
 
               <select
                 name="type"
-                defaultValue={typeFilter}
-                style={selectStyle}
+                defaultValue={
+                  typeFilter
+                }
+                className={selectClass}
               >
-                <option value="all">Tutti i tipi</option>
-                <option value="CLEANING">Cleaning</option>
-                <option value="MAINTENANCE">Maintenance</option>
-                <option value="GUEST_DOCUMENTS">
-                  Guest documents
+                <option value="all">
+                  Tutti i tipi
                 </option>
-                <option value="CHECK_IN">Check-in</option>
-                <option value="CHECK_OUT">Check-out</option>
-                <option value="ADMIN">Admin</option>
-                <option value="ISSUE">Issue</option>
+
+                <option value="CLEANING">
+                  Pulizie
+                </option>
+
+                <option value="MAINTENANCE">
+                  Manutenzione
+                </option>
+
+                <option value="GUEST_DOCUMENTS">
+                  Documenti ospite
+                </option>
+
+                <option value="CHECK_IN">
+                  Check-in
+                </option>
+
+                <option value="CHECK_OUT">
+                  Check-out
+                </option>
+
+                <option value="ADMIN">
+                  Amministrazione
+                </option>
+
+                <option value="ISSUE">
+                  Segnalazione
+                </option>
               </select>
             </label>
 
-            <button type="submit" style={applyFiltersButtonStyle}>
+            <button
+              type="submit"
+              className="h-10 rounded-xl bg-slate-900 px-4 text-[9px] font-semibold text-white transition hover:bg-slate-800"
+            >
               Applica filtri
             </button>
 
-            <Link href="/tasks" style={resetFiltersStyle}>
+            <Link
+              href="/tasks"
+              className="flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-[9px] font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+            >
               Azzera
             </Link>
           </form>
         </section>
 
-        {tasks.length === 0 ? (
-          <section style={emptyStateStyle}>
-            <strong>Nessun task trovato</strong>
+        {tasks.length ===
+        0 ? (
+          <section className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-14 text-center">
+            <ClipboardCheck
+              size={24}
+              className="mx-auto text-blue-400"
+            />
 
-            <p style={{ margin: "7px 0 0 0", color: "#64748b" }}>
+            <h2 className="mt-3 text-[14px] font-bold text-slate-900">
+              Nessun task trovato
+            </h2>
+
+            <p className="mt-1 text-[10px] text-slate-400">
               Modifica i filtri oppure crea un nuovo task operativo.
             </p>
           </section>
         ) : (
-          <div style={{ display: "grid", gap: "18px" }}>
-            {tasks.map((task) => {
-              const isOverdue =
-                task.status !== TaskStatus.DONE &&
-                task.dueDate &&
-                task.dueDate < startOfToday;
+          <div className="grid gap-3">
+            {tasks.map(
+              (task) => {
+                const isOverdue =
+                  Boolean(
+                    task.status !==
+                      TaskStatus.DONE &&
+                      task.dueDate &&
+                      task.dueDate <
+                        startOfToday,
+                  );
 
-              const isDueToday =
-                task.dueDate &&
-                task.dueDate >= startOfToday &&
-                task.dueDate < startOfTomorrow;
+                const isDueToday =
+                  Boolean(
+                    task.dueDate &&
+                      task.dueDate >=
+                        startOfToday &&
+                      task.dueDate <
+                        startOfTomorrow,
+                  );
 
-              return (
-                <section
-                  key={task.id}
-                  style={{
-                    ...taskCardStyle,
-                    borderLeft: isOverdue
-                      ? "5px solid #f43f5e"
-                      : isDueToday
-                        ? "5px solid #f59e0b"
-                        : "5px solid #cbd5e1",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: "18px",
-                      alignItems: "flex-start",
-                    }}
+                return (
+                  <article
+                    key={
+                      task.id
+                    }
+                    className={[
+                      "relative overflow-hidden rounded-2xl border bg-white shadow-[0_6px_20px_rgba(15,23,42,0.04)]",
+                      isOverdue
+                        ? "border-rose-200"
+                        : isDueToday
+                          ? "border-amber-200"
+                          : "border-slate-200",
+                    ].join(
+                      " ",
+                    )}
                   >
-                    <div>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "9px",
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        <h2
-                          style={{
-                            margin: 0,
-                            fontSize: "21px",
-                          }}
-                        >
+                    <div
+                      className={[
+                        "absolute inset-y-0 left-0 w-1",
+                        isOverdue
+                          ? "bg-rose-500"
+                          : isDueToday
+                            ? "bg-amber-400"
+                            : task.status ===
+                                TaskStatus.DONE
+                              ? "bg-emerald-400"
+                              : "bg-blue-400",
+                      ].join(
+                        " ",
+                      )}
+                    />
+
+                    <div className="p-4 pl-5">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <TaskTypeBadge
+                              type={
+                                task.type
+                              }
+                            />
+
+                            {isOverdue ? (
+                              <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-1 text-[7px] font-bold uppercase tracking-[0.08em] text-rose-700">
+                                <AlertTriangle
+                                  size={
+                                    9
+                                  }
+                                />
+                                Scaduto
+                              </span>
+                            ) : null}
+
+                            {isDueToday &&
+                            !isOverdue ? (
+                              <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[7px] font-bold uppercase tracking-[0.08em] text-amber-700">
+                                Oggi
+                              </span>
+                            ) : null}
+                          </div>
+
                           <Link
                             href={`/tasks/${task.id}`}
-                            style={taskTitleStyle}
+                            className="mt-2 block truncate text-[15px] font-bold tracking-[-0.03em] text-slate-950 transition hover:text-[#2563EB]"
                           >
-                            {task.title}
+                            {
+                              task.title
+                            }
                           </Link>
-                        </h2>
 
-                        {isOverdue && (
-                          <DueBadge label="SCADUTO" tone="red" />
-                        )}
+                          <p className="mt-1 line-clamp-2 max-w-3xl text-[10px] leading-4 text-slate-400">
+                            {task.description ??
+                              "Nessuna descrizione"}
+                          </p>
+                        </div>
 
-                        {isDueToday && (
-                          <DueBadge label="OGGI" tone="yellow" />
-                        )}
+                        <StatusBadge
+                          status={
+                            task.status
+                          }
+                        />
                       </div>
 
-                      <p
-                        style={{
-                          margin: "9px 0 0 0",
-                          color: "#64748b",
-                        }}
-                      >
-                        {task.description ?? "Nessuna descrizione"}
-                      </p>
-                    </div>
-
-                    <StatusBadge status={task.status} />
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(4, minmax(140px, 1fr))",
-                      gap: "16px",
-                      marginTop: "18px",
-                      paddingTop: "18px",
-                      borderTop: "1px solid #e2e8f0",
-                    }}
-                  >
-                    <MiniMetric title="Tipo" value={task.type} />
-
-                    <LinkedMetric
-                      title="Immobile"
-                      href={`/properties/${task.property.id}`}
-                      value={task.property.name}
-                    />
-
-                    <MiniMetric
-                      title="Owner"
-                      value={
-                        task.owner?.fullName ?? "Non assegnato"
-                      }
-                    />
-
-                    <MiniMetric
-                      title="Scadenza"
-                      value={
-                        task.dueDate
-                          ? new Date(task.dueDate).toLocaleString(
-                              "it-IT"
-                            )
-                          : "Non impostata"
-                      }
-                    />
-                  </div>
-
-                  {task.booking && (
-                    <div style={bookingLinkBoxStyle}>
-                      Prenotazione collegata:{" "}
-                      <Link
-                        href={`/bookings/${task.booking.id}`}
-                        style={linkedTextStyle}
-                      >
-                        {task.booking.guestName}
-                      </Link>
-
-                      <span style={{ color: "#94a3b8" }}>
-                        {" "}
-                        ·{" "}
-                        {new Date(
-                          task.booking.checkIn
-                        ).toLocaleDateString("it-IT")}
-                      </span>
-                    </div>
-                  )}
-
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "10px",
-                      marginTop: "18px",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <Link
-                      href={`/tasks/${task.id}`}
-                      style={detailButtonStyle}
-                    >
-                      Apri dettaglio
-                    </Link>
-
-                    {task.status !== TaskStatus.DONE ? (
-                      <form
-                        action={markTaskDone.bind(null, task.id)}
-                      >
-                        <button
-                          type="submit"
-                          style={primaryButtonStyle}
+                      <div className="mt-4 grid gap-2 border-t border-slate-100 pt-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <TaskMetric
+                          icon={
+                            <Building2
+                              size={
+                                12
+                              }
+                            />
+                          }
+                          label="Immobile"
                         >
-                          Segna come completato
-                        </button>
-                      </form>
-                    ) : (
-                      <form action={reopenTask.bind(null, task.id)}>
-                        <button
-                          type="submit"
-                          style={secondaryButtonStyle}
+                          <Link
+                            href={`/properties/${task.property.id}`}
+                            className="truncate font-bold text-[#2563EB] hover:underline"
+                          >
+                            {
+                              task
+                                .property
+                                .name
+                            }
+                          </Link>
+                        </TaskMetric>
+
+                        <TaskMetric
+                          icon={
+                            <UserRound
+                              size={
+                                12
+                              }
+                            />
+                          }
+                          label="Responsabile"
                         >
-                          Riapri task
-                        </button>
-                      </form>
-                    )}
-                  </div>
-                </section>
-              );
-            })}
+                          {task.owner
+                            ?.fullName ??
+                            "Da assegnare"}
+                        </TaskMetric>
+
+                        <TaskMetric
+                          icon={
+                            <CalendarClock
+                              size={
+                                12
+                              }
+                            />
+                          }
+                          label="Scadenza"
+                        >
+                          {task.dueDate
+                            ? new Date(
+                                task.dueDate,
+                              ).toLocaleString(
+                                "it-IT",
+                                {
+                                  dateStyle:
+                                    "short",
+                                  timeStyle:
+                                    "short",
+                                },
+                              )
+                            : "Non impostata"}
+                        </TaskMetric>
+
+                        <TaskMetric
+                          icon={
+                            <CalendarDays
+                              size={
+                                12
+                              }
+                            />
+                          }
+                          label="Prenotazione"
+                        >
+                          {task.booking ? (
+                            <Link
+                              href={`/bookings/${task.booking.id}`}
+                              className="truncate font-bold text-[#2563EB] hover:underline"
+                            >
+                              {
+                                task
+                                  .booking
+                                  .guestName
+                              }
+                            </Link>
+                          ) : (
+                            "Solo immobile"
+                          )}
+                        </TaskMetric>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                        <Link
+                          href={`/tasks/${task.id}`}
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[8px] font-semibold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563EB]"
+                        >
+                          Dettaglio
+                          <ChevronRight
+                            size={
+                              11
+                            }
+                          />
+                        </Link>
+
+                        {task.status !==
+                        TaskStatus.DONE ? (
+                          <form
+                            action={markTaskDone.bind(
+                              null,
+                              task.id,
+                            )}
+                          >
+                            <button
+                              type="submit"
+                              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#2563EB] px-3 text-[8px] font-semibold text-white transition hover:bg-[#1D4ED8]"
+                            >
+                              <CheckCircle2
+                                size={
+                                  11
+                                }
+                              />
+                              Completa
+                            </button>
+                          </form>
+                        ) : (
+                          <form
+                            action={reopenTask.bind(
+                              null,
+                              task.id,
+                            )}
+                          >
+                            <button
+                              type="submit"
+                              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 text-[8px] font-semibold text-[#2563EB] transition hover:bg-blue-100"
+                            >
+                              <RotateCcw
+                                size={
+                                  10
+                                }
+                              />
+                              Riapri
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                );
+              },
+            )}
           </div>
         )}
       </AppShell>
@@ -559,46 +926,117 @@ function buildTaskUrl(
     type?: string;
     propertyId?: string;
     linked?: string;
-  }
+  },
 ) {
   const values = {
-    status: current?.status ?? "all",
-    due: current?.due ?? "all",
-    type: current?.type ?? "all",
-    propertyId: current?.propertyId ?? "all",
-    linked: current?.linked ?? "all",
+    status:
+      current?.status ??
+      "all",
+
+    due:
+      current?.due ??
+      "all",
+
+    type:
+      current?.type ??
+      "all",
+
+    propertyId:
+      current?.propertyId ??
+      "all",
+
+    linked:
+      current?.linked ??
+      "all",
+
     ...changes,
   };
 
-  const query = new URLSearchParams();
+  const query =
+    new URLSearchParams();
 
-  if (values.status !== "all") {
-    query.set("status", values.status);
+  if (
+    values.status !== "all"
+  ) {
+    query.set(
+      "status",
+      values.status,
+    );
   }
 
-  if (values.due !== "all") {
-    query.set("due", values.due);
+  if (
+    values.due !== "all"
+  ) {
+    query.set(
+      "due",
+      values.due,
+    );
   }
 
-  if (values.type !== "all") {
-    query.set("type", values.type);
+  if (
+    values.type !== "all"
+  ) {
+    query.set(
+      "type",
+      values.type,
+    );
   }
 
-  if (values.propertyId !== "all") {
-    query.set("propertyId", values.propertyId);
+  if (
+    values.propertyId !==
+    "all"
+  ) {
+    query.set(
+      "propertyId",
+      values.propertyId,
+    );
   }
 
-  if (values.linked !== "all") {
-    query.set("linked", values.linked);
+  if (
+    values.linked !== "all"
+  ) {
+    query.set(
+      "linked",
+      values.linked,
+    );
   }
 
-  const queryString = query.toString();
+  const queryString =
+    query.toString();
 
-  return queryString ? `/tasks?${queryString}` : "/tasks";
+  return queryString
+    ? `/tasks?${queryString}`
+    : "/tasks";
 }
 
-function isTaskType(value: string): value is TaskType {
-  return Object.values(TaskType).includes(value as TaskType);
+function isTaskType(
+  value: string,
+): value is TaskType {
+  return Object.values(
+    TaskType,
+  ).includes(
+    value as TaskType,
+  );
+}
+
+function FilterGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-[8px] font-bold uppercase tracking-[0.12em] text-slate-400">
+        {label}
+      </p>
+
+      <div className="flex flex-wrap gap-1.5">
+        {children}
+      </div>
+    </div>
+  );
 }
 
 function FilterLink({
@@ -613,327 +1051,173 @@ function FilterLink({
   return (
     <Link
       href={href}
-      style={{
-        display: "inline-block",
-        padding: "9px 13px",
-        borderRadius: "999px",
-        border: active
-          ? "1px solid #0f172a"
-          : "1px solid #cbd5e1",
-        background: active ? "#0f172a" : "#ffffff",
-        color: active ? "#ffffff" : "#334155",
-        textDecoration: "none",
-        fontSize: "13px",
-        fontWeight: 800,
-      }}
+      className={[
+        "rounded-lg border px-2.5 py-1.5 text-[8px] font-semibold transition",
+        active
+          ? "border-blue-200 bg-blue-50 text-[#2563EB]"
+          : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50",
+      ].join(" ")}
     >
       {label}
     </Link>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const style =
-    status === TaskStatus.DONE
-      ? {
-          background: "#dcfce7",
-          color: "#166534",
-          border: "1px solid #bbf7d0",
-        }
-      : status === TaskStatus.IN_PROGRESS
-        ? {
-            background: "#fef9c3",
-            color: "#854d0e",
-            border: "1px solid #fde68a",
-          }
-        : {
-            background: "#fee2e2",
-            color: "#991b1b",
-            border: "1px solid #fecaca",
-          };
-
-  return (
-    <span
-      style={{
-        ...style,
-        padding: "7px 11px",
-        borderRadius: "999px",
-        fontSize: "12px",
-        fontWeight: 900,
-        whiteSpace: "nowrap",
-      }}
-    >
-      {status}
-    </span>
-  );
-}
-
-function DueBadge({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: "red" | "yellow";
-}) {
-  const style =
-    tone === "red"
-      ? {
-          background: "#fff1f2",
-          color: "#be123c",
-          border: "1px solid #fecdd3",
-        }
-      : {
-          background: "#fffbeb",
-          color: "#a16207",
-          border: "1px solid #fde68a",
-        };
-
-  return (
-    <span
-      style={{
-        ...style,
-        padding: "5px 8px",
-        borderRadius: "999px",
-        fontSize: "11px",
-        fontWeight: 900,
-      }}
-    >
-      {label}
-    </span>
-  );
-}
-
-function SummaryBadge({
+function SummaryCard({
   label,
   value,
   tone,
 }: {
   label: string;
   value: number;
-  tone: "default" | "yellow" | "red";
+  tone:
+    | "blue"
+    | "slate"
+    | "amber"
+    | "rose";
 }) {
-  const style =
-    tone === "red"
-      ? {
-          background: "#fff1f2",
-          color: "#be123c",
-          border: "1px solid #fecdd3",
-        }
-      : tone === "yellow"
-        ? {
-            background: "#fffbeb",
-            color: "#a16207",
-            border: "1px solid #fde68a",
-          }
-        : {
-            background: "#ffffff",
-            color: "#0f172a",
-            border: "1px solid #e2e8f0",
-          };
+  const toneClass = {
+    blue:
+      "border-blue-100 bg-blue-50 text-[#2563EB]",
+    slate:
+      "border-slate-200 bg-white text-slate-700",
+    amber:
+      "border-amber-100 bg-amber-50 text-amber-700",
+    rose:
+      "border-rose-100 bg-rose-50 text-rose-700",
+  }[tone];
 
   return (
     <div
-      style={{
-        ...style,
-        padding: "9px 12px",
-        borderRadius: "13px",
-        fontSize: "13px",
-        fontWeight: 800,
-      }}
+      className={[
+        "flex min-w-[92px] items-center justify-between gap-3 rounded-xl border px-3 py-2",
+        toneClass,
+      ].join(" ")}
     >
-      {label}: {value}
-    </div>
-  );
-}
+      <span className="text-[8px] font-semibold">
+        {label}
+      </span>
 
-function MiniMetric({
-  title,
-  value,
-}: {
-  title: string;
-  value: string | number;
-}) {
-  return (
-    <div>
-      <div style={metricLabelStyle}>{title}</div>
-      <strong style={{ color: "#0f172a" }}>{value}</strong>
-    </div>
-  );
-}
-
-function LinkedMetric({
-  title,
-  href,
-  value,
-}: {
-  title: string;
-  href: string;
-  value: string;
-}) {
-  return (
-    <div>
-      <div style={metricLabelStyle}>{title}</div>
-
-      <Link href={href} style={linkedTextStyle}>
+      <strong className="text-[14px] font-black tabular-nums">
         {value}
-      </Link>
+      </strong>
     </div>
   );
 }
 
-const filtersCardStyle = {
-  display: "grid",
-  gap: "22px",
-  marginBottom: "24px",
-  padding: "22px",
-  background: "#ffffff",
-  border: "1px solid #e2e8f0",
-  borderRadius: "20px",
-  boxShadow: "0 8px 26px rgba(15, 23, 42, 0.05)",
-};
+function StatusBadge({
+  status,
+}: {
+  status: TaskStatus;
+}) {
+  const config =
+    status ===
+    TaskStatus.DONE
+      ? {
+          label:
+            "Completato",
+          classes:
+            "border-emerald-200 bg-emerald-50 text-emerald-700",
+        }
+      : status ===
+          TaskStatus.IN_PROGRESS
+        ? {
+            label:
+              "In corso",
+            classes:
+              "border-amber-200 bg-amber-50 text-amber-700",
+          }
+        : {
+            label:
+              "Da fare",
+            classes:
+              "border-blue-200 bg-blue-50 text-[#2563EB]",
+          };
 
-const filterLabelStyle = {
-  marginBottom: "10px",
-  color: "#64748b",
-  fontSize: "13px",
-  fontWeight: 800,
-};
+  return (
+    <span
+      className={[
+        "shrink-0 rounded-full border px-2.5 py-1 text-[8px] font-bold",
+        config.classes,
+      ].join(" ")}
+    >
+      {config.label}
+    </span>
+  );
+}
 
-const filterRowStyle = {
-  display: "flex",
-  flexWrap: "wrap" as const,
-  gap: "8px",
-};
+function TaskTypeBadge({
+  type,
+}: {
+  type: TaskType;
+}) {
+  return (
+    <span className="rounded-full bg-slate-100 px-2 py-1 text-[7px] font-bold uppercase tracking-[0.08em] text-slate-500">
+      {formatTaskType(
+        type,
+      )}
+    </span>
+  );
+}
 
-const selectFiltersStyle = {
-  display: "flex",
-  gap: "12px",
-  alignItems: "end",
-  flexWrap: "wrap" as const,
-  paddingTop: "18px",
-  borderTop: "1px solid #e2e8f0",
-};
+function TaskMetric({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0 rounded-xl bg-slate-50/70 px-3 py-2.5">
+      <div className="flex items-center gap-1.5 text-slate-400">
+        {icon}
 
-const selectLabelStyle = {
-  display: "grid",
-  gap: "7px",
-  minWidth: "220px",
-  color: "#475569",
-  fontSize: "13px",
-  fontWeight: 800,
-};
+        <span className="text-[7px] font-bold uppercase tracking-[0.09em]">
+          {label}
+        </span>
+      </div>
 
-const selectStyle = {
-  padding: "10px 12px",
-  borderRadius: "12px",
-  border: "1px solid #cbd5e1",
-  background: "#ffffff",
-  color: "#0f172a",
-};
+      <div className="mt-1 truncate text-[9px] font-semibold text-slate-700">
+        {children}
+      </div>
+    </div>
+  );
+}
 
-const applyFiltersButtonStyle = {
-  padding: "11px 15px",
-  borderRadius: "12px",
-  border: "1px solid #0f172a",
-  background: "#0f172a",
-  color: "#ffffff",
-  cursor: "pointer",
-  fontWeight: 800,
-};
+function formatTaskType(
+  type: TaskType,
+) {
+  const labels:
+    Record<
+      TaskType,
+      string
+    > = {
+    CLEANING:
+      "Pulizie",
 
-const resetFiltersStyle = {
-  display: "inline-block",
-  padding: "10px 14px",
-  borderRadius: "12px",
-  border: "1px solid #cbd5e1",
-  background: "#ffffff",
-  color: "#334155",
-  textDecoration: "none",
-  fontWeight: 800,
-};
+    MAINTENANCE:
+      "Manutenzione",
 
-const taskCardStyle = {
-  background: "#ffffff",
-  borderTop: "1px solid #e2e8f0",
-  borderRight: "1px solid #e2e8f0",
-  borderBottom: "1px solid #e2e8f0",
-  borderRadius: "20px",
-  padding: "22px",
-  boxShadow: "0 8px 26px rgba(15, 23, 42, 0.05)",
-};
+    GUEST_DOCUMENTS:
+      "Documenti ospite",
 
-const taskTitleStyle = {
-  color: "#0f172a",
-  fontWeight: 850,
-  textDecoration: "none",
-};
+    CHECK_IN:
+      "Check-in",
 
-const bookingLinkBoxStyle = {
-  marginTop: "16px",
-  padding: "13px 15px",
-  borderRadius: "14px",
-  background: "#f8fafc",
-  border: "1px solid #e2e8f0",
-  color: "#475569",
-};
+    CHECK_OUT:
+      "Check-out",
 
-const linkedTextStyle = {
-  color: "#0f172a",
-  fontWeight: 800,
-  textDecoration: "none",
-};
+    ADMIN:
+      "Amministrazione",
 
-const metricLabelStyle = {
-  marginBottom: "5px",
-  color: "#64748b",
-  fontSize: "13px",
-};
+    ISSUE:
+      "Segnalazione",
+  };
 
-const newTaskButtonStyle = {
-  display: "inline-block",
-  padding: "11px 16px",
-  borderRadius: "12px",
-  background: "#0f172a",
-  color: "#ffffff",
-  border: "1px solid #0f172a",
-  textDecoration: "none",
-  fontWeight: 800,
-};
+  return labels[type];
+}
 
-const detailButtonStyle = {
-  display: "inline-block",
-  padding: "10px 14px",
-  borderRadius: "12px",
-  border: "1px solid #cbd5e1",
-  background: "#ffffff",
-  color: "#334155",
-  textDecoration: "none",
-  fontWeight: 800,
-};
-
-const primaryButtonStyle = {
-  padding: "11px 15px",
-  borderRadius: "12px",
-  border: "1px solid #0f172a",
-  background: "#0f172a",
-  color: "#ffffff",
-  cursor: "pointer",
-  fontWeight: 800,
-};
-
-const secondaryButtonStyle = {
-  padding: "11px 15px",
-  borderRadius: "12px",
-  border: "1px solid #cbd5e1",
-  background: "#ffffff",
-  color: "#0f172a",
-  cursor: "pointer",
-  fontWeight: 800,
-};
-
-const emptyStateStyle = {
-  padding: "24px",
-  borderRadius: "20px",
-  background: "#ffffff",
-  border: "1px dashed #cbd5e1",
-};
+const selectClass =
+  "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[9px] font-semibold text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100";

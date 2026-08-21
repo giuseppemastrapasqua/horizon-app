@@ -57,6 +57,7 @@ export async function getPropertiesPageData({
       owner: true,
       bookings: true,
       tasks: true,
+      availabilityBlocks: true,
     },
   });
 }

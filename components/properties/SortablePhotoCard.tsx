@@ -71,7 +71,7 @@ export function SortablePhotoCard({
         />
 
         {image.isCover ? (
-          <span className="absolute left-2.5 top-2.5 rounded-full bg-slate-950/90 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur">
+          <span className="absolute left-2.5 top-2.5 rounded-full bg-blue-700/90 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm backdrop-blur">
             Copertina
           </span>
         ) : null}
@@ -85,7 +85,7 @@ export function SortablePhotoCard({
           aria-label={`Sposta la foto in posizione ${position}`}
           {...attributes}
           {...listeners}
-          className="absolute right-2.5 top-2.5 flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-lg bg-white/95 text-base font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 active:cursor-grabbing"
+          className="absolute right-2.5 top-2.5 flex h-8 w-8 cursor-grab touch-none items-center justify-center rounded-lg bg-white/95 text-base font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 active:cursor-grabbing"
         >
           ⋮⋮
         </button>

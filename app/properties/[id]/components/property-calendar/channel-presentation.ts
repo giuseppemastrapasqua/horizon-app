@@ -122,7 +122,7 @@ export function getChannelPresentation(
               )}`,
 
         className:
-          "bg-slate-950 text-white",
+          "bg-blue-600 text-white",
 
         badgeClassName:
           "bg-white/15 text-white",
@@ -189,4 +189,5 @@ function normalizeCalendarGuestName(
 
   return normalized;
 }
+
 

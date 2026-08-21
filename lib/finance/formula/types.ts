@@ -44,6 +44,19 @@ export type FinanceRule = {
   category?: FinanceRuleCategory;
 
   /**
+   * Canale al quale si applica la regola.
+   * Principalmente utilizzato per OTA_COMMISSION.
+   * null / undefined = nessun filtro canale.
+   */
+  channel?:
+    | "BOOKING"
+    | "AIRBNB"
+    | "VRBO"
+    | "DIRECT"
+    | "OTHER"
+    | null;
+
+  /**
    * Necessario solo quando base === "RULE_RESULT".
    * Contiene l'id della regola di cui usare il risultato.
    */
@@ -68,6 +81,14 @@ export type FinanceCalculationContext = {
   grossRevenue: number;
   bookingCount?: number;
   cleaningCost?: number;
+
+  channel?:
+    | "BOOKING"
+    | "AIRBNB"
+    | "VRBO"
+    | "DIRECT"
+    | "OTHER"
+    | null;
 };
 
 export type FinanceRuleResult = {
@@ -87,6 +108,19 @@ export type FinanceRuleResult = {
    */
   category?: FinanceRuleCategory;
 
+  /**
+   * Canale al quale si applica la regola.
+   * Principalmente utilizzato per OTA_COMMISSION.
+   * null / undefined = nessun filtro canale.
+   */
+  channel?:
+    | "BOOKING"
+    | "AIRBNB"
+    | "VRBO"
+    | "DIRECT"
+    | "OTHER"
+    | null;
+
   baseAmount: number;
   configuredValue: number;
   calculatedAmount: number;
@@ -105,4 +139,7 @@ export type FinanceCalculationResult = {
 
   rules: FinanceRuleResult[];
 };
+
+
+
 

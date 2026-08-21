@@ -1,4 +1,4 @@
-import { AuditAction } from "@prisma/client";
+﻿import { AuditAction } from "@prisma/client";
 
 import {
   buildFinancePreview,
@@ -24,7 +24,7 @@ export async function createFinanceReport({
 
   if (!normalizedPropertyId) {
     throw new Error(
-      "È necessario specificare l'immobile.",
+      "Ãˆ necessario specificare l'immobile.",
     );
   }
 
@@ -39,7 +39,7 @@ export async function createFinanceReport({
     )
   ) {
     throw new Error(
-      "Il mese di riferimento non è valido.",
+      "Il mese di riferimento non Ã¨ valido.",
     );
   }
 
@@ -60,13 +60,13 @@ export async function createFinanceReport({
 
   if (!formula) {
     throw new Error(
-      "Non è disponibile alcuna formula finanziaria per questo immobile.",
+      "Non Ã¨ disponibile alcuna formula finanziaria per questo immobile.",
     );
   }
 
   if (!calculation) {
     throw new Error(
-      "Non è stato possibile calcolare il rendiconto finanziario.",
+      "Non Ã¨ stato possibile calcolare il rendiconto finanziario.",
     );
   }
 
@@ -328,7 +328,7 @@ function createDefaultReportTitle({
       timeZone: "UTC",
     }).format(referenceMonth);
 
-  return `Rendiconto ${propertyName} · ${capitalizeFirstLetter(
+  return `Rendiconto ${propertyName} Â· ${capitalizeFirstLetter(
     formattedMonth,
   )}`;
 }
@@ -345,3 +345,6 @@ function capitalizeFirstLetter(
     value.slice(1)
   );
 }
+
+
+

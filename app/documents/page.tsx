@@ -153,8 +153,8 @@ export default async function DocumentsPage({
         title="Documenti"
         subtitle="Report, rendiconti, fatture e documentazione operativa."
       >
-        <div style={topBarStyle}>
-          <div style={summaryRowStyle}>
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <SummaryBadge
               label="Risultati"
               value={documents.length}
@@ -180,16 +180,16 @@ export default async function DocumentsPage({
             />
           </div>
 
-          <Link href="/documents/new" style={primaryButtonStyle}>
+          <Link href="/documents/new" className="inline-flex h-10 items-center rounded-xl bg-[#2563EB] px-4 text-[10px] font-bold text-white shadow-[0_8px_20px_rgba(37,99,235,0.20)] transition hover:-translate-y-0.5 hover:bg-[#1D4ED8]">
             + Nuovo documento
           </Link>
         </div>
 
-        <section style={filtersCardStyle}>
+        <section className="mb-6 space-y-5 rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.045)]">
           <div>
-            <div style={filterLabelStyle}>Tipo documento</div>
+            <div className="mb-2.5 text-[8px] font-black uppercase tracking-[0.14em] text-slate-400">Tipo documento</div>
 
-            <div style={filterRowStyle}>
+            <div className="flex flex-wrap gap-2">
               <FilterLink
                 href={buildDocumentsUrl(params, { type: "all" })}
                 label="Tutti"
@@ -231,9 +231,9 @@ export default async function DocumentsPage({
           </div>
 
           <div>
-            <div style={filterLabelStyle}>Stato</div>
+            <div className="mb-2.5 text-[8px] font-black uppercase tracking-[0.14em] text-slate-400">Stato</div>
 
-            <div style={filterRowStyle}>
+            <div className="flex flex-wrap gap-2">
               <FilterLink
                 href={buildDocumentsUrl(params, { status: "all" })}
                 label="Tutti"
@@ -274,7 +274,7 @@ export default async function DocumentsPage({
             </div>
           </div>
 
-          <form method="GET" style={selectFiltersStyle}>
+          <form method="GET" className="flex flex-wrap items-end gap-3 border-t border-slate-100 pt-5">
             {typeFilter !== "all" && (
               <input type="hidden" name="type" value={typeFilter} />
             )}
@@ -287,24 +287,24 @@ export default async function DocumentsPage({
               />
             )}
 
-            <label style={searchLabelStyle}>
+            <label className="grid min-w-[280px] flex-1 gap-1.5 text-[9px] font-bold text-slate-500">
               Ricerca
 
               <input
                 name="q"
                 defaultValue={searchQuery}
                 placeholder="Titolo, numero, owner o immobile"
-                style={inputStyle}
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-medium text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
               />
             </label>
 
-            <label style={selectLabelStyle}>
+            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-slate-500">
               Proprietario
 
               <select
                 name="ownerId"
                 defaultValue={ownerFilter}
-                style={inputStyle}
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-medium text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
               >
                 <option value="all">Tutti i proprietari</option>
 
@@ -316,13 +316,13 @@ export default async function DocumentsPage({
               </select>
             </label>
 
-            <label style={selectLabelStyle}>
+            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-slate-500">
               Immobile
 
               <select
                 name="propertyId"
                 defaultValue={propertyFilter}
-                style={inputStyle}
+                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-medium text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
               >
                 <option value="all">Tutti gli immobili</option>
 
@@ -334,41 +334,41 @@ export default async function DocumentsPage({
               </select>
             </label>
 
-            <button type="submit" style={applyFiltersButtonStyle}>
+            <button type="submit" className="h-10 rounded-xl bg-[#2563EB] px-5 text-[10px] font-bold text-white shadow-[0_6px_16px_rgba(37,99,235,0.16)] transition hover:bg-[#1D4ED8]">
               Applica
             </button>
 
-            <Link href="/documents" style={resetFiltersStyle}>
+            <Link href="/documents" className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-[10px] font-bold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600">
               Azzera
             </Link>
           </form>
         </section>
 
         {documents.length === 0 ? (
-          <section style={emptyStateStyle}>
+          <section className="rounded-[20px] border border-dashed border-slate-300 bg-white px-6 py-10 text-center shadow-[0_8px_24px_rgba(15,23,42,0.035)]">
             <strong>Nessun documento trovato</strong>
 
-            <p style={{ margin: "7px 0 0", color: "#64748b" }}>
+            <p className="mt-2 text-[9px] text-slate-400">
               I report salvati, le fatture e i rendiconti compariranno
               qui.
             </p>
           </section>
         ) : (
-          <div style={{ display: "grid", gap: "16px" }}>
+          <div className="grid gap-4">
             {documents.map((document) => {
               const latestVersion =
                 document.versions[0]?.version ??
                 document.currentVersion;
 
               return (
-                <section key={document.id} style={documentCardStyle}>
-                  <div style={documentHeaderStyle}>
+                <section key={document.id} className="group rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.045)] transition duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_16px_36px_rgba(37,99,235,0.08)]">
+                  <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <div style={titleRowStyle}>
-                        <h2 style={{ margin: 0, fontSize: "20px" }}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="m-0 text-[15px] font-black tracking-[-0.025em] text-slate-950">
                           <Link
                             href={`/documents/${document.id}`}
-                            style={documentTitleStyle}
+                            className="text-slate-950 no-underline transition group-hover:text-blue-600"
                           >
                             {document.title}
                           </Link>
@@ -380,19 +380,19 @@ export default async function DocumentsPage({
                         />
                       </div>
 
-                      <p style={documentSubtitleStyle}>
+                      <p className="mt-1.5 text-[9px] font-medium text-slate-400">
                         {document.subtitle ??
                           "Nessun sottotitolo"}
                       </p>
                     </div>
 
-                    <div style={documentNumberStyle}>
+                    <div className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-[8px] font-bold text-slate-400">
                       {document.documentNumber ??
                         "Numero non assegnato"}
                     </div>
                   </div>
 
-                  <div style={metricsGridStyle}>
+                  <div className="mt-5 grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 lg:grid-cols-5">
                     <MiniMetric
                       label="Proprietario"
                       value={
@@ -437,31 +437,31 @@ export default async function DocumentsPage({
                     />
                   </div>
 
-                  <div style={cardFooterStyle}>
-                    <div style={actionRowStyle}>
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                    <div className="flex flex-wrap gap-2">
                       <Link
                         href={`/documents/${document.id}`}
-                        style={primarySmallButtonStyle}
+                        className="inline-flex h-8 items-center rounded-lg bg-[#2563EB] px-3 text-[8px] font-bold text-white transition hover:bg-[#1D4ED8]"
                       >
                         Apri
                       </Link>
 
                       <Link
                         href={`/documents/${document.id}/versions`}
-                        style={secondarySmallButtonStyle}
+                        className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[8px] font-bold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
                       >
                         Versioni
                       </Link>
 
                       <Link
                         href={getSourceHref(document)}
-                        style={secondarySmallButtonStyle}
+                        className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[8px] font-bold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
                       >
                         Apri sorgente
                       </Link>
                     </div>
 
-                    <span style={updatedTextStyle}>
+                    <span className="text-[8px] font-medium text-slate-400">
                       Creato il{" "}
                       {document.createdAt.toLocaleDateString(
                         "it-IT"
@@ -673,7 +673,7 @@ function DocumentTypeBadge({
   type: DocumentType;
 }) {
   return (
-    <span style={typeBadgeStyle}>
+    <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[6px] font-black uppercase tracking-[0.08em] text-blue-700">
       {formatEnum(type)}
     </span>
   );
@@ -684,16 +684,21 @@ function DocumentStatusBadge({
 }: {
   status: DocumentStatus;
 }) {
-  const style =
+  const className =
     status === DocumentStatus.FINAL ||
     status === DocumentStatus.ISSUED
-      ? greenBadgeStyle
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
       : status === DocumentStatus.ARCHIVED
-        ? grayBadgeStyle
-        : yellowBadgeStyle;
+        ? "border-slate-200 bg-slate-100 text-slate-500"
+        : "border-amber-200 bg-amber-50 text-amber-700";
 
   return (
-    <span style={style}>
+    <span
+      className={[
+        "rounded-full border px-2 py-1 text-[6px] font-black uppercase tracking-[0.08em]",
+        className,
+      ].join(" ")}
+    >
       {formatEnum(status)}
     </span>
   );
@@ -707,270 +712,19 @@ function MiniMetric({
   value: string | number;
 }) {
   return (
-    <div>
-      <div style={metricLabelStyle}>{label}</div>
-      <strong style={metricValueStyle}>{value}</strong>
+    <div className="min-w-0">
+      <div className="text-[7px] font-bold uppercase tracking-[0.1em] text-slate-400">
+        {label}
+      </div>
+
+      <strong className="mt-1 block truncate text-[9px] font-bold text-slate-700">
+        {value}
+      </strong>
     </div>
   );
 }
-
 function formatEnum(value: string) {
   return value.replaceAll("_", " ");
 }
 
-const topBarStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "16px",
-  alignItems: "center",
-  marginBottom: "22px",
-  flexWrap: "wrap" as const,
-};
 
-const summaryRowStyle = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap" as const,
-};
-
-const filtersCardStyle = {
-  display: "grid",
-  gap: "22px",
-  marginBottom: "24px",
-  padding: "22px",
-  background: "#ffffff",
-  border: "1px solid #e2e8f0",
-  borderRadius: "20px",
-  boxShadow: "0 8px 26px rgba(15, 23, 42, 0.05)",
-};
-
-const filterLabelStyle = {
-  marginBottom: "10px",
-  color: "#64748b",
-  fontSize: "13px",
-  fontWeight: 800,
-};
-
-const filterRowStyle = {
-  display: "flex",
-  flexWrap: "wrap" as const,
-  gap: "8px",
-};
-
-const selectFiltersStyle = {
-  display: "flex",
-  alignItems: "end",
-  gap: "12px",
-  flexWrap: "wrap" as const,
-  paddingTop: "18px",
-  borderTop: "1px solid #e2e8f0",
-};
-
-const searchLabelStyle = {
-  display: "grid",
-  gap: "7px",
-  minWidth: "280px",
-  flex: 1,
-  color: "#475569",
-  fontSize: "13px",
-  fontWeight: 800,
-};
-
-const selectLabelStyle = {
-  display: "grid",
-  gap: "7px",
-  minWidth: "210px",
-  color: "#475569",
-  fontSize: "13px",
-  fontWeight: 800,
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: "12px",
-  border: "1px solid #cbd5e1",
-  background: "#ffffff",
-  color: "#0f172a",
-};
-
-const applyFiltersButtonStyle = {
-  padding: "11px 15px",
-  borderRadius: "12px",
-  border: "1px solid #0f172a",
-  background: "#0f172a",
-  color: "#ffffff",
-  cursor: "pointer",
-  fontWeight: 800,
-};
-
-const resetFiltersStyle = {
-  display: "inline-block",
-  padding: "10px 14px",
-  borderRadius: "12px",
-  border: "1px solid #cbd5e1",
-  background: "#ffffff",
-  color: "#334155",
-  textDecoration: "none",
-  fontWeight: 800,
-};
-
-const documentCardStyle = {
-  background: "#ffffff",
-  border: "1px solid #e2e8f0",
-  borderRadius: "20px",
-  padding: "22px",
-  boxShadow: "0 8px 26px rgba(15, 23, 42, 0.05)",
-};
-
-const documentHeaderStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "18px",
-  alignItems: "flex-start",
-  flexWrap: "wrap" as const,
-};
-
-const titleRowStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "9px",
-  flexWrap: "wrap" as const,
-};
-
-const documentTitleStyle = {
-  color: "#0f172a",
-  textDecoration: "none",
-  fontWeight: 850,
-};
-
-const documentSubtitleStyle = {
-  margin: "8px 0 0",
-  color: "#64748b",
-};
-
-const documentNumberStyle = {
-  color: "#64748b",
-  fontSize: "13px",
-  fontWeight: 800,
-};
-
-const metricsGridStyle = {
-  display: "grid",
-  gridTemplateColumns:
-    "repeat(5, minmax(130px, 1fr))",
-  gap: "16px",
-  marginTop: "20px",
-  paddingTop: "18px",
-  borderTop: "1px solid #e2e8f0",
-};
-
-const cardFooterStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "14px",
-  alignItems: "center",
-  marginTop: "18px",
-  paddingTop: "16px",
-  borderTop: "1px solid #e2e8f0",
-  flexWrap: "wrap" as const,
-};
-
-const actionRowStyle = {
-  display: "flex",
-  gap: "10px",
-  flexWrap: "wrap" as const,
-};
-
-const primaryButtonStyle = {
-  display: "inline-block",
-  padding: "11px 16px",
-  borderRadius: "12px",
-  background: "#0f172a",
-  color: "#ffffff",
-  textDecoration: "none",
-  fontWeight: 800,
-};
-
-const primarySmallButtonStyle = {
-  display: "inline-block",
-  padding: "9px 13px",
-  borderRadius: "11px",
-  background: "#0f172a",
-  color: "#ffffff",
-  textDecoration: "none",
-  fontSize: "13px",
-  fontWeight: 800,
-};
-
-const secondarySmallButtonStyle = {
-  display: "inline-block",
-  padding: "9px 13px",
-  borderRadius: "11px",
-  background: "#ffffff",
-  color: "#334155",
-  border: "1px solid #cbd5e1",
-  textDecoration: "none",
-  fontSize: "13px",
-  fontWeight: 800,
-};
-
-const updatedTextStyle = {
-  color: "#94a3b8",
-  fontSize: "12px",
-};
-
-const metricLabelStyle = {
-  color: "#64748b",
-  fontSize: "12px",
-  marginBottom: "5px",
-};
-
-const metricValueStyle = {
-  color: "#0f172a",
-  fontSize: "13px",
-};
-
-const badgeBaseStyle = {
-  display: "inline-block",
-  padding: "5px 8px",
-  borderRadius: "999px",
-  fontSize: "10px",
-  fontWeight: 900,
-  whiteSpace: "nowrap" as const,
-};
-
-const typeBadgeStyle = {
-  ...badgeBaseStyle,
-  background: "#eff6ff",
-  color: "#1d4ed8",
-  border: "1px solid #bfdbfe",
-};
-
-const greenBadgeStyle = {
-  ...badgeBaseStyle,
-  background: "#ecfdf5",
-  color: "#166534",
-  border: "1px solid #bbf7d0",
-};
-
-const yellowBadgeStyle = {
-  ...badgeBaseStyle,
-  background: "#fffbeb",
-  color: "#a16207",
-  border: "1px solid #fde68a",
-};
-
-const grayBadgeStyle = {
-  ...badgeBaseStyle,
-  background: "#f1f5f9",
-  color: "#64748b",
-  border: "1px solid #cbd5e1",
-};
-
-const emptyStateStyle = {
-  padding: "24px",
-  borderRadius: "20px",
-  background: "#ffffff",
-  border: "1px dashed #cbd5e1",
-};

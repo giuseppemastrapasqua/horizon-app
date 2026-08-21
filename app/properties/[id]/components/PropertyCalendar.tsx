@@ -727,7 +727,7 @@ const moveMonth = (
         </div>
       </div>
 
-      <div className="grid xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0 border-b border-slate-200 xl:border-b-0 xl:border-r">
           <div className="grid grid-cols-2 border-b border-slate-200 lg:grid-cols-5">
             <CompactMetric
@@ -1018,6 +1018,8 @@ function chunk<T>(
 
   return result;
 }
+
+
 
 
 

@@ -2,10 +2,14 @@ import type { CSSProperties } from "react";
 
 import Link from "next/link";
 
-import { generateFinanceReportAction } from "@/app/reports/monthly/property/actions";
+import {
+  generateFinanceReportAction,
+  generateFinanceReportsBatchAction,
+} from "@/app/reports/monthly/property/actions";
 import { AppShell } from "@/components/AppShell";
 import { FinancePreview } from "@/components/finance/FinancePreview";
 import { Navigation } from "@/components/Navigation";
+import { prisma } from "@/lib/prisma";
 import {
   buildFinancePreview,
 } from "@/lib/finance/preview";
@@ -46,37 +50,203 @@ export default async function PropertyReportPage({
     );
 
   if (!propertyId) {
+    const properties =
+      await prisma.property.findMany({
+        where: {
+          status: {
+            not: "ARCHIVED",
+          },
+        },
+
+        orderBy: {
+          name: "asc",
+        },
+
+        select: {
+          id: true,
+          name: true,
+          city: true,
+        },
+      });
+
     return (
       <>
         <Navigation />
 
         <AppShell
-          title="Rendiconto immobile"
-          subtitle="Seleziona un immobile per generare il rendiconto."
+          title="Genera rendiconti"
+          subtitle="Scegli il mese e la struttura."
         >
-          <section style={emptyStateStyle}>
-            <h2 style={emptyTitleStyle}>
-              Immobile non selezionato
-            </h2>
-
-            <p style={emptyDescriptionStyle}>
-              Apri il rendiconto dalla pagina di un
-              immobile oppure torna all’elenco delle
-              strutture.
-            </p>
-
-            <Link
-              href="/properties"
-              style={primaryLinkStyle}
+          <section
+            style={{
+              maxWidth: "640px",
+              margin: "0 auto",
+              border: "1px solid #e2e8f0",
+              borderRadius: "22px",
+              background: "#ffffff",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                padding: "28px 32px",
+                borderBottom: "1px solid #e2e8f0",
+                background: "#f8fafc",
+              }}
             >
-              Vai agli immobili
-            </Link>
+              <div
+                style={{
+                  color: "#2563eb",
+                  fontSize: "11px",
+                  fontWeight: 800,
+                  letterSpacing: "0.08em",
+                }}
+              >
+                FINANCE
+              </div>
+
+              <h2
+                style={{
+                  margin: "6px 0 0",
+                  color: "#0f172a",
+                  fontSize: "25px",
+                }}
+              >
+                Genera rendiconti
+              </h2>
+
+              <p
+                style={{
+                  margin: "8px 0 0",
+                  color: "#64748b",
+                  lineHeight: 1.6,
+                }}
+              >
+                Scegli il mese e se generare un rendiconto
+                per tutte le strutture oppure per una sola.
+              </p>
+            </div>
+
+            <form
+              action={
+                generateFinanceReportsBatchAction
+              }
+              style={{
+                display: "grid",
+                gap: "24px",
+                padding: "32px",
+              }}
+            >
+              <label>
+                <span
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    color: "#334155",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                  }}
+                >
+                  Mese
+                </span>
+
+                <input
+                  name="referenceMonth"
+                  type="month"
+                  required
+                  defaultValue={
+                    referenceMonth
+                  }
+                  style={{
+                    width: "100%",
+                    boxSizing: "border-box",
+                    padding: "13px 14px",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "12px",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "15px",
+                  }}
+                />
+              </label>
+
+              <label>
+                <span
+                  style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    color: "#334155",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                  }}
+                >
+                  Struttura
+                </span>
+
+                <select
+                  name="targetProperty"
+                  required
+                  defaultValue="ALL"
+                  style={{
+                    width: "100%",
+                    padding: "13px 14px",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "12px",
+                    background: "#ffffff",
+                    color: "#0f172a",
+                    fontSize: "15px",
+                  }}
+                >
+                  <option value="ALL">
+                    Tutte le strutture
+                  </option>
+
+                  {properties.map(
+                    (property) => (
+                      <option
+                        key={property.id}
+                        value={property.id}
+                      >
+                        {property.name}
+                        {property.city
+                          ? ` · ${property.city}`
+                          : ""}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </label>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "12px",
+                  paddingTop: "18px",
+                  borderTop: "1px solid #e2e8f0",
+                }}
+              >
+                <Link
+                  href="/reports/finance"
+                  style={secondaryLinkStyle}
+                >
+                  Annulla
+                </Link>
+
+                <button
+                  type="submit"
+                  style={generateButtonStyle}
+                >
+                  Genera rendiconti
+                </button>
+              </div>
+            </form>
           </section>
         </AppShell>
       </>
     );
   }
-
   const monthStart =
     parseReferenceMonth(referenceMonth);
 
@@ -423,26 +593,6 @@ const generateButtonStyle: CSSProperties = {
   cursor: "pointer",
 };
 
-const emptyStateStyle: CSSProperties = {
-  display: "grid",
-  justifyItems: "start",
-  gap: "12px",
-  padding: "30px",
-  border: "1px solid #e2e8f0",
-  borderRadius: "20px",
-  background: "#ffffff",
-};
-
-const emptyTitleStyle: CSSProperties = {
-  margin: 0,
-  color: "#0f172a",
-};
-
-const emptyDescriptionStyle: CSSProperties = {
-  margin: 0,
-  color: "#64748b",
-};
-
 const errorStateStyle: CSSProperties = {
   display: "grid",
   justifyItems: "start",
@@ -508,3 +658,10 @@ const secondaryLinkStyle: CSSProperties = {
   fontWeight: 700,
   textDecoration: "none",
 };
+
+
+
+
+
+
+
