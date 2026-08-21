@@ -1,9 +1,10 @@
-﻿import type { CSSProperties } from "react";
+import type { CSSProperties } from "react";
 
 import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
 import { Navigation } from "@/components/Navigation";
+import { buildFinanceInsights } from "@/lib/intelligence";
 import { prisma } from "@/lib/prisma";
 
 type FinanceReportsPageProps = {
@@ -108,6 +109,38 @@ export default async function FinanceReportsPage({
     }),
   ]);
 
+  const financeInsights =
+    buildFinanceInsights({
+      reports:
+        reports.map(
+          (report) => ({
+            id: report.id,
+            propertyId:
+              report.property.id,
+            propertyName:
+              report.property.name,
+            referenceMonth:
+              report.referenceMonth,
+            currency:
+              report.currency,
+            grossRevenue:
+              Number(report.grossRevenue),
+            finalAmount:
+              Number(report.finalAmount),
+            adjustments:
+              report.adjustments.map(
+                (adjustment) => ({
+                  id: adjustment.id,
+                  description:
+                    adjustment.description,
+                  amount:
+                    Number(adjustment.amount),
+                }),
+              ),
+          }),
+        ),
+    });
+
   const totalGrossRevenue =
     reports.reduce(
       (total, report) =>
@@ -147,169 +180,6 @@ export default async function FinanceReportsPage({
           );
 
 
-  const summaryCurrency =
-    getSingleCurrency(
-      reports.map(
-        (report) =>
-          report.currency
-      )
-    );
-
-  const monthlyHistoryMap =
-    new Map<
-      string,
-      {
-        month: Date;
-        grossRevenue: number;
-        finalAmount: number;
-        manualAdjustments: number;
-        reportsCount: number;
-      }
-    >();
-
-  for (const report of reports) {
-    const key =
-      `${report.referenceMonth.getUTCFullYear()}-${String(
-        report.referenceMonth.getUTCMonth() + 1
-      ).padStart(2, "0")}`;
-
-    const manualAdjustments =
-      report.adjustments.reduce(
-        (total, adjustment) =>
-          total +
-          Number(adjustment.amount),
-        0
-      );
-
-    const current =
-      monthlyHistoryMap.get(key) ?? {
-        month:
-          report.referenceMonth,
-        grossRevenue: 0,
-        finalAmount: 0,
-        manualAdjustments: 0,
-        reportsCount: 0,
-      };
-
-    current.grossRevenue +=
-      Number(report.grossRevenue);
-
-    current.finalAmount +=
-      Number(report.finalAmount) +
-      manualAdjustments;
-
-    current.manualAdjustments +=
-      manualAdjustments;
-
-    current.reportsCount += 1;
-
-    monthlyHistoryMap.set(
-      key,
-      current
-    );
-  }
-
-  const monthlyHistory =
-    Array.from(
-      monthlyHistoryMap.values()
-    )
-      .sort(
-        (a, b) =>
-          b.month.getTime() -
-          a.month.getTime()
-      )
-      .slice(0, 12);
-
-  const maxMonthlyGross =
-    Math.max(
-      1,
-      ...monthlyHistory.map(
-        (item) =>
-          item.grossRevenue
-      )
-    );
-
-  const propertyPerformanceMap =
-    new Map<
-      string,
-      {
-        propertyId: string;
-        propertyName: string;
-        address: string;
-        city: string;
-        grossRevenue: number;
-        finalAmount: number;
-        manualAdjustments: number;
-        reportsCount: number;
-      }
-    >();
-
-  for (const report of reports) {
-    const manualAdjustments =
-      report.adjustments.reduce(
-        (total, adjustment) =>
-          total +
-          Number(adjustment.amount),
-        0
-      );
-
-    const current =
-      propertyPerformanceMap.get(
-        report.property.id
-      ) ?? {
-        propertyId:
-          report.property.id,
-
-        propertyName:
-          report.property.name,
-
-        address:
-          report.property.address,
-
-        city:
-          report.property.city,
-
-        grossRevenue: 0,
-        finalAmount: 0,
-        manualAdjustments: 0,
-        reportsCount: 0,
-      };
-
-    current.grossRevenue +=
-      Number(report.grossRevenue);
-
-    current.finalAmount +=
-      Number(report.finalAmount) +
-      manualAdjustments;
-
-    current.manualAdjustments +=
-      manualAdjustments;
-
-    current.reportsCount += 1;
-
-    propertyPerformanceMap.set(
-      report.property.id,
-      current
-    );
-  }
-
-  const propertyPerformance =
-    Array.from(
-      propertyPerformanceMap.values()
-    ).sort(
-      (a, b) =>
-        b.finalAmount -
-        a.finalAmount
-    );
-
-  const maxPropertyGross =
-    Math.max(
-      1,
-      ...propertyPerformance.map(
-        (item) =>
-          item.grossRevenue
-      )
-    );
 
       return (
         total +
@@ -560,6 +430,93 @@ export default async function FinanceReportsPage({
             }
           />
         </section>
+
+        {financeInsights.length > 0 ? (
+          <section className="mb-5 rounded-3xl border border-blue-100 bg-blue-50/50 p-6 shadow-sm">
+            <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">
+                  HORIZON INTELLIGENCE
+                </div>
+
+                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+                  Elementi finanziari da verificare
+                </h2>
+
+                <p className="mt-1 text-sm text-slate-600">
+                  Horizon evidenzia solo variazioni e anomalie economicamente rilevanti.
+                </p>
+              </div>
+
+              <span className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
+                {financeInsights.length}{" "}
+                {financeInsights.length === 1
+                  ? "segnalazione"
+                  : "segnalazioni"}
+              </span>
+            </div>
+
+            <div className="grid gap-3">
+              {financeInsights.map((insight) => {
+                const severityClass =
+                  insight.severity === "CRITICAL"
+                    ? "border-rose-200 bg-rose-50"
+                    : insight.severity === "WARNING"
+                      ? "border-amber-200 bg-amber-50"
+                      : insight.severity === "OPPORTUNITY"
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-blue-100 bg-white";
+
+                const severityLabel =
+                  insight.severity === "CRITICAL"
+                    ? "Critico"
+                    : insight.severity === "WARNING"
+                      ? "Attenzione"
+                      : insight.severity === "OPPORTUNITY"
+                        ? "Opportunità"
+                        : "Informazione";
+
+                return (
+                  <article
+                    key={insight.id}
+                    className={`rounded-2xl border p-5 ${severityClass}`}
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-600">
+                            {severityLabel}
+                          </span>
+
+                          <span className="text-xs font-semibold text-slate-500">
+                            {insight.propertyName}
+                          </span>
+                        </div>
+
+                        <h3 className="mt-3 text-base font-bold text-slate-950">
+                          {insight.title}
+                        </h3>
+
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          {insight.explanation}
+                        </p>
+                      </div>
+
+                      {insight.action?.href ? (
+                        <Link
+                          href={insight.action.href}
+                          className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white no-underline transition hover:bg-blue-700"
+                        >
+                          {insight.action.label}
+                        </Link>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
 
         <section className="mb-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
@@ -1567,4 +1524,5 @@ const performanceNumbersStyle: CSSProperties = {
   color: "#0f172a",
   fontSize: "13px",
 };
+
 
