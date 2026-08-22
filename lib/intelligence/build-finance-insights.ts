@@ -453,7 +453,281 @@ export function buildFinanceInsights({
       }
 
       /*
-       * 4. VARIAZIONE FORTE VS MESE PRECEDENTE
+       * 4. VARIAZIONE STORICA CATEGORIE DI COSTO
+       *
+       * Confrontiamo il peso percentuale
+       * delle categorie sul lordo corrente
+       * con il mese precedente.
+       *
+       * Per evitare rumore viene generato
+       * un solo insight: la variazione
+       * materialmente più importante.
+       */
+      if (
+        previousReport &&
+        report.grossRevenue > 0 &&
+        previousReport.grossRevenue > 0
+      ) {
+        const trackedCategories = [
+          "OTA_COMMISSION",
+          "MANAGEMENT_COMMISSION",
+          "CLEANING",
+          "TAX",
+          "OTHER",
+        ] as const;
+
+        let largestCategoryIncrease:
+          | {
+              category:
+                typeof trackedCategories[number];
+              currentAmount: number;
+              previousAmount: number;
+              currentRatio: number;
+              previousRatio: number;
+              ratioDelta: number;
+              relativeIncrease: number;
+            }
+          | null = null;
+
+        for (
+          const category
+          of trackedCategories
+        ) {
+          const currentAmount =
+            report.rules
+              .filter(
+                (rule) =>
+                  rule.operation ===
+                    "SUBTRACT" &&
+                  rule.category ===
+                    category,
+              )
+              .reduce(
+                (total, rule) =>
+                  total +
+                  Math.abs(
+                    rule.calculatedAmount,
+                  ),
+                0,
+              );
+
+          const previousAmount =
+            previousReport.rules
+              .filter(
+                (rule) =>
+                  rule.operation ===
+                    "SUBTRACT" &&
+                  rule.category ===
+                    category,
+              )
+              .reduce(
+                (total, rule) =>
+                  total +
+                  Math.abs(
+                    rule.calculatedAmount,
+                  ),
+                0,
+              );
+
+          const currentRatio =
+            currentAmount /
+            report.grossRevenue;
+
+          const previousRatio =
+            previousAmount /
+            previousReport.grossRevenue;
+
+          const ratioDelta =
+            currentRatio -
+            previousRatio;
+
+          const relativeIncrease =
+            previousRatio > 0
+              ? ratioDelta /
+                previousRatio
+              : currentRatio > 0
+                ? Number.POSITIVE_INFINITY
+                : 0;
+
+          const isMaterial =
+            currentRatio >= 0.05 &&
+            ratioDelta >= 0.05 &&
+            (
+              previousRatio === 0 ||
+              relativeIncrease >= 0.5
+            );
+
+          if (!isMaterial) {
+            continue;
+          }
+
+          if (
+            largestCategoryIncrease ===
+              null ||
+            ratioDelta >
+              largestCategoryIncrease.ratioDelta
+          ) {
+            largestCategoryIncrease = {
+              category,
+              currentAmount,
+              previousAmount,
+              currentRatio,
+              previousRatio,
+              ratioDelta,
+              relativeIncrease,
+            };
+          }
+        }
+
+        if (
+          largestCategoryIncrease !==
+          null
+        ) {
+          const categoryChange =
+            largestCategoryIncrease;
+
+          const categoryLabel =
+            categoryChange.category ===
+              "OTA_COMMISSION"
+              ? "commissioni OTA"
+              : categoryChange.category ===
+                  "MANAGEMENT_COMMISSION"
+                ? "commissione di gestione"
+                : categoryChange.category ===
+                    "CLEANING"
+                  ? "costi di pulizia"
+                  : categoryChange.category ===
+                      "TAX"
+                    ? "imposte e tasse"
+                    : "altre voci di costo";
+
+          const currentPercent =
+            categoryChange.currentRatio *
+            100;
+
+          const previousPercent =
+            categoryChange.previousRatio *
+            100;
+
+          const deltaPoints =
+            categoryChange.ratioDelta *
+            100;
+
+          const estimatedImpact =
+            Math.max(
+              0,
+              categoryChange.currentAmount -
+                (
+                  categoryChange.previousRatio *
+                  report.grossRevenue
+                ),
+            );
+
+          insights.push({
+            id:
+              `finance-category-change:${report.id}:${categoryChange.category}`,
+
+            propertyId:
+              report.propertyId,
+
+            propertyName:
+              report.propertyName,
+
+            category:
+              "FINANCE",
+
+            severity:
+              deltaPoints >= 10 ||
+              currentPercent >= 25
+                ? "WARNING"
+                : "INFO",
+
+            title:
+              "Categoria di costo in aumento",
+
+            explanation:
+              `Il peso di ${categoryLabel} è passato da circa ${previousPercent.toFixed(
+                0,
+              )}% a ${currentPercent.toFixed(
+                0,
+              )}% del lordo rispetto al rendiconto precedente.`,
+
+            date:
+              dateKey(
+                report.referenceMonth,
+              ),
+
+            economicImpact: {
+              amount:
+                estimatedImpact,
+
+              currency:
+                "EUR",
+
+              direction:
+                "NEGATIVE",
+            },
+
+            action: {
+              type:
+                "REVIEW_FINANCE",
+
+              label:
+                "Verifica variazione",
+
+              href:
+                `/reports/monthly/${report.id}`,
+
+              propertyId:
+                report.propertyId,
+
+              requiresApproval:
+                false,
+            },
+
+            metadata: {
+              reportId:
+                report.id,
+
+              previousReportId:
+                previousReport.id,
+
+              costCategory:
+                categoryChange.category,
+
+              currentAmount:
+                categoryChange.currentAmount,
+
+              previousAmount:
+                categoryChange.previousAmount,
+
+              currentPercent:
+                Number(
+                  currentPercent.toFixed(
+                    2,
+                  ),
+                ),
+
+              previousPercent:
+                Number(
+                  previousPercent.toFixed(
+                    2,
+                  ),
+                ),
+
+              deltaPercentagePoints:
+                Number(
+                  deltaPoints.toFixed(
+                    2,
+                  ),
+                ),
+            },
+          });
+        }
+      }
+
+      /*
+       * 5. VARIAZIONE FORTE VS MESE PRECEDENTE
        *
        * Richiede un precedente rendiconto
        * della stessa struttura.
