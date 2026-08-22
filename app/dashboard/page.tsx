@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 import {
   ArrowRight,
@@ -19,11 +19,22 @@ import {
   getPropertiesPageData,
 } from "@/lib/properties/get-properties-page-data";
 
+import {
+  getDashboardIntelligence,
+} from "@/lib/intelligence";
+
 export default async function Home() {
-  const properties =
-    await getPropertiesPageData({
-      sort: "name-asc",
-    });
+  const [
+    properties,
+    intelligence,
+  ] =
+    await Promise.all([
+      getPropertiesPageData({
+        sort: "name-asc",
+      }),
+
+      getDashboardIntelligence(),
+    ]);
 
   const now =
     new Date();
@@ -73,6 +84,102 @@ export default async function Home() {
           </Link>
         </div>
       </div>
+
+      {intelligence.insights.length > 0 ? (
+        <section className="mb-6 overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-blue-100 bg-blue-50/60 px-5 py-4">
+            <div>
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                Horizon Intelligence
+              </p>
+
+              <h2 className="mt-1 text-[18px] font-bold tracking-[-0.02em] text-slate-950">
+                Priorità del portfolio
+              </h2>
+
+              <p className="mt-1 text-[11px] text-slate-500">
+                Segnali ordinati per severità, impatto economico e rilevanza temporale.
+                {intelligence.portfolio.totalInsights > intelligence.insights.length ? (
+                  <>
+                    {" "}
+                    Mostrate {intelligence.insights.length} priorità su{" "}
+                    {intelligence.portfolio.totalInsights} segnalazioni.
+                  </>
+                ) : null}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-[9px] font-bold text-rose-700">
+                {intelligence.portfolio.criticalInsights} critici
+              </span>
+
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-[9px] font-bold text-amber-700">
+                {intelligence.portfolio.warnings} attenzioni
+              </span>
+
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[9px] font-bold text-emerald-700">
+                {intelligence.portfolio.opportunities} opportunità
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-3 p-4 xl:grid-cols-2">
+            {intelligence.insights.map((insight) => (
+              <article
+                key={insight.id}
+                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={[
+                        "rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.08em]",
+                        insight.severity === "CRITICAL"
+                          ? "bg-rose-100 text-rose-700"
+                          : insight.severity === "WARNING"
+                            ? "bg-amber-100 text-amber-700"
+                            : insight.severity === "OPPORTUNITY"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-blue-100 text-blue-700",
+                      ].join(" ")}>
+                        {insight.severity === "CRITICAL"
+                          ? "Critico"
+                          : insight.severity === "WARNING"
+                            ? "Attenzione"
+                            : insight.severity === "OPPORTUNITY"
+                              ? "Opportunità"
+                              : "Informazione"}
+                      </span>
+
+                      <span className="text-[9px] font-semibold text-slate-400">
+                        {insight.propertyName}
+                      </span>
+                    </div>
+
+                    <h3 className="mt-2 text-[13px] font-bold text-slate-950">
+                      {insight.title}
+                    </h3>
+
+                    <p className="mt-1 text-[10px] leading-5 text-slate-500">
+                      {insight.explanation}
+                    </p>
+                  </div>
+
+                  {insight.action?.href ? (
+                    <Link
+                      href={insight.action.href}
+                      className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] px-3 text-[9px] font-bold !text-white transition hover:bg-[#1D4ED8]"
+                    >
+                      {insight.action.label}
+                    </Link>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.045)]">
         <div className="overflow-x-auto">
@@ -475,12 +582,4 @@ function formatStatus(
     )
     .join(" ");
 }
-
-
-
-
-
-
-
-
 

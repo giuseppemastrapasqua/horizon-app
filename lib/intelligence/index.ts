@@ -8,3 +8,4 @@ export * from "./build-task-insights";
 export * from "./build-document-insights";
 export * from "./build-finance-insights";
 export * from "./build-missing-finance-report-insights";
+export * from "./get-dashboard-intelligence";

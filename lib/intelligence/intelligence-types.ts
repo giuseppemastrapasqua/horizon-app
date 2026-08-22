@@ -1,4 +1,4 @@
-﻿export type IntelligenceSeverity =
+export type IntelligenceSeverity =
   | "INFO"
   | "OPPORTUNITY"
   | "WARNING"
@@ -70,6 +70,8 @@ export type HorizonIntelligenceBriefing = {
 
   portfolio: {
     properties: number;
+
+    totalInsights: number;
 
     criticalInsights: number;
     warnings: number;
