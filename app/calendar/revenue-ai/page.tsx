@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 import {
   ArrowLeft,
@@ -23,12 +23,9 @@ import {
 } from "@/lib/prisma";
 
 import {
-  getPropertyRevenueData,
-} from "@/lib/revenue/get-property-revenue-data";
+  getPropertyRevenueAnalysis,
+} from "@/lib/revenue/get-property-revenue-analysis";
 
-import {
-  buildPeriodRevenueRecommendation,
-} from "@/app/properties/[id]/components/property-calendar/revenue/build-period-recommendation";
 
 import {
   buildDailyChannelPrices,
@@ -54,9 +51,6 @@ import {
   RevenueIntelligenceInsights,
 } from "../components/RevenueIntelligenceInsights";
 
-import {
-  buildRevenueRecommendationInsights,
-} from "@/lib/intelligence";
 
 type RevenueAiPageProps = {
   searchParams: Promise<{
@@ -245,47 +239,27 @@ export default async function RevenueAiPage({
     );
   }
 
-  const standardRate =
-    property.ratePlans.find(
-      (ratePlan) =>
-        ratePlan.code ===
-        "STANDARD",
-    ) ??
-    property.ratePlans.find(
-      (ratePlan) =>
-        ratePlan.isDefault,
-    ) ??
-    null;
-
-  const revenueData =
-    await getPropertyRevenueData({
+  const revenueAnalysis =
+    await getPropertyRevenueAnalysis({
       propertyId,
       startDate: rangeFrom,
       endDate: rangeTo,
     });
 
+  const standardRate =
+    revenueAnalysis?.standardRate ??
+    null;
+
+  const revenueData =
+    revenueAnalysis?.revenueData ??
+    null;
+
   const revenueResult =
-    standardRate
-      ? buildPeriodRevenueRecommendation({
-          propertyId,
-
-          rangeStart:
-            getParam(params.from),
-
-          rangeEnd:
-            getParam(params.to),
-
-          minimumStay:
-            String(
-              standardRate.minimumStay,
-            ),
-
-          revenueData,
-        })
-      : null;
+    revenueAnalysis?.revenueResult ??
+    null;
 
   const recommendation =
-    revenueResult?.recommendation ??
+    revenueAnalysis?.recommendation ??
     null;
 
   const connections =
@@ -411,20 +385,8 @@ export default async function RevenueAiPage({
       : null;
 
   const intelligenceInsights =
-    recommendation
-      ? buildRevenueRecommendationInsights({
-          propertyId:
-            property.id,
-
-          propertyName:
-            property.name,
-
-          recommendation,
-
-          currentPrice:
-            standardPrice,
-        })
-      : [];
+    revenueAnalysis?.insights ??
+    [];
 
   const calendarHref =
     `/calendar?propertyId=${propertyId}` +
@@ -952,16 +914,3 @@ function MetricCard({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

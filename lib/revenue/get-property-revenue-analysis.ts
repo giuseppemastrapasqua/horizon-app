@@ -69,17 +69,6 @@ export async function getPropertyRevenueAnalysis({
     ) ??
     null;
 
-  if (!standardRate) {
-    return {
-      property,
-      standardRate: null,
-      revenueData: null,
-      revenueResult: null,
-      recommendation: null,
-      insights: [],
-    };
-  }
-
   const revenueData =
     await getPropertyRevenueData({
       propertyId:
@@ -88,6 +77,17 @@ export async function getPropertyRevenueAnalysis({
       startDate,
       endDate,
     });
+
+  if (!standardRate) {
+    return {
+      property,
+      standardRate: null,
+      revenueData,
+      revenueResult: null,
+      recommendation: null,
+      insights: [],
+    };
+  }
 
   const revenueResult =
     buildPeriodRevenueRecommendation({

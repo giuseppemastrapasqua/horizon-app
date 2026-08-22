@@ -34,6 +34,7 @@ type CalendarPeriodEditorProps = {
   source: PriceSource;
   minimumStay: number;
   closed: boolean;
+  revenueAiAvailable: boolean;
 };
 
 export function CalendarPeriodEditor({
@@ -45,6 +46,7 @@ export function CalendarPeriodEditor({
   source,
   minimumStay,
   closed,
+  revenueAiAvailable,
 }: CalendarPeriodEditorProps) {
   const [open, setOpen] =
     useState(false);
@@ -374,11 +376,14 @@ export function CalendarPeriodEditor({
 
                     <button
                       type="submit"
+                      disabled={!revenueAiAvailable}
                       className={[
-                        "flex h-12 w-full items-center gap-2 rounded-xl px-3 text-left",
-                        isAi
-                          ? "bg-[#2563EB] text-white"
-                          : "border border-[#E2E8F0] bg-white text-[#475569]",
+                        "flex h-12 w-full items-center gap-2 rounded-xl px-3 text-left transition",
+                        !revenueAiAvailable
+                          ? "cursor-not-allowed border border-[#E2E8F0] bg-[#F8FAFC] text-[#94A3B8] opacity-70"
+                          : isAi
+                            ? "bg-[#2563EB] text-white"
+                            : "border border-[#E2E8F0] bg-white text-[#475569]",
                       ].join(
                         " ",
                       )}
@@ -392,7 +397,9 @@ export function CalendarPeriodEditor({
                           Revenue AI
                         </strong>
                         <span className="text-[8px] opacity-70">
-                          Ottimizzazione dinamica
+                          {revenueAiAvailable
+                            ? "Ottimizzazione dinamica"
+                            : "Configura Standard Rate"}
                         </span>
                       </span>
                     </button>
@@ -637,10 +644,3 @@ export function CalendarPeriodEditor({
     </>
   );
 }
-
-
-
-
-
-
-

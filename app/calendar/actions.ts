@@ -145,9 +145,7 @@ export async function applyRevenueAiAction(
     });
 
   if (!standard) {
-    throw new Error(
-      "Standard Rate non configurata.",
-    );
+    return;
   }
 
   /*
@@ -192,10 +190,7 @@ export async function applyRevenueAiAction(
     result.recommendation;
 
   if (!recommendation) {
-    throw new Error(
-      result.message ||
-        "Dati di mercato insufficienti per generare una raccomandazione.",
-    );
+    return;
   }
 
   /*
@@ -233,9 +228,7 @@ export async function applyRevenueAiAction(
   if (
     dailyPrices.length === 0
   ) {
-    throw new Error(
-      "Revenue AI non ha prodotto prezzi giornalieri.",
-    );
+    return;
   }
 
   for (
@@ -485,15 +478,3 @@ function finish(
     `/calendar?${params.toString()}`,
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
