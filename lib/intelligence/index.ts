@@ -7,3 +7,4 @@ export * from "./build-revenue-recommendation-insights";
 export * from "./build-task-insights";
 export * from "./build-document-insights";
 export * from "./build-finance-insights";
+export * from "./build-missing-finance-report-insights";

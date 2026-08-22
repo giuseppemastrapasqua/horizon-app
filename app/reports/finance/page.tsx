@@ -4,7 +4,10 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
 import { Navigation } from "@/components/Navigation";
-import { buildFinanceInsights } from "@/lib/intelligence";
+import {
+  buildFinanceInsights,
+  buildMissingFinanceReportInsights,
+} from "@/lib/intelligence";
 import { prisma } from "@/lib/prisma";
 
 type FinanceReportsPageProps = {
@@ -25,7 +28,27 @@ export default async function FinanceReportsPage({
       ? propertyIdValue.trim()
       : "";
 
-  const [properties, reports] = await Promise.all([
+  const now = new Date();
+
+  const previousMonthStart =
+    new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth() - 1,
+        1,
+      ),
+    );
+
+  const currentMonthStart =
+    new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        1,
+      ),
+    );
+
+  const [properties, reports, previousMonthBookings, previousMonthReports] = await Promise.all([
     prisma.property.findMany({
       orderBy: {
         name: "asc",
@@ -121,7 +144,79 @@ export default async function FinanceReportsPage({
         },
       },
     }),
+
+    prisma.booking.findMany({
+      where: {
+        ...(selectedPropertyId
+          ? {
+              propertyId:
+                selectedPropertyId,
+            }
+          : {}),
+
+        bookingStatus: {
+          not: "CANCELLED",
+        },
+
+        checkIn: {
+          gte:
+            previousMonthStart,
+          lt:
+            currentMonthStart,
+        },
+      },
+
+      select: {
+        id: true,
+        propertyId: true,
+        checkIn: true,
+        grossAmount: true,
+      },
+    }),
+
+    prisma.financeReport.findMany({
+      where: {
+        ...(selectedPropertyId
+          ? {
+              propertyId:
+                selectedPropertyId,
+            }
+          : {}),
+
+        referenceMonth:
+          previousMonthStart,
+      },
+
+      select: {
+        id: true,
+        propertyId: true,
+        referenceMonth: true,
+      },
+    }),
   ]);
+
+  const missingFinanceReportInsights =
+    buildMissingFinanceReportInsights({
+      properties,
+
+      bookings:
+        previousMonthBookings.map(
+          (booking) => ({
+            id: booking.id,
+            propertyId:
+              booking.propertyId,
+            checkIn:
+              booking.checkIn,
+            grossAmount:
+              Number(booking.grossAmount),
+          }),
+        ),
+
+      reports:
+        previousMonthReports,
+
+      now,
+    });
 
   const financeInsights =
     buildFinanceInsights({
@@ -169,6 +264,12 @@ export default async function FinanceReportsPage({
           }),
         ),
     });
+
+  const allFinanceInsights =
+    [
+      ...missingFinanceReportInsights,
+      ...financeInsights,
+    ].slice(0, 8);
 
   const totalGrossRevenue =
     reports.reduce(
@@ -460,7 +561,7 @@ export default async function FinanceReportsPage({
           />
         </section>
 
-        {financeInsights.length > 0 ? (
+        {allFinanceInsights.length > 0 ? (
           <section className="mb-5 rounded-3xl border border-blue-100 bg-blue-50/50 p-6 shadow-sm">
             <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -478,15 +579,15 @@ export default async function FinanceReportsPage({
               </div>
 
               <span className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
-                {financeInsights.length}{" "}
-                {financeInsights.length === 1
+                {allFinanceInsights.length}{" "}
+                {allFinanceInsights.length === 1
                   ? "segnalazione"
                   : "segnalazioni"}
               </span>
             </div>
 
             <div className="grid gap-3">
-              {financeInsights.map((insight) => {
+              {allFinanceInsights.map((insight) => {
                 const severityClass =
                   insight.severity === "CRITICAL"
                     ? "border-rose-200 bg-rose-50"
@@ -1553,5 +1654,8 @@ const performanceNumbersStyle: CSSProperties = {
   color: "#0f172a",
   fontSize: "13px",
 };
+
+
+
 
 
