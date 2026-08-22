@@ -4,6 +4,7 @@ import {
   buildIntelligenceBriefing,
   buildMissingFinanceReportInsights,
   buildTaskInsights,
+  getPropertyRevenueIntelligence,
 } from "@/lib/intelligence";
 
 import {
@@ -46,6 +47,7 @@ export async function getDashboardIntelligence({
         select: {
           id: true,
           name: true,
+          status: true,
         },
       }),
 
@@ -398,6 +400,56 @@ export async function getDashboardIntelligence({
 
       now,
     });
+
+  /*
+   * Revenue Intelligence V4
+   *
+   * Orizzonte corto e operativo:
+   * oggi + prossimi 6 giorni.
+   */
+  const revenueStartDate =
+    new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+      ),
+    );
+
+  const revenueEndDate =
+    new Date(
+      revenueStartDate,
+    );
+
+  revenueEndDate.setUTCDate(
+    revenueEndDate.getUTCDate() +
+      6,
+  );
+
+  const revenueInsights =
+    (
+      await Promise.all(
+        properties
+          .filter(
+            (property) =>
+              property.status ===
+              "ACTIVE",
+          )
+          .map(
+            (property) =>
+              getPropertyRevenueIntelligence({
+                propertyId:
+                  property.id,
+
+                startDate:
+                  revenueStartDate,
+
+                endDate:
+                  revenueEndDate,
+              }),
+          ),
+      )
+    ).flat();
 
   const insights = [
     ...taskInsights,
