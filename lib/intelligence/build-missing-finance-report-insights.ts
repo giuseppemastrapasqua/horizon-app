@@ -166,6 +166,8 @@ export function buildMissingFinanceReportInsights({
         href:
           `/reports/monthly/property?propertyId=${encodeURIComponent(
             property.id,
+          )}&referenceMonth=${encodeURIComponent(
+            monthKey(previousMonthStart),
           )}`,
 
         propertyId:
@@ -236,4 +238,12 @@ function formatAmount(
       maximumFractionDigits: 0,
     },
   ).format(amount);
+}
+
+function monthKey(
+  date: Date,
+) {
+  return date
+    .toISOString()
+    .slice(0, 7);
 }
