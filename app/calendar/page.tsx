@@ -1533,7 +1533,7 @@ export default async function CalendarPage({
                     )}&to=${toCalendarDateValue(
                       rangeTo,
                     )}`}
-                    className="group mt-4 flex items-center justify-between rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-4 py-3 text-[#2563EB] transition hover:border-[#93C5FD] hover:bg-[#E0F2FE]"
+                    className="group mt-4 flex items-center justify-between rounded-xl border border-[#2563EB] bg-[#2563EB] px-4 py-3 text-white shadow-sm transition hover:border-[#1D4ED8] hover:bg-[#1D4ED8]"
                   >
                     <div className="flex items-center gap-3">
                       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#2563EB] shadow-sm">
@@ -2158,6 +2158,7 @@ function formatCurrency(
     value,
   );
 }
+
 
 
 
