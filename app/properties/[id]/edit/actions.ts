@@ -16,7 +16,8 @@ export async function updatePropertyAction(
     formData.get("propertyId") ?? "",
   ).trim();
 
-  await requirePropertyAccess(propertyId);
+  const user =
+    await requirePropertyAccess(propertyId);
 
   const name = String(
     formData.get("name") ?? "",
@@ -82,6 +83,18 @@ export async function updatePropertyAction(
   ) {
     throw new Error(
       "La commissione Horizon deve essere compresa tra 0 e 99,99.",
+    );
+  }
+
+  if (
+    !Number.isFinite(
+      propertyManagementCommissionPercent,
+    ) ||
+    propertyManagementCommissionPercent < 0 ||
+    propertyManagementCommissionPercent >= 100
+  ) {
+    throw new Error(
+      "La commissione di gestione deve essere compresa tra 0 e 99,99.",
     );
   }
 
@@ -163,6 +176,16 @@ export async function updatePropertyAction(
         );
       }
 
+      if (
+        Number(
+          currentProperty.propertyManagementCommissionPercent,
+        ) !== propertyManagementCommissionPercent
+      ) {
+        changedFields.push(
+          "propertyManagementCommissionPercent",
+        );
+      }
+
       await transaction.property.update({
         where: {
           id: propertyId,
@@ -187,6 +210,9 @@ export async function updatePropertyAction(
 
       await AuditService.log(
         {
+          actorId:
+            user.id,
+
           action:
             AuditAction.UPDATE,
 
@@ -222,6 +248,11 @@ export async function updatePropertyAction(
               horizonCommissionPercent:
                 Number(
                   currentProperty.horizonCommissionPercent,
+                ),
+
+              propertyManagementCommissionPercent:
+                Number(
+                  currentProperty.propertyManagementCommissionPercent,
                 ),
             },
 
