@@ -5,6 +5,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 function parseDate(
@@ -69,6 +70,8 @@ export async function closePropertyPeriodAction(
     );
   }
 
+  await requirePropertyAccess(propertyId);
+
   const startDate =
     parseDate(
       formData.get(
@@ -113,62 +116,60 @@ export async function closePropertyPeriodAction(
       1,
     );
 
-  const overlapping =
-    await prisma.propertyAvailabilityBlock.findMany({
-      where: {
-        propertyId,
-
-        source:
-          AvailabilityBlockSource.MANUAL,
-
-        startDate: {
-          lte:
-            dayAfter,
-        },
-
-        endDate: {
-          gte:
-            dayBefore,
-        },
-      },
-
-      orderBy: {
-        startDate:
-          "asc",
-      },
-    });
-
-  let mergedStart =
-    startDate;
-
-  let mergedEnd =
-    endDate;
-
-  for (
-    const block
-    of overlapping
-  ) {
-    if (
-      block.startDate <
-      mergedStart
-    ) {
-      mergedStart =
-        block.startDate;
-    }
-
-    if (
-      block.endDate >
-      mergedEnd
-    ) {
-      mergedEnd =
-        block.endDate;
-    }
-  }
-
   await prisma.$transaction(
-    async (
-      transaction,
-    ) => {
+    async (transaction) => {
+      const overlapping =
+        await transaction.propertyAvailabilityBlock.findMany({
+          where: {
+            propertyId,
+
+            source:
+              AvailabilityBlockSource.MANUAL,
+
+            startDate: {
+              lte:
+                dayAfter,
+            },
+
+            endDate: {
+              gte:
+                dayBefore,
+            },
+          },
+
+          orderBy: {
+            startDate:
+              "asc",
+          },
+        });
+
+      let mergedStart =
+        startDate;
+
+      let mergedEnd =
+        endDate;
+
+      for (
+        const block
+        of overlapping
+      ) {
+        if (
+          block.startDate <
+          mergedStart
+        ) {
+          mergedStart =
+            block.startDate;
+        }
+
+        if (
+          block.endDate >
+          mergedEnd
+        ) {
+          mergedEnd =
+            block.endDate;
+        }
+      }
+
       if (
         overlapping.length >
         0
@@ -205,7 +206,6 @@ export async function closePropertyPeriodAction(
       });
     },
   );
-
   revalidatePath(
     `/properties/${propertyId}`,
   );
@@ -226,6 +226,8 @@ export async function openPropertyPeriodAction(
       "Immobile mancante.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   const startDate =
     parseDate(
@@ -252,39 +254,32 @@ export async function openPropertyPeriodAction(
     );
   }
 
-  const overlapping =
-    await prisma.propertyAvailabilityBlock.findMany({
-      where: {
-        propertyId,
-
-        source:
-          AvailabilityBlockSource.MANUAL,
-
-        startDate: {
-          lte:
-            endDate,
-        },
-
-        endDate: {
-          gte:
-            startDate,
-        },
-      },
-    });
-
   await prisma.$transaction(
-    async (
-      transaction,
-    ) => {
+    async (transaction) => {
+      const overlapping =
+        await transaction.propertyAvailabilityBlock.findMany({
+          where: {
+            propertyId,
+
+            source:
+              AvailabilityBlockSource.MANUAL,
+
+            startDate: {
+              lte:
+                endDate,
+            },
+
+            endDate: {
+              gte:
+                startDate,
+            },
+          },
+        });
+
       for (
         const block
         of overlapping
       ) {
-        /*
-         * Caso 1:
-         * il periodo riaperto copre
-         * completamente il blocco.
-         */
         if (
           startDate <=
             block.startDate &&
@@ -301,17 +296,6 @@ export async function openPropertyPeriodAction(
           continue;
         }
 
-        /*
-         * Caso 2:
-         * riapriamo la parte centrale.
-         *
-         * 10 -------- 20
-         *       14-16
-         *
-         * diventa:
-         *
-         * 10-13 + 17-20
-         */
         if (
           startDate >
             block.startDate &&
@@ -363,11 +347,6 @@ export async function openPropertyPeriodAction(
           continue;
         }
 
-        /*
-         * Caso 3:
-         * togliamo l'inizio
-         * della chiusura.
-         */
         if (
           startDate <=
             block.startDate &&
@@ -392,11 +371,6 @@ export async function openPropertyPeriodAction(
           continue;
         }
 
-        /*
-         * Caso 4:
-         * togliamo la fine
-         * della chiusura.
-         */
         if (
           startDate >
             block.startDate &&
@@ -421,7 +395,6 @@ export async function openPropertyPeriodAction(
       }
     },
   );
-
   revalidatePath(
     `/properties/${propertyId}`,
   );

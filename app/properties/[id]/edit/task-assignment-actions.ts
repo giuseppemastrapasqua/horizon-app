@@ -7,6 +7,7 @@ import {
 
 import { revalidatePath } from "next/cache";
 
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 const assignmentRoles = [
@@ -27,6 +28,8 @@ export async function updatePropertyTaskAssignmentsAction(
       "Immobile non specificato.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   const property =
     await prisma.property.findUnique({
