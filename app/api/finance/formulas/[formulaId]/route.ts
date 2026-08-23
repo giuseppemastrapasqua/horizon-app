@@ -1,10 +1,12 @@
 import {
   AuditAction,
+  FinanceFormulaScope,
   Prisma,
 } from "@prisma/client";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { AuditService } from "@/services/audit/AuditService";
 
@@ -20,10 +22,49 @@ type RouteContext = {
   }>;
 };
 
+const GLOBAL_FORMULA_ROLES = [
+  "SUPER_ADMIN",
+  "MANAGER",
+  "FINANCE_ADMIN",
+];
+
+function hasGlobalFormulaAccess(
+  role: string,
+): boolean {
+  return GLOBAL_FORMULA_ROLES.includes(
+    role,
+  );
+}
+
+function hasPropertyFormulaAccess(
+  propertyId: string | null,
+  accessiblePropertyIds: string[] | null,
+): boolean {
+  if (!propertyId) {
+    return false;
+  }
+
+  return (
+    accessiblePropertyIds === null ||
+    accessiblePropertyIds.includes(
+      propertyId,
+    )
+  );
+}
+
 export async function GET(
   _request: Request,
   context: RouteContext,
 ) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Accesso non autorizzato." },
+      { status: 401 },
+    );
+  }
+
   const { formulaId } = await context.params;
 
   if (!formulaId.trim()) {
@@ -32,9 +73,7 @@ export async function GET(
         error:
           "L'identificativo della formula non è valido.",
       },
-      {
-        status: 400,
-      },
+      { status: 400 },
     );
   }
 
@@ -44,7 +83,6 @@ export async function GET(
         where: {
           id: formulaId,
         },
-
         select: {
           id: true,
           scope: true,
@@ -52,12 +90,10 @@ export async function GET(
           name: true,
           description: true,
           status: true,
-
           rules: {
             orderBy: {
               order: "asc",
             },
-
             select: {
               id: true,
               name: true,
@@ -80,9 +116,31 @@ export async function GET(
           error:
             "La formula selezionata non esiste.",
         },
+        { status: 404 },
+      );
+    }
+
+    const accessiblePropertyIds =
+      await getAccessiblePropertyIds();
+
+    const authorized =
+      formula.scope ===
+      FinanceFormulaScope.ALL_PROPERTIES
+        ? hasGlobalFormulaAccess(
+            session.user.role,
+          )
+        : hasPropertyFormulaAccess(
+            formula.propertyId,
+            accessiblePropertyIds,
+          );
+
+    if (!authorized) {
+      return NextResponse.json(
         {
-          status: 404,
+          error:
+            "Accesso alla formula non autorizzato.",
         },
+        { status: 403 },
       );
     }
 
@@ -97,9 +155,7 @@ export async function GET(
         error:
           "Non è stato possibile caricare la formula.",
       },
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }
@@ -108,6 +164,15 @@ export async function PUT(
   request: Request,
   context: RouteContext,
 ) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Accesso non autorizzato." },
+      { status: 401 },
+    );
+  }
+
   const { formulaId } = await context.params;
 
   if (!formulaId.trim()) {
@@ -116,9 +181,7 @@ export async function PUT(
         error:
           "L'identificativo della formula non è valido.",
       },
-      {
-        status: 400,
-      },
+      { status: 400 },
     );
   }
 
@@ -133,9 +196,7 @@ export async function PUT(
         error:
           "Il corpo della richiesta non è valido.",
       },
-      {
-        status: 400,
-      },
+      { status: 400 },
     );
   }
 
@@ -144,20 +205,87 @@ export async function PUT(
 
   if (validationError) {
     return NextResponse.json(
-      {
-        error: validationError,
-      },
-      {
-        status: 400,
-      },
+      { error: validationError },
+      { status: 400 },
     );
   }
 
+  const data =
+    payload as UpdateFormulaPayload;
+
   try {
+    const currentFormula =
+      await prisma.financeFormula.findUnique({
+        where: {
+          id: formulaId,
+        },
+        select: {
+          id: true,
+          scope: true,
+          propertyId: true,
+        },
+      });
+
+    if (!currentFormula) {
+      return NextResponse.json(
+        {
+          error:
+            "La formula selezionata non esiste.",
+        },
+        { status: 404 },
+      );
+    }
+
+    const accessiblePropertyIds =
+      await getAccessiblePropertyIds();
+
+    const canAccessCurrent =
+      currentFormula.scope ===
+      FinanceFormulaScope.ALL_PROPERTIES
+        ? hasGlobalFormulaAccess(
+            session.user.role,
+          )
+        : hasPropertyFormulaAccess(
+            currentFormula.propertyId,
+            accessiblePropertyIds,
+          );
+
+    if (!canAccessCurrent) {
+      return NextResponse.json(
+        {
+          error:
+            "Accesso alla formula non autorizzato.",
+        },
+        { status: 403 },
+      );
+    }
+
+    const canAccessDestination =
+      data.scope ===
+      FinanceFormulaScope.ALL_PROPERTIES
+        ? hasGlobalFormulaAccess(
+            session.user.role,
+          )
+        : hasPropertyFormulaAccess(
+            data.propertyId?.trim() ?? null,
+            accessiblePropertyIds,
+          );
+
+    if (!canAccessDestination) {
+      return NextResponse.json(
+        {
+          error:
+            "Destinazione della formula non autorizzata.",
+        },
+        { status: 403 },
+      );
+    }
+
     const result =
       await updateFinanceFormula(
         formulaId,
-        payload as UpdateFormulaPayload,
+        data,
+        session.user.id,
       );
 
     if (
@@ -169,9 +297,7 @@ export async function PUT(
           error:
             "La formula selezionata non esiste.",
         },
-        {
-          status: 404,
-        },
+        { status: 404 },
       );
     }
 
@@ -184,9 +310,7 @@ export async function PUT(
           error:
             "La proprietà selezionata non esiste.",
         },
-        {
-          status: 404,
-        },
+        { status: 404 },
       );
     }
 
@@ -205,9 +329,7 @@ export async function PUT(
           error:
             "Non è stato possibile aggiornare la formula.",
         },
-        {
-          status: 400,
-        },
+        { status: 400 },
       );
     }
 
@@ -216,9 +338,7 @@ export async function PUT(
         error:
           "Errore interno del server.",
       },
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }
@@ -227,6 +347,15 @@ export async function DELETE(
   _request: Request,
   context: RouteContext,
 ) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Accesso non autorizzato." },
+      { status: 401 },
+    );
+  }
+
   const { formulaId } = await context.params;
 
   if (!formulaId.trim()) {
@@ -235,13 +364,9 @@ export async function DELETE(
         error:
           "L'identificativo della formula non è valido.",
       },
-      {
-        status: 400,
-      },
+      { status: 400 },
     );
   }
-
-  const session = await auth();
 
   try {
     const formula =
@@ -249,7 +374,6 @@ export async function DELETE(
         where: {
           id: formulaId,
         },
-
         select: {
           id: true,
           propertyId: true,
@@ -282,9 +406,31 @@ export async function DELETE(
           error:
             "La formula selezionata non esiste.",
         },
+        { status: 404 },
+      );
+    }
+
+    const accessiblePropertyIds =
+      await getAccessiblePropertyIds();
+
+    const authorized =
+      formula.scope ===
+      FinanceFormulaScope.ALL_PROPERTIES
+        ? hasGlobalFormulaAccess(
+            session.user.role,
+          )
+        : hasPropertyFormulaAccess(
+            formula.propertyId,
+            accessiblePropertyIds,
+          );
+
+    if (!authorized) {
+      return NextResponse.json(
         {
-          status: 404,
+          error:
+            "Accesso alla formula non autorizzato.",
         },
+        { status: 403 },
       );
     }
 
@@ -299,13 +445,14 @@ export async function DELETE(
         await AuditService.log(
           {
             actorId:
-              session?.user?.id ?? null,
+              session.user.id,
             action: AuditAction.DELETE,
             propertyId:
               formula.propertyId,
             entityType:
               "FINANCE_FORMULA",
-            entityId: formula.id,
+            entityId:
+              formula.id,
             description:
               "Formula finanziaria eliminata.",
             metadata: {
@@ -318,23 +465,26 @@ export async function DELETE(
                 formula.propertyId,
               rulesCount:
                 formula.rules.length,
-              rules: formula.rules.map(
-                (rule) => ({
-                  id: rule.id,
-                  name: rule.name,
-                  order: rule.order,
-                  isEnabled:
-                    rule.isEnabled,
-                  operation:
-                    rule.operation,
-                  valueType:
-                    rule.valueType,
-                  base: rule.base,
-                  value: rule.value,
-                  referencedFormulaId:
-                    rule.referencedFormulaId,
-                }),
-              ),
+              rules:
+                formula.rules.map(
+                  (rule) => ({
+                    id: rule.id,
+                    name: rule.name,
+                    order: rule.order,
+                    isEnabled:
+                      rule.isEnabled,
+                    operation:
+                      rule.operation,
+                    valueType:
+                      rule.valueType,
+                    base:
+                      rule.base,
+                    value:
+                      rule.value,
+                    referencedFormulaId:
+                      rule.referencedFormulaId,
+                  }),
+                ),
             },
           },
           transaction,
@@ -357,9 +507,7 @@ export async function DELETE(
           error:
             "Non è stato possibile eliminare la formula.",
         },
-        {
-          status: 400,
-        },
+        { status: 400 },
       );
     }
 
@@ -368,9 +516,7 @@ export async function DELETE(
         error:
           "Errore interno del server.",
       },
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }
