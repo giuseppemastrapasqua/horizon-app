@@ -40,50 +40,49 @@ export async function saveCalendarPeriodAction(formData: FormData) {
     requiredText(formData, "availability");
 
 
-  await removePricingOverridesInsideRange({
-    propertyId,
-    from,
-    to,
-    source: "AI",
-  });
-
-  await prisma.propertyPriceOverride.create({
-    data: {
+  await prisma.$transaction(async (transaction) => {
+    await removePricingOverridesInsideRange({
       propertyId,
-      startDate: from,
-      endDate: to,
-      nightlyPrice: standardRate,
-      source: "MANUAL",
-      note: "Standard Rate impostata dal calendario Horizon",
-    },
-  });
+      from,
+      to,
+      source: "AI",
+      db: transaction,
+    });
 
-  if (availability === "CLOSED") {
-    await prisma.propertyAvailabilityBlock.create({
+    await transaction.propertyPriceOverride.create({
       data: {
         propertyId,
         startDate: from,
         endDate: to,
+        nightlyPrice: standardRate,
         source: "MANUAL",
-        note: "Periodo chiuso dal calendario Horizon",
+        note: "Standard Rate impostata dal calendario Horizon",
       },
     });
-  }
 
-  if (availability === "OPEN") {
-    await prisma.propertyAvailabilityBlock.deleteMany({
-      where: {
-        propertyId,
-        source: "MANUAL",
-        startDate: {
-          lte: to,
+    if (availability === "CLOSED") {
+      await transaction.propertyAvailabilityBlock.create({
+        data: {
+          propertyId,
+          startDate: from,
+          endDate: to,
+          source: "MANUAL",
+          note: "Periodo chiuso dal calendario Horizon",
         },
-        endDate: {
-          gte: from,
+      });
+    }
+
+    if (availability === "OPEN") {
+      await transaction.propertyAvailabilityBlock.deleteMany({
+        where: {
+          propertyId,
+          source: "MANUAL",
+          startDate: { lte: to },
+          endDate: { gte: from },
         },
-      },
-    });
-  }
+      });
+    }
+  });
 
   finish(propertyId, month, from, to);
 }
@@ -235,47 +234,65 @@ export async function applyRevenueAiAction(
     return;
   }
 
-  for (
-    const dailyPrice of
-      dailyPrices
-  ) {
-    const day =
-      parseDate(
-        dailyPrice.date,
-      );
-
-    await prisma.propertyPriceOverride.create({
-      data: {
-        propertyId,
-
-        startDate:
-          day,
-
-        endDate:
-          day,
-
-        nightlyPrice:
-          dailyPrice.recommendedPrice,
-
-        minimumStay:
-          recommendation.minimumStay,
-
-        source:
-          "AI",
-
-        note:
-          [
-            "Revenue AI Market Based",
-            `Data ${dailyPrice.date}`,
-            "Prezzo giornaliero da segnali di mercato",
-            result.message,
-            `Copertura ${recommendation.coveragePercent}%`,
-          ]
-            .filter(Boolean)
-            .join(" · "),
-      },
+  await prisma.$transaction(async (transaction) => {
+    await removePricingOverridesInsideRange({
+      propertyId,
+      from,
+      to,
+      source: "AI",
+      db: transaction,
     });
-  }
+
+    await removePricingOverridesInsideRange({
+      propertyId,
+      from,
+      to,
+      source: "MANUAL",
+      db: transaction,
+    });
+
+    for (
+      const dailyPrice of
+        dailyPrices
+    ) {
+      const day =
+        parseDate(
+          dailyPrice.date,
+        );
+
+      await transaction.propertyPriceOverride.create({
+        data: {
+          propertyId,
+
+          startDate:
+            day,
+
+          endDate:
+            day,
+
+          nightlyPrice:
+            dailyPrice.recommendedPrice,
+
+          minimumStay:
+            recommendation.minimumStay,
+
+          source:
+            "AI",
+
+          note:
+            [
+              "Revenue AI Market Based",
+              `Data ${dailyPrice.date}`,
+              "Prezzo giornaliero da segnali di mercato",
+              result.message,
+              `Copertura ${recommendation.coveragePercent}%`,
+            ]
+              .filter(Boolean)
+              .join(" · "),
+        },
+      });
+    }
+  });
   finish(
     propertyId,
     month,
@@ -289,14 +306,16 @@ async function removePricingOverridesInsideRange({
   from,
   to,
   source,
+  db = prisma,
 }: {
   propertyId: string;
   from: Date;
   to: Date;
   source: "AI" | "MANUAL";
+  db?: Pick<typeof prisma, "propertyPriceOverride">;
 }) {
   const overlapping =
-    await prisma.propertyPriceOverride.findMany({
+    await db.propertyPriceOverride.findMany({
       where: {
         propertyId,
         source,
@@ -325,7 +344,7 @@ async function removePricingOverridesInsideRange({
     });
 
   for (const override of overlapping) {
-    await prisma.propertyPriceOverride.delete({
+    await db.propertyPriceOverride.delete({
       where: {
         id: override.id,
       },
@@ -334,7 +353,7 @@ async function removePricingOverridesInsideRange({
     if (
       override.startDate < from
     ) {
-      await prisma.propertyPriceOverride.create({
+      await db.propertyPriceOverride.create({
         data: {
           propertyId,
 
@@ -374,7 +393,7 @@ async function removePricingOverridesInsideRange({
     if (
       override.endDate > to
     ) {
-      await prisma.propertyPriceOverride.create({
+      await db.propertyPriceOverride.create({
         data: {
           propertyId,
 
