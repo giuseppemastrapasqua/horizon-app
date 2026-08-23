@@ -214,75 +214,86 @@ export async function createPropertyDocumentAction(
     ? new Date()
     : null;
 
-  const document =
-    await prisma.propertyDocument.create({
-      data: {
-        propertyId,
-        type,
-        title,
-        documentNumber: getOptionalString(
-          formData,
-          "documentNumber",
-        ),
-        issuer: getOptionalString(
-          formData,
-          "issuer",
-        ),
-        issueDate,
-        expiryDate,
-        validity: getDocumentValidity(formData),
-        fileUrl,
-        filename,
-        ocrStatus: fileUrl
-          ? PropertyDocumentOcrStatus.QUEUED
-          : PropertyDocumentOcrStatus.NOT_REQUESTED,
-        ocrRequestedAt,
-        notes: getOptionalString(
-          formData,
-          "notes",
-        ),
-      },
-      select: {
-        id: true,
-      },
-    });
+  await prisma.$transaction(
+    async (transaction) => {
+      const document =
+        await transaction.propertyDocument.create({
+          data: {
+            propertyId,
+            type,
+            title,
+            documentNumber: getOptionalString(
+              formData,
+              "documentNumber",
+            ),
+            issuer: getOptionalString(
+              formData,
+              "issuer",
+            ),
+            issueDate,
+            expiryDate,
+            validity: getDocumentValidity(formData),
+            fileUrl,
+            filename,
+            ocrStatus: fileUrl
+              ? PropertyDocumentOcrStatus.QUEUED
+              : PropertyDocumentOcrStatus.NOT_REQUESTED,
+            ocrRequestedAt,
+            notes: getOptionalString(
+              formData,
+              "notes",
+            ),
+          },
+          select: {
+            id: true,
+          },
+        });
 
-  if (fileUrl && ocrRequestedAt) {
-    await enqueueBackgroundJob({
-      type: "PROPERTY_DOCUMENT_OCR",
-      payload: {
-        documentId: document.id,
-        propertyId,
-        fileUrl,
-        ...(filename
-          ? {
-              filename,
-            }
-          : {}),
-      },
-      deduplicationKey:
-        getOcrDeduplicationKey(
-          document.id,
-          ocrRequestedAt,
-        ),
-    });
-  }
+      if (fileUrl && ocrRequestedAt) {
+        await enqueueBackgroundJob(
+          {
+            type: "PROPERTY_DOCUMENT_OCR",
+            payload: {
+              documentId: document.id,
+              propertyId,
+              fileUrl,
+              ...(filename
+                ? {
+                    filename,
+                  }
+                : {}),
+            },
+            deduplicationKey:
+              getOcrDeduplicationKey(
+                document.id,
+                ocrRequestedAt,
+              ),
+          },
+          transaction,
+        );
+      }
 
-  await AuditService.log({
-    actorId: user.id,
-    action: AuditAction.CREATE,
-    propertyId,
-    entityType: AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
-    entityId: document.id,
-    description: "Documento immobile creato.",
-    metadata: {
-      propertyId,
-      title,
-      type,
-      ocrRequested: Boolean(fileUrl),
+      await AuditService.log(
+        {
+          actorId: user.id,
+          action: AuditAction.CREATE,
+          propertyId,
+          entityType:
+            AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
+          entityId: document.id,
+          description:
+            "Documento immobile creato.",
+          metadata: {
+            propertyId,
+            title,
+            type,
+            ocrRequested: Boolean(fileUrl),
+          },
+        },
+        transaction,
+      );
     },
-  });
-
+  );
   revalidatePropertyPaths(propertyId);
 }
 
@@ -357,102 +368,114 @@ export async function updatePropertyDocumentAction(
       ? new Date()
       : null;
 
-  await prisma.propertyDocument.update({
-    where: {
-      id: document.id,
-    },
-    data: {
-      type: getDocumentType(formData),
-      title: getRequiredString(
-        formData,
-        "title",
-        "Il titolo del documento è obbligatorio.",
-      ),
-      documentNumber: getOptionalString(
-        formData,
-        "documentNumber",
-      ),
-      issuer: getOptionalString(
-        formData,
-        "issuer",
-      ),
-      issueDate,
-      expiryDate,
-      validity: getDocumentValidity(formData),
-      fileUrl,
-      filename,
-      notes: getOptionalString(
-        formData,
-        "notes",
-      ),
-      ...(fileUrlChanged
-        ? fileUrl
-          ? {
-              ocrStatus:
-                PropertyDocumentOcrStatus.QUEUED,
-              ocrRequestedAt,
-              ocrStartedAt: null,
-              ocrCompletedAt: null,
-              ocrExtractedText: null,
-              ocrProvider: null,
-              ocrProviderVersion: null,
-              ocrError: null,
-            }
-          : {
-              ocrStatus:
-                PropertyDocumentOcrStatus.NOT_REQUESTED,
-              ocrRequestedAt: null,
-              ocrStartedAt: null,
-              ocrCompletedAt: null,
-              ocrExtractedText: null,
-              ocrProvider: null,
-              ocrProviderVersion: null,
-              ocrError: null,
-            }
-        : {}),
-    },
-  });
+  await prisma.$transaction(
+    async (transaction) => {
+      await transaction.propertyDocument.update({
+        where: {
+          id: document.id,
+        },
+        data: {
+          type: getDocumentType(formData),
+          title: getRequiredString(
+            formData,
+            "title",
+            "Il titolo del documento è obbligatorio.",
+          ),
+          documentNumber: getOptionalString(
+            formData,
+            "documentNumber",
+          ),
+          issuer: getOptionalString(
+            formData,
+            "issuer",
+          ),
+          issueDate,
+          expiryDate,
+          validity: getDocumentValidity(formData),
+          fileUrl,
+          filename,
+          notes: getOptionalString(
+            formData,
+            "notes",
+          ),
+          ...(fileUrlChanged
+            ? fileUrl
+              ? {
+                  ocrStatus:
+                    PropertyDocumentOcrStatus.QUEUED,
+                  ocrRequestedAt,
+                  ocrStartedAt: null,
+                  ocrCompletedAt: null,
+                  ocrExtractedText: null,
+                  ocrProvider: null,
+                  ocrProviderVersion: null,
+                  ocrError: null,
+                }
+              : {
+                  ocrStatus:
+                    PropertyDocumentOcrStatus.NOT_REQUESTED,
+                  ocrRequestedAt: null,
+                  ocrStartedAt: null,
+                  ocrCompletedAt: null,
+                  ocrExtractedText: null,
+                  ocrProvider: null,
+                  ocrProviderVersion: null,
+                  ocrError: null,
+                }
+            : {}),
+        },
+      });
 
-  if (
-    fileUrlChanged &&
-    fileUrl &&
-    ocrRequestedAt
-  ) {
-    await enqueueBackgroundJob({
-      type: "PROPERTY_DOCUMENT_OCR",
-      payload: {
-        documentId: document.id,
-        propertyId,
-        fileUrl,
-        ...(filename
-          ? {
-              filename,
-            }
-          : {}),
-      },
-      deduplicationKey:
-        getOcrDeduplicationKey(
-          document.id,
-          ocrRequestedAt,
-        ),
-    });
-  }
+      if (
+        fileUrlChanged &&
+        fileUrl &&
+        ocrRequestedAt
+      ) {
+        await enqueueBackgroundJob(
+          {
+            type: "PROPERTY_DOCUMENT_OCR",
+            payload: {
+              documentId: document.id,
+              propertyId,
+              fileUrl,
+              ...(filename
+                ? {
+                    filename,
+                  }
+                : {}),
+            },
+            deduplicationKey:
+              getOcrDeduplicationKey(
+                document.id,
+                ocrRequestedAt,
+              ),
+          },
+          transaction,
+        );
+      }
 
-  await AuditService.log({
-    actorId: user.id,
-    action: AuditAction.UPDATE,
-    propertyId,
-    entityType: AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
-    entityId: document.id,
-    description: "Documento immobile aggiornato.",
-    metadata: {
-      propertyId,
-      fileUrlChanged,
-      ocrRequested:
-        fileUrlChanged && Boolean(fileUrl),
+      await AuditService.log(
+        {
+          actorId: user.id,
+          action: AuditAction.UPDATE,
+          propertyId,
+          entityType:
+            AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
+          entityId: document.id,
+          description:
+            "Documento immobile aggiornato.",
+          metadata: {
+            propertyId,
+            fileUrlChanged,
+            ocrRequested:
+              fileUrlChanged &&
+              Boolean(fileUrl),
+          },
+        },
+        transaction,
+      );
     },
-  });
-
+  );
   revalidatePropertyPaths(propertyId);
 }
 
@@ -632,23 +655,31 @@ export async function deletePropertyDocumentAction(
     throw new Error("Documento non trovato.");
   }
 
-  await prisma.propertyDocument.delete({
-    where: {
-      id: document.id,
-    },
-  });
+  await prisma.$transaction(
+    async (transaction) => {
+      await transaction.propertyDocument.delete({
+        where: {
+          id: document.id,
+        },
+      });
 
-  await AuditService.log({
-    actorId: user.id,
-    action: AuditAction.DELETE,
-    propertyId,
-    entityType: AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
-    entityId: document.id,
-    description: "Documento immobile eliminato.",
-    metadata: {
-      propertyId,
+      await AuditService.log(
+        {
+          actorId: user.id,
+          action: AuditAction.DELETE,
+          propertyId,
+          entityType:
+            AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
+          entityId: document.id,
+          description:
+            "Documento immobile eliminato.",
+          metadata: {
+            propertyId,
+          },
+        },
+        transaction,
+      );
     },
-  });
-
+  );
   revalidatePropertyPaths(propertyId);
 }
