@@ -282,13 +282,6 @@ export async function saveRateTypesAction(
       maxGuests,
       "Tariffa",
     );
-
-    assertOccupancyRange(
-      value.minimumGuests,
-      value.occupancyIncluded,
-      maxGuests,
-      "Tariffa",
-    );
   }
 await prisma.$transaction(
     async (
