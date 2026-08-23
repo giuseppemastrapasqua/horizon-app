@@ -6,6 +6,7 @@ import {
   AUDIT_ACTIONS,
   AUDIT_ENTITY_TYPES,
 } from "@/lib/audit/constants";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
 import { prisma } from "@/lib/prisma";
 import { AuditService } from "@/services/audit/AuditService";
@@ -50,6 +51,9 @@ export async function updatePropertyCodesAction(
     );
   }
 
+  const user =
+    await requirePropertyAccess(propertyId);
+
   const cin = normalizePropertyCode(
     formData.get("cin"),
   );
@@ -61,80 +65,109 @@ export async function updatePropertyCodesAction(
   validatePropertyCode(cin, "CIN");
   validatePropertyCode(cir, "CIR");
 
-  const property =
-    await prisma.property.findUnique({
-      where: {
-        id: propertyId,
-      },
-      select: {
-        cin: true,
-        cir: true,
-      },
-    });
+  await prisma.$transaction(
+    async (transaction) => {
+      const property =
+        await transaction.property.findUnique({
+          where: {
+            id: propertyId,
+          },
+          select: {
+            cin: true,
+            cir: true,
+          },
+        });
 
-  if (!property) {
-    throw new Error("Immobile non trovato.");
-  }
+      if (!property) {
+        throw new Error(
+          "Immobile non trovato.",
+        );
+      }
 
-  const currentCin = normalizePropertyCode(
-    property.cin,
+      const currentCin =
+        normalizePropertyCode(
+          property.cin,
+        );
+
+      const currentCir =
+        normalizePropertyCode(
+          property.cir,
+        );
+
+      const codesChanged =
+        currentCin !== cin ||
+        currentCir !== cir;
+
+      await transaction.property.update({
+        where: {
+          id: propertyId,
+        },
+        data: {
+          cin,
+          cir,
+
+          ...(codesChanged
+            ? {
+                codeVerificationStatus:
+                  "PENDING",
+                codeVerifiedAt: null,
+                codeVerificationNotes:
+                  null,
+              }
+            : {}),
+        },
+      });
+
+      if (!codesChanged) {
+        return;
+      }
+
+      await enqueueBackgroundJob(
+        {
+          type:
+            "PROPERTY_CODE_VERIFICATION",
+          payload: {
+            propertyId,
+            cin,
+            cir,
+          },
+          deduplicationKey:
+            `property-code-verification:${propertyId}:${cin}:${cir}`,
+        },
+        transaction,
+      );
+
+      await AuditService.log(
+        {
+          actorId:
+            user.id,
+          propertyId,
+          action:
+            AUDIT_ACTIONS.UPDATE,
+          entityType:
+            AUDIT_ENTITY_TYPES.PROPERTY_CODES,
+          entityId:
+            propertyId,
+          description:
+            "Codici CIN e CIR aggiornati. Verifica avviata.",
+          metadata: {
+            previousCin:
+              property.cin,
+            previousCir:
+              property.cir,
+            cin,
+            cir,
+          },
+        },
+        transaction,
+      );
+    },
   );
 
-  const currentCir = normalizePropertyCode(
-    property.cir,
+  revalidatePath(
+    `/properties/${propertyId}`,
   );
 
-  const codesChanged =
-    currentCin !== cin || currentCir !== cir;
-
-  await prisma.property.update({
-    where: {
-      id: propertyId,
-    },
-    data: {
-      cin,
-      cir,
-
-      ...(codesChanged
-        ? {
-            codeVerificationStatus: "PENDING",
-            codeVerifiedAt: null,
-            codeVerificationNotes: null,
-          }
-        : {}),
-    },
-  });
-
-  if (codesChanged) {
-    await enqueueBackgroundJob({
-      type: "PROPERTY_CODE_VERIFICATION",
-      payload: {
-        propertyId,
-        cin,
-        cir,
-      },
-      deduplicationKey:
-        `property-code-verification:${propertyId}:${cin}:${cir}`,
-    });
-
-    await AuditService.log({
-      propertyId,
-      action: AUDIT_ACTIONS.UPDATE,
-      entityType:
-        AUDIT_ENTITY_TYPES.PROPERTY_CODES,
-      entityId: propertyId,
-      description:
-        "Codici CIN e CIR aggiornati. Verifica avviata.",
-      metadata: {
-        previousCin: property.cin,
-        previousCir: property.cir,
-        cin,
-        cir,
-      },
-    });
-  }
-
-  revalidatePath(`/properties/${propertyId}`);
   revalidatePath(
     `/properties/${propertyId}/edit`,
   );
