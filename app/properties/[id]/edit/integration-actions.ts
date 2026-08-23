@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
+import { prisma } from "@/lib/prisma";
 import { upsertIntegrationPropertyMapping } from "@/lib/integrations/shared/upsert-integration-property-mapping";
 import {
   INTEGRATION_PROVIDERS,
@@ -37,6 +39,8 @@ export async function updatePropertyIntegrationAction(
       "Identificativo immobile mancante.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   if (!providerValue) {
     throw new Error(
@@ -76,15 +80,13 @@ export async function synchronizePropertyIntegrationAction(
     formData.get("provider") ?? "",
   ).trim();
 
-  const externalPropertyId = String(
-    formData.get("externalPropertyId") ?? "",
-  ).trim();
-
   if (!propertyId) {
     throw new Error(
       "Identificativo immobile mancante.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   if (!isIntegrationProvider(providerValue)) {
     throw new Error(
@@ -101,11 +103,25 @@ export async function synchronizePropertyIntegrationAction(
     );
   }
 
-  if (!externalPropertyId) {
+  const mapping =
+    await prisma.integrationPropertyMapping.findFirst({
+      where: {
+        propertyId,
+        provider: "BOOKING_COM",
+      },
+      select: {
+        externalPropertyId: true,
+      },
+    });
+
+  if (!mapping) {
     throw new Error(
-      "Identificativo esterno dell’immobile mancante.",
+      "Configurazione Booking.com non trovata per questo immobile.",
     );
   }
+
+  const externalPropertyId =
+    mapping.externalPropertyId;
 
   await enqueueBackgroundJob({
     type: "BOOKING_SYNC",
