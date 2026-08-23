@@ -109,6 +109,23 @@ export async function createBooking(
 
   const booking = await prisma.$transaction(
     async (transaction) => {
+      const overlappingBooking =
+        await transaction.booking.findFirst({
+          where: {
+            propertyId: property.id,
+            bookingStatus: { not: BookingStatus.CANCELLED },
+            checkIn: { lt: checkOut },
+            checkOut: { gt: checkIn },
+          },
+          select: { id: true },
+        });
+
+      if (overlappingBooking) {
+        throw new Error(
+          "Esiste già una prenotazione sovrapposta per questa struttura.",
+        );
+      }
+
       const createdBooking =
         await transaction.booking.create({
           data: {
