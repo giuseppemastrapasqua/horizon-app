@@ -8,7 +8,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { auth } from "@/auth";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
 import { prisma } from "@/lib/prisma";
 import { AuditService } from "@/services/audit/AuditService";
@@ -162,13 +162,13 @@ function getOcrDeduplicationKey(
 export async function createPropertyDocumentAction(
   formData: FormData,
 ): Promise<void> {
-  const session = await auth();
-
   const propertyId = getRequiredString(
     formData,
     "propertyId",
     "Immobile non specificato.",
   );
+
+  const user = await requirePropertyAccess(propertyId);
 
   await ensurePropertyExists(propertyId);
 
@@ -269,7 +269,7 @@ export async function createPropertyDocumentAction(
   }
 
   await AuditService.log({
-    actorId: session?.user?.id ?? null,
+    actorId: user.id,
     action: AuditAction.CREATE,
     propertyId,
     entityType: AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
@@ -289,13 +289,13 @@ export async function createPropertyDocumentAction(
 export async function updatePropertyDocumentAction(
   formData: FormData,
 ): Promise<void> {
-  const session = await auth();
-
   const propertyId = getRequiredString(
     formData,
     "propertyId",
     "Immobile non specificato.",
   );
+
+  const user = await requirePropertyAccess(propertyId);
 
   const documentId = getRequiredString(
     formData,
@@ -439,7 +439,7 @@ export async function updatePropertyDocumentAction(
   }
 
   await AuditService.log({
-    actorId: session?.user?.id ?? null,
+    actorId: user.id,
     action: AuditAction.UPDATE,
     propertyId,
     entityType: AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
@@ -459,13 +459,13 @@ export async function updatePropertyDocumentAction(
 export async function retryPropertyDocumentOcrAction(
   formData: FormData,
 ): Promise<void> {
-  const session = await auth();
-
   const propertyId = getRequiredString(
     formData,
     "propertyId",
     "Immobile non specificato.",
   );
+
+  const user = await requirePropertyAccess(propertyId);
 
   const documentId = getRequiredString(
     formData,
@@ -584,7 +584,7 @@ export async function retryPropertyDocumentOcrAction(
   }
 
   await AuditService.log({
-    actorId: session?.user?.id ?? null,
+    actorId: user.id,
     action: AuditAction.RETRY,
     propertyId,
     entityType: AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
@@ -615,7 +615,7 @@ export async function deletePropertyDocumentAction(
     "Documento non specificato.",
   );
 
-  const session = await auth();
+  const user = await requirePropertyAccess(propertyId);
 
   const document =
     await prisma.propertyDocument.findFirst({
@@ -639,7 +639,7 @@ export async function deletePropertyDocumentAction(
   });
 
   await AuditService.log({
-    actorId: session?.user?.id ?? null,
+    actorId: user.id,
     action: AuditAction.DELETE,
     propertyId,
     entityType: AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
