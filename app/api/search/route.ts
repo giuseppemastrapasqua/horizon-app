@@ -1,19 +1,87 @@
 import { NextRequest, NextResponse } from "next/server";
+
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 const MIN_QUERY_LENGTH = 2;
 const MAX_RESULTS_PER_DOMAIN = 5;
 
-export async function GET(request: NextRequest) {
-  const query = request.nextUrl.searchParams.get("q")?.trim();
+const GLOBAL_ACCESS_ROLES = [
+  "SUPER_ADMIN",
+  "MANAGER",
+  "FINANCE_ADMIN",
+];
 
-  if (!query || query.length < MIN_QUERY_LENGTH) {
+export async function GET(request: NextRequest) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return NextResponse.json(
+      { error: "Accesso non autorizzato." },
+      { status: 401 },
+    );
+  }
+
+  const query =
+    request.nextUrl.searchParams
+      .get("q")
+      ?.trim();
+
+  if (
+    !query ||
+    query.length < MIN_QUERY_LENGTH
+  ) {
     return NextResponse.json({
       results: [],
     });
   }
 
   try {
+    const globalAccess =
+      GLOBAL_ACCESS_ROLES.includes(
+        session.user.role,
+      );
+
+    const accessibleProperties =
+      globalAccess
+        ? null
+        : await prisma.property.findMany({
+            where: {
+              OR: [
+                {
+                  ownerId:
+                    session.user.id,
+                },
+                {
+                  taskAssignments: {
+                    some: {
+                      userId:
+                        session.user.id,
+                      active: true,
+                    },
+                  },
+                },
+              ],
+            },
+            select: {
+              id: true,
+            },
+          });
+
+    const accessiblePropertyIds =
+      accessibleProperties?.map(
+        (property) => property.id,
+      ) ?? [];
+
+    const propertyScope =
+      globalAccess
+        ? {}
+        : {
+            propertyId: {
+              in: accessiblePropertyIds,
+            },
+          };
+
     const [
       bookings,
       guests,
@@ -24,6 +92,7 @@ export async function GET(request: NextRequest) {
     ] = await Promise.all([
       prisma.booking.findMany({
         where: {
+          ...propertyScope,
           OR: [
             {
               guestName: {
@@ -72,24 +141,40 @@ export async function GET(request: NextRequest) {
 
       prisma.guest.findMany({
         where: {
-          OR: [
+          AND: [
+            globalAccess
+              ? {}
+              : {
+                  bookings: {
+                    some: {
+                      propertyId: {
+                        in:
+                          accessiblePropertyIds,
+                      },
+                    },
+                  },
+                },
             {
-              fullName: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-            {
-              email: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-            {
-              phone: {
-                contains: query,
-                mode: "insensitive",
-              },
+              OR: [
+                {
+                  fullName: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  phone: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              ],
             },
           ],
         },
@@ -99,7 +184,15 @@ export async function GET(request: NextRequest) {
           email: true,
           _count: {
             select: {
-              bookings: true,
+              bookings: globalAccess
+                ? true
+                : {
+                    where: {
+                      propertyId: {
+                        in: accessiblePropertyIds,
+                      },
+                    },
+                  },
             },
           },
         },
@@ -111,30 +204,42 @@ export async function GET(request: NextRequest) {
 
       prisma.property.findMany({
         where: {
-          OR: [
+          AND: [
+            globalAccess
+              ? {}
+              : {
+                  id: {
+                    in:
+                      accessiblePropertyIds,
+                  },
+                },
             {
-              name: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-            {
-              address: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-            {
-              city: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-            {
-              zone: {
-                contains: query,
-                mode: "insensitive",
-              },
+              OR: [
+                {
+                  name: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  address: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  city: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  zone: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              ],
             },
           ],
         },
@@ -152,24 +257,41 @@ export async function GET(request: NextRequest) {
 
       prisma.user.findMany({
         where: {
-          OR: [
+          role: "OWNER",
+          AND: [
+            globalAccess
+              ? {}
+              : {
+                  properties: {
+                    some: {
+                      id: {
+                        in:
+                          accessiblePropertyIds,
+                      },
+                    },
+                  },
+                },
             {
-              fullName: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-            {
-              email: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-            {
-              phone: {
-                contains: query,
-                mode: "insensitive",
-              },
+              OR: [
+                {
+                  fullName: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  email: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  phone: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              ],
             },
           ],
         },
@@ -186,24 +308,44 @@ export async function GET(request: NextRequest) {
 
       prisma.document.findMany({
         where: {
-          OR: [
+          AND: [
+            globalAccess
+              ? {}
+              : {
+                  OR: [
+                    {
+                      propertyId: {
+                        in:
+                          accessiblePropertyIds,
+                      },
+                    },
+                    {
+                      ownerId:
+                        session.user.id,
+                    },
+                  ],
+                },
             {
-              title: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-            {
-              subtitle: {
-                contains: query,
-                mode: "insensitive",
-              },
-            },
-            {
-              documentNumber: {
-                contains: query,
-                mode: "insensitive",
-              },
+              OR: [
+                {
+                  title: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  subtitle: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+                {
+                  documentNumber: {
+                    contains: query,
+                    mode: "insensitive",
+                  },
+                },
+              ],
             },
           ],
         },
@@ -221,6 +363,7 @@ export async function GET(request: NextRequest) {
 
       prisma.task.findMany({
         where: {
+          ...propertyScope,
           OR: [
             {
               title: {
@@ -255,8 +398,10 @@ export async function GET(request: NextRequest) {
         type: "BOOKING" as const,
         title: booking.guestName,
         subtitle: `${booking.property.name} · ${formatDate(
-          booking.checkIn
-        )} → ${formatDate(booking.checkOut)}`,
+          booking.checkIn,
+        )} → ${formatDate(
+          booking.checkOut,
+        )}`,
         href: `/bookings/${booking.id}`,
       })),
 
@@ -266,39 +411,52 @@ export async function GET(request: NextRequest) {
         title: guest.fullName,
         subtitle: buildGuestSubtitle({
           email: guest.email,
-          bookingsCount: guest._count.bookings,
+          bookingsCount:
+            guest._count.bookings,
         }),
         href: `/guests/${guest.id}`,
       })),
 
-      ...properties.map((property) => ({
-        id: property.id,
-        type: "PROPERTY" as const,
-        title: property.name,
-        subtitle:
-          [property.address, property.city]
-            .filter(Boolean)
-            .join(" · ") || "Immobile",
-        href: `/properties/${property.id}`,
-      })),
+      ...properties.map(
+        (property) => ({
+          id: property.id,
+          type: "PROPERTY" as const,
+          title: property.name,
+          subtitle:
+            [
+              property.address,
+              property.city,
+            ]
+              .filter(Boolean)
+              .join(" · ") ||
+            "Immobile",
+          href:
+            `/properties/${property.id}`,
+        }),
+      ),
 
       ...owners.map((owner) => ({
         id: owner.id,
         type: "OWNER" as const,
         title: owner.fullName,
-        subtitle: owner.email ?? "Proprietario",
+        subtitle:
+          owner.email ??
+          "Proprietario",
         href: `/owners/${owner.id}`,
       })),
 
-      ...documents.map((document) => ({
-        id: document.id,
-        type: "DOCUMENT" as const,
-        title: document.title,
-        subtitle:
-          document.subtitle ??
-          `Documento · ${document.type}`,
-        href: `/documents/${document.id}`,
-      })),
+      ...documents.map(
+        (document) => ({
+          id: document.id,
+          type: "DOCUMENT" as const,
+          title: document.title,
+          subtitle:
+            document.subtitle ??
+            `Documento · ${document.type}`,
+          href:
+            `/documents/${document.id}`,
+        }),
+      ),
 
       ...tasks.map((task) => ({
         id: task.id,
@@ -315,26 +473,33 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error("Global search failed:", error);
+    console.error(
+      "Global search failed:",
+      error,
+    );
 
     return NextResponse.json(
       {
         results: [],
-        error: "Ricerca non disponibile.",
+        error:
+          "Ricerca non disponibile.",
       },
       {
         status: 500,
-      }
+      },
     );
   }
 }
 
 function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("it-IT", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
+  return new Intl.DateTimeFormat(
+    "it-IT",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    },
+  ).format(date);
 }
 
 function buildGuestSubtitle({
@@ -346,8 +511,8 @@ function buildGuestSubtitle({
 }) {
   const bookingsLabel =
     bookingsCount === 1
-      ? "1 soggiorno"
-      : `${bookingsCount} soggiorni`;
+      ? "1 prenotazione"
+      : `${bookingsCount} prenotazioni`;
 
   return email
     ? `${email} · ${bookingsLabel}`
