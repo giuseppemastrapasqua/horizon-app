@@ -183,25 +183,28 @@ export async function createBooking(
         transaction,
       );
 
+      await emitEvent(
+        {
+          eventType: "BOOKING_CREATED",
+          aggregateType: "BOOKING",
+          aggregateId: createdBooking.id,
+          payload: {
+            bookingId: createdBooking.id,
+            propertyId: createdBooking.propertyId,
+            ownerId: createdBooking.ownerId,
+            guestName: createdBooking.guestName,
+            checkIn: createdBooking.checkIn.toISOString(),
+            checkOut: createdBooking.checkOut.toISOString(),
+            channel: createdBooking.channel,
+          },
+          idempotencyKey: `BOOKING_CREATED:${createdBooking.id}`,
+        },
+        transaction,
+      );
+
       return createdBooking;
     },
   );
-
-  await emitEvent({
-    eventType: "BOOKING_CREATED",
-    aggregateType: "BOOKING",
-    aggregateId: booking.id,
-    payload: {
-      bookingId: booking.id,
-      propertyId: booking.propertyId,
-      ownerId: booking.ownerId,
-      guestName: booking.guestName,
-      checkIn: booking.checkIn.toISOString(),
-      checkOut: booking.checkOut.toISOString(),
-      channel: booking.channel,
-    },
-    idempotencyKey: `BOOKING_CREATED:${booking.id}`,
-  });
 
   await processPendingEvents({
     limit: 20,
