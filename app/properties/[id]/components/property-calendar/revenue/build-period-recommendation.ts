@@ -264,28 +264,6 @@ export function buildPeriodRevenueRecommendation({
       },
     );
 
-  console.log(
-    "HORIZON_REVENUE_INPUT",
-    {
-      rangeStart,
-      rangeEnd,
-      selectedDays:
-        selectedDays.length,
-      snapshot:
-        revenueData.snapshot,
-      comparables:
-        revenueData.comparables.map(
-          (comparable) => ({
-            adr:
-              comparable.adr,
-            nightlyPrice:
-              comparable.nightlyPrice,
-            similarityScore:
-              comparable.similarityScore,
-          }),
-        ),
-    },
-  );
 
   if (
     selectedDays.length === 0
@@ -543,16 +521,6 @@ export function buildPeriodRevenueRecommendation({
         100,
     );
 
-  console.log(
-    "HORIZON_REVENUE_COVERAGE",
-    {
-      selectedDays:
-        selectedDays.length,
-      selectedNights,
-      analyzedNights,
-      coveragePercent,
-    },
-  );
 
   if (
     analyzedNights === 0 ||

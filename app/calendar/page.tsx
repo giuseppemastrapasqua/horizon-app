@@ -419,25 +419,6 @@ export default async function CalendarPage({
     null;
 
 
-  console.log("CALENDAR STANDARD DEBUG", {
-    propertyId:
-      selectedProperty?.id ?? null,
-
-    propertyName:
-      selectedProperty?.name ?? null,
-
-    standardRate,
-
-    ratePlans:
-      ratePlans.map(
-        (ratePlan) => ({
-          code: ratePlan.code,
-          basePrice: ratePlan.basePrice,
-          active: ratePlan.active,
-          isDefault: ratePlan.isDefault,
-        }),
-      ),
-  });
   const requestedFrom =
     parseOptionalCalendarDate(
       getStringParam(

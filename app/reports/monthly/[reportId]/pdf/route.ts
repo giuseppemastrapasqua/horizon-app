@@ -1,4 +1,4 @@
-﻿import {
+import {
   buildFinanceReportPdf,
   type FinanceReportPdfInput,
 } from "@/lib/pdf/finance-report";
@@ -458,25 +458,6 @@ export async function GET(
 })),
   };
 
-  console.log(
-    "FINANCE PDF DEBUG",
-    {
-      reportId: report.id,
-
-      databaseAdjustments:
-        report.adjustments.map(
-          (adjustment) => ({
-            id: adjustment.id,
-            description: adjustment.description,
-            amount: Number(adjustment.amount),
-          }),
-        ),
-
-      pdfAdjustments: pdfInput.adjustments,
-      finalAmount: pdfInput.finalAmount,
-      grossRevenue: pdfInput.grossRevenue,
-    },
-  );
 
   const pdfBytes =
     await buildFinanceReportPdf(
