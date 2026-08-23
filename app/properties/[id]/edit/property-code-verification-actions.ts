@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
 import { prisma } from "@/lib/prisma";
 
@@ -24,6 +25,8 @@ export async function requestPropertyCodeVerificationAction(
       "Identificativo immobile mancante.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   const property =
     await prisma.property.findUnique({
@@ -54,29 +57,35 @@ export async function requestPropertyCodeVerificationAction(
     );
   }
 
-  await prisma.property.update({
-    where: {
-      id: propertyId,
-    },
-    data: {
-      codeVerificationStatus: "PENDING",
-      codeVerifiedAt: null,
-      codeVerificationNotes:
-        "Verifica dei codici accodata.",
-    },
-  });
+  await prisma.$transaction(
+    async (transaction) => {
+      await transaction.property.update({
+        where: {
+          id: propertyId,
+        },
+        data: {
+          codeVerificationStatus: "PENDING",
+          codeVerifiedAt: null,
+          codeVerificationNotes:
+            "Verifica dei codici accodata.",
+        },
+      });
 
-  await enqueueBackgroundJob({
-    type: "PROPERTY_CODE_VERIFICATION",
-    payload: {
-      propertyId,
-      cin,
-      cir,
+      await enqueueBackgroundJob(
+        {
+          type: "PROPERTY_CODE_VERIFICATION",
+          payload: {
+            propertyId,
+            cin,
+            cir,
+          },
+          deduplicationKey:
+            `property-code-verification:${propertyId}:${cin}:${cir}`,
+        },
+        transaction,
+      );
     },
-    deduplicationKey:
-      `property-code-verification:${propertyId}:${cin}:${cir}`,
-  });
-
+  );
   revalidatePath(`/properties/${propertyId}`);
   revalidatePath(
     `/properties/${propertyId}/edit`,
