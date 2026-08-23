@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 
 import { createPropertyImage } from "@/lib/application/properties/create-property-image";
 import { deletePropertyImage } from "@/lib/application/properties/delete-property-image";
@@ -29,6 +30,8 @@ export async function setPropertyCoverImageAction(
       "Identificativo immagine mancante.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   await setPropertyCoverImage({
     propertyId,
@@ -62,6 +65,8 @@ export async function uploadPropertyImageAction(
       "Seleziona un'immagine da caricare.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   await createPropertyImage({
     propertyId,
@@ -98,6 +103,8 @@ export async function deletePropertyImageAction(
     );
   }
 
+  await requirePropertyAccess(propertyId);
+
   await deletePropertyImage({
     propertyId,
     imageId,
@@ -123,6 +130,8 @@ export async function reorderPropertyImagesAction(
   if (imageIds.length === 0) {
     return;
   }
+
+  await requirePropertyAccess(propertyId);
 
   await updatePropertyImageOrder({
     propertyId,
