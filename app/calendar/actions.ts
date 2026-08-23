@@ -39,6 +39,15 @@ export async function saveCalendarPeriodAction(formData: FormData) {
   const availability =
     requiredText(formData, "availability");
 
+  if (
+    availability !== "OPEN" &&
+    availability !== "CLOSED"
+  ) {
+    throw new Error(
+      "Disponibilità non valida.",
+    );
+  }
+
 
   await prisma.$transaction(async (transaction) => {
     await removePricingOverridesInsideRange({
@@ -46,6 +55,14 @@ export async function saveCalendarPeriodAction(formData: FormData) {
       from,
       to,
       source: "AI",
+      db: transaction,
+    });
+
+    await removePricingOverridesInsideRange({
+      propertyId,
+      from,
+      to,
+      source: "MANUAL",
       db: transaction,
     });
 
@@ -60,6 +77,13 @@ export async function saveCalendarPeriodAction(formData: FormData) {
       },
     });
 
+    await removeAvailabilityBlocksInsideRange({
+      propertyId,
+      from,
+      to,
+      db: transaction,
+    });
+
     if (availability === "CLOSED") {
       await transaction.propertyAvailabilityBlock.create({
         data: {
@@ -68,17 +92,6 @@ export async function saveCalendarPeriodAction(formData: FormData) {
           endDate: to,
           source: "MANUAL",
           note: "Periodo chiuso dal calendario Horizon",
-        },
-      });
-    }
-
-    if (availability === "OPEN") {
-      await transaction.propertyAvailabilityBlock.deleteMany({
-        where: {
-          propertyId,
-          source: "MANUAL",
-          startDate: { lte: to },
-          endDate: { gte: from },
         },
       });
     }
@@ -203,19 +216,6 @@ export async function applyRevenueAiAction(
    * Preserviamo automaticamente le parti
    * degli override esterne al range.
    */
-  await removePricingOverridesInsideRange({
-    propertyId,
-    from,
-    to,
-    source: "AI",
-  });
-
-  await removePricingOverridesInsideRange({
-    propertyId,
-    from,
-    to,
-    source: "MANUAL",
-  });
 
   /*
    * Salviamo la raccomandazione del
@@ -426,6 +426,90 @@ async function removePricingOverridesInsideRange({
 
           note:
             override.note,
+        },
+      });
+    }
+  }
+}
+
+async function removeAvailabilityBlocksInsideRange({
+  propertyId,
+  from,
+  to,
+  db = prisma,
+}: {
+  propertyId: string;
+  from: Date;
+  to: Date;
+  db?: Pick<typeof prisma, "propertyAvailabilityBlock">;
+}) {
+  const overlapping =
+    await db.propertyAvailabilityBlock.findMany({
+      where: {
+        propertyId,
+        source: "MANUAL",
+        startDate: {
+          lte: to,
+        },
+        endDate: {
+          gte: from,
+        },
+      },
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        source: true,
+        createdById: true,
+        note: true,
+      },
+    });
+
+  for (const block of overlapping) {
+    await db.propertyAvailabilityBlock.delete({
+      where: {
+        id: block.id,
+      },
+    });
+
+    if (block.startDate < from) {
+      await db.propertyAvailabilityBlock.create({
+        data: {
+          propertyId,
+          startDate:
+            block.startDate,
+          endDate:
+            shiftCalendarDate(
+              from,
+              -1,
+            ),
+          source:
+            block.source,
+          createdById:
+            block.createdById,
+          note:
+            block.note,
+        },
+      });
+    }
+
+    if (block.endDate > to) {
+      await db.propertyAvailabilityBlock.create({
+        data: {
+          propertyId,
+          startDate:
+            shiftCalendarDate(
+              to,
+              1,
+            ),
+          endDate:
+            block.endDate,
+          source:
+            block.source,
+          createdById:
+            block.createdById,
+          note:
+            block.note,
         },
       });
     }
