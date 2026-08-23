@@ -3,6 +3,7 @@
 import {
   AuditAction,
   BookingChannel,
+  Prisma,
   BookingOperationalStatus,
   BookingStatus,
 } from "@prisma/client";
@@ -92,22 +93,47 @@ export async function createBooking(
   const guestPhone = optionalText(
     formData.get("guestPhone"),
   );
-
-  const guests = Math.max(
-    1,
-    Number(formData.get("guests") || 1),
+  const guests = Number(
+    formData.get("guests") || 1,
   );
 
-  const grossAmount = Math.max(
-    0,
-    Number(formData.get("grossAmount") || 0),
+  if (
+    !Number.isInteger(guests) ||
+    guests < 1
+  ) {
+    throw new Error(
+      "Il numero di ospiti non è valido.",
+    );
+  }
+
+  if (guests > property.maxGuests) {
+    throw new Error(
+      "Il numero di ospiti supera la capienza dell'immobile.",
+    );
+  }
+
+  const grossAmount = Number(
+    formData.get("grossAmount") || 0,
   );
+
+  if (
+    !Number.isFinite(grossAmount) ||
+    grossAmount < 0
+  ) {
+    throw new Error(
+      "L'importo della prenotazione non è valido.",
+    );
+  }
+
 
   const internalNotes = optionalText(
     formData.get("internalNotes"),
   );
 
-  const booking = await prisma.$transaction(
+  let booking;
+
+  try {
+    booking = await prisma.$transaction(
     async (transaction) => {
       const overlappingBooking =
         await transaction.booking.findFirst({
@@ -204,7 +230,25 @@ export async function createBooking(
 
       return createdBooking;
     },
+    {
+      isolationLevel:
+        Prisma.TransactionIsolationLevel.Serializable,
+    },
   );
+
+  } catch (error) {
+    if (
+      error instanceof
+        Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2034"
+    ) {
+      throw new Error(
+        "La disponibilità è cambiata mentre salvavi la prenotazione. Riprova.",
+      );
+    }
+
+    throw error;
+  }
 
   await processPendingEvents({
     limit: 20,
