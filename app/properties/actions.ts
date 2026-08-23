@@ -13,8 +13,19 @@ export async function createProperty(
 ): Promise<void> {
   const user = await requireRoles(["SUPER_ADMIN", "MANAGER"]);
 
+  const ownerId = String(
+    formData.get("ownerId") || "",
+  ).trim();
+
+  if (!ownerId) {
+    throw new Error(
+      "Seleziona un proprietario.",
+    );
+  }
+
   const owner = await prisma.user.findFirst({
     where: {
+      id: ownerId,
       role: "OWNER",
     },
     select: {
@@ -24,25 +35,50 @@ export async function createProperty(
 
   if (!owner) {
     throw new Error(
-      "Nessun owner trovato. Esegui prima il seed.",
+      "Proprietario non valido.",
     );
   }
 
+
   const name = String(
     formData.get("name") || "",
-  );
+  ).trim();
 
   const address = String(
     formData.get("address") || "",
-  );
+  ).trim();
 
   const city = String(
     formData.get("city") || "Milano",
-  );
+  ).trim();
 
   const zone = String(
     formData.get("zone") || "",
-  );
+  ).trim();
+
+  if (!name) {
+    throw new Error(
+      "Il nome dell'immobile è obbligatorio.",
+    );
+  }
+
+  if (!address) {
+    throw new Error(
+      "L'indirizzo è obbligatorio.",
+    );
+  }
+
+  if (!city) {
+    throw new Error(
+      "La città è obbligatoria.",
+    );
+  }
+
+  if (!zone) {
+    throw new Error(
+      "La zona è obbligatoria.",
+    );
+  }
 
   const maxGuests = Number(
     formData.get("maxGuests") || 1,
@@ -62,7 +98,44 @@ export async function createProperty(
 
   const notes = String(
     formData.get("notes") || "",
-  );
+  ).trim();
+
+  if (
+    !Number.isInteger(maxGuests) ||
+    maxGuests < 1
+  ) {
+    throw new Error(
+      "Il numero massimo di ospiti non è valido.",
+    );
+  }
+
+  if (
+    !Number.isInteger(bedrooms) ||
+    bedrooms < 0
+  ) {
+    throw new Error(
+      "Il numero di camere non è valido.",
+    );
+  }
+
+  if (
+    !Number.isInteger(bathrooms) ||
+    bathrooms < 0
+  ) {
+    throw new Error(
+      "Il numero di bagni non è valido.",
+    );
+  }
+
+  if (
+    !Number.isFinite(cleaningCost) ||
+    cleaningCost < 0
+  ) {
+    throw new Error(
+      "Il costo pulizia non è valido.",
+    );
+  }
+
 
   const initialScore = calculateInitialScore({
     zone,
