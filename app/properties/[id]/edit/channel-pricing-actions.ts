@@ -8,6 +8,8 @@ import {
   BookingChannel,
 } from "@prisma/client";
 
+import { requirePropertyAccess } from "@/lib/auth/guards";
+
 import {
   prisma,
 } from "@/lib/prisma";
@@ -41,6 +43,8 @@ export async function updatePropertyChannelPricingAction(
       "Identificativo immobile mancante.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   if (
     channelText !== "BOOKING" &&

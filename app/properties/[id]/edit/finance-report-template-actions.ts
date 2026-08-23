@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 function getString(
@@ -36,6 +37,8 @@ export async function updateFinanceReportTemplateAction(
       "propertyId mancante."
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   const data = {
     name:
@@ -145,6 +148,8 @@ export async function resetFinanceReportTemplateAction(
       "propertyId mancante."
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   await prisma.financeReportTemplate.deleteMany({
     where: {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 export async function updatePropertyRatePlanAction(
@@ -46,6 +47,8 @@ export async function updatePropertyRatePlanAction(
       "Identificativo immobile mancante.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   if (!name) {
     throw new Error(
