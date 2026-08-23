@@ -6,7 +6,7 @@ import {
 } from "@prisma/client";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { requirePropertyAccess, requireUser } from "@/lib/auth/guards";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 import { prisma } from "@/lib/prisma";
 import { resolveTaskAssignee } from "@/lib/tasks/resolve-task-assignee";
@@ -35,11 +35,13 @@ function parseTaskType(
 export async function createTask(
   formData: FormData,
 ): Promise<void> {
-  const session = await auth();
+  const user = await requireUser();
 
   const propertyId = String(
     formData.get("propertyId") || "",
   );
+
+  await requirePropertyAccess(propertyId);
 
   const bookingIdRaw = String(
     formData.get("bookingId") || "",
@@ -107,7 +109,7 @@ await prisma.$transaction(
       await AuditService.log(
         {
           actorId:
-            session?.user?.id ?? null,
+            user.id,
           action: AuditAction.CREATE,
           propertyId: property.id,
           entityType:
@@ -138,8 +140,3 @@ await prisma.$transaction(
     `/properties/${property.id}`,
   );
 }
-
-
-
-
-

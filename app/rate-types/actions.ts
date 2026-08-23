@@ -12,7 +12,7 @@ import {
   prisma,
 } from "@/lib/prisma";
 
-import { requireUser } from "@/lib/auth/guards";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 
 const CORE_RATE_TYPES = [
   {
@@ -40,13 +40,14 @@ const CORE_RATE_TYPES = [
 export async function saveRateTypesAction(
   formData: FormData,
 ) {
-  await requireUser();
+
   const propertyId =
     readRequiredText(
       formData,
       "propertyId",
       "Struttura",
     );
+  await requirePropertyAccess(propertyId);
 
   const property =
     await assertProperty(
@@ -448,13 +449,14 @@ await prisma.$transaction(
 export async function createCustomRateAction(
   formData: FormData,
 ) {
-  await requireUser();
+
   const propertyId =
     readRequiredText(
       formData,
       "propertyId",
       "Struttura",
     );
+  await requirePropertyAccess(propertyId);
 
   const name =
     readRequiredText(
@@ -633,13 +635,14 @@ export async function createCustomRateAction(
 export async function updateCustomRateAction(
   formData: FormData,
 ) {
-  await requireUser();
+
   const propertyId =
     readRequiredText(
       formData,
       "propertyId",
       "Struttura",
     );
+  await requirePropertyAccess(propertyId);
 
   const ratePlanId =
     readRequiredText(
@@ -837,13 +840,14 @@ const ratePlan =
 export async function deleteCustomRateAction(
   formData: FormData,
 ) {
-  await requireUser();
+
   const propertyId =
     readRequiredText(
       formData,
       "propertyId",
       "Struttura",
     );
+  await requirePropertyAccess(propertyId);
 
   const ratePlanId =
     readRequiredText(

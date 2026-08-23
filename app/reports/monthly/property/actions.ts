@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth/guards";
+import { getAccessiblePropertyIds, requirePropertyAccess, requireUser } from "@/lib/auth/guards";
 
 import { createFinanceReport } from "@/lib/finance/create-finance-report";
 import { prisma } from "@/lib/prisma";
@@ -14,6 +14,8 @@ export async function generateFinanceReportAction(
       formData,
       "propertyId"
     );
+
+  await requirePropertyAccess(propertyId);
 
   const referenceMonthValue =
     getRequiredString(
@@ -70,21 +72,25 @@ export async function generateFinanceReportsBatchAction(
       referenceMonthValue
     );
 
+  const accessiblePropertyIds =
+    await getAccessiblePropertyIds();
+
   const properties =
     await prisma.property.findMany({
       where:
         targetProperty === "ALL"
           ? {
-              status: {
-                not: "ARCHIVED",
-              },
+              status: { not: "ARCHIVED" },
+              ...(accessiblePropertyIds
+                ? { id: { in: accessiblePropertyIds } }
+                : {}),
             }
           : {
               id: targetProperty,
-
-              status: {
-                not: "ARCHIVED",
-              },
+              status: { not: "ARCHIVED" },
+              ...(accessiblePropertyIds
+                ? { id: { in: accessiblePropertyIds } }
+                : {}),
             },
 
       orderBy: {

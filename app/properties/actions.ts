@@ -3,7 +3,7 @@
 import { AuditAction } from "@prisma/client";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { requireRoles } from "@/lib/auth/guards";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 import { prisma } from "@/lib/prisma";
 import { AuditService } from "@/services/audit/AuditService";
@@ -11,7 +11,7 @@ import { AuditService } from "@/services/audit/AuditService";
 export async function createProperty(
   formData: FormData,
 ): Promise<void> {
-  const session = await auth();
+  const user = await requireRoles(["SUPER_ADMIN", "MANAGER"]);
 
   const owner = await prisma.user.findFirst({
     where: {
@@ -109,7 +109,7 @@ export async function createProperty(
         await AuditService.log(
           {
             actorId:
-              session?.user?.id ?? null,
+              user.id,
             action: AuditAction.CREATE,
             propertyId:
               createdProperty.id,

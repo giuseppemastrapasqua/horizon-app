@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/guards";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { AuditService } from "@/services/audit/AuditService";
 
 export async function updatePropertyAction(
@@ -15,6 +15,8 @@ export async function updatePropertyAction(
   const propertyId = String(
     formData.get("propertyId") ?? "",
   ).trim();
+
+  await requirePropertyAccess(propertyId);
 
   const name = String(
     formData.get("name") ?? "",

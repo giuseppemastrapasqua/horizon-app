@@ -8,7 +8,7 @@ import {
 } from "@prisma/client";
 import { redirect } from "next/navigation";
 
-import { requireUser } from "@/lib/auth/guards";
+import { requirePropertyAccess, requireUser } from "@/lib/auth/guards";
 import { emitEvent } from "@/lib/events/emit";
 import { processPendingEvents } from "@/lib/events/process-pending";
 import { prisma } from "@/lib/prisma";
@@ -31,6 +31,8 @@ export async function createBooking(
   if (!propertyId) {
     throw new Error("Seleziona un immobile.");
   }
+
+  await requirePropertyAccess(propertyId);
 
   if (!guestName) {
     throw new Error(
@@ -199,6 +201,17 @@ export async function setBookingOperationalStatus(
     | "CLEANING_PENDING",
 ): Promise<void> {
   const user = await requireUser();
+
+  const target = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { propertyId: true },
+  });
+
+  if (!target) {
+    throw new Error("Prenotazione non trovata.");
+  }
+
+  await requirePropertyAccess(target.propertyId);
 
   const booking = await prisma.$transaction(
     async (transaction) => {
