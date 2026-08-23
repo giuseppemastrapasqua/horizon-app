@@ -1,6 +1,7 @@
-﻿"use server";
+"use server";
 
 import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth/guards";
 
 import { createFinanceReport } from "@/lib/finance/create-finance-report";
 import { prisma } from "@/lib/prisma";
@@ -275,7 +276,3 @@ function parseReferenceMonth(
     )
   );
 }
-
-
-
-

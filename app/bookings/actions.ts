@@ -8,7 +8,7 @@ import {
 } from "@prisma/client";
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth";
+import { requireUser } from "@/lib/auth/guards";
 import { emitEvent } from "@/lib/events/emit";
 import { processPendingEvents } from "@/lib/events/process-pending";
 import { prisma } from "@/lib/prisma";
@@ -18,7 +18,7 @@ import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 export async function createBooking(
   formData: FormData,
 ): Promise<void> {
-  const session = await auth();
+  const user = await requireUser();
 
   const propertyId = String(
     formData.get("propertyId") || "",
@@ -133,7 +133,7 @@ export async function createBooking(
       await AuditService.log(
         {
           actorId:
-            session?.user?.id ?? null,
+            user.id,
           action: AuditAction.CREATE,
           propertyId: property.id,
           entityType: AUDIT_ENTITY_TYPES.BOOKING,
@@ -198,7 +198,7 @@ export async function setBookingOperationalStatus(
     | "DOCUMENTS_PENDING"
     | "CLEANING_PENDING",
 ): Promise<void> {
-  const session = await auth();
+  const user = await requireUser();
 
   const booking = await prisma.$transaction(
     async (transaction) => {
@@ -245,7 +245,7 @@ export async function setBookingOperationalStatus(
       await AuditService.log(
         {
           actorId:
-            session?.user?.id ?? null,
+            user.id,
           action: AuditAction.UPDATE,
           propertyId:
             updatedBooking.propertyId,
@@ -300,4 +300,3 @@ function optionalText(
 
   return text || null;
 }
-

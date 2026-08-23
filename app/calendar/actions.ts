@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth/guards";
 
 import {
   getPropertyRevenueData,
@@ -15,6 +16,7 @@ import {
 
 
 export async function saveCalendarPeriodAction(formData: FormData) {
+  await requireUser();
   const propertyId = requiredText(formData, "propertyId");
   const month = requiredText(formData, "month");
   const from = parseDate(requiredText(formData, "from"));

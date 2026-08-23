@@ -12,6 +12,8 @@ import {
   prisma,
 } from "@/lib/prisma";
 
+import { requireUser } from "@/lib/auth/guards";
+
 const CORE_RATE_TYPES = [
   {
     code: "STANDARD",
@@ -38,6 +40,7 @@ const CORE_RATE_TYPES = [
 export async function saveRateTypesAction(
   formData: FormData,
 ) {
+  await requireUser();
   const propertyId =
     readRequiredText(
       formData,
@@ -445,6 +448,7 @@ await prisma.$transaction(
 export async function createCustomRateAction(
   formData: FormData,
 ) {
+  await requireUser();
   const propertyId =
     readRequiredText(
       formData,
@@ -629,6 +633,7 @@ export async function createCustomRateAction(
 export async function updateCustomRateAction(
   formData: FormData,
 ) {
+  await requireUser();
   const propertyId =
     readRequiredText(
       formData,
@@ -832,6 +837,7 @@ const ratePlan =
 export async function deleteCustomRateAction(
   formData: FormData,
 ) {
+  await requireUser();
   const propertyId =
     readRequiredText(
       formData,
@@ -1263,25 +1269,3 @@ function finish(
     )}`,
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -8,9 +8,12 @@ import {
   prisma,
 } from "@/lib/prisma";
 
+import { requireUser } from "@/lib/auth/guards";
+
 export async function addFinanceReportAdjustmentAction(
   formData: FormData,
 ): Promise<void> {
+  await requireUser();
   const reportId =
     String(
       formData.get("reportId") ?? "",
@@ -115,6 +118,7 @@ export async function addFinanceReportAdjustmentAction(
 export async function deleteFinanceReportAdjustmentAction(
   formData: FormData,
 ): Promise<void> {
+  await requireUser();
   const reportId =
     String(
       formData.get("reportId") ?? "",

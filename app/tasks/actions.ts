@@ -5,11 +5,13 @@ import { revalidatePath } from "next/cache";
 
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth/guards";
 import { AuditService } from "@/services/audit/AuditService";
 
 export async function markTaskDone(
   taskId: string,
 ): Promise<void> {
+  await requireUser();
   await updateTaskStatus(
     taskId,
     "DONE",
@@ -22,6 +24,7 @@ export async function markTaskDone(
 export async function reopenTask(
   taskId: string,
 ): Promise<void> {
+  await requireUser();
   await updateTaskStatus(
     taskId,
     "TODO",
