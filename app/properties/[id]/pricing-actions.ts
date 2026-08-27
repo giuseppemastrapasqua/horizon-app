@@ -5,6 +5,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 export async function savePropertyPricingOverrideAction(
@@ -56,6 +57,8 @@ export async function savePropertyPricingOverrideAction(
       "propertyId mancante.",
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   if (
     !startDateValue ||
