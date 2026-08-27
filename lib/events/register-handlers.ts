@@ -14,5 +14,10 @@ export function registerHorizonEventHandlers() {
     handleBookingCreated
   );
 
+  registerEventHandler(
+    "TASK_CREATED",
+    handleTaskCreated
+  );
+
   handlersRegistered = true;
 }

@@ -54,7 +54,6 @@ export const createCleaningTaskAction: ImperiumAction =
 
       const bookingId = payload.bookingId;
       const propertyId = payload.propertyId;
-      const ownerId = payload.ownerId ?? null;
 
       const title =
         `Pulizia pre check-in · ${
@@ -95,6 +94,19 @@ export const createCleaningTaskAction: ImperiumAction =
                 skipped: true as const,
                 taskId: existingTask.id,
               };
+            }
+
+            const ownerId =
+              await resolveTaskAssignee(
+                propertyId,
+                TaskType.CLEANING,
+                transaction,
+              );
+
+            if (!ownerId) {
+              throw new Error(
+                "Nessun assegnatario disponibile per il task di pulizia.",
+              );
             }
 
             const task =
@@ -157,6 +169,26 @@ export const createCleaningTaskAction: ImperiumAction =
               transaction,
             );
 
+            await emitEvent(
+              {
+                eventType: "TASK_CREATED",
+                aggregateType: "TASK",
+                aggregateId: task.id,
+                payload: {
+                  taskId: task.id,
+                  propertyId: task.propertyId,
+                  bookingId: task.bookingId,
+                  ownerId: task.ownerId,
+                  type: task.type,
+                },
+                idempotencyKey:
+                  `task-created:${task.id}`,
+                causationId:
+                  context.event.id,
+              },
+              transaction,
+            );
+
             return {
               skipped: false as const,
               task,
@@ -192,5 +224,3 @@ export const createCleaningTaskAction: ImperiumAction =
       };
     },
   };
-
-
