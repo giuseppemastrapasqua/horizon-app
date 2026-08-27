@@ -54,7 +54,6 @@ export const createDocumentsTaskAction: ImperiumAction =
 
       const bookingId = payload.bookingId;
       const propertyId = payload.propertyId;
-      const ownerId = payload.ownerId ?? null;
 
       const title =
         `Controllo documenti · ${
@@ -95,6 +94,19 @@ export const createDocumentsTaskAction: ImperiumAction =
                 skipped: true as const,
                 taskId: existingTask.id,
               };
+            }
+
+            const ownerId =
+              await resolveTaskAssignee(
+                propertyId,
+                TaskType.GUEST_DOCUMENTS,
+                transaction,
+              );
+
+            if (!ownerId) {
+              throw new Error(
+                "Nessun assegnatario disponibile per il task documenti.",
+              );
             }
 
             const task =
@@ -159,6 +171,26 @@ export const createDocumentsTaskAction: ImperiumAction =
               transaction,
             );
 
+            await emitEvent(
+              {
+                eventType: "TASK_CREATED",
+                aggregateType: "TASK",
+                aggregateId: task.id,
+                payload: {
+                  taskId: task.id,
+                  propertyId: task.propertyId,
+                  bookingId: task.bookingId,
+                  ownerId: task.ownerId,
+                  type: task.type,
+                },
+                idempotencyKey:
+                  `task-created:${task.id}`,
+                causationId:
+                  context.event.id,
+              },
+              transaction,
+            );
+
             return {
               skipped: false as const,
               task,
@@ -194,5 +226,3 @@ export const createDocumentsTaskAction: ImperiumAction =
       };
     },
   };
-
-

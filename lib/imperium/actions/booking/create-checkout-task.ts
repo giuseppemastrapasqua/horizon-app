@@ -54,7 +54,6 @@ export const createCheckoutTaskAction: ImperiumAction =
 
       const bookingId = payload.bookingId;
       const propertyId = payload.propertyId;
-      const ownerId = payload.ownerId ?? null;
 
       const title =
         `Controllo check-out · ${
@@ -95,6 +94,19 @@ export const createCheckoutTaskAction: ImperiumAction =
                 skipped: true as const,
                 taskId: existingTask.id,
               };
+            }
+
+            const ownerId =
+              await resolveTaskAssignee(
+                propertyId,
+                TaskType.CHECK_OUT,
+                transaction,
+              );
+
+            if (!ownerId) {
+              throw new Error(
+                "Nessun assegnatario disponibile per il task di check-out.",
+              );
             }
 
             const task =
@@ -158,6 +170,26 @@ export const createCheckoutTaskAction: ImperiumAction =
               transaction,
             );
 
+            await emitEvent(
+              {
+                eventType: "TASK_CREATED",
+                aggregateType: "TASK",
+                aggregateId: task.id,
+                payload: {
+                  taskId: task.id,
+                  propertyId: task.propertyId,
+                  bookingId: task.bookingId,
+                  ownerId: task.ownerId,
+                  type: task.type,
+                },
+                idempotencyKey:
+                  `task-created:${task.id}`,
+                causationId:
+                  context.event.id,
+              },
+              transaction,
+            );
+
             return {
               skipped: false as const,
               task,
@@ -193,5 +225,3 @@ export const createCheckoutTaskAction: ImperiumAction =
       };
     },
   };
-
-
