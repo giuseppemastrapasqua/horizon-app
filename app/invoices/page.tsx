@@ -17,6 +17,7 @@ import {
 import {
   prisma,
 } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 type InvoicesPageProps = {
   searchParams?: Promise<{
@@ -32,6 +33,7 @@ export default async function InvoicesPage({
 }: InvoicesPageProps) {
   const params =
     await searchParams;
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
 
   const statusFilter =
     params?.status ?? "all";
@@ -48,6 +50,9 @@ export default async function InvoicesPage({
   const where: Prisma.DocumentWhereInput = {
     type:
       DocumentType.COMMISSION_INVOICE,
+    ...(accessiblePropertyIds !== null
+      ? { AND: [{ propertyId: { in: accessiblePropertyIds } }] }
+      : {}),
   };
 
   if (
@@ -149,6 +154,9 @@ export default async function InvoicesPage({
         where: {
           role:
             "OWNER",
+          ...(accessiblePropertyIds !== null
+            ? { properties: { some: { id: { in: accessiblePropertyIds } } } }
+            : {}),
         },
         orderBy: {
           fullName:
@@ -161,6 +169,9 @@ export default async function InvoicesPage({
       }),
 
       prisma.property.findMany({
+        where: accessiblePropertyIds !== null
+          ? { id: { in: accessiblePropertyIds } }
+          : undefined,
         orderBy: {
           name:
             "asc",

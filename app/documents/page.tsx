@@ -5,6 +5,7 @@ import {
   Prisma,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 import {
   buildDocumentInsights,
@@ -26,6 +27,7 @@ export default async function DocumentsPage({
   searchParams,
 }: DocumentsPageProps) {
   const params = await searchParams;
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
 
   const typeFilter = params?.type ?? "all";
   const statusFilter = params?.status ?? "all";
@@ -33,7 +35,9 @@ export default async function DocumentsPage({
   const propertyFilter = params?.propertyId ?? "all";
   const searchQuery = params?.q?.trim() ?? "";
 
-  const where: Prisma.DocumentWhereInput = {};
+  const where: Prisma.DocumentWhereInput = accessiblePropertyIds !== null
+    ? { AND: [{ propertyId: { in: accessiblePropertyIds } }] }
+    : {};
 
   if (typeFilter !== "all" && isDocumentType(typeFilter)) {
     where.type = typeFilter;
@@ -116,6 +120,9 @@ export default async function DocumentsPage({
     prisma.user.findMany({
       where: {
         role: "OWNER",
+        ...(accessiblePropertyIds !== null
+          ? { properties: { some: { id: { in: accessiblePropertyIds } } } }
+          : {}),
       },
       orderBy: {
         fullName: "asc",
@@ -127,6 +134,9 @@ export default async function DocumentsPage({
     }),
 
     prisma.property.findMany({
+      where: accessiblePropertyIds !== null
+        ? { id: { in: accessiblePropertyIds } }
+        : undefined,
       orderBy: {
         name: "asc",
       },
