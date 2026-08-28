@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 import { createBooking } from "../actions";
@@ -17,7 +18,12 @@ export default async function NewBookingPage({
   const params = await searchParams;
   const selectedPropertyId = params?.propertyId;
 
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
+
   const properties = await prisma.property.findMany({
+    where: accessiblePropertyIds
+      ? { id: { in: accessiblePropertyIds } }
+      : undefined,
     orderBy: { name: "asc" },
     include: {
       owner: true,
