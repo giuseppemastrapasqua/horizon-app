@@ -1,5 +1,6 @@
 import { TaskStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 
 export async function getBookingWorkspace(bookingId: string) {
   const now = new Date();
@@ -25,6 +26,8 @@ export async function getBookingWorkspace(bookingId: string) {
   if (!booking) {
     return null;
   }
+
+  await requirePropertyAccess(booking.propertyId);
 
   const documents = await prisma.document.findMany({
     where: {
