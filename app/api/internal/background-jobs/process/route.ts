@@ -35,7 +35,7 @@ function isAuthorized(
   );
 }
 
-export async function POST(
+async function handleRequest(
   request: Request,
 ): Promise<NextResponse> {
   const configuredSecrets =
@@ -104,4 +104,15 @@ export async function POST(
       },
     );
   }
+}
+export async function GET(
+  request: Request,
+): Promise<NextResponse> {
+  return handleRequest(request);
+}
+
+export async function POST(
+  request: Request,
+): Promise<NextResponse> {
+  return handleRequest(request);
 }

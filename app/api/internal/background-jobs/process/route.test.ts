@@ -19,7 +19,7 @@ vi.mock(
   }),
 );
 
-import { POST } from "./route";
+import { GET, POST } from "./route";
 
 describe("POST /api/internal/background-jobs/process", () => {
   const originalBackgroundJobSecret =
@@ -227,6 +227,35 @@ describe("POST /api/internal/background-jobs/process", () => {
       "Errore durante l'esecuzione del background worker:",
       processorError,
     );
+  });
+  it("accetta GET con CRON_SECRET", async () => {
+    process.env.CRON_SECRET = "cron-secret";
+
+    processNextBackgroundJobMock.mockResolvedValueOnce(
+      false,
+    );
+
+    const request = createRequest("cron-secret");
+
+    const response = await GET(
+      new Request(request.url, {
+        method: "GET",
+        headers: request.headers,
+      }),
+    );
+
+    expect(response.status).toBe(200);
+
+    await expect(response.json()).resolves.toEqual({
+      processedJobs: 0,
+      limit: 10,
+      message:
+        "Non ci sono background job disponibili.",
+    });
+
+    expect(
+      processNextBackgroundJobMock,
+    ).toHaveBeenCalledOnce();
   });
 });
 
