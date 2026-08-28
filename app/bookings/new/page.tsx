@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 import { createBooking } from "../actions";
+import { BookingCreateForm } from "./BookingCreateForm";
 
 type NewBookingPageProps = {
   searchParams?: Promise<{
@@ -47,7 +48,7 @@ export default async function NewBookingPage({
             boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
           }}
         >
-          <form action={createBooking} style={{ display: "grid", gap: "18px" }}>
+          <BookingCreateForm action={createBooking}>
             <label style={labelStyle}>
               Immobile
               <select
@@ -155,7 +156,7 @@ export default async function NewBookingPage({
             <button type="submit" style={primaryButtonStyle}>
               Crea prenotazione
             </button>
-          </form>
+          </BookingCreateForm>
         </div>
       </AppShell>
     </>
