@@ -30,6 +30,8 @@ import {
   prisma,
 } from "@/lib/prisma";
 
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
+
 import {
   formatCurrency,
 } from "@/lib/format/currency";
@@ -172,6 +174,8 @@ export default async function BookingsPage({
             },
           };
 
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
+
   const [
     bookings,
     properties,
@@ -179,6 +183,10 @@ export default async function BookingsPage({
     await Promise.all([
       prisma.booking.findMany({
         where: {
+          ...(accessiblePropertyIds
+            ? { propertyId: { in: accessiblePropertyIds } }
+            : {}),
+
           ...(propertyId
             ? {
                 propertyId,
@@ -210,6 +218,9 @@ export default async function BookingsPage({
       }),
 
       prisma.property.findMany({
+        where: accessiblePropertyIds
+          ? { id: { in: accessiblePropertyIds } }
+          : undefined,
         orderBy: {
           name: "asc",
         },
@@ -324,6 +335,7 @@ export default async function BookingsPage({
     isFullMonth
       ? await getCommissionSummary({
           propertyId,
+          accessiblePropertyIds,
           monthStart:
             rangeStart,
         })
@@ -826,9 +838,11 @@ export default async function BookingsPage({
 
 async function getCommissionSummary({
   propertyId,
+  accessiblePropertyIds,
   monthStart,
 }: {
   propertyId: string;
+  accessiblePropertyIds: string[] | null;
   monthStart: Date;
 }) {
   const nextMonth =
@@ -841,6 +855,10 @@ async function getCommissionSummary({
   const reports =
     await prisma.financeReport.findMany({
       where: {
+        ...(accessiblePropertyIds
+          ? { propertyId: { in: accessiblePropertyIds } }
+          : {}),
+
         ...(propertyId
           ? {
               propertyId,

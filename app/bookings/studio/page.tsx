@@ -1,10 +1,16 @@
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 import { BookingsStudioClient } from "./BookingsStudioClient";
 
 export default async function BookingsStudioPage() {
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
+
   const bookings = await prisma.booking.findMany({
+    where: accessiblePropertyIds
+      ? { propertyId: { in: accessiblePropertyIds } }
+      : undefined,
     orderBy: {
       createdAt: "desc",
     },
