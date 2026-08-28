@@ -312,18 +312,10 @@ export async function GET(request: NextRequest) {
             globalAccess
               ? {}
               : {
-                  OR: [
-                    {
-                      propertyId: {
-                        in:
-                          accessiblePropertyIds,
-                      },
-                    },
-                    {
-                      ownerId:
-                        session.user.id,
-                    },
-                  ],
+                  propertyId: {
+                    in:
+                      accessiblePropertyIds,
+                  },
                 },
             {
               OR: [

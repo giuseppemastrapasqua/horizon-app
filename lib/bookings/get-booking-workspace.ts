@@ -31,14 +31,7 @@ export async function getBookingWorkspace(bookingId: string) {
 
   const documents = await prisma.document.findMany({
     where: {
-      OR: [
-        {
-          propertyId: booking.propertyId,
-        },
-        {
-          ownerId: booking.ownerId,
-        },
-      ],
+      propertyId: booking.propertyId,
     },
     orderBy: {
       updatedAt: "desc",

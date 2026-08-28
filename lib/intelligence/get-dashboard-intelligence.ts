@@ -10,12 +10,15 @@ import {
 import {
   prisma,
 } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 export async function getDashboardIntelligence({
   now = new Date(),
 }: {
   now?: Date;
 } = {}) {
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
+
   const previousMonthStart =
     new Date(
       Date.UTC(
@@ -44,6 +47,9 @@ export async function getDashboardIntelligence({
   ] =
     await Promise.all([
       prisma.property.findMany({
+        where: accessiblePropertyIds !== null
+          ? { id: { in: accessiblePropertyIds } }
+          : undefined,
         select: {
           id: true,
           name: true,
@@ -60,6 +66,9 @@ export async function getDashboardIntelligence({
        */
       prisma.task.findMany({
         where: {
+          ...(accessiblePropertyIds !== null
+            ? { propertyId: { in: accessiblePropertyIds } }
+            : {}),
           status: {
             in: [
               "TODO",
@@ -101,6 +110,9 @@ export async function getDashboardIntelligence({
        */
       prisma.document.findMany({
         where: {
+          ...(accessiblePropertyIds !== null
+            ? { propertyId: { in: accessiblePropertyIds } }
+            : {}),
           status: {
             not: "ARCHIVED",
           },
@@ -138,6 +150,9 @@ export async function getDashboardIntelligence({
        * uno storico sufficiente.
        */
       prisma.financeReport.findMany({
+        where: accessiblePropertyIds !== null
+          ? { propertyId: { in: accessiblePropertyIds } }
+          : undefined,
         orderBy: [
           {
             referenceMonth: "desc",
@@ -198,6 +213,9 @@ export async function getDashboardIntelligence({
        */
       prisma.booking.findMany({
         where: {
+          ...(accessiblePropertyIds !== null
+            ? { propertyId: { in: accessiblePropertyIds } }
+            : {}),
           bookingStatus: {
             not: "CANCELLED",
           },
@@ -220,6 +238,9 @@ export async function getDashboardIntelligence({
 
       prisma.financeReport.findMany({
         where: {
+          ...(accessiblePropertyIds !== null
+            ? { propertyId: { in: accessiblePropertyIds } }
+            : {}),
           referenceMonth:
             previousMonthStart,
         },
