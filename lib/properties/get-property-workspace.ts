@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 import { buildPropertyMetrics } from "@/lib/properties/build-property-metrics";
 import { buildPropertyTimeline } from "@/lib/properties/build-property-timeline";
@@ -10,11 +11,21 @@ import { mapWorkspaceProperty } from "@/lib/properties/map-property-workspace";
 export async function getPropertyWorkspace(
   propertyId: string,
 ) {
+  const accessiblePropertyIds =
+    await getAccessiblePropertyIds();
+
   const propertyData =
     await Promise.all([
-      prisma.property.findUnique({
+      prisma.property.findFirst({
         where: {
           id: propertyId,
+          ...(accessiblePropertyIds !== null
+            ? {
+                id: {
+                  in: accessiblePropertyIds,
+                },
+              }
+            : {}),
         },
 
         include: {

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 export type PropertySortOption =
   | "newest"
@@ -16,11 +17,15 @@ export async function getPropertiesPageData({
   search = "",
   sort = "newest",
 }: GetPropertiesPageDataOptions = {}) {
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
   const query = search.trim();
 
   return prisma.property.findMany({
-    where:
-      query.length > 0
+    where: {
+      ...(accessiblePropertyIds !== null
+        ? { id: { in: accessiblePropertyIds } }
+        : {}),
+      ...(query.length > 0
         ? {
             OR: [
               {
@@ -49,7 +54,8 @@ export async function getPropertiesPageData({
               },
             ],
           }
-        : undefined,
+        : {}),
+    },
 
     orderBy: getPropertyOrderBy(sort),
 
