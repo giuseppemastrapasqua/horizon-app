@@ -5,9 +5,18 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { redirect } from "next/navigation";
+
+import { auth } from "@/auth";
 import { LoginForm } from "@/components/auth/LoginForm";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const session = await auth();
+
+  if (session?.user?.id) {
+    redirect("/dashboard");
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500 text-white">
       <div className="grid min-h-screen lg:grid-cols-[1.1fr_0.9fr]">
