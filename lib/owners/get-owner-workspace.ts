@@ -3,9 +3,11 @@ import {
   TaskStatus,
 } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import type { OwnerTimelineItem } from "@/app/owners/[id]/components/OwnerTimeline";
 
 export async function getOwnerWorkspace(ownerId: string) {
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
   const now = new Date();
 
   const monthStart = new Date(
@@ -20,12 +22,25 @@ export async function getOwnerWorkspace(ownerId: string) {
     1
   );
 
-  const owner = await prisma.user.findUnique({
+  const owner = await prisma.user.findFirst({
     where: {
       id: ownerId,
+      role: "OWNER",
+      ...(accessiblePropertyIds !== null
+        ? {
+            properties: {
+              some: {
+                id: { in: accessiblePropertyIds },
+              },
+            },
+          }
+        : {}),
     },
     include: {
       properties: {
+        where: accessiblePropertyIds !== null
+          ? { id: { in: accessiblePropertyIds } }
+          : undefined,
         orderBy: {
           name: "asc",
         },
@@ -36,6 +51,9 @@ export async function getOwnerWorkspace(ownerId: string) {
       },
 
       bookings: {
+        where: accessiblePropertyIds !== null
+          ? { propertyId: { in: accessiblePropertyIds } }
+          : undefined,
         orderBy: {
           createdAt: "desc",
         },
@@ -45,6 +63,9 @@ export async function getOwnerWorkspace(ownerId: string) {
       },
 
       tasks: {
+        where: accessiblePropertyIds !== null
+          ? { propertyId: { in: accessiblePropertyIds } }
+          : undefined,
         orderBy: {
           updatedAt: "desc",
         },
@@ -55,6 +76,9 @@ export async function getOwnerWorkspace(ownerId: string) {
       },
 
       documents: {
+        where: accessiblePropertyIds !== null
+          ? { propertyId: { in: accessiblePropertyIds } }
+          : undefined,
         orderBy: {
           updatedAt: "desc",
         },

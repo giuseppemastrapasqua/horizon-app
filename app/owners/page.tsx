@@ -1,28 +1,48 @@
 import Link from "next/link";
 import { BookingOperationalStatus, TaskStatus, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 
 export default async function OwnersPage() {
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
   const now = new Date();
 
   const owners = await prisma.user.findMany({
     where: {
       role: UserRole.OWNER,
+      ...(accessiblePropertyIds !== null
+        ? {
+            properties: {
+              some: {
+                id: { in: accessiblePropertyIds },
+              },
+            },
+          }
+        : {}),
     },
     orderBy: {
       fullName: "asc",
     },
     include: {
       properties: {
+        where: accessiblePropertyIds !== null
+          ? { id: { in: accessiblePropertyIds } }
+          : undefined,
         include: {
           bookings: true,
           tasks: true,
         },
       },
-      bookings: true,
-      tasks: true,
+      bookings:
+        accessiblePropertyIds !== null
+          ? { where: { propertyId: { in: accessiblePropertyIds } } }
+          : true,
+      tasks:
+        accessiblePropertyIds !== null
+          ? { where: { propertyId: { in: accessiblePropertyIds } } }
+          : true,
     },
   });
 
