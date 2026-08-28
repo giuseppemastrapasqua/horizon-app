@@ -1,12 +1,27 @@
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 export async function getGuests() {
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
+
   const guests = await prisma.guest.findMany({
+    where: accessiblePropertyIds !== null
+      ? {
+          bookings: {
+            some: {
+              propertyId: { in: accessiblePropertyIds },
+            },
+          },
+        }
+      : undefined,
     orderBy: {
       updatedAt: "desc",
     },
     include: {
       bookings: {
+        where: accessiblePropertyIds !== null
+          ? { propertyId: { in: accessiblePropertyIds } }
+          : undefined,
         orderBy: {
           checkIn: "desc",
         },
