@@ -671,9 +671,14 @@ export default async function CalendarPage({
                         Aperto
                       </span>
 
+                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-700">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                        Chiusura manuale
+                      </span>
+
                       <span className="flex items-center gap-1.5 text-[8px] font-semibold text-rose-700">
                         <span className="h-2 w-2 rounded-full bg-rose-500" />
-                        Chiuso
+                        Chiuso senza prenotazione
                       </span>
 
                       <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-600">
@@ -727,6 +732,7 @@ export default async function CalendarPage({
                   </div>
 
                   <div className="flex shrink-0 items-start gap-3">
+                    <Link href={`/bookings/new?propertyId=${encodeURIComponent(selectedProperty?.id ?? "")}`} className="mt-[14px] inline-flex h-10 items-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100">Crea prenotazione</Link>
                     <CalendarRangeController
                       key={`${toCalendarDateValue(rangeFrom)}-${toCalendarDateValue(rangeTo)}-${selectedProperty?.id ?? ""}`}
                       from={toCalendarDateValue(rangeFrom)}
@@ -892,6 +898,12 @@ export default async function CalendarPage({
                       day.getDay() === 0 ||
                       day.getDay() === 6;
 
+
+                    const displayBooking =
+                      bookings[0] ??
+                      checkIns[0] ??
+                      checkOuts[0] ??
+                      null;
                     return (
                       <div
                         key={
@@ -936,150 +948,39 @@ export default async function CalendarPage({
 
                           {block ? (
                             <span
-                              title={
-                                block.note ??
-                                "DisponibilitÃ  bloccata"
-                              }
-                              className="flex h-5 w-5 items-center justify-center rounded-md bg-rose-50 text-rose-500"
-                            >
-                              <LockKeyhole
-                                size={11}
-                              />
-                            </span>
-                          ) : bookings.length >
-                            0 ? (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-emerald-50 text-emerald-500">
-                              <CircleCheck
-                                size={11}
-                              />
-                            </span>
-                          ) : (
-                            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-slate-50 text-slate-300">
-                              <CircleX
-                                size={11}
-                              />
-                            </span>
-                          )}
+                              title={block.note ?? "Disponibilità bloccata"}
+                              className={`h-2.5 w-10 shrink-0 rounded-full ${block.source === "MANUAL" ? "bg-emerald-600" : "bg-rose-600"}`}
+                            />
+                          ) : null}
                         </div>
-
-                        {inMonth ? (
-                          <>
-
+                          {inMonth ? (
+                            displayBooking ? (
+                              <Link
+                                href={`/bookings/${displayBooking.id}`}
+                                title={`${displayBooking.channel} · ${displayBooking.guestName}`}
+                                className={`mt-5 -mx-4 flex h-7 w-[calc(100%+2rem)] items-center justify-center rounded-none px-2 text-center text-[10px] font-bold text-white transition hover:opacity-90 ${getBookingChannelBarClass(displayBooking.channel)}`}
+                              >
+                                <span className="truncate">
+                                  {displayBooking.guestName}
+                                </span>
+                              </Link>
+                          ) : (
                             <div className="mb-2">
                               <CalendarDayPricing
-                                dateKey={
-                                  calendarDate
-                                }
-                                dayLabel={day.toLocaleDateString(
-                                  "it-IT",
-                                  {
-                                    day: "numeric",
-                                    month: "long",
-                                    year: "numeric",
-                                  },
-                                )}
-                                price={
-                                  dayOriginPrice
-                                }
-                                source={
-                                  dayOriginSource
-                                }
-                                channels={
-                                  dayOriginChannelPrices
-                                }
-                                minimumStay={
-                                  standardRate?.minimumStay ??
-                                  1
-                                }
-                                closed={
-                                  Boolean(
-                                    block,
-                                  )
-                                }
+                                dateKey={calendarDate}
+                                dayLabel={day.toLocaleDateString("it-IT", {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                })}
+                                price={dayOriginPrice}
+                                source={dayOriginSource}
+                                channels={dayOriginChannelPrices}
+                                minimumStay={standardRate?.minimumStay ?? 1}
+                                closed={Boolean(block)}
                               />
                             </div>
-                            <div className="space-y-1">
-                              {checkIns.map(
-                                (
-                                  booking,
-                                ) => (
-                                  <Link
-                                    key={`in-${booking.id}`}
-                                    href={`/bookings/${booking.id}`}
-                                    className="group/event flex min-w-0 items-center gap-1.5 rounded-md bg-emerald-50/70 px-1.5 py-1 text-[6px] font-bold text-emerald-700 transition hover:bg-emerald-100"
-                                    title={`Check-in · ${booking.guestName}`}
-                                  >
-                                    <span className="shrink-0 rounded bg-emerald-100 px-1 py-0.5 text-[5px] font-black uppercase tracking-[0.08em] text-emerald-700">
-                                      IN
-                                    </span>
-
-                                    <span className="min-w-0 truncate">
-                                      {
-                                        booking.guestName
-                                      }
-                                    </span>
-                                  </Link>
-                                ),
-                              )}
-
-                              {checkOuts.map(
-                                (
-                                  booking,
-                                ) => (
-                                  <Link
-                                    key={`out-${booking.id}`}
-                                    href={`/bookings/${booking.id}`}
-                                    className="group/event flex min-w-0 items-center gap-1.5 rounded-md bg-rose-50/70 px-1.5 py-1 text-[6px] font-bold text-rose-700 transition hover:bg-rose-100"
-                                    title={`Check-out · ${booking.guestName}`}
-                                  >
-                                    <span className="shrink-0 rounded bg-rose-100 px-1 py-0.5 text-[5px] font-black uppercase tracking-[0.08em] text-rose-700">
-                                      OUT
-                                    </span>
-
-                                    <span className="min-w-0 truncate">
-                                      {
-                                        booking.guestName
-                                      }
-                                    </span>
-                                  </Link>
-                                ),
-                              )}
-
-                              {bookings
-                                .filter(
-                                  (
-                                    booking,
-                                  ) =>
-                                    !isSameDay(
-                                      day,
-                                      booking.checkIn,
-                                    ) &&
-                                    !isSameDay(
-                                      day,
-                                      booking.checkOut,
-                                    ),
-                                )
-                                .slice(
-                                  0,
-                                  1,
-                                )
-                                .map(
-                                  (
-                                    booking,
-                                  ) => (
-                                    <Link
-                                      key={`stay-${booking.id}`}
-                                      href={`/bookings/${booking.id}`}
-                                      className="flex min-w-0 items-center gap-1.5 rounded-md bg-slate-100/70 px-1.5 py-1 text-[6px] font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-800"
-                                    >
-                                      {
-                                        booking.guestName
-                                      }
-                                    </Link>
-                                  ),
-                                )}
-                            </div>
-                          </>
+                          )
                         ) : null}
                       </div>
                     );
@@ -1756,6 +1657,34 @@ function addCalendarDays(
 
 
 
+function getBookingChannelBarClass(channel?: string) {
+  switch (channel) {
+    case "BOOKING":
+      return "bg-blue-600";
+    case "AIRBNB":
+      return "bg-fuchsia-600";
+    case "HORIZON":
+      return "bg-sky-600";
+    case "VRBO":
+      return "bg-violet-600";
+    default:
+      return "bg-slate-400";
+  }
+}
+function getBookingChannelClasses(channel: string) {
+  switch (channel) {
+    case "BOOKING":
+      return "bg-blue-50 text-blue-700 hover:bg-blue-100";
+    case "AIRBNB":
+      return "bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100";
+    case "HORIZON":
+      return "bg-sky-50 text-sky-700 hover:bg-sky-100";
+    case "VRBO":
+      return "bg-violet-50 text-violet-700 hover:bg-violet-100";
+    default:
+      return "bg-slate-100 text-slate-700 hover:bg-slate-200";
+  }
+}
 function isCalendarRangeFullyBlocked({
   from,
   to,
