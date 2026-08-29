@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 
 export async function getPropertyRevenueData({
   propertyId,
@@ -9,6 +10,8 @@ export async function getPropertyRevenueData({
   startDate: Date;
   endDate: Date;
 }) {
+  await requirePropertyAccess(propertyId);
+
   const [
     property,
     latestSnapshot,
@@ -71,10 +74,10 @@ export async function getPropertyRevenueData({
   ]);
 
   /*
-   * revenueDailySignal può contenere
-   * più acquisizioni della stessa data.
+   * revenueDailySignal puÃƒÂ² contenere
+   * piÃƒÂ¹ acquisizioni della stessa data.
    *
-   * Manteniamo soltanto quella più
+   * Manteniamo soltanto quella piÃƒÂ¹
    * recente per ogni giorno.
    */
   const latestSignalByDate =
