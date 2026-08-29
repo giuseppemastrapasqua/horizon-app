@@ -16,6 +16,10 @@ import { Navigation } from "@/components/Navigation";
 import { prisma } from "@/lib/prisma";
 
 import {
+  requirePropertyAccess,
+} from "@/lib/auth/guards";
+
+import {
   markTaskDone,
   reopenTask,
 } from "../actions";
@@ -48,6 +52,8 @@ export default async function TaskDetailPage({
   if (!task) {
     notFound();
   }
+
+  await requirePropertyAccess(task.propertyId);
 
   const statusLabel =
     task.status === "DONE"
