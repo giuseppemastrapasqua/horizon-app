@@ -10,6 +10,7 @@ import {
   deleteFinanceReportAdjustmentAction,
 } from "./actions";
 import { prisma } from "@/lib/prisma";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 
 import {
   getPropertyOtaCommissionByChannel,
@@ -133,6 +134,8 @@ export default async function FinanceReportDetailPage({
   if (!report) {
     notFound();
   }
+
+  await requirePropertyAccess(report.property.id);
 
   const monthStart =
     new Date(
