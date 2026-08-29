@@ -10,6 +10,7 @@ import { AppShell } from "@/components/AppShell";
 import { FinancePreview } from "@/components/finance/FinancePreview";
 import { Navigation } from "@/components/Navigation";
 import { prisma } from "@/lib/prisma";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import {
   buildFinancePreview,
 } from "@/lib/finance/preview";
@@ -49,6 +50,9 @@ export default async function PropertyReportPage({
         : undefined
     );
 
+  if (propertyId) {
+    await requirePropertyAccess(propertyId);
+  }
   if (!propertyId) {
     const properties =
       await prisma.property.findMany({
