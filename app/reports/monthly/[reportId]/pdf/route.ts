@@ -4,6 +4,7 @@ import {
 } from "@/lib/pdf/finance-report";
 
 import { prisma } from "@/lib/prisma";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 
 import {
   getPropertyOtaCommissionByChannel,
@@ -120,6 +121,8 @@ export async function GET(
       }
     );
   }
+
+  await requirePropertyAccess(report.property.id);
 
   const monthStart = new Date(
     Date.UTC(
