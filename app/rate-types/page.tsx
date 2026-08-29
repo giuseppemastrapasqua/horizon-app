@@ -27,6 +27,10 @@ import {
 } from "@/lib/prisma";
 
 import {
+  getAccessiblePropertyIds,
+} from "@/lib/auth/guards";
+
+import {
   createCustomRateAction,
   deleteCustomRateAction,
   saveRateTypesAction,
@@ -53,8 +57,20 @@ export default async function RateTypesPage({
       ? params.propertyId.trim()
       : "";
 
+  const accessiblePropertyIds =
+    await getAccessiblePropertyIds();
+
   const properties =
     await prisma.property.findMany({
+      where:
+        accessiblePropertyIds !== null
+          ? {
+              id: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : undefined,
+
       orderBy: {
         name: "asc",
       },
