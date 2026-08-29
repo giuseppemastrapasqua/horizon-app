@@ -15,6 +15,8 @@ export async function updatePropertyAmenitiesAction(
     formData.get("propertyId") ?? "",
   ).trim();
 
+  await requirePropertyAccess(propertyId);
+
   const amenityIds = Array.from(
     new Set(
       formData
