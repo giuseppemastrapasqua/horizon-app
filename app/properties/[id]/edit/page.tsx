@@ -23,6 +23,7 @@ import { PropertyCodeVerificationHistory } from "@/components/properties/Propert
 import { AuditService } from "@/services/audit/AuditService";
 import { PropertyTimeline } from "@/components/properties/PropertyTimeline";
 import { prisma } from "@/lib/prisma";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 import { PropertyFinanceReportSettings } from "@/components/properties/PropertyFinanceReportSettings";
 import {
   resetFinanceReportTemplateAction,
@@ -74,8 +75,9 @@ export default async function PropertyEditPage({
 }: PropertyEditPageProps) {
   const { id } = await params;
 
+  await requirePropertyAccess(id);
+
   const workspace = await getPropertyWorkspace(id);
-  const timeline = await AuditService.getPropertyTimeline(id);
   const [
     activeUsers,
     taskAssignments,
@@ -110,6 +112,8 @@ export default async function PropertyEditPage({
   if (!workspace) {
     notFound();
   }
+
+  const timeline = await AuditService.getPropertyTimeline(id);
 
   const {
     property,
