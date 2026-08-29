@@ -11,6 +11,10 @@ import {
 } from "@/lib/prisma";
 
 import {
+  requirePropertyAccess,
+} from "@/lib/auth/guards";
+
+import {
   getPropertyRevenueData,
 } from "@/lib/revenue/get-property-revenue-data";
 
@@ -23,6 +27,8 @@ export async function getPropertyRevenueAnalysis({
   startDate: Date;
   endDate: Date;
 }) {
+  await requirePropertyAccess(propertyId);
+
   const property =
     await prisma.property.findUnique({
       where: {
