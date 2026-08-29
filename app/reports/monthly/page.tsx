@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { BookingOperationalStatus, TaskStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { DocumentLayout } from "@/components/documents/DocumentLayout";
 import { DocumentSection } from "@/components/documents/DocumentSection";
 import { DocumentMetric } from "@/components/documents/DocumentMetric";
