@@ -1,4 +1,5 @@
-﻿import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
+import { requirePropertyAccess } from "@/lib/auth/guards";
 
 import type {
   RevenueNightContext,
@@ -8,6 +9,8 @@ export async function buildRevenueNightContext(
   propertyId: string,
   date: Date,
 ): Promise<RevenueNightContext> {
+  await requirePropertyAccess(propertyId);
+
   const targetDate =
     startOfUtcDay(date);
 
@@ -440,5 +443,3 @@ function dateKey(
     .toISOString()
     .slice(0, 10);
 }
-
-
