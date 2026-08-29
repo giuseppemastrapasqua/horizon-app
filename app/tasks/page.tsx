@@ -33,6 +33,10 @@ import {
 } from "@/lib/prisma";
 
 import {
+  getAccessiblePropertyIds,
+} from "@/lib/auth/guards";
+
+import {
   buildTaskInsights,
 } from "@/lib/intelligence";
 
@@ -56,6 +60,9 @@ export default async function TasksPage({
 }: TasksPageProps) {
   const params =
     await searchParams;
+
+  const accessiblePropertyIds =
+    await getAccessiblePropertyIds();
 
   const statusFilter =
     params?.status ?? "all";
@@ -99,7 +106,15 @@ export default async function TasksPage({
   );
 
   const where:
-    Prisma.TaskWhereInput = {};
+    Prisma.TaskWhereInput = {
+      ...(accessiblePropertyIds !== null
+        ? {
+            propertyId: {
+              in: accessiblePropertyIds,
+            },
+          }
+        : {}),
+    };
 
   if (
     statusFilter === "open"
@@ -218,6 +233,15 @@ export default async function TasksPage({
       }),
 
       prisma.property.findMany({
+        where:
+          accessiblePropertyIds !== null
+            ? {
+                id: {
+                  in: accessiblePropertyIds,
+                },
+              }
+            : undefined,
+
         orderBy: {
           name: "asc",
         },
