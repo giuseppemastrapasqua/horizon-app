@@ -10,6 +10,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { Navigation } from "@/components/Navigation";
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 import {
   createTask,
@@ -36,8 +37,20 @@ export default async function NewTaskPage({
     params?.bookingId ??
     "";
 
+  const accessiblePropertyIds =
+    await getAccessiblePropertyIds();
+
   const properties =
     await prisma.property.findMany({
+      where:
+        accessiblePropertyIds !== null
+          ? {
+              id: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : undefined,
+
       orderBy: {
         name: "asc",
       },
