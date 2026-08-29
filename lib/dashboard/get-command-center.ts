@@ -9,8 +9,12 @@ import {
 } from "@/lib/dashboard/command-center-bookings";
 import { getPriorityTasks } from "@/lib/dashboard/command-center-task";
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 export async function getCommandCenter() {
+  const accessiblePropertyIds =
+    await getAccessiblePropertyIds();
+
   const now = new Date();
 
   const startOfToday = new Date(now);
@@ -33,6 +37,13 @@ export async function getCommandCenter() {
   ] = await Promise.all([
     prisma.booking.findMany({
       where: {
+        ...(accessiblePropertyIds !== null
+          ? {
+              propertyId: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : {}),
         checkIn: {
           gte: startOfToday,
           lte: endOfToday,
@@ -53,6 +64,13 @@ export async function getCommandCenter() {
 
     prisma.booking.findMany({
       where: {
+        ...(accessiblePropertyIds !== null
+          ? {
+              propertyId: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : {}),
         checkOut: {
           gte: startOfToday,
           lte: endOfToday,
@@ -73,6 +91,13 @@ export async function getCommandCenter() {
 
     prisma.task.findMany({
       where: {
+        ...(accessiblePropertyIds !== null
+          ? {
+              propertyId: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : {}),
         status: {
           notIn: [
             TaskStatus.DONE,
@@ -107,6 +132,13 @@ export async function getCommandCenter() {
 
     prisma.task.count({
       where: {
+        ...(accessiblePropertyIds !== null
+          ? {
+              propertyId: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : {}),
         status: {
           notIn: [
             TaskStatus.DONE,
