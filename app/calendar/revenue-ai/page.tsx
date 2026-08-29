@@ -23,6 +23,10 @@ import {
 } from "@/lib/prisma";
 
 import {
+  requirePropertyAccess,
+} from "@/lib/auth/guards";
+
+import {
   getPropertyRevenueAnalysis,
 } from "@/lib/revenue/get-property-revenue-analysis";
 
@@ -177,6 +181,8 @@ export default async function RevenueAiPage({
       </>
     );
   }
+
+  await requirePropertyAccess(propertyId);
 
   const rangeFrom =
     requestedFrom <= requestedTo
