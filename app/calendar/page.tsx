@@ -26,6 +26,10 @@ import {
 } from "@/lib/prisma";
 
 import {
+  getAccessiblePropertyIds,
+} from "@/lib/auth/guards";
+
+import {
   calculateDerivedRatePrice,
   resolveStandardRateForDate,
 } from "@/lib/pricing/resolve-standard-rate";
@@ -109,6 +113,9 @@ export default async function CalendarPage({
       params.propertyId,
     );
 
+  const accessiblePropertyIds =
+    await getAccessiblePropertyIds();
+
   const monthStart =
     parseMonth(
       requestedMonth,
@@ -142,6 +149,15 @@ export default async function CalendarPage({
 
   const properties =
     await prisma.property.findMany({
+      where:
+        accessiblePropertyIds !== null
+          ? {
+              id: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : undefined,
+
       orderBy: {
         name:
           "asc",
