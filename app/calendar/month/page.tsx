@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 
@@ -21,6 +22,7 @@ export default async function MonthlyCalendarPage({
   searchParams,
 }: MonthlyCalendarPageProps) {
   const params = await searchParams;
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
   const selectedMonth = parseMonth(params?.month);
 
   const year = selectedMonth.getFullYear();
@@ -32,6 +34,9 @@ export default async function MonthlyCalendarPage({
   const [bookings, tasks] = await Promise.all([
     prisma.booking.findMany({
       where: {
+        ...(accessiblePropertyIds !== null
+          ? { propertyId: { in: accessiblePropertyIds } }
+          : {}),
         OR: [
           {
             checkIn: {
@@ -57,6 +62,9 @@ export default async function MonthlyCalendarPage({
 
     prisma.task.findMany({
       where: {
+        ...(accessiblePropertyIds !== null
+          ? { propertyId: { in: accessiblePropertyIds } }
+          : {}),
         dueDate: {
           gte: monthStart,
           lt: monthEnd,

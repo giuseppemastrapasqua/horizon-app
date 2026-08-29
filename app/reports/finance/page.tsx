@@ -9,6 +9,7 @@ import {
   buildMissingFinanceReportInsights,
 } from "@/lib/intelligence";
 import { prisma } from "@/lib/prisma";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 type FinanceReportsPageProps = {
   searchParams: Promise<{
@@ -27,6 +28,8 @@ export default async function FinanceReportsPage({
     typeof propertyIdValue === "string"
       ? propertyIdValue.trim()
       : "";
+
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
 
   const now = new Date();
 
@@ -50,6 +53,10 @@ export default async function FinanceReportsPage({
 
   const [properties, reports, previousMonthBookings, previousMonthReports] = await Promise.all([
     prisma.property.findMany({
+      where: accessiblePropertyIds !== null
+        ? { id: { in: accessiblePropertyIds } }
+        : undefined,
+
       orderBy: {
         name: "asc",
       },
@@ -61,11 +68,14 @@ export default async function FinanceReportsPage({
     }),
 
     prisma.financeReport.findMany({
-      where: selectedPropertyId
-        ? {
-            propertyId: selectedPropertyId,
-          }
-        : undefined,
+      where: {
+        ...(accessiblePropertyIds !== null
+          ? { propertyId: { in: accessiblePropertyIds } }
+          : {}),
+        ...(selectedPropertyId
+          ? { propertyId: selectedPropertyId }
+          : {}),
+      },
 
       orderBy: [
         {
@@ -147,6 +157,14 @@ export default async function FinanceReportsPage({
 
     prisma.booking.findMany({
       where: {
+        ...(accessiblePropertyIds !== null
+          ? {
+              propertyId: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : {}),
+
         ...(selectedPropertyId
           ? {
               propertyId:
@@ -176,6 +194,14 @@ export default async function FinanceReportsPage({
 
     prisma.financeReport.findMany({
       where: {
+        ...(accessiblePropertyIds !== null
+          ? {
+              propertyId: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : {}),
+
         ...(selectedPropertyId
           ? {
               propertyId:
