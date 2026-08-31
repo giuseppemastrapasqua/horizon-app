@@ -78,6 +78,7 @@ model User {
   createdPriceOverrides     PropertyPriceOverride[]     @relation("PropertyPriceOverrideCreatedBy")
   tasks                     Task[]
   taskAssignments           PropertyTaskAssignment[]
+  propertyAccesses          PropertyAccess[]
   createdAvailabilityBlocks PropertyAvailabilityBlock[] @relation("PropertyAvailabilityBlockCreatedBy")
 
   @@index([role])
@@ -156,6 +157,7 @@ model Property {
   priceOverrides                      PropertyPriceOverride[]
   tasks                               Task[]
   taskAssignments                     PropertyTaskAssignment[]
+  accesses                            PropertyAccess[]
   availabilityBlocks                  PropertyAvailabilityBlock[]
   revenueMarketSnapshots              RevenueMarketSnapshot[]
   revenueComparables                  RevenueComparable[]
@@ -522,6 +524,32 @@ model PropertyTaskAssignment {
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([propertyId, role])
+  @@index([propertyId])
+  @@index([userId])
+  @@index([role])
+  @@index([active])
+}
+
+enum PropertyAccessRole {
+  OWNER
+  MANAGER
+  FINANCE
+  VIEWER
+}
+
+model PropertyAccess {
+  id         String             @id @default(cuid())
+  propertyId String
+  userId     String
+  role       PropertyAccessRole
+  active     Boolean            @default(true)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, userId])
   @@index([propertyId])
   @@index([userId])
   @@index([role])

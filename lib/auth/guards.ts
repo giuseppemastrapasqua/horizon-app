@@ -13,7 +13,7 @@ export async function requireUser() {
 export async function requirePropertyAccess(propertyId: string) {
   const user = await requireUser();
 
-  if (["SUPER_ADMIN", "MANAGER", "FINANCE_ADMIN"].includes(user.role)) {
+  if (user.role === "SUPER_ADMIN") {
     return user;
   }
 
@@ -22,6 +22,14 @@ export async function requirePropertyAccess(propertyId: string) {
       id: propertyId,
       OR: [
         { ownerId: user.id },
+        {
+          accesses: {
+            some: {
+              userId: user.id,
+              active: true,
+            },
+          },
+        },
         {
           taskAssignments: {
             some: {
@@ -35,7 +43,9 @@ export async function requirePropertyAccess(propertyId: string) {
     select: { id: true },
   });
 
-  if (!property) throw new Error("Accesso alla struttura non autorizzato.");
+  if (!property) {
+    throw new Error("Accesso alla struttura non autorizzato.");
+  }
 
   return user;
 }
@@ -43,7 +53,7 @@ export async function requirePropertyAccess(propertyId: string) {
 export async function getAccessiblePropertyIds() {
   const user = await requireUser();
 
-  if (["SUPER_ADMIN", "MANAGER", "FINANCE_ADMIN"].includes(user.role)) {
+  if (user.role === "SUPER_ADMIN") {
     return null;
   }
 
@@ -51,6 +61,14 @@ export async function getAccessiblePropertyIds() {
     where: {
       OR: [
         { ownerId: user.id },
+        {
+          accesses: {
+            some: {
+              userId: user.id,
+              active: true,
+            },
+          },
+        },
         {
           taskAssignments: {
             some: {
@@ -66,6 +84,7 @@ export async function getAccessiblePropertyIds() {
 
   return properties.map((property) => property.id);
 }
+
 export async function requireRoles(roles: string[]) {
   const user = await requireUser();
 
