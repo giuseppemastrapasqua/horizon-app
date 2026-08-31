@@ -247,7 +247,7 @@ export default async function PropertyEditPage({
       <Navigation />
 
       <AppShell
-        title={`Scheda immobile Ãƒâ€šÃ‚Â· ${property.name}`}
+        title={`Scheda immobile · ${property.name}`}
         subtitle="Gestisci tutte le informazioni operative e pubbliche dell'immobile."
       >
         <div className="mx-auto max-w-6xl space-y-8">
@@ -296,8 +296,8 @@ export default async function PropertyEditPage({
                   </p>
 
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Horizon ottimizzerÃƒÆ’Ã‚Â  automaticamente la tariffa considerando
-                    domanda, eventi, stagionalitÃƒÆ’Ã‚Â  e performance
+                    Horizon ottimizzerà automaticamente la tariffa considerando
+                    domanda, eventi, stagionalità e performance
                     dell&apos;immobile.
                   </p>
                 </div>
@@ -491,7 +491,7 @@ export default async function PropertyEditPage({
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Pubblicazione e visibilitÃƒÆ’Ã‚Â .
+                  Pubblicazione e visibilità.
                 </p>
               </div>
             </div>
@@ -513,7 +513,7 @@ export default async function PropertyEditPage({
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-600">
-                    IdentitÃƒÆ’Ã‚Â , contenuti pubblici e dati operativi.
+                    Identità, contenuti pubblici e dati operativi.
                   </p>
                 </div>
               </div>
@@ -583,7 +583,7 @@ export default async function PropertyEditPage({
                   />
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Questo contenuto potrÃƒÆ’Ã‚Â  essere ottimizzato automaticamente
+                    Questo contenuto potrà essere ottimizzato automaticamente
                     dall&apos;AI per il marketplace.
                   </p>
                 </div>
@@ -591,7 +591,7 @@ export default async function PropertyEditPage({
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
                 <h3 className="text-lg font-semibold text-slate-900">
-                  OperativitÃƒÆ’Ã‚Â 
+                  Operatività
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -604,7 +604,7 @@ export default async function PropertyEditPage({
                     htmlFor="cleaningCost"
                     className="mb-2 block text-sm font-medium text-slate-700"
                   >
-                    Costo pulizia per prenotazione (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬)
+                    Costo pulizia per prenotazione (€)
                   </label>
 
                   <input
@@ -671,7 +671,7 @@ export default async function PropertyEditPage({
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-600">
-                    Horizon assegnerÃƒÆ’Ã‚Â  automaticamente i task alla persona configurata per ciascuna funzione.
+                    Horizon assegnerà automaticamente i task alla persona configurata per ciascuna funzione.
                   </p>
                 </div>
               </div>
@@ -708,7 +708,7 @@ export default async function PropertyEditPage({
                           key={user.id}
                           value={user.id}
                         >
-                          {user.fullName} Ãƒâ€šÃ‚Â· {user.email}
+                          {user.fullName} · {user.email}
                         </option>
                       ),
                     )}
@@ -739,7 +739,7 @@ export default async function PropertyEditPage({
                           key={user.id}
                           value={user.id}
                         >
-                          {user.fullName} Ãƒâ€šÃ‚Â· {user.email}
+                          {user.fullName} · {user.email}
                         </option>
                       ),
                     )}
@@ -770,21 +770,21 @@ export default async function PropertyEditPage({
                           key={user.id}
                           value={user.id}
                         >
-                          {user.fullName} Ãƒâ€šÃ‚Â· {user.email}
+                          {user.fullName} · {user.email}
                         </option>
                       ),
                     )}
                   </select>
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Riceve check-in, check-out, documenti ospite, issue e attivitÃƒÆ’Ã‚Â  amministrative.
+                    Riceve check-in, check-out, documenti ospite, issue e attività amministrative.
                   </p>
                 </label>
               </div>
 
               <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4">
                 <p className="text-sm font-medium text-blue-900">
-                  Una sola persona puÃƒÆ’Ã‚Â² essere responsabile di tutte le funzioni.
+                  Una sola persona può essere responsabile di tutte le funzioni.
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-blue-700">
@@ -935,9 +935,9 @@ export default async function PropertyEditPage({
                   </div>
 
                   <p className="mt-6 max-w-2xl text-sm leading-6 text-slate-300">
-                    Horizon analizzerÃƒÆ’Ã‚Â  mercato, domanda, stagionalitÃƒÆ’Ã‚Â , eventi
+                    Horizon analizzerà mercato, domanda, stagionalità, eventi
                     e andamento delle prenotazioni per determinare
-                    automaticamente la tariffa piÃƒÆ’Ã‚Â¹ efficace.
+                    automaticamente la tariffa più efficace.
                   </p>
                 </div>
 
@@ -950,7 +950,7 @@ export default async function PropertyEditPage({
             <div className="grid gap-8 p-8 lg:grid-cols-[1fr_320px]">
               <div>
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                  FunzionalitÃƒÆ’Ã‚Â  previste
+                  Funzionalità previste
                 </h3>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -960,7 +960,7 @@ export default async function PropertyEditPage({
                       className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
                     >
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                        ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“
+                        ✓
                       </span>
 
                       <span className="text-sm font-medium text-slate-800">
@@ -981,7 +981,7 @@ export default async function PropertyEditPage({
                 </h3>
 
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Ogni decisione del Revenue Engine sarÃƒÆ’Ã‚Â  accompagnata da una
+                  Ogni decisione del Revenue Engine sarà accompagnata da una
                   motivazione chiara. Il gestore mantiene sempre il controllo finale.
                 </p>
 
@@ -992,13 +992,13 @@ export default async function PropertyEditPage({
 
                   <p className="mt-1 text-sm font-semibold text-slate-900">
                     {revenueRatePlan
-                      ? `${revenueRatePlan.basePrice} ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ Ãƒâ€šÃ‚Â· ${revenueRatePlan.name}`
+                      ? `${revenueRatePlan.basePrice} € · ${revenueRatePlan.name}`
                       : "Da configurare"}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-500">
                     {revenueRatePlan
-                      ? `Min ${revenueRatePlan.minimumStay} notti Ãƒâ€šÃ‚Â· ${revenueRatePlan.occupancyIncluded} ospiti inclusi`
+                      ? `Min ${revenueRatePlan.minimumStay} notti · ${revenueRatePlan.occupancyIncluded} ospiti inclusi`
                       : "Configura una tariffa base ufficiale per attivare il Revenue Engine."}
                   </p>
                 </div>
@@ -1040,7 +1040,7 @@ export default async function PropertyEditPage({
 
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-slate-600">
-                    Tariffa base ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+                    Tariffa base €
                   </label>
                   <input
                     name="basePrice"
@@ -1129,8 +1129,8 @@ export default async function PropertyEditPage({
 
                   <p className="mt-1 text-sm text-slate-600">
                     {property.status === "ARCHIVED"
-                      ? "La struttura ÃƒÆ’Ã‚Â¨ archiviata."
-                      : `La struttura ÃƒÆ’Ã‚Â¨ attualmente ${property.status.toLowerCase()}.`}
+                      ? "La struttura è archiviata."
+                      : `La struttura è attualmente ${property.status.toLowerCase()}.`}
                   </p>
                 </div>
 
@@ -1164,7 +1164,7 @@ export default async function PropertyEditPage({
 
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-red-800">
                     Disponibile solo per strutture archiviate e senza storico operativo
-                    protetto. L'operazione non puÃƒÆ’Ã‚Â² essere annullata.
+                    protetto. L'operazione non può essere annullata.
                   </p>
 
                   {property.status === "ARCHIVED" ? (
