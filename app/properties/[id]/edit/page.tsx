@@ -25,6 +25,7 @@ import { PropertyTimeline } from "@/components/properties/PropertyTimeline";
 import { prisma } from "@/lib/prisma";
 import { requirePropertyAccess } from "@/lib/auth/guards";
 import { PropertyAccessSection } from "@/components/properties/PropertyAccessSection";
+import { PropertyOwnerInvitesSection } from "@/components/properties/PropertyOwnerInvitesSection";
 import { updatePropertyAccessAction } from "./property-access-actions";
 import {
   archivePropertyAction,
@@ -119,7 +120,7 @@ export default async function PropertyEditPage({
     notFound();
   }
 
-  const [accessUsers, propertyAccesses] =
+  const [accessUsers, propertyAccesses, propertyOwnerInvites] =
     currentUser.role === "SUPER_ADMIN"
       ? await Promise.all([
           prisma.user.findMany({
@@ -161,8 +162,26 @@ export default async function PropertyEditPage({
               },
             },
           }),
+
+          prisma.propertyOwnerInvite.findMany({
+            where: {
+              propertyId: id,
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              expiresAt: true,
+              acceptedAt: true,
+              revokedAt: true,
+              createdAt: true,
+            },
+          }),
         ])
-      : [[], []];
+      : [[], [], []];
 
   const timeline = await AuditService.getPropertyTimeline(id);
 
@@ -228,7 +247,7 @@ export default async function PropertyEditPage({
       <Navigation />
 
       <AppShell
-        title={`Scheda immobile · ${property.name}`}
+        title={`Scheda immobile Ãƒâ€šÃ‚Â· ${property.name}`}
         subtitle="Gestisci tutte le informazioni operative e pubbliche dell'immobile."
       >
         <div className="mx-auto max-w-6xl space-y-8">
@@ -277,8 +296,8 @@ export default async function PropertyEditPage({
                   </p>
 
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Horizon ottimizzerà automaticamente la tariffa considerando
-                    domanda, eventi, stagionalità e performance
+                    Horizon ottimizzerÃƒÆ’Ã‚Â  automaticamente la tariffa considerando
+                    domanda, eventi, stagionalitÃƒÆ’Ã‚Â  e performance
                     dell&apos;immobile.
                   </p>
                 </div>
@@ -472,7 +491,7 @@ export default async function PropertyEditPage({
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Pubblicazione e visibilità.
+                  Pubblicazione e visibilitÃƒÆ’Ã‚Â .
                 </p>
               </div>
             </div>
@@ -494,7 +513,7 @@ export default async function PropertyEditPage({
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-600">
-                    Identità, contenuti pubblici e dati operativi.
+                    IdentitÃƒÆ’Ã‚Â , contenuti pubblici e dati operativi.
                   </p>
                 </div>
               </div>
@@ -564,7 +583,7 @@ export default async function PropertyEditPage({
                   />
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Questo contenuto potrà essere ottimizzato automaticamente
+                    Questo contenuto potrÃƒÆ’Ã‚Â  essere ottimizzato automaticamente
                     dall&apos;AI per il marketplace.
                   </p>
                 </div>
@@ -572,7 +591,7 @@ export default async function PropertyEditPage({
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
                 <h3 className="text-lg font-semibold text-slate-900">
-                  Operatività
+                  OperativitÃƒÆ’Ã‚Â 
                 </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -585,7 +604,7 @@ export default async function PropertyEditPage({
                     htmlFor="cleaningCost"
                     className="mb-2 block text-sm font-medium text-slate-700"
                   >
-                    Costo pulizia per prenotazione (€)
+                    Costo pulizia per prenotazione (ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬)
                   </label>
 
                   <input
@@ -613,19 +632,25 @@ export default async function PropertyEditPage({
           </section>
 
           {currentUser.role === "SUPER_ADMIN" && (
+            <>
+              <PropertyOwnerInvitesSection
+                propertyId={property.id}
+                invites={propertyOwnerInvites.map((invite) => ({
+                  ...invite,
+                  expiresAt: invite.expiresAt.toISOString(),
+                  acceptedAt: invite.acceptedAt?.toISOString() ?? null,
+                  revokedAt: invite.revokedAt?.toISOString() ?? null,
+                  createdAt: invite.createdAt.toISOString(),
+                }))}
+              />
 
-            <PropertyAccessSection
-
-              propertyId={property.id}
-
-              users={accessUsers}
-
-              accesses={propertyAccesses}
-
-              updateAction={updatePropertyAccessAction}
-
-            />
-
+              <PropertyAccessSection
+                propertyId={property.id}
+                users={accessUsers}
+                accesses={propertyAccesses}
+                updateAction={updatePropertyAccessAction}
+              />
+            </>
           )}
 
 
@@ -646,7 +671,7 @@ export default async function PropertyEditPage({
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-600">
-                    Horizon assegnerà automaticamente i task alla persona configurata per ciascuna funzione.
+                    Horizon assegnerÃƒÆ’Ã‚Â  automaticamente i task alla persona configurata per ciascuna funzione.
                   </p>
                 </div>
               </div>
@@ -683,7 +708,7 @@ export default async function PropertyEditPage({
                           key={user.id}
                           value={user.id}
                         >
-                          {user.fullName} · {user.email}
+                          {user.fullName} Ãƒâ€šÃ‚Â· {user.email}
                         </option>
                       ),
                     )}
@@ -714,7 +739,7 @@ export default async function PropertyEditPage({
                           key={user.id}
                           value={user.id}
                         >
-                          {user.fullName} · {user.email}
+                          {user.fullName} Ãƒâ€šÃ‚Â· {user.email}
                         </option>
                       ),
                     )}
@@ -745,21 +770,21 @@ export default async function PropertyEditPage({
                           key={user.id}
                           value={user.id}
                         >
-                          {user.fullName} · {user.email}
+                          {user.fullName} Ãƒâ€šÃ‚Â· {user.email}
                         </option>
                       ),
                     )}
                   </select>
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Riceve check-in, check-out, documenti ospite, issue e attività amministrative.
+                    Riceve check-in, check-out, documenti ospite, issue e attivitÃƒÆ’Ã‚Â  amministrative.
                   </p>
                 </label>
               </div>
 
               <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4">
                 <p className="text-sm font-medium text-blue-900">
-                  Una sola persona può essere responsabile di tutte le funzioni.
+                  Una sola persona puÃƒÆ’Ã‚Â² essere responsabile di tutte le funzioni.
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-blue-700">
@@ -910,9 +935,9 @@ export default async function PropertyEditPage({
                   </div>
 
                   <p className="mt-6 max-w-2xl text-sm leading-6 text-slate-300">
-                    Horizon analizzerà mercato, domanda, stagionalità, eventi
+                    Horizon analizzerÃƒÆ’Ã‚Â  mercato, domanda, stagionalitÃƒÆ’Ã‚Â , eventi
                     e andamento delle prenotazioni per determinare
-                    automaticamente la tariffa più efficace.
+                    automaticamente la tariffa piÃƒÆ’Ã‚Â¹ efficace.
                   </p>
                 </div>
 
@@ -925,7 +950,7 @@ export default async function PropertyEditPage({
             <div className="grid gap-8 p-8 lg:grid-cols-[1fr_320px]">
               <div>
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                  Funzionalità previste
+                  FunzionalitÃƒÆ’Ã‚Â  previste
                 </h3>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -935,7 +960,7 @@ export default async function PropertyEditPage({
                       className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
                     >
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                        ✓
+                        ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“
                       </span>
 
                       <span className="text-sm font-medium text-slate-800">
@@ -956,7 +981,7 @@ export default async function PropertyEditPage({
                 </h3>
 
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Ogni decisione del Revenue Engine sarà accompagnata da una
+                  Ogni decisione del Revenue Engine sarÃƒÆ’Ã‚Â  accompagnata da una
                   motivazione chiara. Il gestore mantiene sempre il controllo finale.
                 </p>
 
@@ -967,13 +992,13 @@ export default async function PropertyEditPage({
 
                   <p className="mt-1 text-sm font-semibold text-slate-900">
                     {revenueRatePlan
-                      ? `${revenueRatePlan.basePrice} € · ${revenueRatePlan.name}`
+                      ? `${revenueRatePlan.basePrice} ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ Ãƒâ€šÃ‚Â· ${revenueRatePlan.name}`
                       : "Da configurare"}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-500">
                     {revenueRatePlan
-                      ? `Min ${revenueRatePlan.minimumStay} notti · ${revenueRatePlan.occupancyIncluded} ospiti inclusi`
+                      ? `Min ${revenueRatePlan.minimumStay} notti Ãƒâ€šÃ‚Â· ${revenueRatePlan.occupancyIncluded} ospiti inclusi`
                       : "Configura una tariffa base ufficiale per attivare il Revenue Engine."}
                   </p>
                 </div>
@@ -1015,7 +1040,7 @@ export default async function PropertyEditPage({
 
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-slate-600">
-                    Tariffa base €
+                    Tariffa base ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
                   </label>
                   <input
                     name="basePrice"
@@ -1104,8 +1129,8 @@ export default async function PropertyEditPage({
 
                   <p className="mt-1 text-sm text-slate-600">
                     {property.status === "ARCHIVED"
-                      ? "La struttura è archiviata."
-                      : `La struttura è attualmente ${property.status.toLowerCase()}.`}
+                      ? "La struttura ÃƒÆ’Ã‚Â¨ archiviata."
+                      : `La struttura ÃƒÆ’Ã‚Â¨ attualmente ${property.status.toLowerCase()}.`}
                   </p>
                 </div>
 
@@ -1139,7 +1164,7 @@ export default async function PropertyEditPage({
 
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-red-800">
                     Disponibile solo per strutture archiviate e senza storico operativo
-                    protetto. L'operazione non può essere annullata.
+                    protetto. L'operazione non puÃƒÆ’Ã‚Â² essere annullata.
                   </p>
 
                   {property.status === "ARCHIVED" ? (
