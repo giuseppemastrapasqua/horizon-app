@@ -8,6 +8,7 @@ import { processBookingSyncJob } from "@/lib/job/handlers/process-booking-sync-j
 import { processPropertyCodeVerificationJob } from "@/lib/job/handlers/process-property-code-verification-job";
 import { processPropertyDocumentOcrJob } from "@/lib/job/handlers/process-property-document-ocr-job";
 import { processStorageObjectDeleteJob } from "@/lib/job/handlers/process-storage-object-delete-job";
+import { processRevenueAiAnalysisJob } from "@/lib/job/handlers/process-revenue-ai-analysis-job";
 
 export type BackgroundJobPayload =
   Prisma.JsonValue;
@@ -57,9 +58,7 @@ const backgroundJobHandlers = {
     ),
 
   REVENUE_AI_ANALYSIS:
-    createUnsupportedJobHandler(
-      "REVENUE_AI_ANALYSIS",
-    ),
+    processRevenueAiAnalysisJob,
 
   STORAGE_OBJECT_DELETE:
     processStorageObjectDeleteJob,

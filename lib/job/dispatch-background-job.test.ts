@@ -23,6 +23,7 @@ const processPropertyDocumentOcrJobMock =
 
 const processStorageObjectDeleteJobMock =
   vi.hoisted(() => vi.fn());
+const processRevenueAiAnalysisJobMock = vi.hoisted(() => vi.fn());
 
 vi.mock(
   "@/lib/job/handlers/process-booking-sync-job",
@@ -56,6 +57,13 @@ vi.mock(
   }),
 );
 
+vi.mock(
+  "@/lib/job/handlers/process-revenue-ai-analysis-job",
+  () => ({
+    processRevenueAiAnalysisJob:
+      processRevenueAiAnalysisJobMock,
+  }),
+);
 import { dispatchBackgroundJob } from "./dispatch-background-job";
 
 describe("dispatchBackgroundJob", () => {
@@ -64,11 +72,13 @@ describe("dispatchBackgroundJob", () => {
     processPropertyCodeVerificationJobMock.mockReset();
     processPropertyDocumentOcrJobMock.mockReset();
     processStorageObjectDeleteJobMock.mockReset();
+    processRevenueAiAnalysisJobMock.mockReset();
 
     processBookingSyncJobMock.mockResolvedValue(undefined);
     processPropertyCodeVerificationJobMock.mockResolvedValue(undefined);
     processPropertyDocumentOcrJobMock.mockResolvedValue(undefined);
     processStorageObjectDeleteJobMock.mockResolvedValue(undefined);
+    processRevenueAiAnalysisJobMock.mockResolvedValue(undefined);
   });
 
   it("inoltra BOOKING_SYNC al relativo handler", async () => {
@@ -156,7 +166,6 @@ describe("dispatchBackgroundJob", () => {
     "PROPERTY_DOCUMENT_AI_REVIEW",
     "PROPERTY_SYNC",
     "FINANCE_REPORT_GENERATION",
-    "REVENUE_AI_ANALYSIS",
   ] satisfies BackgroundJobType[])(
     "rifiuta il job %s perché l'handler non è implementato",
     async (type) => {

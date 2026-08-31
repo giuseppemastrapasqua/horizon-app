@@ -1,3 +1,9 @@
+﻿import dotenv from "dotenv";
+
+dotenv.config({
+  path: ".env.local",
+});
+
 import { runBackgroundJobWorker } from "@/lib/job/run-background-job-worker";
 import { prisma } from "@/lib/prisma";
 
@@ -23,7 +29,10 @@ process.on("SIGTERM", () => {
   requestShutdown("SIGTERM");
 });
 
-console.log("Background job worker avviato.");
+console.log(
+  "Background job worker avviato.",
+  process.env.REVENUE_MARKET_PROVIDER ?? "AIRDNA",
+);
 
 runBackgroundJobWorker({
   isShutdownRequested: () => shutdownRequested,

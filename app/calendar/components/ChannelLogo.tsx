@@ -1,16 +1,23 @@
-type ChannelLogoProps = {
+﻿type ChannelLogoProps = {
   channel:
     | "BOOKING"
     | "AIRBNB"
     | "VRBO"
-    | "HORIZON";
+    | "HORIZON"
+    | "DIRECT"
+    | "OTHER";
   size?: number;
+  variant?: "brand" | "white";
 };
 
 export function ChannelLogo({
   channel,
   size = 16,
+  variant = "brand",
 }: ChannelLogoProps) {
+  const white =
+    variant === "white";
+
   if (channel === "BOOKING") {
     return (
       <span
@@ -20,15 +27,19 @@ export function ChannelLogo({
           width: size,
           height: size,
         }}
-        className="flex shrink-0 items-center justify-center rounded-[5px] bg-[#003b95] font-black text-white"
+        className={[
+          "flex shrink-0 items-center justify-center rounded-[5px] font-black",
+          white
+            ? "bg-transparent text-white"
+            : "bg-[#003b95] text-white",
+        ].join(" ")}
       >
         <span
           style={{
-            fontSize:
-              Math.max(
-                7,
-                size * 0.48,
-              ),
+            fontSize: Math.max(
+              7,
+              size * 0.48,
+            ),
           }}
           className="leading-none"
         >
@@ -47,7 +58,12 @@ export function ChannelLogo({
           width: size,
           height: size,
         }}
-        className="flex shrink-0 items-center justify-center text-[#FF385C]"
+        className={[
+          "flex shrink-0 items-center justify-center",
+          white
+            ? "text-white"
+            : "text-[#FF385C]",
+        ].join(" ")}
       >
         <svg
           viewBox="0 0 32 32"
@@ -84,7 +100,12 @@ export function ChannelLogo({
           width: size,
           height: size,
         }}
-        className="flex shrink-0 items-center justify-center rounded-[5px] bg-[#3B2B98] text-white"
+        className={[
+          "flex shrink-0 items-center justify-center rounded-[5px]",
+          white
+            ? "bg-transparent text-white"
+            : "bg-[#3B2B98] text-white",
+        ].join(" ")}
       >
         <svg
           viewBox="0 0 24 24"
@@ -105,6 +126,68 @@ export function ChannelLogo({
     );
   }
 
+  if (channel === "DIRECT") {
+    return (
+      <span
+        aria-label="Prenotazione diretta"
+        title="Prenotazione diretta"
+        style={{
+          width: size,
+          height: size,
+        }}
+        className={[
+          "flex shrink-0 items-center justify-center rounded-[5px] font-black",
+          white
+            ? "bg-transparent text-white"
+            : "bg-slate-700 text-white",
+        ].join(" ")}
+      >
+        <span
+          style={{
+            fontSize: Math.max(
+              7,
+              size * 0.5,
+            ),
+          }}
+          className="leading-none"
+        >
+          D
+        </span>
+      </span>
+    );
+  }
+
+  if (channel === "OTHER") {
+    return (
+      <span
+        aria-label="Altro canale"
+        title="Altro canale"
+        style={{
+          width: size,
+          height: size,
+        }}
+        className={[
+          "flex shrink-0 items-center justify-center rounded-[5px] font-black",
+          white
+            ? "bg-transparent text-white"
+            : "bg-slate-500 text-white",
+        ].join(" ")}
+      >
+        <span
+          style={{
+            fontSize: Math.max(
+              7,
+              size * 0.5,
+            ),
+          }}
+          className="leading-none"
+        >
+          ·
+        </span>
+      </span>
+    );
+  }
+
   return (
     <span
       aria-label="Horizon"
@@ -113,7 +196,12 @@ export function ChannelLogo({
         width: size,
         height: size,
       }}
-      className="flex shrink-0 items-center justify-center rounded-[6px] bg-[#2563EB] text-white shadow-sm"
+      className={[
+        "flex shrink-0 items-center justify-center rounded-[6px] text-white",
+        white
+          ? "bg-transparent"
+          : "bg-[#2563EB] shadow-sm",
+      ].join(" ")}
     >
       <svg
         viewBox="0 0 24 24"

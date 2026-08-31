@@ -354,24 +354,111 @@ const previousYearMetrics =
       suggestion:
         RevenueRecommendation,
     ) => {
-      setNightlyPrice(
+      if (
+        !rangeStart ||
+        !rangeEnd
+      ) {
+        setRevenueMessage(
+          "Seleziona prima il periodo Da - A.",
+        );
+
+        return;
+      }
+
+      const nextNightlyPrice =
         String(
           suggestion.nightlyPrice,
-        ),
+        );
+
+      const nextMinimumStay =
+        String(
+          suggestion.minimumStay,
+        );
+
+      setNightlyPrice(
+        nextNightlyPrice,
       );
 
       setMinimumStay(
-        String(
-          suggestion.minimumStay,
-        ),
+        nextMinimumStay,
       );
 
       setPricingSource(
         "AI",
       );
 
+      const formData =
+        new FormData();
+
+      formData.set(
+        "propertyId",
+        propertyId,
+      );
+
+      formData.set(
+        "source",
+        "AI",
+      );
+
+      formData.set(
+        "startDate",
+        rangeStart,
+      );
+
+      formData.set(
+        "endDate",
+        rangeEnd,
+      );
+
+      formData.set(
+        "nightlyPrice",
+        nextNightlyPrice,
+      );
+
+      formData.set(
+        "minimumStay",
+        nextMinimumStay,
+      );
+
+      formData.set(
+        "maximumStay",
+        maximumStay,
+      );
+
+      formData.set(
+        "cleaningCost",
+        cleaningCostInput,
+      );
+
+      formData.set(
+        "includedGuests",
+        includedGuests,
+      );
+
       setRevenueMessage(
-        "Suggerimento applicato. Puoi modificarlo prima di salvare.",
+        "Salvataggio tariffa AI in corso...",
+      );
+
+      startPricingTransition(
+        async () => {
+          try {
+            await savePricingAction(
+              formData,
+            );
+
+            setRevenueMessage(
+              "Tariffa AI applicata al periodo.",
+            );
+
+            router.refresh();
+          } catch (error) {
+            setRevenueMessage(
+              error instanceof Error
+                ? error.message
+                : "Impossibile applicare la tariffa AI.",
+            );
+          }
+        },
       );
     };
 

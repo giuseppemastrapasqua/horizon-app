@@ -5,6 +5,12 @@ import {
   vi,
 } from "vitest";
 
+vi.mock(
+  "@/lib/job/process-next-background-job",
+  () => ({
+    processNextBackgroundJob: vi.fn(),
+  }),
+);
 import { runBackgroundJobWorker } from "./run-background-job-worker";
 
 describe("runBackgroundJobWorker", () => {

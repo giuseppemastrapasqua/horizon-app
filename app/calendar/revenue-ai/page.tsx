@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 import {
   ArrowLeft,
@@ -44,7 +44,7 @@ import {
 } from "@/lib/pricing/get-pricing-channel-from-config";
 
 import {
-  applyRevenueAiAction,
+  applyRevenueRecommendationAction,
 } from "../actions";
 
 import {
@@ -450,7 +450,7 @@ export default async function RevenueAiPage({
               {formatDate(
                 rangeFrom,
               )}
-              {" â†’ "}
+              {" Ã¢â€ â€™ "}
               {formatDate(
                 rangeTo,
               )}
@@ -485,7 +485,7 @@ export default async function RevenueAiPage({
                     ? formatCurrency(
                         standardPrice,
                       )
-                    : "â€”"
+                    : "Ã¢â‚¬â€"
                 }
                 detail="riferimento attuale"
               />
@@ -497,7 +497,7 @@ export default async function RevenueAiPage({
                     ? `${delta >= 0 ? "+" : ""}${formatCurrency(
                         delta,
                       )}`
-                    : "â€”"
+                    : "Ã¢â‚¬â€"
                 }
                 detail={
                   deltaPercent !== null
@@ -546,7 +546,7 @@ export default async function RevenueAiPage({
               <div className="grid lg:grid-cols-[1.55fr_1fr]">
                 <div className="p-5 lg:border-r lg:border-slate-100">
                   <p className="text-[8px] font-black uppercase tracking-[0.13em] text-slate-400">
-                    PerchÃ© Horizon propone questo prezzo
+                    PerchÃƒÂ© Horizon propone questo prezzo
                   </p>
 
                   <p className="mt-3 max-w-3xl text-[13px] font-medium leading-6 text-slate-700">
@@ -579,7 +579,7 @@ export default async function RevenueAiPage({
                     </div>
 
                     <span className="flex h-7 w-7 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50 text-[9px] font-black text-indigo-600">
-                      âœ¦
+                      Ã¢Å“Â¦
                     </span>
                   </div>
 
@@ -669,7 +669,7 @@ export default async function RevenueAiPage({
 
                 <div className="flex items-center gap-1.5 rounded-xl border border-violet-100 bg-violet-50/70 px-2.5 py-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-[7px] font-black text-white shadow-sm">
-                    âœ¦
+                    Ã¢Å“Â¦
                   </span>
 
                   <span className="text-[7px] font-black uppercase tracking-[0.1em] text-violet-600">
@@ -689,7 +689,7 @@ export default async function RevenueAiPage({
                       <th className="px-3 py-3">
                         <div className="flex items-center gap-1.5">
                           <span className="flex h-5 w-5 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-[7px] font-black text-white">
-                            âœ¦
+                            Ã¢Å“Â¦
                           </span>
 
                           <span className="text-[7px] font-black uppercase tracking-[0.1em] text-violet-600">
@@ -795,7 +795,7 @@ export default async function RevenueAiPage({
                                   </strong>
                                 ) : (
                                   <span className="text-[11px] font-semibold text-slate-300">
-                                    â€”
+                                    Ã¢â‚¬â€
                                   </span>
                                 )}
                               </td>
@@ -810,7 +810,7 @@ export default async function RevenueAiPage({
             </section>
             <form
               action={
-                applyRevenueAiAction
+                applyRevenueRecommendationAction
               }
               className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-violet-50/70 p-4 shadow-[0_8px_26px_rgba(79,70,229,0.06)]"
             >
@@ -920,3 +920,4 @@ function MetricCard({
     </div>
   );
 }
+

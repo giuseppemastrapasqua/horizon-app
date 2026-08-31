@@ -11,6 +11,17 @@ export async function buildRevenueNightContext(
 ): Promise<RevenueNightContext> {
   await requirePropertyAccess(propertyId);
 
+  return buildRevenueNightContextInternal(
+    propertyId,
+    date,
+  );
+}
+
+export async function buildRevenueNightContextInternal(
+  propertyId: string,
+  date: Date,
+): Promise<RevenueNightContext> {
+
   const targetDate =
     startOfUtcDay(date);
 
@@ -192,7 +203,7 @@ export async function buildRevenueNightContext(
 
       /*
        * Non lo inventiamo.
-       * VerrÃ  calcolato quando
+       * Verrà calcolato quando
        * implementeremo il pickup
        * storico della property.
        */

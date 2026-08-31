@@ -4,26 +4,20 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
+import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
 import { requirePropertyAccess } from "@/lib/auth/guards";
-
-import {
-  getPropertyRevenueData,
-} from "@/lib/revenue/get-property-revenue-data";
-
-import {
-  buildPeriodRevenueRecommendation,
-} from "@/app/properties/[id]/components/property-calendar/revenue/build-period-recommendation";
-
+import { getPropertyRevenueAnalysis } from "@/lib/revenue/get-property-revenue-analysis";
 
 export async function saveCalendarPeriodAction(formData: FormData) {
   const propertyId = requiredText(formData, "propertyId");
   await requirePropertyAccess(propertyId);
+
   const month = requiredText(formData, "month");
   const from = parseDate(requiredText(formData, "from"));
   const to = parseDate(requiredText(formData, "to"));
 
   if (to < from) {
-    throw new Error("La data A non puÃ² precedere la data Da.");
+    throw new Error("La data A non può precedere la data Da.");
   }
 
   const standardRate = Number(
@@ -43,11 +37,8 @@ export async function saveCalendarPeriodAction(formData: FormData) {
     availability !== "OPEN" &&
     availability !== "CLOSED"
   ) {
-    throw new Error(
-      "Disponibilità non valida.",
-    );
+    throw new Error("Disponibilità non valida.");
   }
-
 
   await prisma.$transaction(async (transaction) => {
     await removePricingOverridesInsideRange({
@@ -104,34 +95,18 @@ export async function applyRevenueAiAction(
   formData: FormData,
 ) {
   const propertyId =
-    requiredText(
-      formData,
-      "propertyId",
-    );
+    requiredText(formData, "propertyId");
 
   await requirePropertyAccess(propertyId);
 
   const month =
-    requiredText(
-      formData,
-      "month",
-    );
+    requiredText(formData, "month");
 
   const from =
-    parseDate(
-      requiredText(
-        formData,
-        "from",
-      ),
-    );
+    parseDate(requiredText(formData, "from"));
 
   const to =
-    parseDate(
-      requiredText(
-        formData,
-        "to",
-      ),
-    );
+    parseDate(requiredText(formData, "to"));
 
   if (to < from) {
     throw new Error(
@@ -139,99 +114,95 @@ export async function applyRevenueAiAction(
     );
   }
 
-  /*
-   * La Standard Rate NON viene usata
-   * come baseline del Revenue AI.
-   *
-   * Ci serve soltanto il minimum stay
-   * configurato dalla struttura.
-   */
-  const standard =
-    await prisma.propertyRatePlan.findUnique({
-      where: {
-        propertyId_code: {
-          propertyId,
-          code: "STANDARD",
-        },
+  const strategy =
+    "BALANCED" as const;
+
+  let currentDate =
+    new Date(from);
+
+  let queuedJobs = 0;
+
+  while (currentDate <= to) {
+    const date =
+      dateKey(currentDate);
+
+    await enqueueBackgroundJob({
+      type: "REVENUE_AI_ANALYSIS",
+
+      payload: {
+        propertyId,
+        date,
+        strategy,
       },
 
-      select: {
-        minimumStay: true,
-      },
+      deduplicationKey:
+        `revenue-ai-analysis:${propertyId}:${date}:${strategy}`,
     });
 
-  if (!standard) {
+    queuedJobs += 1;
+
+    currentDate =
+      shiftCalendarDate(
+        currentDate,
+        1,
+      );
+  }
+
+  if (queuedJobs === 0) {
     return;
   }
 
-  /*
-   * Dati Revenue reali:
-   *
-   * - RevenueDailySignal
-   * - ultimo snapshot mercato
-   * - comparables
-   */
-  const revenueData =
-    await getPropertyRevenueData({
+  revalidatePath("/calendar");
+  revalidatePath("/calendar/revenue-ai");
+
+  finish(
+    propertyId,
+    month,
+    from,
+    to,
+  );
+}
+
+export async function applyRevenueRecommendationAction(
+  formData: FormData,
+) {
+  const propertyId =
+    requiredText(formData, "propertyId");
+
+  await requirePropertyAccess(propertyId);
+
+  const month =
+    requiredText(formData, "month");
+
+  const from =
+    parseDate(requiredText(formData, "from"));
+
+  const to =
+    parseDate(requiredText(formData, "to"));
+
+  if (to < from) {
+    throw new Error(
+      "La data A non può precedere la data Da.",
+    );
+  }
+
+  const analysis =
+    await getPropertyRevenueAnalysis({
       propertyId,
-      startDate: from,
-      endDate: to,
-    });
-
-  /*
-   * Il prezzo viene costruito dal
-   * Revenue Engine market-based.
-   *
-   * Non riceve alcun basePrice manuale.
-   */
-  const result =
-    buildPeriodRevenueRecommendation({
-      propertyId,
-
-      rangeStart:
-        dateKey(from),
-
-      rangeEnd:
-        dateKey(to),
-
-      minimumStay:
-        String(
-          standard.minimumStay,
-        ),
-
-      revenueData,
+      startDate: toUtcCalendarDate(from),
+      endDate: toUtcCalendarDate(to),
     });
 
   const recommendation =
-    result.recommendation;
+    analysis?.recommendation;
 
-  if (!recommendation) {
-    return;
-  }
-
-  /*
-   * Revenue AI diventa la sorgente prezzo
-   * del solo periodo selezionato.
-   *
-   * Preserviamo automaticamente le parti
-   * degli override esterne al range.
-   */
-
-  /*
-   * Salviamo la raccomandazione del
-   * periodo come override AI.
-   *
-   * Il prezzo deriva dal mercato,
-   * non dalla Standard Rate manuale.
-   */
   const dailyPrices =
-    recommendation.dailyPrices ??
-    [];
+    recommendation?.dailyPrices;
 
-  if (
-    dailyPrices.length === 0
-  ) {
-    return;
+  if (!recommendation || !dailyPrices?.length) {
+    throw new Error(
+      "Nessuna raccomandazione Revenue AI disponibile.",
+    );
   }
 
   await prisma.$transaction(async (transaction) => {
@@ -251,48 +222,29 @@ export async function applyRevenueAiAction(
       db: transaction,
     });
 
-    for (
-      const dailyPrice of
-        dailyPrices
-    ) {
-      const day =
-        parseDate(
-          dailyPrice.date,
-        );
+    for (const day of dailyPrices) {
+      const date =
+        parseDate(day.date);
 
       await transaction.propertyPriceOverride.create({
         data: {
           propertyId,
-
-          startDate:
-            day,
-
-          endDate:
-            day,
-
+          startDate: date,
+          endDate: date,
           nightlyPrice:
-            dailyPrice.recommendedPrice,
-
+            day.recommendedPrice,
           minimumStay:
             recommendation.minimumStay,
-
-          source:
-            "AI",
-
-          note:
-            [
-              "Revenue AI Market Based",
-              `Data ${dailyPrice.date}`,
-              "Prezzo giornaliero da segnali di mercato",
-              result.message,
-              `Copertura ${recommendation.coveragePercent}%`,
-            ]
-              .filter(Boolean)
-              .join(" · "),
+          source: "AI",
+          note: "Revenue AI Horizon",
         },
       });
     }
   });
+
+  revalidatePath("/calendar");
+  revalidatePath("/calendar/revenue-ai");
+
   finish(
     propertyId,
     month,
@@ -350,80 +302,58 @@ async function removePricingOverridesInsideRange({
       },
     });
 
-    if (
-      override.startDate < from
-    ) {
+    if (override.startDate < from) {
       await db.propertyPriceOverride.create({
         data: {
           propertyId,
-
           startDate:
             override.startDate,
-
           endDate:
             shiftCalendarDate(
               from,
               -1,
             ),
-
           nightlyPrice:
             override.nightlyPrice,
-
           minimumStay:
             override.minimumStay,
-
           maximumStay:
             override.maximumStay,
-
           occupancyIncluded:
             override.occupancyIncluded,
-
           source:
             override.source,
-
           createdById:
             override.createdById,
-
           note:
             override.note,
         },
       });
     }
 
-    if (
-      override.endDate > to
-    ) {
+    if (override.endDate > to) {
       await db.propertyPriceOverride.create({
         data: {
           propertyId,
-
           startDate:
             shiftCalendarDate(
               to,
               1,
             ),
-
           endDate:
             override.endDate,
-
           nightlyPrice:
             override.nightlyPrice,
-
           minimumStay:
             override.minimumStay,
-
           maximumStay:
             override.maximumStay,
-
           occupancyIncluded:
             override.occupancyIncluded,
-
           source:
             override.source,
-
           createdById:
             override.createdById,
-
           note:
             override.note,
         },
@@ -448,13 +378,16 @@ async function removeAvailabilityBlocksInsideRange({
       where: {
         propertyId,
         source: "MANUAL",
+
         startDate: {
           lte: to,
         },
+
         endDate: {
           gte: from,
         },
       },
+
       select: {
         id: true,
         startDate: true,
@@ -516,6 +449,18 @@ async function removeAvailabilityBlocksInsideRange({
   }
 }
 
+function toUtcCalendarDate(
+  date: Date,
+): Date {
+  return new Date(
+    Date.UTC(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+    ),
+  );
+}
+
 function shiftCalendarDate(
   date: Date,
   days: number,
@@ -524,12 +469,12 @@ function shiftCalendarDate(
     new Date(date);
 
   result.setDate(
-    result.getDate() +
-      days,
+    result.getDate() + days,
   );
 
   return result;
 }
+
 function requiredText(
   formData: FormData,
   key: string,
@@ -538,7 +483,9 @@ function requiredText(
     String(formData.get(key) ?? "").trim();
 
   if (!value) {
-    throw new Error(`${key}: valore obbligatorio.`);
+    throw new Error(
+      `${key}: valore obbligatorio.`,
+    );
   }
 
   return value;
@@ -546,7 +493,7 @@ function requiredText(
 
 function parseDate(value: string) {
   const date =
-    new Date(`${value}T00:00:00`);
+    new Date(`${value.slice(0, 10)}T00:00:00`);
 
   if (Number.isNaN(date.getTime())) {
     throw new Error("Data non valida.");
@@ -554,8 +501,6 @@ function parseDate(value: string) {
 
   return date;
 }
-
-
 
 function dateKey(date: Date) {
   return `${date.getFullYear()}-${String(

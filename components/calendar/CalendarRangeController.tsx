@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useEffect,
@@ -48,7 +48,7 @@ export function CalendarRangeController({
       () =>
         rangeFrom === rangeTo
           ? formatDate(rangeFrom)
-          : `${formatDate(rangeFrom)} → ${formatDate(rangeTo)}`,
+          : `${formatDate(rangeFrom)} â†’ ${formatDate(rangeTo)}`,
       [rangeFrom, rangeTo],
     );
 
@@ -182,6 +182,20 @@ export function CalendarRangeController({
 
       if (
         !(target instanceof Element)
+      ) {
+        return;
+      }
+
+      /*
+       * Link, pulsanti e controlli interattivi
+       * dentro la cella mantengono la loro azione.
+       * Il click sul resto della cella seleziona
+       * invece il periodo.
+       */
+      if (
+        target.closest(
+          "a, button, input, select, textarea, [role='button']",
+        )
       ) {
         return;
       }
@@ -445,6 +459,7 @@ function formatDate(
 
   return `${day}/${month}/${year}`;
 }
+
 
 
 

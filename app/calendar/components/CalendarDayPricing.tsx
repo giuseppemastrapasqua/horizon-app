@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  X,
+  CalendarRange,
   Sparkles,
   Tags,
-  CalendarRange,
+  X,
 } from "lucide-react";
 
 import {
@@ -58,6 +58,23 @@ function formatPrice(
   ).format(value);
 }
 
+function getSourceLabel(
+  source:
+    | "AI"
+    | "MANUAL"
+    | "CONFIGURED",
+) {
+  if (source === "AI") {
+    return "Revenue AI";
+  }
+
+  if (source === "MANUAL") {
+    return "Manuale";
+  }
+
+  return "Standard";
+}
+
 export function CalendarDayPricing({
   dateKey,
   dayLabel,
@@ -67,7 +84,6 @@ export function CalendarDayPricing({
   minimumStay,
   closed,
 }: CalendarDayPricingProps) {
-
   const openDialog = () => {
     const dialog =
       document.getElementById(
@@ -86,6 +102,9 @@ export function CalendarDayPricing({
     dialog?.close();
   };
 
+  const sourceLabel =
+    getSourceLabel(source);
+
   return (
     <>
       <div className="group/pricing relative">
@@ -93,26 +112,44 @@ export function CalendarDayPricing({
           {source === "AI" ? (
             <span
               title="Revenue AI"
-              className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-violet-50 text-violet-600"
+              className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md bg-violet-100 text-violet-600 ring-1 ring-violet-200/70"
             >
-              <Sparkles size={9} />
+              <Sparkles size={10} />
             </span>
           ) : null}
 
-          <strong className="truncate text-[15px] font-semibold tracking-[-0.035em] text-[#2563EB] tabular-nums">
+          {source === "MANUAL" ? (
+            <span
+              title="Prezzo manuale"
+              className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500 ring-1 ring-slate-200"
+            >
+              <Tags size={9} />
+            </span>
+          ) : null}
+
+          <strong
+            className={[
+              "truncate text-[16px] font-bold tracking-[-0.04em] tabular-nums",
+              source === "AI"
+                ? "text-violet-700"
+                : source === "MANUAL"
+                  ? "text-slate-800"
+                  : "text-blue-600",
+            ].join(" ")}
+          >
             {formatPrice(price)}
           </strong>
         </div>
 
-        <div className="mt-1.5 flex items-center gap-1">
+        <div className="mt-2 flex items-center gap-1.5">
           <button
             type="button"
             onClick={openDialog}
-            title="Tariffe"
+            title="Dettaglio tariffe"
             aria-label={`Tariffe ${dayLabel}`}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-blue-100 bg-blue-50 text-[#2563EB] transition hover:border-blue-200 hover:bg-blue-100 hover:text-blue-700"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500 text-white shadow-[0_4px_12px_rgba(16,185,129,0.24)] transition hover:bg-emerald-600"
           >
-            <Tags size={11} />
+            <Tags size={13} />
           </button>
 
           <button
@@ -141,12 +178,14 @@ export function CalendarDayPricing({
                 ),
               );
             }}
-            title="Modifica"
+            title="Gestisci giorno"
             aria-label={`Modifica ${dayLabel}`}
-            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-blue-100 bg-blue-50 text-[#2563EB] transition hover:border-blue-200 hover:bg-blue-100 hover:text-blue-700"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.24)] transition hover:bg-blue-700"
           >
-            <CalendarRange size={11} />
+            <CalendarRange size={13} />
           </button>
+
+
         </div>
       </div>
 
@@ -160,16 +199,16 @@ export function CalendarDayPricing({
             closeDialog();
           }
         }}
-        className="m-auto w-[min(420px,calc(100vw-32px))] rounded-2xl border border-[#CBD5E1] bg-white p-0 shadow-[0_30px_90px_rgba(15,23,42,0.22)] backdrop:bg-slate-950/20 backdrop:backdrop-blur-[2px]"
+        className="m-auto w-[min(420px,calc(100vw-32px))] rounded-[24px] border border-slate-200 bg-white p-0 shadow-[0_30px_90px_rgba(15,23,42,0.20)] backdrop:bg-slate-950/25 backdrop:backdrop-blur-[2px]"
       >
         <div className="p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[7px] font-black uppercase tracking-[0.16em] text-slate-400">
+              <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-slate-400">
                 Dettaglio tariffe
               </p>
 
-              <h3 className="mt-1 text-lg font-black tracking-[-0.04em] text-[#0F172A]">
+              <h3 className="mt-1 text-lg font-black tracking-[-0.04em] text-slate-950">
                 {dayLabel}
               </h3>
             </div>
@@ -184,24 +223,47 @@ export function CalendarDayPricing({
             </button>
           </div>
 
-          <div className="mt-5 rounded-2xl border border-[#BFDBFE] bg-[#EFF6FF] p-4">
+          <div
+            className={[
+              "mt-5 rounded-2xl border p-4",
+              source === "AI"
+                ? "border-violet-200 bg-violet-50/70"
+                : source === "MANUAL"
+                  ? "border-slate-200 bg-slate-50"
+                  : "border-blue-200 bg-blue-50/70",
+            ].join(" ")}
+          >
             <div className="flex items-end justify-between gap-3">
               <div>
-                <p className="text-[7px] font-black uppercase tracking-[0.12em] text-[#64748B]">
+                <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-slate-500">
                   Prezzo origine
                 </p>
 
-                <strong className="mt-1 block text-[26px] font-black tracking-[-0.055em] text-[#2563EB] tabular-nums">
+                <strong
+                  className={[
+                    "mt-1 block text-[28px] font-black tracking-[-0.055em] tabular-nums",
+                    source === "AI"
+                      ? "text-violet-700"
+                      : source === "MANUAL"
+                        ? "text-slate-900"
+                        : "text-blue-600",
+                  ].join(" ")}
+                >
                   {formatPrice(price)}
                 </strong>
               </div>
 
-              <span className="rounded-full bg-white px-2.5 py-1 text-[7px] font-black text-[#2563EB] shadow-sm">
-                {source === "AI"
-                  ? "Revenue AI"
-                  : source === "MANUAL"
-                    ? "Manuale"
-                    : "Standard"}
+              <span
+                className={[
+                  "rounded-full px-2.5 py-1 text-[8px] font-black",
+                  source === "AI"
+                    ? "bg-white text-violet-700 ring-1 ring-violet-200"
+                    : source === "MANUAL"
+                      ? "bg-white text-slate-700 ring-1 ring-slate-200"
+                      : "bg-white text-blue-700 ring-1 ring-blue-200",
+                ].join(" ")}
+              >
+                {sourceLabel}
               </span>
             </div>
           </div>
@@ -218,9 +280,7 @@ export function CalendarDayPricing({
 
                 return (
                   <div
-                    key={
-                      channel.channel
-                    }
+                    key={channel.channel}
                     className="flex items-center justify-between gap-4 rounded-xl px-2.5 py-2.5 transition hover:bg-slate-50"
                   >
                     <div className="flex items-center gap-2.5">
@@ -242,7 +302,7 @@ export function CalendarDayPricing({
                       className={[
                         "text-[12px] font-black tabular-nums",
                         hasPrice
-                          ? "text-slate-700"
+                          ? "text-slate-800"
                           : "text-slate-300",
                       ].join(" ")}
                     >
@@ -262,13 +322,5 @@ export function CalendarDayPricing({
     </>
   );
 }
-
-
-
-
-
-
-
-
 
 

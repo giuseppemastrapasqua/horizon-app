@@ -6,6 +6,7 @@ import {
   ArrowRight,
   BarChart3,
   Building2,
+  CalendarPlus,
   ChevronLeft,
   ChevronRight,
   CircleCheck,
@@ -34,8 +35,6 @@ import {
   resolveStandardRateForDate,
 } from "@/lib/pricing/resolve-standard-rate";
 
-import {
-} from "@/lib/revenue/get-property-revenue-data";
 
 import {
   getChannelPricingConfig,
@@ -56,6 +55,8 @@ import {
 import {
   CalendarDayPricing,
 } from "./components/CalendarDayPricing";
+
+import { ClosedAvailabilityRibbon } from "./components/ClosedAvailabilityRibbon";
 
 import {
   applyRevenueAiAction,
@@ -483,7 +484,7 @@ export default async function CalendarPage({
 
   /*
    * selectedStandardPrice resta disponibile
-   * per i form e le preview già esistenti,
+   * per i form e le preview giÃ  esistenti,
    * ma ora deriva dal resolver centrale.
    */
   const selectedStandardPrice =
@@ -718,7 +719,7 @@ export default async function CalendarPage({
 
                       <span className="flex items-center gap-1.5 text-[8px] font-semibold text-violet-700">
                         <span className="flex h-4 w-4 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-indigo-600 text-[6px] font-black text-white">
-                          ✦
+                          âœ¦
                         </span>
                         Revenue AI
                       </span>
@@ -748,7 +749,7 @@ export default async function CalendarPage({
                   </div>
 
                   <div className="flex shrink-0 items-start gap-3">
-                    <Link href={`/bookings/new?propertyId=${encodeURIComponent(selectedProperty?.id ?? "")}`} className="mt-[14px] inline-flex h-10 items-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100">Crea prenotazione</Link>
+
                     <CalendarRangeController
                       key={`${toCalendarDateValue(rangeFrom)}-${toCalendarDateValue(rangeTo)}-${selectedProperty?.id ?? ""}`}
                       from={toCalendarDateValue(rangeFrom)}
@@ -757,17 +758,27 @@ export default async function CalendarPage({
                       month={formatMonthParam(monthStart)}
                     />
 
-                    <CalendarPeriodEditor
-                      propertyId={selectedProperty?.id ?? ""}
-                      month={formatMonthParam(monthStart)}
-                      from={toCalendarDateValue(rangeFrom)}
-                      to={toCalendarDateValue(rangeTo)}
-                      price={effectiveStandardPrice}
-                      source={effectiveStandardSource}
-                      minimumStay={standardRate?.minimumStay ?? 1}
-                      closed={selectedPeriodClosed}
-                      revenueAiAvailable={Boolean(standardRate)}
-                    />
+                    <div className="flex w-[225px] flex-col gap-2">
+                      <CalendarPeriodEditor
+                        propertyId={selectedProperty?.id ?? ""}
+                        month={formatMonthParam(monthStart)}
+                        from={toCalendarDateValue(rangeFrom)}
+                        to={toCalendarDateValue(rangeTo)}
+                        price={effectiveStandardPrice}
+                        source={effectiveStandardSource}
+                        minimumStay={standardRate?.minimumStay ?? 1}
+                        closed={selectedPeriodClosed}
+                        revenueAiAvailable={Boolean(standardRate)}
+                      />
+
+                      <Link
+                        href={`/bookings/new?propertyId=${encodeURIComponent(selectedProperty?.id ?? "")}`}
+                        className="inline-flex h-10 w-[225px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                      >
+                        <CalendarPlus size={14} />
+                        Crea prenotazione
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -787,7 +798,7 @@ export default async function CalendarPage({
                       key={
                         weekday
                       }
-                      className="px-2 py-2.5 text-center text-[7px] font-black uppercase tracking-[0.16em] text-slate-400"
+                      className="px-2 py-3 text-center text-[9px] font-black uppercase tracking-[0.14em] text-slate-400"
                     >
                       {weekday}
                     </div>
@@ -931,7 +942,7 @@ export default async function CalendarPage({
                           )
                         }
                         className={[
-                          "group relative min-h-[116px] border-b border-r border-slate-100 px-3.5 py-3 transition-all duration-200 hover:z-10 hover:bg-blue-50/30",
+                          "group relative min-h-[132px] border-b border-r border-slate-100 px-3 py-3 transition-all duration-200 hover:z-10 hover:bg-blue-50/40",
                           inMonth
                             ? isWeekend
                               ? "bg-slate-50/35"
@@ -962,25 +973,53 @@ export default async function CalendarPage({
                             }
                           </span>
 
-                          {block ? (
-                            <span
-                              title={block.note ?? "Disponibilità bloccata"}
-                              className={`h-2.5 w-10 shrink-0 rounded-full ${block.source === "MANUAL" ? "bg-emerald-600" : "bg-rose-600"}`}
-                            />
-                          ) : null}
+                          
                         </div>
                           {inMonth ? (
                             displayBooking ? (
                               <Link
                                 href={`/bookings/${displayBooking.id}`}
-                                title={`${displayBooking.channel} · ${displayBooking.guestName}`}
-                                className={`mt-5 -mx-4 flex h-7 w-[calc(100%+2rem)] items-center justify-center rounded-none px-2 text-center text-[10px] font-bold text-white transition hover:opacity-90 ${getBookingChannelBarClass(displayBooking.channel)}`}
+                                title={`${displayBooking.channel} Ã‚Â· ${displayBooking.guestName}`}
+                                className={`relative z-[2] mt-4 -mx-3.5 flex h-7 w-[calc(100%+1.75rem)] items-center px-4 text-left text-[10px] font-semibold text-white shadow-sm transition hover:z-[3] hover:brightness-95 ${getBookingChannelBarClass(displayBooking.channel)}`}
+                                style={{
+                                  clipPath:
+                                    isSameDay(day, displayBooking.checkIn)
+                                      ? "polygon(16px 0, 100% 0, 100% 100%, 0 100%)"
+                                      : isSameDay(day, displayBooking.checkOut)
+                                        ? "polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%)"
+                                        : undefined,
+                                }}
                               >
-                                <span className="truncate">
-                                  {displayBooking.guestName}
-                                </span>
+                                {isSameDay(day, displayBooking.checkIn) ? (
+                                  <span className="flex min-w-0 items-center gap-2 text-white">
+                                    <ChannelLogo
+                                      channel={displayBooking.channel}
+                                      size={15}
+                                      variant="white"
+                                    />
+
+                                    <span className="truncate text-white">
+                                      {displayBooking.guestName}
+                                    </span>
+                                  </span>
+                                ) : null}
                               </Link>
-                          ) : (
+                            ) : block ? (
+                              <ClosedAvailabilityRibbon
+                                dateKey={calendarDate}
+                                price={dayOriginPrice}
+                                source={
+                                  dayOriginSource === "AI"
+                                    ? "Revenue AI"
+                                    : dayOriginSource === "MANUAL"
+                                      ? "Manuale"
+                                      : "Configurata"
+                                }
+                                minimumStay={standardRate?.minimumStay ?? 1}
+                                isStart={isSameDay(day, block.startDate)}
+                                isEnd={isSameDay(day, block.endDate)}
+                              />
+                            ) : (
                             <div className="mb-2">
                               <CalendarDayPricing
                                 dateKey={calendarDate}
@@ -1010,457 +1049,6 @@ export default async function CalendarPage({
 
 
             <div className="space-y-4">
-              <section className="hidden">
-                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-600">
-                  Gestione periodo
-                </p>
-
-                <h3 className="mt-1 text-sm font-bold text-slate-900">
-                  Prezzo e disponibilità
-                </h3>
-
-                                <CalendarRangeController
-                  key={`${toCalendarDateValue(rangeFrom)}-${toCalendarDateValue(rangeTo)}-${selectedProperty?.id ?? ""}`}
-                  from={
-                    toCalendarDateValue(
-                      rangeFrom,
-                    )
-                  }
-                  to={
-                    toCalendarDateValue(
-                      rangeTo,
-                    )
-                  }
-                  propertyId={
-                    selectedProperty?.id ??
-                    ""
-                  }
-                  month={
-                    formatMonthParam(
-                      monthStart,
-                    )
-                  }
-                />
-
-                <div className="mt-4 grid gap-3 border-t border-[#E2E8F0] pt-4 lg:grid-cols-[minmax(180px,280px)_220px_minmax(180px,1fr)] lg:items-end">
-                  <div className="mb-1.5">
-                    <p className="text-[7px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                      Modalità prezzo
-                    </p>
-
-                    <p className="mt-1 text-[8px] leading-4 text-slate-500">
-                      Scegli come determinare il prezzo del periodo selezionato.
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70 p-1 shadow-inner">
-                    <form
-                      action={
-                        applyRevenueAiAction
-                      }
-                    >
-                      <input
-                        type="hidden"
-                        name="propertyId"
-                        value={
-                          selectedProperty?.id ??
-                          ""
-                        }
-                      />
-
-                      <input
-                        type="hidden"
-                        name="month"
-                        value={
-                          formatMonthParam(
-                            monthStart,
-                          )
-                        }
-                      />
-
-                      <input
-                        type="hidden"
-                        name="from"
-                        value={
-                          toCalendarDateValue(
-                            rangeFrom,
-                          )
-                        }
-                      />
-
-                      <input
-                        type="hidden"
-                        name="to"
-                        value={
-                          toCalendarDateValue(
-                            rangeTo,
-                          )
-                        }
-                      />
-
-                      <button
-                        type="submit"
-                        className={[
-                          "relative h-full w-full rounded-xl px-3 py-3 text-left transition-all duration-200",
-                          isRevenueAiMode
-                            ? "bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)]"
-                            : "bg-transparent text-slate-600 hover:bg-white hover:shadow-sm",
-                        ].join(
-                          " ",
-                        )}
-                      >
-                        <span className="flex items-start gap-2">
-                          <span
-                            className={[
-                              "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[9px] font-black transition",
-                              isRevenueAiMode
-                                ? "bg-white/15 text-white ring-1 ring-white/20"
-                                : "bg-[#E0F2FE] text-[#2563EB]",
-                            ].join(
-                              " ",
-                            )}
-                          >
-                            ✦
-                          </span>
-
-                          <span className="min-w-0">
-                            <strong
-                              className={[
-                                "block text-[9px] font-black",
-                                isRevenueAiMode
-                                  ? "text-white"
-                                  : "text-slate-800",
-                              ].join(
-                                " ",
-                              )}
-                            >
-                              Revenue AI
-                            </strong>
-
-                            <span
-                              className={[
-                                "mt-0.5 block text-[6px] leading-3",
-                                isRevenueAiMode
-                                  ? "text-blue-100"
-                                  : "text-slate-300",
-                              ].join(
-                                " ",
-                              )}
-                            >
-                              Ottimizzazione dinamica
-                            </span>
-
-                            {isRevenueAiMode ? (
-                              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[6px] font-black uppercase tracking-[0.08em] text-white ring-1 ring-white/15">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                                Attiva
-                              </span>
-                            ) : null}
-                          </span>
-                        </span>
-                      </button>
-                    </form>
-
-                    <div
-                      className={[
-                        "relative rounded-xl px-3 py-3 transition-all duration-200",
-                        isManualMode
-                          ? "bg-[#0F172A] text-white shadow-sm"
-                          : "bg-transparent text-slate-600",
-                      ].join(
-                        " ",
-                      )}
-                    >
-                      <div className="flex items-start gap-2">
-                        <span
-                          className={[
-                            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[9px] font-black",
-                            isManualMode
-                              ? "bg-white/10 text-white ring-1 ring-white/15"
-                              : "bg-white text-slate-700 shadow-sm",
-                          ].join(
-                            " ",
-                          )}
-                        >
-                          €
-                        </span>
-
-                        <span className="min-w-0">
-                          <strong
-                            className={[
-                              "block text-[9px] font-black",
-                              isManualMode
-                                ? "text-white"
-                                : "text-slate-800",
-                            ].join(
-                              " ",
-                            )}
-                          >
-                            Manuale
-                          </strong>
-
-                          <span
-                            className={[
-                              "mt-0.5 block text-[6px] leading-3",
-                              isManualMode
-                                ? "text-slate-300"
-                                : "text-slate-300",
-                            ].join(
-                              " ",
-                            )}
-                          >
-                            Prezzo personalizzato
-                          </span>
-
-                          {isManualMode ? (
-                            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[6px] font-black uppercase tracking-[0.08em] text-white ring-1 ring-white/10">
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                              Attiva
-                            </span>
-                          ) : null}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/70 px-2.5 py-2.5">
-                      <p className="text-[6px] font-black uppercase tracking-[0.12em] text-slate-400">
-                        Prezzo
-                      </p>
-
-                      <strong className="mt-1 block text-[13px] font-black tracking-[-0.04em] text-slate-950 tabular-nums">
-                        {formatCurrency(
-                          effectiveStandardPrice,
-                        )}
-                      </strong>
-
-                      <p className="mt-0.5 truncate text-[6px] font-semibold text-slate-400">
-                        {effectiveStandardSource}
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/70 px-2.5 py-2.5">
-                      <p className="text-[6px] font-black uppercase tracking-[0.12em] text-slate-400">
-                        Min stay
-                      </p>
-
-                      <strong className="mt-1 block text-[13px] font-black tracking-[-0.04em] text-slate-950">
-                        {standardRate?.minimumStay ??
-                          1}
-                      </strong>
-
-                      <p className="mt-0.5 text-[6px] font-semibold text-slate-400">
-                        notti
-                      </p>
-                    </div>
-
-                    <div
-                      className={[
-                        "rounded-xl border px-2.5 py-2.5",
-                        selectedPeriodClosed
-                          ? "border-rose-100 bg-rose-50/60"
-                          : "border-emerald-100 bg-emerald-50/60",
-                      ].join(
-                        " ",
-                      )}
-                    >
-                      <p className="text-[6px] font-black uppercase tracking-[0.12em] text-slate-400">
-                        Stato
-                      </p>
-
-                      <strong
-                        className={[
-                          "mt-1 block text-[10px] font-black",
-                          selectedPeriodClosed
-                            ? "text-rose-600"
-                            : "text-emerald-600",
-                        ].join(
-                          " ",
-                        )}
-                      >
-                        {selectedPeriodClosed
-                          ? "Chiuso"
-                          : "Aperto"}
-                      </strong>
-
-                      <span
-                        className={[
-                          "mt-1 block h-1.5 w-1.5 rounded-full",
-                          selectedPeriodClosed
-                            ? "bg-rose-400"
-                            : "bg-emerald-400",
-                        ].join(
-                          " ",
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  <form
-                    action={
-                      saveCalendarPeriodAction
-                    }
-                    className="mt-4 grid gap-3 border-t border-[#E2E8F0] pt-4 lg:grid-cols-[minmax(180px,280px)_220px_minmax(180px,1fr)] lg:items-end"
-                  >
-                    <input
-                      type="hidden"
-                      name="propertyId"
-                      value={
-                        selectedProperty?.id ??
-                        ""
-                      }
-                    />
-
-                    <input
-                      type="hidden"
-                      name="month"
-                      value={
-                        formatMonthParam(
-                          monthStart,
-                        )
-                      }
-                    />
-
-                    <input
-                      type="hidden"
-                      name="from"
-                      value={
-                        toCalendarDateValue(
-                          rangeFrom,
-                        )
-                      }
-                    />
-
-                    <input
-                      type="hidden"
-                      name="to"
-                      value={
-                        toCalendarDateValue(
-                          rangeTo,
-                        )
-                      }
-                    />
-
-                    <label
-                      className={[
-                        "block rounded-xl transition",
-                        isRevenueAiMode
-                          ? "opacity-60"
-                          : "opacity-100",
-                      ].join(
-                        " ",
-                      )}
-                    >
-                      <span className="mb-1 block text-[7px] font-bold uppercase tracking-[0.08em] text-slate-400">
-                        Override manuale
-                      </span>
-
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
-                          €
-                        </span>
-
-                        <input
-                          type="number"
-                          name="standardRate"
-                          min="1"
-                          step="0.01"
-                          defaultValue={
-                            selectedStandardPrice
-                          }
-                          className={[
-                            "h-10 w-full rounded-xl border pl-7 pr-3 text-[11px] font-bold outline-none transition",
-                            isRevenueAiMode
-                              ? "border-slate-100 bg-slate-50 text-slate-400"
-                              : isManualMode
-                                ? "border-slate-300 bg-white text-slate-950 shadow-sm focus:border-slate-500 focus:ring-2 focus:ring-slate-100"
-                                : "border-slate-200 bg-white text-slate-900 focus:border-slate-400 focus:ring-2 focus:ring-slate-100",
-                          ].join(
-                            " ",
-                          )}
-                        />
-                      </div>
-                    </label>
-
-                    <p className="mb-1 mt-3 text-[7px] font-bold uppercase tracking-[0.08em] text-slate-400">
-                      Disponibilità
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="submit"
-                        name="availability"
-                        value="OPEN"
-                        className="rounded-xl border border-emerald-200 bg-emerald-50 py-2.5 text-[8px] font-bold text-emerald-700 transition hover:bg-emerald-100"
-                      >
-                        Aperto
-                      </button>
-
-                      <button
-                        type="submit"
-                        name="availability"
-                        value="CLOSED"
-                        className="rounded-xl border border-rose-200 bg-rose-50 py-2.5 text-[8px] font-bold text-rose-700 transition hover:bg-rose-100"
-                      >
-                        Chiuso
-                      </button>
-                    </div>
-
-                    <div className="mt-2 flex items-center justify-between rounded-lg bg-slate-50 px-2.5 py-2 text-[7px]">
-                      <span className="text-slate-400">
-                        Stato periodo
-                      </span>
-
-                      <strong
-                        className={
-                          selectedPeriodClosed
-                            ? "text-rose-600"
-                            : "text-emerald-600"
-                        }
-                      >
-                        {selectedPeriodClosed
-                          ? "Chiuso"
-                          : "Aperto"}
-                      </strong>
-                    </div>
-                  </form>
-
-                  <Link
-                    href={`/calendar/revenue-ai?propertyId=${selectedProperty?.id ?? ""}&from=${toCalendarDateValue(
-                      rangeFrom,
-                    )}&to=${toCalendarDateValue(
-                      rangeTo,
-                    )}`}
-                    className="group mt-4 flex items-center justify-between rounded-xl border border-[#2563EB] bg-[#2563EB] px-4 py-3 text-white shadow-sm transition hover:border-[#1D4ED8] hover:bg-[#1D4ED8]"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-[#2563EB] shadow-sm">
-                        <BarChart3
-                          size={15}
-                        />
-                      </span>
-
-                      <div>
-                        <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[#64748B]">
-                          Horizon Revenue Intelligence
-                        </p>
-
-                        <p className="mt-0.5 text-[12px] font-semibold text-[#0F172A]">
-                          Apri analisi mercato
-                        </p>
-                      </div>
-                    </div>
-
-                    <ArrowRight
-                      size={15}
-                      className="transition-transform group-hover:translate-x-1"
-                    />
-                  </Link>
-                </div>
-              </section>
-
-
               <section className="rounded-[24px] border border-slate-200/70 bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
@@ -1544,8 +1132,8 @@ export default async function CalendarPage({
                                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-indigo-600 text-[7px] font-black text-white shadow-sm">
                                       {effectiveStandardSource ===
                                       "Revenue AI"
-                                        ? "✦"
-                                        : "€"}
+                                        ? "âœ¦"
+                                        : "â‚¬"}
                                     </span>
                                   ) : null}
 
@@ -1558,7 +1146,7 @@ export default async function CalendarPage({
 
                                 <p className="mt-1.5 text-[6px] font-bold uppercase tracking-[0.1em] text-slate-400">
                                   {isStandard
-                                    ? `Standard · ${effectiveStandardSource}`
+                                    ? `Standard Â· ${effectiveStandardSource}`
                                     : `${adjustment >= 0 ? "+" : ""}${adjustment}% da Standard`}
                                 </p>
                               </div>
@@ -1605,9 +1193,9 @@ export default async function CalendarPage({
                                   {
                                     ratePlan.minimumStay
                                   }
-                                  {" notti · Max "}
+                                  {" notti Â· Max "}
                                   {ratePlan.maximumStay ??
-                                    "∞"}
+                                    "âˆž"}
                                 </p>
                               </div>
 
@@ -1676,13 +1264,13 @@ function addCalendarDays(
 function getBookingChannelBarClass(channel?: string) {
   switch (channel) {
     case "BOOKING":
-      return "bg-blue-600";
+      return "bg-blue-500";
     case "AIRBNB":
-      return "bg-fuchsia-600";
+      return "bg-rose-500";
     case "HORIZON":
-      return "bg-sky-600";
+      return "bg-sky-500";
     case "VRBO":
-      return "bg-violet-600";
+      return "bg-violet-500";
     default:
       return "bg-slate-400";
   }
@@ -2085,3 +1673,21 @@ function formatCurrency(
     value,
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

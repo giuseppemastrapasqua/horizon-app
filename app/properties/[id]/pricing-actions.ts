@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import {
   PricingOverrideSource,
@@ -15,6 +15,16 @@ export async function savePropertyPricingOverrideAction(
     String(
       formData.get("propertyId") ?? "",
     ).trim();
+
+  const sourceValue =
+    String(
+      formData.get("source") ?? "MANUAL",
+    ).trim();
+
+  const source =
+    sourceValue === "AI"
+      ? PricingOverrideSource.AI
+      : PricingOverrideSource.MANUAL;
 
   const startDateValue =
     String(
@@ -86,7 +96,7 @@ export async function savePropertyPricingOverrideAction(
     startDate.getTime()
   ) {
     throw new Error(
-      "La data finale non può precedere quella iniziale.",
+      "La data finale non puÃ² precedere quella iniziale.",
     );
   }
 
@@ -95,7 +105,7 @@ export async function savePropertyPricingOverrideAction(
     nightlyPrice < 0
   ) {
     throw new Error(
-      "Il prezzo notte non può essere negativo.",
+      "Il prezzo notte non puÃ² essere negativo.",
     );
   }
 
@@ -123,13 +133,13 @@ export async function savePropertyPricingOverrideAction(
     maximumStay < minimumStay
   ) {
     throw new Error(
-      "Il maximum stay non può essere inferiore al minimum stay.",
+      "Il maximum stay non puÃ² essere inferiore al minimum stay.",
     );
   }
 
   if (cleaningCost < 0) {
     throw new Error(
-      "Il costo pulizia non può essere negativo.",
+      "Il costo pulizia non puÃ² essere negativo.",
     );
   }
 
@@ -161,7 +171,7 @@ export async function savePropertyPricingOverrideAction(
       }
 
       /*
-       * Il costo pulizia è una configurazione
+       * Il costo pulizia Ã¨ una configurazione
        * della property, quindi viene aggiornato
        * indipendentemente dall'intervallo.
        */
@@ -261,15 +271,29 @@ export async function savePropertyPricingOverrideAction(
        *
        * Gli intervalli parzialmente sovrapposti
        * saranno gestiti successivamente dal
-       * resolver di priorità.
+       * resolver di prioritÃ .
        */
+      if (source === PricingOverrideSource.AI) {
+        await transaction.propertyPriceOverride.deleteMany({
+          where: {
+            propertyId,
+            source: PricingOverrideSource.MANUAL,
+            startDate: {
+              lte: endDate,
+            },
+            endDate: {
+              gte: startDate,
+            },
+          },
+        });
+      }
+
       await transaction.propertyPriceOverride.deleteMany({
         where: {
           propertyId,
           startDate,
           endDate,
-          source:
-            PricingOverrideSource.MANUAL,
+          source: source,
         },
       });
 
@@ -282,8 +306,7 @@ export async function savePropertyPricingOverrideAction(
           minimumStay,
           maximumStay,
           occupancyIncluded,
-          source:
-            PricingOverrideSource.MANUAL,
+          source: source,
         },
       });
     },
@@ -392,5 +415,7 @@ function parseOptionalInteger(
 
   return number;
 }
+
+
 
 
