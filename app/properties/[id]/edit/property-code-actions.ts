@@ -84,6 +84,50 @@ export async function updatePropertyCodesAction(
         );
       }
 
+      const duplicateCin =
+        await transaction.property.findFirst({
+          where: {
+            id: {
+              not: propertyId,
+            },
+            cin: {
+              equals: cin,
+              mode: "insensitive",
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+      if (duplicateCin) {
+        throw new Error(
+          "CIN già registrato su Horizon. Non è possibile associarlo a una seconda struttura.",
+        );
+      }
+
+      const duplicateCir =
+        await transaction.property.findFirst({
+          where: {
+            id: {
+              not: propertyId,
+            },
+            cir: {
+              equals: cir,
+              mode: "insensitive",
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+      if (duplicateCir) {
+        throw new Error(
+          "CIR già registrato su Horizon. Non è possibile associarlo a una seconda struttura.",
+        );
+      }
+
       const currentCin =
         normalizePropertyCode(
           property.cin,

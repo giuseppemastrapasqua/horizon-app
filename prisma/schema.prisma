@@ -133,8 +133,8 @@ model Property {
   ///    * Codici identificativi dell'alloggio.
   ///    * La verifica incrociata verrà eseguita successivamente
   ///    * dal servizio di verifica AI.
-  cin                                 String?
-  cir                                 String?
+  cin                                 String?                         @unique
+  cir                                 String?                         @unique
   codeVerificationNotes               String?
   codeVerificationStatus              PropertyCodeVerificationStatus  @default(NOT_VERIFIED)
   codeVerifiedAt                      DateTime?
