@@ -24,6 +24,8 @@ import { AuditService } from "@/services/audit/AuditService";
 import { PropertyTimeline } from "@/components/properties/PropertyTimeline";
 import { prisma } from "@/lib/prisma";
 import { requirePropertyAccess } from "@/lib/auth/guards";
+import { PropertyAccessSection } from "@/components/properties/PropertyAccessSection";
+import { updatePropertyAccessAction } from "./property-access-actions";
 import { PropertyFinanceReportSettings } from "@/components/properties/PropertyFinanceReportSettings";
 import {
   resetFinanceReportTemplateAction,
@@ -75,7 +77,7 @@ export default async function PropertyEditPage({
 }: PropertyEditPageProps) {
   const { id } = await params;
 
-  await requirePropertyAccess(id);
+  const currentUser = await requirePropertyAccess(id);
 
   const workspace = await getPropertyWorkspace(id);
   const [
@@ -112,6 +114,51 @@ export default async function PropertyEditPage({
   if (!workspace) {
     notFound();
   }
+
+  const [accessUsers, propertyAccesses] =
+    currentUser.role === "SUPER_ADMIN"
+      ? await Promise.all([
+          prisma.user.findMany({
+            where: {
+              status: RecordStatus.ACTIVE,
+              role: {
+                not: "SUPER_ADMIN",
+              },
+            },
+            orderBy: {
+              fullName: "asc",
+            },
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              role: true,
+            },
+          }),
+
+          prisma.propertyAccess.findMany({
+            where: {
+              propertyId: id,
+              active: true,
+            },
+            orderBy: {
+              createdAt: "asc",
+            },
+            select: {
+              userId: true,
+              role: true,
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  role: true,
+                },
+              },
+            },
+          }),
+        ])
+      : [[], []];
 
   const timeline = await AuditService.getPropertyTimeline(id);
 
@@ -561,7 +608,25 @@ export default async function PropertyEditPage({
             </form>
           </section>
 
+          {currentUser.role === "SUPER_ADMIN" && (
+
+            <PropertyAccessSection
+
+              propertyId={property.id}
+
+              users={accessUsers}
+
+              accesses={propertyAccesses}
+
+              updateAction={updatePropertyAccessAction}
+
+            />
+
+          )}
+
+
           <section
+
             id="responsabili-operativi"
             className="scroll-mt-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
           >
