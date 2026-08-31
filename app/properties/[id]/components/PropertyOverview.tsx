@@ -32,8 +32,7 @@ export function PropertyOverview({
   currentScore,
   commercialClass,
 }: PropertyOverviewProps) {
-  const isActive =
-    status === "ACTIVE";
+  const isActive = status === "ACTIVE";
 
   return (
     <section className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -60,17 +59,13 @@ export function PropertyOverview({
                   ].join(" ")}
                 />
 
-                {isActive
-                  ? "Attivo"
-                  : formatLabel(status)}
+                {formatPropertyStatus(status)}
               </span>
 
               <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700 ring-1 ring-inset ring-blue-100">
                 <Building2 size={11} />
 
-                {formatLabel(
-                  commercialClass,
-                )}
+                {formatLabel(commercialClass)}
               </span>
             </div>
 
@@ -80,38 +75,24 @@ export function PropertyOverview({
                 wide
               >
                 {address}
-                {zone
-                  ? ` · ${zone}`
-                  : ""}
+                {zone ? ` · ${zone}` : ""}
               </InfoItem>
 
-              <InfoItem
-                icon={<Users size={14} />}
-              >
+              <InfoItem icon={<Users size={14} />}>
                 {maxGuests} ospiti
               </InfoItem>
 
-              <InfoItem
-                icon={<BedDouble size={14} />}
-              >
+              <InfoItem icon={<BedDouble size={14} />}>
                 {bedrooms ?? "—"}{" "}
-                {bedrooms === 1
-                  ? "camera"
-                  : "camere"}
+                {bedrooms === 1 ? "camera" : "camere"}
               </InfoItem>
 
-              <InfoItem
-                icon={<Bath size={14} />}
-              >
+              <InfoItem icon={<Bath size={14} />}>
                 {bathrooms ?? "—"}{" "}
-                {bathrooms === 1
-                  ? "bagno"
-                  : "bagni"}
+                {bathrooms === 1 ? "bagno" : "bagni"}
               </InfoItem>
 
-              <InfoItem
-                icon={<UserRound size={14} />}
-              >
+              <InfoItem icon={<UserRound size={14} />}>
                 <span className="text-slate-400">
                   Proprietario
                 </span>
@@ -151,9 +132,7 @@ export function PropertyOverview({
                   />
 
                   <span className="text-[10px] font-medium text-slate-500">
-                    {formatLabel(
-                      commercialClass,
-                    )}
+                    {formatLabel(commercialClass)}
                   </span>
                 </div>
               </div>
@@ -194,9 +173,7 @@ function InfoItem({
     <div
       className={[
         "inline-flex min-h-9 items-center gap-2 rounded-xl border border-slate-100 bg-slate-50/70 px-2.5 py-1.5 text-xs text-slate-600",
-        wide
-          ? "sm:max-w-md"
-          : "",
+        wide ? "sm:max-w-md" : "",
       ].join(" ")}
     >
       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white text-blue-500 shadow-sm ring-1 ring-slate-100">
@@ -210,9 +187,19 @@ function InfoItem({
   );
 }
 
-function formatLabel(
-  value: string,
-) {
+function formatPropertyStatus(status: string) {
+  const labels: Record<string, string> = {
+    DRAFT: "Bozza",
+    ACTIVE: "Attivo",
+    MAINTENANCE: "Manutenzione",
+    OFFLINE: "Offline",
+    ARCHIVED: "Archiviato",
+  };
+
+  return labels[status] ?? formatLabel(status);
+}
+
+function formatLabel(value: string) {
   return value
     .toLowerCase()
     .split("_")
