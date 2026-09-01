@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
 import { prisma } from "@/lib/prisma";
 import { upsertIntegrationPropertyMapping } from "@/lib/integrations/shared/upsert-integration-property-mapping";
@@ -40,7 +40,7 @@ export async function updatePropertyIntegrationAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   if (!providerValue) {
     throw new Error(
@@ -86,7 +86,7 @@ export async function synchronizePropertyIntegrationAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   if (!isIntegrationProvider(providerValue)) {
     throw new Error(
