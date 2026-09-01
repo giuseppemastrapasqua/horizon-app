@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 function getString(
@@ -38,7 +38,7 @@ export async function updateFinanceReportTemplateAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER", "FINANCE"]);
 
   const data = {
     name:
@@ -149,7 +149,7 @@ export async function resetFinanceReportTemplateAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER", "FINANCE"]);
 
   await prisma.financeReportTemplate.deleteMany({
     where: {
