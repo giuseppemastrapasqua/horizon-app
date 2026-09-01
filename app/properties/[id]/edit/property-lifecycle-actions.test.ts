@@ -6,7 +6,7 @@ import {
   vi,
 } from "vitest";
 
-const requirePropertyAccessMock = vi.hoisted(() =>
+const requirePropertyRoleMock = vi.hoisted(() =>
   vi.fn(),
 );
 
@@ -35,7 +35,7 @@ const redirectMock = vi.hoisted(() =>
 );
 
 vi.mock("@/lib/auth/guards", () => ({
-  requirePropertyAccess: requirePropertyAccessMock,
+  requirePropertyRole: requirePropertyRoleMock,
   requireRoles: requireRolesMock,
 }));
 
@@ -92,7 +92,7 @@ describe("property lifecycle actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    requirePropertyAccessMock.mockResolvedValue({
+    requirePropertyRoleMock.mockResolvedValue({
       id: "user-1",
       role: "MANAGER",
     });
@@ -119,8 +119,11 @@ describe("property lifecycle actions", () => {
     await archivePropertyAction(formData);
 
     expect(
-      requirePropertyAccessMock,
-    ).toHaveBeenCalledWith("property-1");
+      requirePropertyRoleMock,
+    ).toHaveBeenCalledWith(
+      "property-1",
+      ["OWNER", "MANAGER"],
+    );
 
     expect(propertyUpdateMock).toHaveBeenCalledWith({
       where: {

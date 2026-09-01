@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
-  requirePropertyAccess,
+  requirePropertyRole,
   requireRoles,
 } from "@/lib/auth/guards";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
@@ -37,7 +37,7 @@ export async function archivePropertyAction(
     throw new Error("Struttura non specificata.");
   }
 
-  const user = await requirePropertyAccess(propertyId);
+  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const property = await prisma.property.findUnique({
     where: { id: propertyId },
