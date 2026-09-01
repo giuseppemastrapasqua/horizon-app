@@ -6,7 +6,7 @@ import {
 } from "@prisma/client";
 import { redirect } from "next/navigation";
 
-import { requirePropertyAccess, requireUser } from "@/lib/auth/guards";
+import { requirePropertyRole, requireUser } from "@/lib/auth/guards";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 import { prisma } from "@/lib/prisma";
 import { resolveTaskAssignee } from "@/lib/tasks/resolve-task-assignee";
@@ -41,7 +41,7 @@ export async function createTask(
     formData.get("propertyId") || "",
   );
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const bookingIdRaw = String(
     formData.get("bookingId") || "",
