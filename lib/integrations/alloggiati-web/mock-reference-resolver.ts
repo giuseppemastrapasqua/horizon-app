@@ -17,6 +17,12 @@ export class MockAlloggiatiReferenceResolver
     return this.countries[country] ?? null;
   }
 
+  async isItaly(
+    country: string,
+  ): Promise<boolean> {
+    return country.trim().toUpperCase() === "ITALIA";
+  }
+
   async resolveMunicipalityCode(
     city: string,
     province?: string | null,

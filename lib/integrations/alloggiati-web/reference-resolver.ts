@@ -6,6 +6,9 @@ export interface AlloggiatiReferenceResolver {
     country: string,
   ): Promise<AlloggiatiPlaceCode | null>;
 
+  isItaly(
+    country: string,
+  ): Promise<boolean>;
   resolveMunicipalityCode(
     city: string,
     province?: string | null,
