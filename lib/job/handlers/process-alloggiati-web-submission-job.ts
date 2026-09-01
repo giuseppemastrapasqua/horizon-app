@@ -24,6 +24,9 @@ import type {
 import {
   createRuntimeAlloggiatiWebCredentialProvider,
 } from "@/lib/integrations/alloggiati-web/runtime-credential-provider";
+import {
+  createRuntimeAlloggiatiWebValidator,
+} from "@/lib/integrations/alloggiati-web/runtime-validator";
 import { prisma } from "@/lib/prisma";
 
 type AlloggiatiWebSubmissionPayload = {
@@ -219,14 +222,12 @@ export async function processAlloggiatiWebSubmissionJob(
       propertyId: payload.propertyId,
     });
 
-  if (!dependencies.createValidator) {
-    throw new Error(
-      "Alloggiati Web trasporto reale non ancora configurato.",
-    );
-  }
+  const createValidator =
+    dependencies.createValidator ??
+    createRuntimeAlloggiatiWebValidator;
 
   const validator =
-    dependencies.createValidator(credentials);
+    createValidator(credentials);
 
   await preflightAlloggiatiSubmission(
     submission,

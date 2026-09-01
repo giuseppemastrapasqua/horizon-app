@@ -258,11 +258,17 @@ describe(
     );
 
     it(
-      "prepara la submission e si ferma prima del trasporto",
+      "prepara la submission prima del preflight",
       async () => {
         let prepared:
           | AlloggiatiWebSubmission
           | undefined;
+
+        const validateSubmission = vi.fn(
+          async () => ({
+            success: true,
+          }),
+        );
 
         await expect(
           processAlloggiatiWebSubmissionJob(
@@ -287,10 +293,13 @@ describe(
                   wsKey: "test-wskey",
                 }),
               },
+              createValidator: () => ({
+                validateSubmission,
+              }),
             },
           ),
         ).rejects.toThrow(
-          "Alloggiati Web trasporto reale non ancora configurato.",
+          "Alloggiati Web invio disabilitato dopo preflight.",
         );
 
         expect(prepared).toBeDefined();
@@ -306,6 +315,10 @@ describe(
         expect(
           prepared?.records[0].slice(0, 2),
         ).toBe("16");
+
+        expect(
+          validateSubmission,
+        ).toHaveBeenCalledWith(prepared);
 
         expect(
           bookingFindUniqueMock,
