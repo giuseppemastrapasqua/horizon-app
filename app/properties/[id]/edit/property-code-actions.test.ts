@@ -7,7 +7,7 @@ import {
 } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  requirePropertyAccess: vi.fn(),
+  requirePropertyRole: vi.fn(),
   findUnique: vi.fn(),
   findFirst: vi.fn(),
   update: vi.fn(),
@@ -17,8 +17,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/auth/guards", () => ({
-  requirePropertyAccess:
-    mocks.requirePropertyAccess,
+  requirePropertyRole:
+    mocks.requirePropertyRole,
 }));
 
 vi.mock("@/lib/job/enqueue-background-job", () => ({
@@ -96,7 +96,7 @@ describe(
     beforeEach(() => {
       vi.clearAllMocks();
 
-      mocks.requirePropertyAccess.mockResolvedValue({
+      mocks.requirePropertyRole.mockResolvedValue({
         id: "user-1",
       });
 
