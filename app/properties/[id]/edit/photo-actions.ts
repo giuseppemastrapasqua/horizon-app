@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 
 import { createPropertyImage } from "@/lib/application/properties/create-property-image";
 import { deletePropertyImage } from "@/lib/application/properties/delete-property-image";
@@ -31,7 +31,7 @@ export async function setPropertyCoverImageAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   await setPropertyCoverImage({
     propertyId,
@@ -66,7 +66,7 @@ export async function uploadPropertyImageAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   await createPropertyImage({
     propertyId,
@@ -103,7 +103,7 @@ export async function deletePropertyImageAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   await deletePropertyImage({
     propertyId,
@@ -131,7 +131,7 @@ export async function reorderPropertyImagesAction(
     return;
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   await updatePropertyImageOrder({
     propertyId,
