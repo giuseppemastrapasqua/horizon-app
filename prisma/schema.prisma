@@ -556,6 +556,7 @@ model BookingGuest {
   documentType         String?
   documentNumber       String?
   documentIssueCountry String?
+  documentIssueCity    String?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 

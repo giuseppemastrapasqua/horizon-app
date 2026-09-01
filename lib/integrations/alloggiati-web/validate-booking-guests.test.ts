@@ -18,6 +18,7 @@ const leader = {
   documentType: "IDENTITY_CARD",
   documentNumber: "AA1234567",
   documentIssueCountry: "ITALIA",
+  documentIssueCity: "Milano",
 };
 
 const member = {

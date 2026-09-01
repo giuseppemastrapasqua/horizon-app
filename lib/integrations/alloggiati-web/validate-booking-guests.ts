@@ -13,6 +13,7 @@ export type AlloggiatiGuestInput = {
   documentType?: string | null;
   documentNumber?: string | null;
   documentIssueCountry?: string | null;
+  documentIssueCity?: string | null;
 };
 
 export type AlloggiatiComplianceIssueCode =
