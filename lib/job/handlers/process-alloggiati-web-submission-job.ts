@@ -3,9 +3,18 @@ import type {
   Prisma,
 } from "@prisma/client";
 
+import type {
+  AlloggiatiWebCredentialProvider,
+} from "@/lib/integrations/alloggiati-web/credential-provider";
 import {
   prepareBookingSubmission,
 } from "@/lib/integrations/alloggiati-web/prepare-booking-submission";
+import {
+  preflightAlloggiatiSubmission,
+} from "@/lib/integrations/alloggiati-web/preflight-submission";
+import type {
+  AlloggiatiWebSubmissionValidator,
+} from "@/lib/integrations/alloggiati-web/preflight-submission";
 import {
   PublicAlloggiatiReferenceProvider,
 } from "@/lib/integrations/alloggiati-web/public-reference-provider";
@@ -23,6 +32,14 @@ type ProcessAlloggiatiWebSubmissionJobDependencies = {
   getReferenceResolver?: (
   ) => Promise<AlloggiatiReferenceResolver>;
   prepareSubmission?: typeof prepareBookingSubmission;
+  credentialProvider?: AlloggiatiWebCredentialProvider;
+  createValidator?: (
+    credentials: {
+      username: string;
+      password: string;
+      wsKey: string;
+    },
+  ) => AlloggiatiWebSubmissionValidator;
 };
 
 const publicReferenceProvider =
@@ -178,18 +195,41 @@ export async function processAlloggiatiWebSubmissionJob(
     dependencies.prepareSubmission ??
     prepareBookingSubmission;
 
-  await prepareSubmission(
-    {
-      checkIn: booking.checkIn,
-      nights: booking.nights,
-      expectedGuests: booking.guests,
-      guests: booking.bookingGuests,
-      apartmentId: mapping.externalPropertyId,
-    },
-    resolver,
+  const submission =
+    await prepareSubmission(
+      {
+        checkIn: booking.checkIn,
+        nights: booking.nights,
+        expectedGuests: booking.guests,
+        guests: booking.bookingGuests,
+        apartmentId: mapping.externalPropertyId,
+      },
+      resolver,
+    );
+
+  if (
+    !dependencies.credentialProvider ||
+    !dependencies.createValidator
+  ) {
+    throw new Error(
+      "Alloggiati Web trasporto reale non ancora configurato.",
+    );
+  }
+
+  const credentials =
+    await dependencies.credentialProvider.getCredentials({
+      propertyId: payload.propertyId,
+    });
+
+  const validator =
+    dependencies.createValidator(credentials);
+
+  await preflightAlloggiatiSubmission(
+    submission,
+    validator,
   );
 
   throw new Error(
-    "Alloggiati Web trasporto reale non ancora configurato.",
+    "Alloggiati Web invio disabilitato dopo preflight.",
   );
 }

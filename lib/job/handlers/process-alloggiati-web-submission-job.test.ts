@@ -12,8 +12,14 @@ import {
 } from "vitest";
 
 import {
+  MockAlloggiatiWebTransport,
+} from "@/lib/integrations/alloggiati-web/mock-transport";
+import {
   MockAlloggiatiReferenceResolver,
 } from "@/lib/integrations/alloggiati-web/mock-reference-resolver";
+import {
+  AlloggiatiWebAdapter,
+} from "@/lib/integrations/alloggiati-web/adapter";
 import {
   prepareBookingSubmission,
 } from "@/lib/integrations/alloggiati-web/prepare-booking-submission";
@@ -301,6 +307,70 @@ describe(
         expect(
           mappingFindUniqueMock,
         ).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      "esegue il preflight senza inviare",
+      async () => {
+        const transport =
+          new MockAlloggiatiWebTransport();
+
+        const credentialProvider = {
+          getCredentials: vi.fn(
+            async () => ({
+              username: "test-user",
+              password: "test-password",
+              wsKey: "test-wskey",
+            }),
+          ),
+        };
+
+        await expect(
+          processAlloggiatiWebSubmissionJob(
+            createJob(),
+            {
+              getReferenceResolver:
+                async () => resolver,
+              credentialProvider,
+              createValidator: (credentials) =>
+                new AlloggiatiWebAdapter(
+                  transport,
+                  credentials,
+                ),
+            },
+          ),
+        ).rejects.toThrow(
+          "Alloggiati Web invio disabilitato dopo preflight.",
+        );
+
+        expect(
+          credentialProvider.getCredentials,
+        ).toHaveBeenCalledWith({
+          propertyId: "property-1",
+        });
+
+        expect(
+          transport.authenticatedWith,
+        ).toHaveLength(1);
+
+        expect(
+          transport.validatedSubmissions,
+        ).toHaveLength(1);
+
+        expect(
+          transport.validatedSubmissions[0]
+            .apartmentId,
+        ).toBe("APT-123");
+
+        expect(
+          transport.validatedSubmissions[0]
+            .records[0],
+        ).toHaveLength(168);
+
+        expect(
+          transport.submitted,
+        ).toHaveLength(0);
       },
     );
   },
