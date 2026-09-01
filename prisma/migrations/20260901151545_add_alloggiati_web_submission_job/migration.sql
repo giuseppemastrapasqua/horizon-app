@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "BackgroundJobType" ADD VALUE 'ALLOGGIATI_WEB_SUBMISSION';

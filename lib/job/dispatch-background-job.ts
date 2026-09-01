@@ -5,6 +5,7 @@ import type {
 } from "@prisma/client";
 
 import { processBookingSyncJob } from "@/lib/job/handlers/process-booking-sync-job";
+import { processAlloggiatiWebSubmissionJob } from "@/lib/job/handlers/process-alloggiati-web-submission-job";
 import { processPropertyCodeVerificationJob } from "@/lib/job/handlers/process-property-code-verification-job";
 import { processPropertyDocumentOcrJob } from "@/lib/job/handlers/process-property-document-ocr-job";
 import { processStorageObjectDeleteJob } from "@/lib/job/handlers/process-storage-object-delete-job";
@@ -51,6 +52,9 @@ const backgroundJobHandlers = {
 
   BOOKING_SYNC:
     processBookingSyncJob,
+
+  ALLOGGIATI_WEB_SUBMISSION:
+    processAlloggiatiWebSubmissionJob,
 
   FINANCE_REPORT_GENERATION:
     createUnsupportedJobHandler(
