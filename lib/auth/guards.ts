@@ -54,14 +54,14 @@ export async function requirePropertyAccess(propertyId: string) {
   return user;
 }
 
-export async function requirePropertyRole(
+export async function hasPropertyRole(
   propertyId: string,
   roles: PropertyAccessRole[],
 ) {
   const user = await requireUser();
 
   if (user.role === "SUPER_ADMIN") {
-    return user;
+    return true;
   }
 
   const property = await prisma.property.findFirst({
@@ -85,7 +85,16 @@ export async function requirePropertyRole(
     select: { id: true },
   });
 
-  if (!property) {
+  return Boolean(property);
+}
+
+export async function requirePropertyRole(
+  propertyId: string,
+  roles: PropertyAccessRole[],
+) {
+  const user = await requireUser();
+
+  if (!(await hasPropertyRole(propertyId, roles))) {
     throw new Error(
       "Permessi insufficienti per modificare la struttura.",
     );

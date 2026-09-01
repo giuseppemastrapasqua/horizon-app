@@ -23,7 +23,7 @@ import { PropertyCodeVerificationHistory } from "@/components/properties/Propert
 import { AuditService } from "@/services/audit/AuditService";
 import { PropertyTimeline } from "@/components/properties/PropertyTimeline";
 import { prisma } from "@/lib/prisma";
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { hasPropertyRole, requirePropertyAccess } from "@/lib/auth/guards";
 import { PropertyAccessSection } from "@/components/properties/PropertyAccessSection";
 import { PropertyOwnerInvitesSection } from "@/components/properties/PropertyOwnerInvitesSection";
 import { updatePropertyAccessAction } from "./property-access-actions";
@@ -84,38 +84,42 @@ export default async function PropertyEditPage({
 
   const currentUser = await requirePropertyAccess(id);
 
+  const canManageProperty = await hasPropertyRole(
+    id,
+    ["OWNER", "MANAGER"],
+  );
+
   const workspace = await getPropertyWorkspace(id);
-  const [
-    activeUsers,
-    taskAssignments,
-  ] = await Promise.all([
-    prisma.user.findMany({
-      where: {
-        status: RecordStatus.ACTIVE,
-      },
-      orderBy: {
-        fullName: "asc",
-      },
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        role: true,
-      },
-    }),
 
-    prisma.propertyTaskAssignment.findMany({
-      where: {
-        propertyId: id,
-        active: true,
-      },
-      select: {
-        role: true,
-        userId: true,
-      },
-    }),
-  ]);
+  const [activeUsers, taskAssignments] = canManageProperty
+    ? await Promise.all([
+        prisma.user.findMany({
+          where: {
+            status: RecordStatus.ACTIVE,
+          },
+          orderBy: {
+            fullName: "asc",
+          },
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            role: true,
+          },
+        }),
 
+        prisma.propertyTaskAssignment.findMany({
+          where: {
+            propertyId: id,
+            active: true,
+          },
+          select: {
+            role: true,
+            userId: true,
+          },
+        }),
+      ])
+    : [[], []];
   if (!workspace) {
     notFound();
   }
@@ -654,6 +658,7 @@ export default async function PropertyEditPage({
           )}
 
 
+          {canManageProperty && (
           <section
 
             id="responsabili-operativi"
@@ -802,6 +807,7 @@ export default async function PropertyEditPage({
               </div>
             </form>
           </section>
+          )}
           <PropertyCodeSection
             propertyId={property.id}
             cin={property.cin}
