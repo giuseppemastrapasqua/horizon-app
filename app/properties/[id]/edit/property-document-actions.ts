@@ -8,7 +8,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
 import { prisma } from "@/lib/prisma";
 import { AuditService } from "@/services/audit/AuditService";
@@ -168,7 +168,7 @@ export async function createPropertyDocumentAction(
     "Immobile non specificato.",
   );
 
-  const user = await requirePropertyAccess(propertyId);
+  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   await ensurePropertyExists(propertyId);
 
@@ -306,7 +306,7 @@ export async function updatePropertyDocumentAction(
     "Immobile non specificato.",
   );
 
-  const user = await requirePropertyAccess(propertyId);
+  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const documentId = getRequiredString(
     formData,
@@ -488,7 +488,7 @@ export async function retryPropertyDocumentOcrAction(
     "Immobile non specificato.",
   );
 
-  const user = await requirePropertyAccess(propertyId);
+  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const documentId = getRequiredString(
     formData,
@@ -638,7 +638,7 @@ export async function deletePropertyDocumentAction(
     "Documento non specificato.",
   );
 
-  const user = await requirePropertyAccess(propertyId);
+  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const document =
     await prisma.propertyDocument.findFirst({
