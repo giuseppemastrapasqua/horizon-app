@@ -512,6 +512,7 @@ model Booking {
   owner                   User                     @relation(fields: [ownerId], references: [id])
   property                Property                 @relation(fields: [propertyId], references: [id])
   tasks                   Task[]
+  bookingGuests           BookingGuest[]
 
   @@unique([integrationConnectionId, externalBookingId])
   @@index([channel, externalBookingId])
@@ -525,6 +526,40 @@ model Booking {
   @@index([externalBookingId])
   @@index([guestId])
   @@index([integrationConnectionId])
+}
+
+enum BookingGuestRole {
+  LEADER
+  MEMBER
+}
+
+enum BookingGuestGender {
+  MALE
+  FEMALE
+}
+
+model BookingGuest {
+  id                   String             @id @default(cuid())
+  bookingId            String
+  role                 BookingGuestRole   @default(MEMBER)
+  firstName            String
+  lastName             String
+  gender               BookingGuestGender
+  birthDate            DateTime
+  birthCity            String?
+  birthProvince        String?
+  birthCountry         String
+  citizenship          String
+  documentType         String?
+  documentNumber       String?
+  documentIssueCountry String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([lastName, firstName])
 }
 
 enum PropertyTaskAssignmentRole {
