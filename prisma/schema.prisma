@@ -167,6 +167,7 @@ model Property {
   revenueDailySignals                 RevenueDailySignal[]
   revenueRecommendations              RevenueRecommendation[]
   financeReportTemplate               FinanceReportTemplate?
+  alloggiatiWebCredential             AlloggiatiWebCredential?
 
   @@index([ownerId])
   @@index([status])
@@ -1379,4 +1380,19 @@ model RevenueRecommendation {
   @@index([status])
   @@index([generatedAt])
   @@index([marketSnapshotId])
+}
+
+model AlloggiatiWebCredential {
+  id                String   @id @default(cuid())
+  propertyId        String   @unique
+  usernameEncrypted String
+  passwordEncrypted String
+  wsKeyEncrypted    String
+  keyVersion        Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
 }
