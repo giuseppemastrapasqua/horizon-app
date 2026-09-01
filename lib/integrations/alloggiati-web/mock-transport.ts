@@ -4,6 +4,8 @@ import type {
   AlloggiatiWebSession,
   AlloggiatiWebSubmission,
   AlloggiatiWebSubmissionResult,
+  AlloggiatiWebTableResult,
+  AlloggiatiWebTableType,
   AlloggiatiWebValidationResult,
 } from "./types";
 import type {
@@ -24,6 +26,9 @@ export class MockAlloggiatiWebTransport
 
   readonly receiptDates: string[] = [];
 
+  readonly requestedTables:
+    AlloggiatiWebTableType[] = [];
+
   session: AlloggiatiWebSession = {
     token: "mock-token",
   };
@@ -42,6 +47,10 @@ export class MockAlloggiatiWebTransport
   receipt: AlloggiatiWebReceipt = {
     date: "2026-09-01",
     pdfBase64: "bW9jay1wZGY=",
+  };
+
+  tableResult: AlloggiatiWebTableResult = {
+    entries: [],
   };
 
   async authenticate(
@@ -80,5 +89,14 @@ export class MockAlloggiatiWebTransport
       ...this.receipt,
       date,
     };
+  }
+
+  async getTable(
+    _session: AlloggiatiWebSession,
+    table: AlloggiatiWebTableType,
+  ): Promise<AlloggiatiWebTableResult> {
+    this.requestedTables.push(table);
+
+    return this.tableResult;
   }
 }

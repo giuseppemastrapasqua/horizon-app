@@ -28,3 +28,16 @@ export type AlloggiatiWebReceipt = {
   date: string;
   pdfBase64: string;
 };
+
+export type AlloggiatiWebTableType =
+  | "Luoghi"
+  | "Tipi_Documento";
+
+export type AlloggiatiWebTableEntry = {
+  code: string;
+  description: string;
+};
+
+export type AlloggiatiWebTableResult = {
+  entries: AlloggiatiWebTableEntry[];
+};

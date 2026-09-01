@@ -100,6 +100,46 @@ describe("AlloggiatiWebAdapter", () => {
     ]);
   });
 
+  it("recupera una tabella tramite il transport", async () => {
+    const transport =
+      new MockAlloggiatiWebTransport();
+
+    transport.tableResult = {
+      entries: [
+        {
+          code: "100000100",
+          description: "ITALIA",
+        },
+      ],
+    };
+
+    const adapter =
+      new AlloggiatiWebAdapter(
+        transport,
+        credentials,
+      );
+
+    const result =
+      await adapter.getTable("Luoghi");
+
+    expect(result).toEqual({
+      entries: [
+        {
+          code: "100000100",
+          description: "ITALIA",
+        },
+      ],
+    });
+
+    expect(
+      transport.requestedTables,
+    ).toEqual(["Luoghi"]);
+
+    expect(
+      transport.authenticatedWith,
+    ).toEqual([credentials]);
+  });
+
   it("blocca una trasmissione senza record", async () => {
     const transport =
       new MockAlloggiatiWebTransport();

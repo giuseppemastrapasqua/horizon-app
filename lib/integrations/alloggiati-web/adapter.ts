@@ -3,6 +3,8 @@ import type {
   AlloggiatiWebReceipt,
   AlloggiatiWebSubmission,
   AlloggiatiWebSubmissionResult,
+  AlloggiatiWebTableResult,
+  AlloggiatiWebTableType,
   AlloggiatiWebValidationResult,
 } from "./types";
 import type {
@@ -68,6 +70,20 @@ export class AlloggiatiWebAdapter {
     return this.transport.getReceipt(
       session,
       normalizedDate,
+    );
+  }
+
+  async getTable(
+    table: AlloggiatiWebTableType,
+  ): Promise<AlloggiatiWebTableResult> {
+    const session =
+      await this.transport.authenticate(
+        this.credentials,
+      );
+
+    return this.transport.getTable(
+      session,
+      table,
     );
   }
 }

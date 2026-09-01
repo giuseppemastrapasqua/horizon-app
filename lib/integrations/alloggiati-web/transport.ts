@@ -4,6 +4,8 @@ import type {
   AlloggiatiWebSession,
   AlloggiatiWebSubmission,
   AlloggiatiWebSubmissionResult,
+  AlloggiatiWebTableResult,
+  AlloggiatiWebTableType,
   AlloggiatiWebValidationResult,
 } from "./types";
 
@@ -26,4 +28,9 @@ export interface AlloggiatiWebTransport {
     session: AlloggiatiWebSession,
     date: string,
   ): Promise<AlloggiatiWebReceipt>;
+
+  getTable(
+    session: AlloggiatiWebSession,
+    table: AlloggiatiWebTableType,
+  ): Promise<AlloggiatiWebTableResult>;
 }
