@@ -7,7 +7,7 @@ import {
 
 import { revalidatePath } from "next/cache";
 
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 const assignmentRoles = [
@@ -29,7 +29,7 @@ export async function updatePropertyTaskAssignmentsAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const property =
     await prisma.property.findUnique({
