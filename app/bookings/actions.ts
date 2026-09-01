@@ -9,7 +9,7 @@ import {
 } from "@prisma/client";
 import { redirect } from "next/navigation";
 
-import { requirePropertyAccess, requireUser } from "@/lib/auth/guards";
+import { requirePropertyAccess, requirePropertyRole, requireUser } from "@/lib/auth/guards";
 import { emitEvent } from "@/lib/events/emit";
 import { processPendingEvents } from "@/lib/events/process-pending";
 import { prisma } from "@/lib/prisma";
@@ -33,7 +33,7 @@ export async function createBooking(
     throw new Error("Seleziona un immobile.");
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   if (!guestName) {
     throw new Error(
