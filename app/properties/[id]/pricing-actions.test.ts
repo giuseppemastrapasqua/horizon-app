@@ -1,4 +1,4 @@
-﻿import {
+import {
   beforeEach,
   describe,
   expect,
@@ -6,7 +6,7 @@
   vi,
 } from "vitest";
 
-const requirePropertyAccessMock = vi.hoisted(() => vi.fn());
+const requirePropertyRoleMock = vi.hoisted(() => vi.fn());
 
 const propertyFindUniqueMock = vi.hoisted(() => vi.fn());
 const propertyUpdateMock = vi.hoisted(() => vi.fn());
@@ -15,7 +15,7 @@ const overrideDeleteManyMock = vi.hoisted(() => vi.fn());
 const overrideCreateMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/guards", () => ({
-  requirePropertyAccess: requirePropertyAccessMock,
+  requirePropertyRole: requirePropertyRoleMock,
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -76,6 +76,11 @@ describe("savePropertyPricingOverrideAction", () => {
     formData.set("cleaningCost", "50");
 
     await savePropertyPricingOverrideAction(formData);
+
+    expect(requirePropertyRoleMock).toHaveBeenCalledWith(
+      "property-1",
+      ["OWNER", "MANAGER"],
+    );
 
     expect(overrideCreateMock).toHaveBeenCalledWith({
       data: expect.objectContaining({

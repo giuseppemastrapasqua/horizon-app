@@ -8,7 +8,7 @@ import {
   BookingChannel,
 } from "@prisma/client";
 
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 
 import {
   prisma,
@@ -44,7 +44,7 @@ export async function updatePropertyChannelPricingAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   if (
     channelText !== "BOOKING" &&

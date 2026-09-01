@@ -1,11 +1,11 @@
-﻿"use server";
+"use server";
 
 import {
   PricingOverrideSource,
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 export async function savePropertyPricingOverrideAction(
@@ -68,7 +68,7 @@ export async function savePropertyPricingOverrideAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   if (
     !startDateValue ||

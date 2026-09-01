@@ -5,7 +5,7 @@ import {
 } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 function parseDate(
@@ -70,7 +70,7 @@ export async function closePropertyPeriodAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const startDate =
     parseDate(
@@ -227,7 +227,7 @@ export async function openPropertyPeriodAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const startDate =
     parseDate(
