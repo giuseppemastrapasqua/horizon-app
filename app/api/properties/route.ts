@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -14,33 +15,19 @@ export async function GET() {
   }
 
   try {
-    const globalAccess = [
-      "SUPER_ADMIN",
-      "MANAGER",
-      "FINANCE_ADMIN",
-    ].includes(session.user.role);
+    const accessiblePropertyIds =
+      await getAccessiblePropertyIds();
 
     const properties =
       await prisma.property.findMany({
-        where: globalAccess
-          ? undefined
-          : {
-              OR: [
-                {
-                  ownerId:
-                    session.user.id,
+        where:
+          accessiblePropertyIds === null
+            ? undefined
+            : {
+                id: {
+                  in: accessiblePropertyIds,
                 },
-                {
-                  taskAssignments: {
-                    some: {
-                      userId:
-                        session.user.id,
-                      active: true,
-                    },
-                  },
-                },
-              ],
-            },
+              },
 
         orderBy: {
           name: "asc",

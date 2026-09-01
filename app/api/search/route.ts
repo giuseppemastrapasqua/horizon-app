@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 const MIN_QUERY_LENGTH = 2;
 const MAX_RESULTS_PER_DOMAIN = 5;
 
-const GLOBAL_ACCESS_ROLES = [
-  "SUPER_ADMIN",
-  "MANAGER",
-  "FINANCE_ADMIN",
-];
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -37,41 +33,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const globalAccess =
-      GLOBAL_ACCESS_ROLES.includes(
-        session.user.role,
-      );
-
-    const accessibleProperties =
-      globalAccess
-        ? null
-        : await prisma.property.findMany({
-            where: {
-              OR: [
-                {
-                  ownerId:
-                    session.user.id,
-                },
-                {
-                  taskAssignments: {
-                    some: {
-                      userId:
-                        session.user.id,
-                      active: true,
-                    },
-                  },
-                },
-              ],
-            },
-            select: {
-              id: true,
-            },
-          });
-
     const accessiblePropertyIds =
-      accessibleProperties?.map(
-        (property) => property.id,
-      ) ?? [];
+      await getAccessiblePropertyIds();
+
+    const globalAccess =
+      accessiblePropertyIds === null;
 
     const propertyScope =
       globalAccess
@@ -81,7 +47,6 @@ export async function GET(request: NextRequest) {
               in: accessiblePropertyIds,
             },
           };
-
     const [
       bookings,
       guests,
