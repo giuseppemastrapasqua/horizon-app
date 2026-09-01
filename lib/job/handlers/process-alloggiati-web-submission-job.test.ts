@@ -280,6 +280,13 @@ describe(
 
                   return prepared;
                 },
+              credentialProvider: {
+                getCredentials: async () => ({
+                  username: "test-user",
+                  password: "test-password",
+                  wsKey: "test-wskey",
+                }),
+              },
             },
           ),
         ).rejects.toThrow(
