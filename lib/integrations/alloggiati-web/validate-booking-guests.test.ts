@@ -9,7 +9,7 @@ import {
 } from "./validate-booking-guests";
 
 const leader = {
-  role: "LEADER" as const,
+  role: "FAMILY_HEAD" as const,
   firstName: "Mario",
   lastName: "Rossi",
   birthDate: new Date("1985-04-10"),
@@ -21,7 +21,7 @@ const leader = {
 };
 
 const member = {
-  role: "MEMBER" as const,
+  role: "FAMILY_MEMBER" as const,
   firstName: "Anna",
   lastName: "Rossi",
   birthDate: new Date("1987-06-20"),
@@ -129,6 +129,48 @@ describe("validateBookingGuestsForAlloggiati", () => {
     expect(result.issues).toContainEqual({
       code: "MISSING_CITIZENSHIP",
       guestIndex: 1,
+    });
+  });
+
+  it("rifiuta SINGLE_GUEST insieme ad altri ospiti", () => {
+    const result =
+      validateBookingGuestsForAlloggiati(
+        2,
+        [
+          {
+            ...leader,
+            role: "SINGLE_GUEST",
+          },
+          member,
+        ],
+      );
+
+    expect(result.ready).toBe(false);
+
+    expect(result.issues).toContainEqual({
+      code: "INVALID_GUEST_STRUCTURE",
+    });
+  });
+
+  it("accetta GROUP_HEAD con GROUP_MEMBER", () => {
+    const result =
+      validateBookingGuestsForAlloggiati(
+        2,
+        [
+          {
+            ...leader,
+            role: "GROUP_HEAD",
+          },
+          {
+            ...member,
+            role: "GROUP_MEMBER",
+          },
+        ],
+      );
+
+    expect(result).toEqual({
+      ready: true,
+      issues: [],
     });
   });
 });

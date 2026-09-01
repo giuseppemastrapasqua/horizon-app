@@ -529,8 +529,11 @@ model Booking {
 }
 
 enum BookingGuestRole {
-  LEADER
-  MEMBER
+  SINGLE_GUEST
+  FAMILY_HEAD
+  GROUP_HEAD
+  FAMILY_MEMBER
+  GROUP_MEMBER
 }
 
 enum BookingGuestGender {
@@ -541,7 +544,7 @@ enum BookingGuestGender {
 model BookingGuest {
   id                   String             @id @default(cuid())
   bookingId            String
-  role                 BookingGuestRole   @default(MEMBER)
+  role                 BookingGuestRole
   firstName            String
   lastName             String
   gender               BookingGuestGender

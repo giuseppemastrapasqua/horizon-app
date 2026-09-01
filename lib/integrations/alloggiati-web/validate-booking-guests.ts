@@ -1,5 +1,10 @@
 export type AlloggiatiGuestInput = {
-  role: "LEADER" | "MEMBER";
+  role:
+    | "SINGLE_GUEST"
+    | "FAMILY_HEAD"
+    | "GROUP_HEAD"
+    | "FAMILY_MEMBER"
+    | "GROUP_MEMBER";
   firstName: string;
   lastName: string;
   birthDate: Date;
@@ -13,6 +18,7 @@ export type AlloggiatiGuestInput = {
 export type AlloggiatiComplianceIssueCode =
   | "GUEST_COUNT_MISMATCH"
   | "MISSING_LEADER"
+  | "INVALID_GUEST_STRUCTURE"
   | "MULTIPLE_LEADERS"
   | "MISSING_FIRST_NAME"
   | "MISSING_LAST_NAME"
@@ -50,7 +56,10 @@ export function validateBookingGuestsForAlloggiati(
   }
 
   const leaders = guests.filter(
-    (guest) => guest.role === "LEADER",
+    (guest) =>
+      guest.role === "SINGLE_GUEST" ||
+      guest.role === "FAMILY_HEAD" ||
+      guest.role === "GROUP_HEAD",
   );
 
   if (leaders.length === 0) {
@@ -60,6 +69,16 @@ export function validateBookingGuestsForAlloggiati(
   } else if (leaders.length > 1) {
     issues.push({
       code: "MULTIPLE_LEADERS",
+    });
+  }
+
+  const singleGuest = guests.some(
+    (guest) => guest.role === "SINGLE_GUEST",
+  );
+
+  if (singleGuest && guests.length !== 1) {
+    issues.push({
+      code: "INVALID_GUEST_STRUCTURE",
     });
   }
 
@@ -102,7 +121,11 @@ export function validateBookingGuestsForAlloggiati(
       });
     }
 
-    if (guest.role === "LEADER") {
+    if (
+      guest.role === "SINGLE_GUEST" ||
+      guest.role === "FAMILY_HEAD" ||
+      guest.role === "GROUP_HEAD"
+    ) {
       if (!guest.documentType?.trim()) {
         issues.push({
           code: "MISSING_DOCUMENT_TYPE",
