@@ -24,7 +24,6 @@ type RouteContext = {
 
 const GLOBAL_FORMULA_ROLES = [
   "SUPER_ADMIN",
-  "MANAGER",
   "FINANCE_ADMIN",
 ];
 

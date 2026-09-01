@@ -15,7 +15,6 @@ import { prisma } from "@/lib/prisma";
 
 const GLOBAL_ROLES = [
   "SUPER_ADMIN",
-  "MANAGER",
   "FINANCE_ADMIN",
 ];
 
@@ -38,18 +37,30 @@ export async function GET(request: Request) {
     const ids =
       await getAccessiblePropertyIds();
 
-    const where = ids
-      ? {
-          OR: [
-            { propertyId: null },
-            {
+    const hasGlobalAccess =
+      GLOBAL_ROLES.includes(
+        session.user.role,
+      );
+
+    const where =
+      ids === null
+        ? undefined
+        : hasGlobalAccess
+          ? {
+              OR: [
+                { propertyId: null },
+                {
+                  propertyId: {
+                    in: ids,
+                  },
+                },
+              ],
+            }
+          : {
               propertyId: {
                 in: ids,
               },
-            },
-          ],
-        }
-      : undefined;
+            };
 
     const formulas =
       await prisma.financeFormula.findMany({
