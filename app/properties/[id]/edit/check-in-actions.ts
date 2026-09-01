@@ -4,7 +4,7 @@ import { AuditAction } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { isPropertyCheckInType } from "@/lib/properties/property-check-in";
 import { AuditService } from "@/services/audit/AuditService";
@@ -38,7 +38,7 @@ export async function updatePropertyCheckInAction(
     throw new Error("Immobile non specificato.");
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const rawCheckInType = getOptionalString(
     formData,
