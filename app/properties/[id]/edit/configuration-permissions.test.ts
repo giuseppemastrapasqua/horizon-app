@@ -12,6 +12,7 @@ const files = [
   "amenity-actions.ts",
   "check-in-actions.ts",
   "house-rule-actions.ts",
+  "rate-plan-actions.ts",
 ];
 
 describe("property configuration permissions", () => {

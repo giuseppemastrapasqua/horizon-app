@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 export async function updatePropertyRatePlanAction(
@@ -48,7 +48,7 @@ export async function updatePropertyRatePlanAction(
     );
   }
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   if (!name) {
     throw new Error(
