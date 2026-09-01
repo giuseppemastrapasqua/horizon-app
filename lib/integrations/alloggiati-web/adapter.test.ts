@@ -105,12 +105,10 @@ describe("AlloggiatiWebAdapter", () => {
       new MockAlloggiatiWebTransport();
 
     transport.tableResult = {
-      entries: [
-        {
-          code: "100000100",
-          description: "ITALIA",
-        },
-      ],
+      csv: [
+        "CODICE;DESCRIZIONE",
+        "TEST-001;Valore test",
+      ].join("\r\n"),
     };
 
     const adapter =
@@ -123,12 +121,10 @@ describe("AlloggiatiWebAdapter", () => {
       await adapter.getTable("Luoghi");
 
     expect(result).toEqual({
-      entries: [
-        {
-          code: "100000100",
-          description: "ITALIA",
-        },
-      ],
+      csv: [
+        "CODICE;DESCRIZIONE",
+        "TEST-001;Valore test",
+      ].join("\r\n"),
     });
 
     expect(

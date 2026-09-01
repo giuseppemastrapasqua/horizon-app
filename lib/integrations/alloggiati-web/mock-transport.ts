@@ -50,7 +50,7 @@ export class MockAlloggiatiWebTransport
   };
 
   tableResult: AlloggiatiWebTableResult = {
-    entries: [],
+    csv: "",
   };
 
   async authenticate(
