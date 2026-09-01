@@ -1,4 +1,4 @@
-﻿import {
+import {
   beforeEach,
   describe,
   expect,
@@ -6,7 +6,7 @@
   vi,
 } from "vitest";
 
-const requirePropertyAccessMock = vi.hoisted(() => vi.fn());
+const requirePropertyRoleMock = vi.hoisted(() => vi.fn());
 const getPropertyRevenueAnalysisMock = vi.hoisted(() => vi.fn());
 
 const overrideFindManyMock = vi.hoisted(() => vi.fn());
@@ -29,7 +29,7 @@ const revalidatePathMock = vi.hoisted(() => vi.fn());
 const redirectMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/auth/guards", () => ({
-  requirePropertyAccess: requirePropertyAccessMock,
+  requirePropertyRole: requirePropertyRoleMock,
 }));
 
 vi.mock("@/lib/revenue/get-property-revenue-analysis", () => ({
@@ -88,7 +88,7 @@ describe("applyRevenueRecommendationAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    requirePropertyAccessMock.mockResolvedValue(undefined);
+    requirePropertyRoleMock.mockResolvedValue(undefined);
 
     overrideFindManyMock.mockResolvedValue([]);
     overrideDeleteMock.mockResolvedValue({});
@@ -121,8 +121,9 @@ describe("applyRevenueRecommendationAction", () => {
       createFormData(),
     );
 
-    expect(requirePropertyAccessMock).toHaveBeenCalledWith(
+    expect(requirePropertyRoleMock).toHaveBeenCalledWith(
       "property-1",
+      ["OWNER", "MANAGER"],
     );
 
     expect(getPropertyRevenueAnalysisMock).toHaveBeenCalledWith(

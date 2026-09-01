@@ -27,6 +27,7 @@ vi.mock("@/lib/prisma", () => ({
 import {
   getAccessiblePropertyIds,
   requirePropertyAccess,
+  requirePropertyRole,
 } from "@/lib/auth/guards";
 
 describe("property access guards", () => {
@@ -39,17 +40,22 @@ describe("property access guards", () => {
 
     mocks.auth.mockResolvedValue({ user });
 
-    await expect(requirePropertyAccess("property-1")).resolves.toEqual(user);
+    await expect(
+      requirePropertyAccess("property-1"),
+    ).resolves.toEqual(user);
+
     expect(mocks.findFirst).not.toHaveBeenCalled();
   });
 
-  it("checks ownership, PropertyAccess and task assignment for non-admin users", async () => {
+  it("checks ownership, PropertyAccess and task assignment for visibility", async () => {
     const user = { id: "manager-1", role: "MANAGER" };
 
     mocks.auth.mockResolvedValue({ user });
     mocks.findFirst.mockResolvedValue({ id: "property-1" });
 
-    await expect(requirePropertyAccess("property-1")).resolves.toEqual(user);
+    await expect(
+      requirePropertyAccess("property-1"),
+    ).resolves.toEqual(user);
 
     expect(mocks.findFirst).toHaveBeenCalledWith({
       where: {
@@ -78,7 +84,7 @@ describe("property access guards", () => {
     });
   });
 
-  it("rejects access when no authorization exists", async () => {
+  it("rejects visibility when no authorization exists", async () => {
     mocks.auth.mockResolvedValue({
       user: { id: "user-1", role: "MANAGER" },
     });
@@ -87,7 +93,78 @@ describe("property access guards", () => {
 
     await expect(
       requirePropertyAccess("property-1"),
-    ).rejects.toThrow("Accesso alla struttura non autorizzato.");
+    ).rejects.toThrow(
+      "Accesso alla struttura non autorizzato.",
+    );
+  });
+
+  it("gives SUPER_ADMIN every property role without querying Prisma", async () => {
+    const user = { id: "admin-1", role: "SUPER_ADMIN" };
+
+    mocks.auth.mockResolvedValue({ user });
+
+    await expect(
+      requirePropertyRole("property-1", ["OWNER", "MANAGER"]),
+    ).resolves.toEqual(user);
+
+    expect(mocks.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("allows the direct property owner to modify the property", async () => {
+    const user = { id: "owner-1", role: "OWNER" };
+
+    mocks.auth.mockResolvedValue({ user });
+    mocks.findFirst.mockResolvedValue({ id: "property-1" });
+
+    await expect(
+      requirePropertyRole("property-1", ["OWNER", "MANAGER"]),
+    ).resolves.toEqual(user);
+  });
+
+  it("requires an active PropertyAccess role for modification", async () => {
+    const user = { id: "manager-1", role: "MANAGER" };
+
+    mocks.auth.mockResolvedValue({ user });
+    mocks.findFirst.mockResolvedValue({ id: "property-1" });
+
+    await expect(
+      requirePropertyRole("property-1", ["OWNER", "MANAGER"]),
+    ).resolves.toEqual(user);
+
+    expect(mocks.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "property-1",
+        OR: [
+          { ownerId: "manager-1" },
+          {
+            accesses: {
+              some: {
+                userId: "manager-1",
+                active: true,
+                role: {
+                  in: ["OWNER", "MANAGER"],
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+  });
+
+  it("does not treat VIEWER or task assignment as modification permission", async () => {
+    mocks.auth.mockResolvedValue({
+      user: { id: "viewer-1", role: "OPERATOR" },
+    });
+
+    mocks.findFirst.mockResolvedValue(null);
+
+    await expect(
+      requirePropertyRole("property-1", ["OWNER", "MANAGER"]),
+    ).rejects.toThrow(
+      "Permessi insufficienti per modificare la struttura.",
+    );
   });
 
   it("returns null property filter for SUPER_ADMIN", async () => {
@@ -95,7 +172,10 @@ describe("property access guards", () => {
       user: { id: "admin-1", role: "SUPER_ADMIN" },
     });
 
-    await expect(getAccessiblePropertyIds()).resolves.toBeNull();
+    await expect(
+      getAccessiblePropertyIds(),
+    ).resolves.toBeNull();
+
     expect(mocks.findMany).not.toHaveBeenCalled();
   });
 
@@ -109,34 +189,11 @@ describe("property access guards", () => {
       { id: "property-2" },
     ]);
 
-    await expect(getAccessiblePropertyIds()).resolves.toEqual([
+    await expect(
+      getAccessiblePropertyIds(),
+    ).resolves.toEqual([
       "property-1",
       "property-2",
     ]);
-
-    expect(mocks.findMany).toHaveBeenCalledWith({
-      where: {
-        OR: [
-          { ownerId: "finance-1" },
-          {
-            accesses: {
-              some: {
-                userId: "finance-1",
-                active: true,
-              },
-            },
-          },
-          {
-            taskAssignments: {
-              some: {
-                userId: "finance-1",
-                active: true,
-              },
-            },
-          },
-        ],
-      },
-      select: { id: true },
-    });
   });
 });

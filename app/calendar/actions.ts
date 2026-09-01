@@ -5,12 +5,12 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 import { getPropertyRevenueAnalysis } from "@/lib/revenue/get-property-revenue-analysis";
 
 export async function saveCalendarPeriodAction(formData: FormData) {
   const propertyId = requiredText(formData, "propertyId");
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const month = requiredText(formData, "month");
   const from = parseDate(requiredText(formData, "from"));
@@ -97,7 +97,7 @@ export async function applyRevenueAiAction(
   const propertyId =
     requiredText(formData, "propertyId");
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const month =
     requiredText(formData, "month");
@@ -169,7 +169,7 @@ export async function applyRevenueRecommendationAction(
   const propertyId =
     requiredText(formData, "propertyId");
 
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const month =
     requiredText(formData, "month");

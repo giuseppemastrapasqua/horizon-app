@@ -12,7 +12,7 @@ import {
   prisma,
 } from "@/lib/prisma";
 
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyRole } from "@/lib/auth/guards";
 
 const CORE_RATE_TYPES = [
   {
@@ -47,7 +47,7 @@ export async function saveRateTypesAction(
       "propertyId",
       "Struttura",
     );
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const property =
     await assertProperty(
@@ -449,7 +449,7 @@ export async function createCustomRateAction(
       "propertyId",
       "Struttura",
     );
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const name =
     readRequiredText(
@@ -635,7 +635,7 @@ export async function updateCustomRateAction(
       "propertyId",
       "Struttura",
     );
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const ratePlanId =
     readRequiredText(
@@ -840,7 +840,7 @@ export async function deleteCustomRateAction(
       "propertyId",
       "Struttura",
     );
-  await requirePropertyAccess(propertyId);
+  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
   const ratePlanId =
     readRequiredText(
