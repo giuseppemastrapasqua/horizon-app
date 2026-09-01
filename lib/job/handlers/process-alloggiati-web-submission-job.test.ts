@@ -12,6 +12,16 @@ import {
 } from "vitest";
 
 import {
+  MockAlloggiatiReferenceResolver,
+} from "@/lib/integrations/alloggiati-web/mock-reference-resolver";
+import {
+  prepareBookingSubmission,
+} from "@/lib/integrations/alloggiati-web/prepare-booking-submission";
+import type {
+  AlloggiatiWebSubmission,
+} from "@/lib/integrations/alloggiati-web/types";
+
+import {
   processAlloggiatiWebSubmissionJob,
 } from "./process-alloggiati-web-submission-job";
 
@@ -103,6 +113,20 @@ const booking = {
     },
   ],
 };
+
+const resolver =
+  new MockAlloggiatiReferenceResolver(
+    {
+      ITALIA: "100000100",
+    },
+    {
+      "Milano|MI": "403015146",
+      Milano: "403015146",
+    },
+    {
+      CARTA_IDENTITA: "IDENT",
+    },
+  );
 
 describe(
   "processAlloggiatiWebSubmissionJob",
@@ -228,15 +252,47 @@ describe(
     );
 
     it(
-      "arriva allo stop fail-safe con dati validi",
+      "prepara la submission e si ferma prima del trasporto",
       async () => {
+        let prepared:
+          | AlloggiatiWebSubmission
+          | undefined;
+
         await expect(
           processAlloggiatiWebSubmissionJob(
             createJob(),
+            {
+              getReferenceResolver:
+                async () => resolver,
+              prepareSubmission:
+                async (input, referenceResolver) => {
+                  prepared =
+                    await prepareBookingSubmission(
+                      input,
+                      referenceResolver,
+                    );
+
+                  return prepared;
+                },
+            },
           ),
         ).rejects.toThrow(
-          "Alloggiati Web reference resolver e trasporto reale non ancora configurati.",
+          "Alloggiati Web trasporto reale non ancora configurato.",
         );
+
+        expect(prepared).toBeDefined();
+        expect(prepared?.apartmentId).toBe(
+          "APT-123",
+        );
+        expect(prepared?.records).toHaveLength(
+          1,
+        );
+        expect(
+          prepared?.records[0],
+        ).toHaveLength(168);
+        expect(
+          prepared?.records[0].slice(0, 2),
+        ).toBe("16");
 
         expect(
           bookingFindUniqueMock,

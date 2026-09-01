@@ -3,12 +3,30 @@ import type {
   Prisma,
 } from "@prisma/client";
 
+import {
+  prepareBookingSubmission,
+} from "@/lib/integrations/alloggiati-web/prepare-booking-submission";
+import {
+  PublicAlloggiatiReferenceProvider,
+} from "@/lib/integrations/alloggiati-web/public-reference-provider";
+import type {
+  AlloggiatiReferenceResolver,
+} from "@/lib/integrations/alloggiati-web/reference-resolver";
 import { prisma } from "@/lib/prisma";
 
 type AlloggiatiWebSubmissionPayload = {
   bookingId: string;
   propertyId: string;
 };
+
+type ProcessAlloggiatiWebSubmissionJobDependencies = {
+  getReferenceResolver?: (
+  ) => Promise<AlloggiatiReferenceResolver>;
+  prepareSubmission?: typeof prepareBookingSubmission;
+};
+
+const publicReferenceProvider =
+  new PublicAlloggiatiReferenceProvider();
 
 function isJsonObject(
   value: Prisma.JsonValue,
@@ -61,6 +79,8 @@ function parsePayload(
 
 export async function processAlloggiatiWebSubmissionJob(
   job: BackgroundJob,
+  dependencies:
+    ProcessAlloggiatiWebSubmissionJobDependencies = {},
 ): Promise<void> {
   if (job.type !== "ALLOGGIATI_WEB_SUBMISSION") {
     throw new Error(
@@ -138,13 +158,38 @@ export async function processAlloggiatiWebSubmissionJob(
     );
   }
 
-  if (booking.guests !== booking.bookingGuests.length) {
+  if (
+    booking.guests !==
+    booking.bookingGuests.length
+  ) {
     throw new Error(
       "Dati ospiti Alloggiati incompleti rispetto alla prenotazione.",
     );
   }
 
+  const getReferenceResolver =
+    dependencies.getReferenceResolver ??
+    (() => publicReferenceProvider.getResolver());
+
+  const resolver =
+    await getReferenceResolver();
+
+  const prepareSubmission =
+    dependencies.prepareSubmission ??
+    prepareBookingSubmission;
+
+  await prepareSubmission(
+    {
+      checkIn: booking.checkIn,
+      nights: booking.nights,
+      expectedGuests: booking.guests,
+      guests: booking.bookingGuests,
+      apartmentId: mapping.externalPropertyId,
+    },
+    resolver,
+  );
+
   throw new Error(
-    "Alloggiati Web reference resolver e trasporto reale non ancora configurati.",
+    "Alloggiati Web trasporto reale non ancora configurato.",
   );
 }
