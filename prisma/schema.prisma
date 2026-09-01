@@ -113,6 +113,8 @@ model Property {
   name                                String
   address                             String
   city                                String                          @default("Milano")
+  latitude                            Decimal?                        @db.Decimal(10, 7)
+  longitude                           Decimal?                        @db.Decimal(10, 7)
   zone                                String?
   maxGuests                           Int
   bedrooms                            Int?

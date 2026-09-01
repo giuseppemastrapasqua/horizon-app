@@ -5,12 +5,15 @@ import { Navigation } from "@/components/Navigation";
 import { prisma } from "@/lib/prisma";
 
 import { createProperty } from "../actions";
+import { OwnerSelector } from "./OwnerSelector";
+import { PropertyLocationMap } from "./PropertyLocationMap";
 
 export default async function NewPropertyPage() {
   const owners =
     await prisma.user.findMany({
       where: {
         role: "OWNER",
+        status: "ACTIVE",
       },
       select: {
         id: true,
@@ -43,38 +46,9 @@ export default async function NewPropertyPage() {
             className="mt-8 space-y-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
           >
             <div className="grid gap-6 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <label
-                  htmlFor="ownerId"
-                  className="block text-sm font-semibold text-slate-700"
-                >
-                  Proprietario
-                </label>
-
-                <select
-                  id="ownerId"
-                  name="ownerId"
-                  required
-                  defaultValue=""
-                  className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
-                >
-                  <option
-                    value=""
-                    disabled
-                  >
-                    Seleziona un proprietario
-                  </option>
-
-                  {owners.map((owner) => (
-                    <option
-                      key={owner.id}
-                      value={owner.id}
-                    >
-                      {owner.fullName} · {owner.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <OwnerSelector
+                initialOwners={owners}
+              />
 
               <div className="sm:col-span-2">
                 <Input
@@ -104,6 +78,8 @@ export default async function NewPropertyPage() {
                 label="Zona"
                 required
               />
+
+              <PropertyLocationMap />
 
               <Input
                 name="maxGuests"
@@ -157,6 +133,8 @@ export default async function NewPropertyPage() {
             <div className="flex justify-end border-t border-slate-200 pt-6">
               <button
                 type="submit"
+                name="submitIntent"
+                value="create-property"
                 className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Crea immobile

@@ -56,6 +56,59 @@ export async function createProperty(
     formData.get("zone") || "",
   ).trim();
 
+  const latitudeValue = String(
+    formData.get("latitude") || "",
+  ).trim();
+
+  const longitudeValue = String(
+    formData.get("longitude") || "",
+  ).trim();
+
+  const latitude =
+    latitudeValue === ""
+      ? null
+      : Number(latitudeValue);
+
+  const longitude =
+    longitudeValue === ""
+      ? null
+      : Number(longitudeValue);
+
+  if (
+    (latitude === null) !==
+    (longitude === null)
+  ) {
+    throw new Error(
+      "Latitudine e longitudine devono essere indicate insieme.",
+    );
+  }
+
+  if (
+    latitude !== null &&
+    (
+      !Number.isFinite(latitude) ||
+      latitude < -90 ||
+      latitude > 90
+    )
+  ) {
+    throw new Error(
+      "La latitudine non è valida.",
+    );
+  }
+
+  if (
+    longitude !== null &&
+    (
+      !Number.isFinite(longitude) ||
+      longitude < -180 ||
+      longitude > 180
+    )
+  ) {
+    throw new Error(
+      "La longitudine non è valida.",
+    );
+  }
+
   if (!name) {
     throw new Error(
       "Il nome dell'immobile è obbligatorio.",
@@ -152,6 +205,8 @@ export async function createProperty(
               name,
               address,
               city,
+              latitude,
+              longitude,
               zone,
               maxGuests,
               bedrooms,
