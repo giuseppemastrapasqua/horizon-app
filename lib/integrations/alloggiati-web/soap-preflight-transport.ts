@@ -15,6 +15,8 @@ import type {
 const SERVICE_URL =
   "https://alloggiatiweb.poliziadistato.it/service/Service.asmx";
 
+const DEFAULT_TIMEOUT_MS = 10_000;
+
 type FetchLike = typeof fetch;
 
 export class SoapPreflightAlloggiatiWebTransport
@@ -25,7 +27,18 @@ export class SoapPreflightAlloggiatiWebTransport
 
   constructor(
     private readonly fetchImpl: FetchLike = fetch,
-  ) {}
+    private readonly timeoutMs =
+      DEFAULT_TIMEOUT_MS,
+  ) {
+    if (
+      !Number.isFinite(timeoutMs) ||
+      timeoutMs <= 0
+    ) {
+      throw new Error(
+        "Timeout Alloggiati Web non valido.",
+      );
+    }
+  }
 
   async authenticate(
     credentials: AlloggiatiWebCredentials,
@@ -141,7 +154,8 @@ export class SoapPreflightAlloggiatiWebTransport
 
     const success =
       Number.isInteger(validRecords) &&
-      validRecords === submission.records.length &&
+      validRecords ===
+        submission.records.length &&
       errors.length === 0;
 
     return {
@@ -195,29 +209,63 @@ export class SoapPreflightAlloggiatiWebTransport
       `<soap:Body>${body}</soap:Body>` +
       `</soap:Envelope>`;
 
-    const response = await this.fetchImpl(
-      SERVICE_URL,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "text/xml; charset=utf-8",
-          SOAPAction:
-            `"AlloggiatiService/${operation}"`,
-        },
-        body: envelope,
-      },
+    const controller =
+      new AbortController();
+
+    const timeout = setTimeout(
+      () => controller.abort(),
+      this.timeoutMs,
     );
 
-    const xml = await response.text();
+    try {
+      const response =
+        await this.fetchImpl(
+          SERVICE_URL,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "text/xml; charset=utf-8",
+              SOAPAction:
+                `"AlloggiatiService/${operation}"`,
+            },
+            body: envelope,
+            signal: controller.signal,
+          },
+        );
 
-    if (!response.ok) {
-      throw new Error(
-        `Alloggiati Web HTTP ${response.status}.`,
-      );
+      const xml = await response.text();
+
+      const soapFault =
+        readSoapFault(xml);
+
+      if (soapFault) {
+        throw new Error(
+          `Alloggiati Web SOAP Fault: ${soapFault}`,
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          `Alloggiati Web HTTP ${response.status}.`,
+        );
+      }
+
+      return xml;
+    } catch (error) {
+      if (
+        controller.signal.aborted &&
+        isAbortError(error)
+      ) {
+        throw new Error(
+          `Timeout Alloggiati Web dopo ${this.timeoutMs} ms.`,
+        );
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return xml;
   }
 }
 
@@ -228,6 +276,20 @@ function escapeXml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
+}
+
+function readSoapFault(
+  xml: string,
+): string | undefined {
+  if (!/<(?:\w+:)?Fault(?:\s|>)/i.test(xml)) {
+    return undefined;
+  }
+
+  return (
+    readTag(xml, "faultstring") ??
+    readTag(xml, "Text") ??
+    "Errore SOAP non specificato."
+  );
 }
 
 function readTag(
@@ -242,7 +304,10 @@ function readTags(
   tag: string,
 ): string[] {
   const escapedTag =
-    tag.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    tag.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&",
+    );
 
   const regex = new RegExp(
     `<(?:\\w+:)?${escapedTag}(?:\\s[^>]*)?>([\\s\\S]*?)</(?:\\w+:)?${escapedTag}>`,
@@ -251,7 +316,8 @@ function readTags(
 
   return Array.from(
     xml.matchAll(regex),
-    (match) => decodeXml(match[1].trim()),
+    (match) =>
+      decodeXml(match[1].trim()),
   );
 }
 
@@ -262,4 +328,13 @@ function decodeXml(value: string): string {
     .replaceAll("&quot;", '"')
     .replaceAll("&apos;", "'")
     .replaceAll("&amp;", "&");
+}
+
+function isAbortError(
+  error: unknown,
+): boolean {
+  return (
+    error instanceof DOMException &&
+    error.name === "AbortError"
+  );
 }
