@@ -77,7 +77,7 @@ export default async function OwnerInvitePage({
 
               <p className="mt-3 leading-7 text-slate-500">
                 Il link è scaduto, è stato revocato oppure è già stato utilizzato.
-                Richiedi un nuovo invito all'amministratore Horizon.
+                Richiedi un nuovo invito all&apos;amministratore Horizon.
               </p>
             </>
           ) : (

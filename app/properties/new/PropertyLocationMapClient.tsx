@@ -92,7 +92,7 @@ export default function PropertyLocationMapClient() {
 
         <p className="mt-1 text-sm text-slate-500">
           Clicca sulla mappa oppure trascina il marker
-          per confermare la posizione dell'immobile.
+          per confermare la posizione dell&apos;immobile.
         </p>
       </div>
 

@@ -1170,7 +1170,7 @@ export default async function PropertyEditPage({
 
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-red-800">
                     Disponibile solo per strutture archiviate e senza storico operativo
-                    protetto. L'operazione non può essere annullata.
+                    protetto. L&apos;operazione non può essere annullata.
                   </p>
 
                   {property.status === "ARCHIVED" ? (
