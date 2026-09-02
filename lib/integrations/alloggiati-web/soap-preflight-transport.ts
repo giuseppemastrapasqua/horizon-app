@@ -87,13 +87,7 @@ export class SoapPreflightAlloggiatiWebTransport
     submission: AlloggiatiWebSubmission,
   ): Promise<AlloggiatiWebValidationResult> {
     const username =
-      this.usernamesByToken.get(session.token);
-
-    if (!username) {
-      throw new Error(
-        "Sessione Alloggiati Web non riconosciuta.",
-      );
-    }
+      this.getUsername(session);
 
     const records = submission.records
       .map(
@@ -188,12 +182,62 @@ export class SoapPreflightAlloggiatiWebTransport
   }
 
   async getTable(
-    _session: AlloggiatiWebSession,
-    _table: AlloggiatiWebTableType,
+    session: AlloggiatiWebSession,
+    table: AlloggiatiWebTableType,
   ): Promise<AlloggiatiWebTableResult> {
-    throw new Error(
-      "Tabella SOAP Alloggiati Web non ancora abilitata.",
+    const username =
+      this.getUsername(session);
+
+    const xml = await this.postSoap(
+      "Tabella",
+      `
+        <Tabella xmlns="AlloggiatiService">
+          <Utente>${escapeXml(username)}</Utente>
+          <token>${escapeXml(session.token)}</token>
+          <tipo>${escapeXml(table)}</tipo>
+          <result>
+            <ErroreDettaglio></ErroreDettaglio>
+          </result>
+        </Tabella>
+      `,
     );
+
+    const error =
+      readTag(xml, "ErroreDettaglio");
+
+    if (error?.trim()) {
+      throw new Error(
+        `Tabella Alloggiati Web fallita: ${error.trim()}`,
+      );
+    }
+
+    const csv =
+      readTag(xml, "CSV") ??
+      readTag(xml, "Csv") ??
+      readTag(xml, "csv");
+
+    if (csv === undefined) {
+      throw new Error(
+        "Alloggiati Web non ha restituito la tabella richiesta.",
+      );
+    }
+
+    return { csv };
+  }
+
+  private getUsername(
+    session: AlloggiatiWebSession,
+  ): string {
+    const username =
+      this.usernamesByToken.get(session.token);
+
+    if (!username) {
+      throw new Error(
+        "Sessione Alloggiati Web non riconosciuta.",
+      );
+    }
+
+    return username;
   }
 
   private async postSoap(

@@ -31,7 +31,8 @@ export type AlloggiatiWebReceipt = {
 
 export type AlloggiatiWebTableType =
   | "Luoghi"
-  | "Tipi_Documento";
+  | "Tipi_Documento"
+  | "ListaAppartamenti";
 
 export type AlloggiatiWebTableResult = {
   csv: string;

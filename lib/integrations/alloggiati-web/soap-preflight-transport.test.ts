@@ -197,6 +197,151 @@ describe(
     );
 
     it(
+      "legge ListaAppartamenti con Tabella",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <TabellaResponse>
+                <TabellaResult>
+                  <ErroreDettaglio></ErroreDettaglio>
+                  <CSV>IdAppartamento;Descrizione&amp;#13;&amp;#10;123;Casa Centro</CSV>
+                </TabellaResult>
+              </TabellaResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.getTable(
+            session,
+            "ListaAppartamenti",
+          ),
+        ).resolves.toEqual({
+          csv:
+            "IdAppartamento;Descrizione&#13;&#10;123;Casa Centro",
+        });
+
+        const [, options] =
+          fetchMock.mock.calls[1];
+
+        expect(
+          options?.headers,
+        ).toMatchObject({
+          SOAPAction:
+            '"AlloggiatiService/Tabella"',
+        });
+
+        expect(
+          String(options?.body),
+        ).toContain(
+          "<Utente>user</Utente>",
+        );
+
+        expect(
+          String(options?.body),
+        ).toContain(
+          "<token>token-123</token>",
+        );
+
+        expect(
+          String(options?.body),
+        ).toContain(
+          "<tipo>ListaAppartamenti</tipo>",
+        );
+      },
+    );
+
+    it(
+      "propaga errore Tabella",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <TabellaResponse>
+                <TabellaResult>
+                  <ErroreDettaglio>Tabella non disponibile</ErroreDettaglio>
+                </TabellaResult>
+              </TabellaResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.getTable(
+            session,
+            "ListaAppartamenti",
+          ),
+        ).rejects.toThrow(
+          "Tabella Alloggiati Web fallita: Tabella non disponibile",
+        );
+      },
+    );
+
+    it(
+      "rifiuta Tabella con sessione sconosciuta",
+      async () => {
+        const fetchMock = vi.fn<typeof fetch>();
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        await expect(
+          transport.getTable(
+            {
+              token: "token-sconosciuto",
+            },
+            "ListaAppartamenti",
+          ),
+        ).rejects.toThrow(
+          "Sessione Alloggiati Web non riconosciuta.",
+        );
+
+        expect(fetchMock).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
       "non abilita mai Send",
       async () => {
         const fetchMock = vi.fn<typeof fetch>();
