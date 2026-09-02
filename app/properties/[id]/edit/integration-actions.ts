@@ -60,6 +60,16 @@ export async function updatePropertyIntegrationAction(
     );
   }
 
+  if (
+    providerValue ===
+      INTEGRATION_PROVIDERS.ALLOGGIATI_WEB &&
+    !/^\d+$/.test(externalPropertyId)
+  ) {
+    throw new Error(
+      "IdAppartamento Alloggiati Web non valido.",
+    );
+  }
+
   await upsertIntegrationPropertyMapping({
     provider: providerValue,
     propertyId,
