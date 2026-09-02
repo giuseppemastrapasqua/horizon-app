@@ -1,5 +1,8 @@
 import type { BackgroundJob } from "@prisma/client";
 
+import {
+  isNonRetryableBackgroundJobError,
+} from "@/lib/job/background-job-errors";
 import { prisma } from "@/lib/prisma";
 
 type FailBackgroundJobInput = {
@@ -56,6 +59,7 @@ export async function failBackgroundJob({
   }
 
   const shouldRetry =
+    !isNonRetryableBackgroundJobError(error) &&
     currentJob.attempts < currentJob.maxAttempts;
 
   const updatedJob =
