@@ -156,22 +156,29 @@ export async function processAlloggiatiWebSubmissionJob(
     );
   }
 
-  const mapping =
-    await prisma.integrationPropertyMapping.findUnique({
+  const connection =
+    await prisma.alloggiatiWebProperty.findUnique({
       where: {
-        provider_propertyId: {
-          provider: "ALLOGGIATI_WEB",
-          propertyId: payload.propertyId,
-        },
+        propertyId: payload.propertyId,
       },
       select: {
-        externalPropertyId: true,
+        apartmentId: true,
       },
     });
 
-  if (!mapping) {
+  if (!connection) {
     throw new Error(
-      "Mapping ALLOGGIATI_WEB non configurato per la struttura.",
+      "Alloggiati Web non configurato per la struttura.",
+    );
+  }
+
+  if (
+    !/^\d+$/.test(
+      connection.apartmentId.trim(),
+    )
+  ) {
+    throw new Error(
+      "IdAppartamento Alloggiati Web non valido.",
     );
   }
 
@@ -208,7 +215,8 @@ export async function processAlloggiatiWebSubmissionJob(
         nights: booking.nights,
         expectedGuests: booking.guests,
         guests: booking.bookingGuests,
-        apartmentId: mapping.externalPropertyId,
+        apartmentId:
+          connection.apartmentId.trim(),
       },
       resolver,
     );

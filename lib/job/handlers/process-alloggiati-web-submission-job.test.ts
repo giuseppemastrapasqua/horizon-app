@@ -33,10 +33,10 @@ import {
 
 const {
   bookingFindUniqueMock,
-  mappingFindUniqueMock,
+  connectionFindUniqueMock,
 } = vi.hoisted(() => ({
   bookingFindUniqueMock: vi.fn(),
-  mappingFindUniqueMock: vi.fn(),
+  connectionFindUniqueMock: vi.fn(),
 }));
 
 vi.mock(
@@ -46,8 +46,8 @@ vi.mock(
       booking: {
         findUnique: bookingFindUniqueMock,
       },
-      integrationPropertyMapping: {
-        findUnique: mappingFindUniqueMock,
+      alloggiatiWebProperty: {
+        findUnique: connectionFindUniqueMock,
       },
     },
   }),
@@ -144,8 +144,8 @@ describe(
         booking,
       );
 
-      mappingFindUniqueMock.mockResolvedValue({
-        externalPropertyId: "APT-123",
+      connectionFindUniqueMock.mockResolvedValue({
+        apartmentId: "123",
       });
     });
 
@@ -217,15 +217,15 @@ describe(
         );
 
         expect(
-          mappingFindUniqueMock,
+          connectionFindUniqueMock,
         ).not.toHaveBeenCalled();
       },
     );
 
     it(
-      "richiede il mapping Alloggiati Web",
+      "richiede il collegamento Alloggiati Web",
       async () => {
-        mappingFindUniqueMock.mockResolvedValue(
+        connectionFindUniqueMock.mockResolvedValue(
           null,
         );
 
@@ -234,11 +234,27 @@ describe(
             createJob(),
           ),
         ).rejects.toThrow(
-          "Mapping ALLOGGIATI_WEB non configurato per la struttura.",
+          "Alloggiati Web non configurato per la struttura.",
         );
       },
     );
 
+    it(
+      "rifiuta un IdAppartamento non numerico",
+      async () => {
+        connectionFindUniqueMock.mockResolvedValue({
+          apartmentId: "APT-123",
+        });
+
+        await expect(
+          processAlloggiatiWebSubmissionJob(
+            createJob(),
+          ),
+        ).rejects.toThrow(
+          "IdAppartamento Alloggiati Web non valido.",
+        );
+      },
+    );
     it(
       "rifiuta dati ospiti incompleti",
       async () => {
@@ -304,7 +320,7 @@ describe(
 
         expect(prepared).toBeDefined();
         expect(prepared?.apartmentId).toBe(
-          "APT-123",
+          "123",
         );
         expect(prepared?.records).toHaveLength(
           1,
@@ -325,7 +341,7 @@ describe(
         ).toHaveBeenCalledTimes(1);
 
         expect(
-          mappingFindUniqueMock,
+          connectionFindUniqueMock,
         ).toHaveBeenCalledTimes(1);
       },
     );
@@ -381,7 +397,7 @@ describe(
         expect(
           transport.validatedSubmissions[0]
             .apartmentId,
-        ).toBe("APT-123");
+        ).toBe("123");
 
         expect(
           transport.validatedSubmissions[0]
