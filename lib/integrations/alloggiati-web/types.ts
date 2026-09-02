@@ -19,7 +19,7 @@ export type AlloggiatiWebValidationResult = {
 };
 
 export type AlloggiatiWebSubmissionResult = {
-  success: boolean;
+  acceptedRecords: number;
   resultCode?: string;
   message?: string;
 };

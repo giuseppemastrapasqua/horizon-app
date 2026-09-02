@@ -40,7 +40,7 @@ export class MockAlloggiatiWebTransport
 
   submissionResult:
     AlloggiatiWebSubmissionResult = {
-      success: true,
+      acceptedRecords: 1,
       resultCode: "MOCK_OK",
     };
 
