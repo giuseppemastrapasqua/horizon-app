@@ -41,12 +41,28 @@ const {
 
 const createFingerprintMock = vi.fn();
 const prepareTransmissionMock = vi.fn();
+const beginSendingMock = vi.fn();
+const recordAcceptedRecordsMock = vi.fn();
+const markRejectedMock = vi.fn();
+const markOutcomeUnknownMock = vi.fn();
+const sendTransmissionMock = vi.fn();
 
 const transmissionDependencies = {
   createFingerprint: createFingerprintMock,
   transmissionStore: {
     prepare: prepareTransmissionMock,
+    beginSending: beginSendingMock,
+    recordAcceptedRecords:
+      recordAcceptedRecordsMock,
+    markRejected: markRejectedMock,
+    markOutcomeUnknown:
+      markOutcomeUnknownMock,
   },
+  createSender: vi.fn(() => ({
+    submit: vi.fn(),
+  })),
+  sendTransmission:
+    sendTransmissionMock,
 };
 
 vi.mock(
@@ -166,6 +182,10 @@ describe(
         id: "transmission-1",
         status: "PREPARED",
       });
+
+      sendTransmissionMock.mockResolvedValue(
+        undefined,
+      );
     });
 
     it(
@@ -334,9 +354,7 @@ describe(
               ...transmissionDependencies,
             },
           ),
-        ).rejects.toThrow(
-          "Alloggiati Web invio disabilitato dopo preflight.",
-        );
+        ).resolves.toBeUndefined();
 
         expect(prepared).toBeDefined();
         expect(prepared?.apartmentId).toBe(
@@ -411,9 +429,7 @@ describe(
               ...transmissionDependencies,
             },
           ),
-        ).rejects.toThrow(
-          "Alloggiati Web invio disabilitato dopo preflight.",
-        );
+        ).resolves.toBeUndefined();
 
         expect(
           credentialProvider.getCredentials,
@@ -493,7 +509,79 @@ describe(
     );
 
     it(
-      "non raggiunge alcuna fase di invio dopo PREPARED",
+      "completa il preflight prima di avviare il Send",
+      async () => {
+        const order: string[] = [];
+
+        const validateSubmission = vi.fn(
+          async () => {
+            order.push("preflight");
+            return {
+              success: true,
+            };
+          },
+        );
+
+        prepareTransmissionMock.mockImplementation(
+          async () => {
+            order.push("prepare");
+
+            return {
+              id: "transmission-1",
+              status: "PREPARED",
+            };
+          },
+        );
+
+        const sendTransmission =
+          vi.fn(async () => {
+            order.push("send");
+          });
+
+        await processAlloggiatiWebSubmissionJob(
+          createJob(),
+          {
+            getReferenceResolver:
+              async () => resolver,
+            credentialProvider: {
+              getCredentials: async () => ({
+                username: "test-user",
+                password: "test-password",
+                wsKey: "test-wskey",
+              }),
+            },
+            createValidator: () => ({
+              validateSubmission,
+            }),
+            createFingerprint:
+              createFingerprintMock,
+            transmissionStore: {
+              prepare: prepareTransmissionMock,
+              beginSending:
+                beginSendingMock,
+              recordAcceptedRecords:
+                recordAcceptedRecordsMock,
+              markRejected:
+                markRejectedMock,
+              markOutcomeUnknown:
+                markOutcomeUnknownMock,
+            },
+            createSender: vi.fn(() => ({
+              submit: vi.fn(),
+            })),
+            sendTransmission,
+          },
+        );
+
+        expect(order).toEqual([
+          "preflight",
+          "prepare",
+          "send",
+        ]);
+      },
+    );
+    it(
+      "invia la transmission preparata tramite orchestrator",
       async () => {
         const validateSubmission = vi.fn(
           async () => ({
@@ -520,13 +608,26 @@ describe(
               ...transmissionDependencies,
             },
           ),
-        ).rejects.toThrow(
-          "Alloggiati Web invio disabilitato dopo preflight.",
-        );
+        ).resolves.toBeUndefined();
 
         expect(
           prepareTransmissionMock,
         ).toHaveBeenCalledTimes(1);
+
+        expect(
+          sendTransmissionMock,
+        ).toHaveBeenCalledTimes(1);
+
+        expect(
+          sendTransmissionMock,
+        ).toHaveBeenCalledWith(
+          "transmission-1",
+          expect.objectContaining({
+            apartmentId: "123",
+          }),
+          expect.anything(),
+          transmissionDependencies.transmissionStore,
+        );
       },
     );
   },

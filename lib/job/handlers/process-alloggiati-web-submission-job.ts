@@ -33,6 +33,11 @@ import {
 import {
   createRuntimeAlloggiatiWebValidator,
 } from "@/lib/integrations/alloggiati-web/runtime-validator";
+import {
+  sendAlloggiatiTransmission,
+  type AlloggiatiSubmissionSender,
+  type AlloggiatiTransmissionOrchestratorStore,
+} from "@/lib/integrations/alloggiati-web/transmission-send-orchestrator";
 import { prisma } from "@/lib/prisma";
 
 type AlloggiatiWebSubmissionPayload = {
@@ -53,9 +58,17 @@ type ProcessAlloggiatiWebSubmissionJobDependencies = {
     },
   ) => AlloggiatiWebSubmissionValidator;
   createFingerprint?: typeof createAlloggiatiSubmissionFingerprint;
-  transmissionStore?: {
+  transmissionStore?: AlloggiatiTransmissionOrchestratorStore & {
     prepare: typeof prismaAlloggiatiTransmissionStore.prepare;
   };
+  createSender?: (
+    credentials: {
+      username: string;
+      password: string;
+      wsKey: string;
+    },
+  ) => AlloggiatiSubmissionSender;
+  sendTransmission?: typeof sendAlloggiatiTransmission;
 };
 
 const publicReferenceProvider =
@@ -263,17 +276,32 @@ export async function processAlloggiatiWebSubmissionJob(
     dependencies.transmissionStore ??
     prismaAlloggiatiTransmissionStore;
 
-  await transmissionStore.prepare({
-    bookingId: booking.id,
-    propertyId: payload.propertyId,
-    apartmentId:
-      connection.apartmentId.trim(),
-    payloadHash,
-    recordsCount:
-      submission.records.length,
-  });
+  const transmission =
+    await transmissionStore.prepare({
+      bookingId: booking.id,
+      propertyId: payload.propertyId,
+      apartmentId:
+        connection.apartmentId.trim(),
+      payloadHash,
+      recordsCount:
+        submission.records.length,
+    });
 
-  throw new Error(
-    "Alloggiati Web invio disabilitato dopo preflight.",
+  const createSender =
+    dependencies.createSender ??
+    createRuntimeAlloggiatiWebValidator;
+
+  const sender =
+    createSender(credentials);
+
+  const sendTransmission =
+    dependencies.sendTransmission ??
+    sendAlloggiatiTransmission;
+
+  await sendTransmission(
+    transmission.id,
+    submission,
+    sender,
+    transmissionStore,
   );
 }
