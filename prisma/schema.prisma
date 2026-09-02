@@ -169,6 +169,7 @@ model Property {
   revenueRecommendations              RevenueRecommendation[]
   financeReportTemplate               FinanceReportTemplate?
   alloggiatiWebProperty               AlloggiatiWebProperty?
+  alloggiatiWebTransmissions          AlloggiatiWebTransmission[]
 
   @@index([ownerId])
   @@index([status])
@@ -488,33 +489,34 @@ model PropertyDocument {
 }
 
 model Booking {
-  id                      String                   @id @default(cuid())
-  propertyId              String
-  ownerId                 String
-  channel                 BookingChannel
-  externalBookingId       String?
-  guestName               String
-  guestEmail              String?
-  guestPhone              String?
-  checkIn                 DateTime
-  checkOut                DateTime
-  nights                  Int
-  guests                  Int
-  grossAmount             Decimal                  @db.Decimal(10, 2)
-  currency                String                   @default("EUR")
-  bookingStatus           BookingStatus            @default(CONFIRMED)
-  operationalStatus       BookingOperationalStatus @default(OK)
-  internalNotes           String?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  guestId                 String?
-  integrationConnectionId String?
-  guest                   Guest?                   @relation(fields: [guestId], references: [id])
-  integrationConnection   IntegrationConnection?   @relation(fields: [integrationConnectionId], references: [id])
-  owner                   User                     @relation(fields: [ownerId], references: [id])
-  property                Property                 @relation(fields: [propertyId], references: [id])
-  tasks                   Task[]
-  bookingGuests           BookingGuest[]
+  id                         String                      @id @default(cuid())
+  propertyId                 String
+  ownerId                    String
+  channel                    BookingChannel
+  externalBookingId          String?
+  guestName                  String
+  guestEmail                 String?
+  guestPhone                 String?
+  checkIn                    DateTime
+  checkOut                   DateTime
+  nights                     Int
+  guests                     Int
+  grossAmount                Decimal                     @db.Decimal(10, 2)
+  currency                   String                      @default("EUR")
+  bookingStatus              BookingStatus               @default(CONFIRMED)
+  operationalStatus          BookingOperationalStatus    @default(OK)
+  internalNotes              String?
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  guestId                    String?
+  integrationConnectionId    String?
+  guest                      Guest?                      @relation(fields: [guestId], references: [id])
+  integrationConnection      IntegrationConnection?      @relation(fields: [integrationConnectionId], references: [id])
+  owner                      User                        @relation(fields: [ownerId], references: [id])
+  property                   Property                    @relation(fields: [propertyId], references: [id])
+  tasks                      Task[]
+  bookingGuests              BookingGuest[]
+  alloggiatiWebTransmissions AlloggiatiWebTransmission[]
 
   @@unique([integrationConnectionId, externalBookingId])
   @@index([channel, externalBookingId])
@@ -1381,6 +1383,41 @@ model RevenueRecommendation {
   @@index([status])
   @@index([generatedAt])
   @@index([marketSnapshotId])
+}
+
+enum AlloggiatiWebTransmissionStatus {
+  PREPARED
+  SENDING
+  CONFIRMED
+  OUTCOME_UNKNOWN
+  REJECTED
+}
+
+model AlloggiatiWebTransmission {
+  id               String                          @id @default(cuid())
+  bookingId        String
+  propertyId       String
+  apartmentId      String
+  status           AlloggiatiWebTransmissionStatus @default(PREPARED)
+  payloadHash      String
+  recordsCount     Int
+  preparedAt       DateTime                        @default(now())
+  sendStartedAt    DateTime?
+  confirmedAt      DateTime?
+  outcomeUnknownAt DateTime?
+  rejectedAt       DateTime?
+  lastError        String?
+  createdAt        DateTime                        @default(now())
+  updatedAt        DateTime                        @updatedAt
+
+  booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, payloadHash])
+  @@index([propertyId])
+  @@index([status])
+  @@index([bookingId])
+  @@index([preparedAt])
 }
 
 model AlloggiatiWebAccount {
