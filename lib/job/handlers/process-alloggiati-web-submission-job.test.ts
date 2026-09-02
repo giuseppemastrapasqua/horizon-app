@@ -39,6 +39,16 @@ const {
   connectionFindUniqueMock: vi.fn(),
 }));
 
+const createFingerprintMock = vi.fn();
+const prepareTransmissionMock = vi.fn();
+
+const transmissionDependencies = {
+  createFingerprint: createFingerprintMock,
+  transmissionStore: {
+    prepare: prepareTransmissionMock,
+  },
+};
+
 vi.mock(
   "@/lib/prisma",
   () => ({
@@ -146,6 +156,15 @@ describe(
 
       connectionFindUniqueMock.mockResolvedValue({
         apartmentId: "123",
+      });
+
+      createFingerprintMock.mockReturnValue(
+        "hash-1",
+      );
+
+      prepareTransmissionMock.mockResolvedValue({
+        id: "transmission-1",
+        status: "PREPARED",
       });
     });
 
@@ -312,6 +331,7 @@ describe(
               createValidator: () => ({
                 validateSubmission,
               }),
+              ...transmissionDependencies,
             },
           ),
         ).rejects.toThrow(
@@ -343,6 +363,20 @@ describe(
         expect(
           connectionFindUniqueMock,
         ).toHaveBeenCalledTimes(1);
+
+        expect(
+          createFingerprintMock,
+        ).toHaveBeenCalledWith(prepared);
+
+        expect(
+          prepareTransmissionMock,
+        ).toHaveBeenCalledWith({
+          bookingId: "booking-1",
+          propertyId: "property-1",
+          apartmentId: "123",
+          payloadHash: "hash-1",
+          recordsCount: 1,
+        });
       },
     );
 
@@ -374,6 +408,7 @@ describe(
                   transport,
                   credentials,
                 ),
+              ...transmissionDependencies,
             },
           ),
         ).rejects.toThrow(
@@ -407,6 +442,91 @@ describe(
         expect(
           transport.submitted,
         ).toHaveLength(0);
+      },
+    );
+
+    it(
+      "non prepara la transmission se il preflight fallisce",
+      async () => {
+        const validateSubmission = vi.fn(
+          async () => ({
+            success: false,
+            errors: [
+              "Schedina non valida.",
+            ],
+          }),
+        );
+
+        await expect(
+          processAlloggiatiWebSubmissionJob(
+            createJob(),
+            {
+              getReferenceResolver:
+                async () => resolver,
+              credentialProvider: {
+                getCredentials: async () => ({
+                  username: "test-user",
+                  password: "test-password",
+                  wsKey: "test-wskey",
+                }),
+              },
+              createValidator: () => ({
+                validateSubmission,
+              }),
+              ...transmissionDependencies,
+            },
+          ),
+        ).rejects.toThrow();
+
+        expect(
+          validateSubmission,
+        ).toHaveBeenCalledTimes(1);
+
+        expect(
+          createFingerprintMock,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          prepareTransmissionMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "non raggiunge alcuna fase di invio dopo PREPARED",
+      async () => {
+        const validateSubmission = vi.fn(
+          async () => ({
+            success: true,
+          }),
+        );
+
+        await expect(
+          processAlloggiatiWebSubmissionJob(
+            createJob(),
+            {
+              getReferenceResolver:
+                async () => resolver,
+              credentialProvider: {
+                getCredentials: async () => ({
+                  username: "test-user",
+                  password: "test-password",
+                  wsKey: "test-wskey",
+                }),
+              },
+              createValidator: () => ({
+                validateSubmission,
+              }),
+              ...transmissionDependencies,
+            },
+          ),
+        ).rejects.toThrow(
+          "Alloggiati Web invio disabilitato dopo preflight.",
+        );
+
+        expect(
+          prepareTransmissionMock,
+        ).toHaveBeenCalledTimes(1);
       },
     );
   },

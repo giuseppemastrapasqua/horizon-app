@@ -12,6 +12,12 @@ import {
 import {
   preflightAlloggiatiSubmission,
 } from "@/lib/integrations/alloggiati-web/preflight-submission";
+import {
+  prismaAlloggiatiTransmissionStore,
+} from "@/lib/integrations/alloggiati-web/prisma-transmission-store";
+import {
+  createAlloggiatiSubmissionFingerprint,
+} from "@/lib/integrations/alloggiati-web/submission-fingerprint";
 import type {
   AlloggiatiWebSubmissionValidator,
 } from "@/lib/integrations/alloggiati-web/preflight-submission";
@@ -46,6 +52,10 @@ type ProcessAlloggiatiWebSubmissionJobDependencies = {
       wsKey: string;
     },
   ) => AlloggiatiWebSubmissionValidator;
+  createFingerprint?: typeof createAlloggiatiSubmissionFingerprint;
+  transmissionStore?: {
+    prepare: typeof prismaAlloggiatiTransmissionStore.prepare;
+  };
 };
 
 const publicReferenceProvider =
@@ -241,6 +251,27 @@ export async function processAlloggiatiWebSubmissionJob(
     submission,
     validator,
   );
+
+  const createFingerprint =
+    dependencies.createFingerprint ??
+    createAlloggiatiSubmissionFingerprint;
+
+  const payloadHash =
+    createFingerprint(submission);
+
+  const transmissionStore =
+    dependencies.transmissionStore ??
+    prismaAlloggiatiTransmissionStore;
+
+  await transmissionStore.prepare({
+    bookingId: booking.id,
+    propertyId: payload.propertyId,
+    apartmentId:
+      connection.apartmentId.trim(),
+    payloadHash,
+    recordsCount:
+      submission.records.length,
+  });
 
   throw new Error(
     "Alloggiati Web invio disabilitato dopo preflight.",
