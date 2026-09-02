@@ -875,5 +875,251 @@ describe(
         );
       },
     );
+    it(
+      "scarica Ricevuta PDF",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <RicevutaResponse>
+                <RicevutaResult>
+                  <ErroreDettaglio></ErroreDettaglio>
+                </RicevutaResult>
+                <PDF>JVBERi0xLjQ=</PDF>
+              </RicevutaResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.getReceipt(
+            session,
+            "2026-09-02",
+          ),
+        ).resolves.toEqual({
+          date: "2026-09-02",
+          pdfBase64: "JVBERi0xLjQ=",
+        });
+      },
+    );
+
+    it(
+      "invia i parametri SOAP Ricevuta corretti",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <RicevutaResponse>
+                <RicevutaResult>
+                  <ErroreDettaglio></ErroreDettaglio>
+                </RicevutaResult>
+                <PDF>JVBERi0xLjQ=</PDF>
+              </RicevutaResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await transport.getReceipt(
+          session,
+          "2026-09-02",
+        );
+
+        const request =
+          fetchMock.mock.calls[1]?.[1];
+
+        expect(
+          request?.headers,
+        ).toMatchObject({
+          SOAPAction:
+            '"AlloggiatiService/Ricevuta"',
+        });
+
+        expect(request?.body).toContain(
+          "<Utente>user</Utente>",
+        );
+
+        expect(request?.body).toContain(
+          "<token>token-123</token>",
+        );
+
+        expect(request?.body).toContain(
+          "<Data>2026-09-02T00:00:00</Data>",
+        );
+
+        expect(request?.body).toContain(
+          "<PDF></PDF>",
+        );
+      },
+    );
+
+    it(
+      "propaga errore Ricevuta",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <RicevutaResponse>
+                <RicevutaResult>
+                  <ErroreDettaglio>
+                    Ricevuta non disponibile
+                  </ErroreDettaglio>
+                </RicevutaResult>
+                <PDF></PDF>
+              </RicevutaResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.getReceipt(
+            session,
+            "2026-09-02",
+          ),
+        ).rejects.toThrow(
+          "Ricevuta Alloggiati Web fallita: Ricevuta non disponibile",
+        );
+      },
+    );
+
+    it(
+      "rifiuta Ricevuta senza PDF",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <RicevutaResponse>
+                <RicevutaResult>
+                  <ErroreDettaglio></ErroreDettaglio>
+                </RicevutaResult>
+                <PDF></PDF>
+              </RicevutaResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.getReceipt(
+            session,
+            "2026-09-02",
+          ),
+        ).rejects.toThrow(
+          "Alloggiati Web non ha restituito la ricevuta PDF.",
+        );
+      },
+    );
+
+    it(
+      "rifiuta data Ricevuta non valida prima del SOAP",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.getReceipt(
+            session,
+            "02/09/2026",
+          ),
+        ).rejects.toThrow(
+          "Data Ricevuta Alloggiati Web non valida.",
+        );
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      },
+    );
   },
 );

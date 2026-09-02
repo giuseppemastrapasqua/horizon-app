@@ -227,12 +227,62 @@ export class SoapPreflightAlloggiatiWebTransport
   }
 
   async getReceipt(
-    _session: AlloggiatiWebSession,
-    _date: string,
+    session: AlloggiatiWebSession,
+    date: string,
   ): Promise<AlloggiatiWebReceipt> {
-    throw new Error(
-      "Ricevuta SOAP Alloggiati Web non ancora abilitata.",
+    const username =
+      this.getUsername(session);
+
+    const normalizedDate =
+      date.trim();
+
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(
+        normalizedDate,
+      )
+    ) {
+      throw new Error(
+        "Data Ricevuta Alloggiati Web non valida.",
+      );
+    }
+
+    const xml = await this.postSoap(
+      "Ricevuta",
+      `
+        <Ricevuta xmlns="AlloggiatiService">
+          <Utente>${escapeXml(username)}</Utente>
+          <token>${escapeXml(session.token)}</token>
+          <Data>${normalizedDate}T00:00:00</Data>
+          <PDF></PDF>
+        </Ricevuta>
+      `,
     );
+
+    const error =
+      readTag(
+        xml,
+        "ErroreDettaglio",
+      )?.trim();
+
+    if (error) {
+      throw new Error(
+        `Ricevuta Alloggiati Web fallita: ${error}`,
+      );
+    }
+
+    const pdfBase64 =
+      readTag(xml, "PDF")?.trim();
+
+    if (!pdfBase64) {
+      throw new Error(
+        "Alloggiati Web non ha restituito la ricevuta PDF.",
+      );
+    }
+
+    return {
+      date: normalizedDate,
+      pdfBase64,
+    };
   }
 
   async getTable(
