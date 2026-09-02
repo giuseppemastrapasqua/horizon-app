@@ -44,6 +44,10 @@ import {
   synchronizePropertyIntegrationAction,
   updatePropertyIntegrationAction,
 } from "./integration-actions";
+import {
+  linkExistingAlloggiatiAccountAction,
+  saveAlloggiatiCredentialsAction,
+} from "./alloggiati-credential-actions";
 import { updatePropertyChannelPricingAction } from "./channel-pricing-actions";
 import { updatePropertyAction } from "./actions";
 import { updatePropertyRatePlanAction } from "./rate-plan-actions";
@@ -195,6 +199,42 @@ export default async function PropertyEditPage({
     propertyDocuments,
     revenueRatePlan,
   } = workspace;
+
+  const [
+    alloggiatiConnection,
+    alloggiatiAccounts,
+  ] =
+    currentUser.role === "SUPER_ADMIN"
+      ? await Promise.all([
+          prisma.alloggiatiWebProperty.findUnique({
+            where: {
+              propertyId: property.id,
+            },
+            select: {
+              apartmentId: true,
+              updatedAt: true,
+              account: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          }),
+
+          prisma.alloggiatiWebAccount.findMany({
+            where: {
+              ownerId: property.owner.id,
+            },
+            orderBy: {
+              name: "asc",
+            },
+            select: {
+              id: true,
+              name: true,
+            },
+          }),
+        ])
+      : [null, []];
   const [
     propertyFinanceTemplate,
     defaultFinanceTemplate,
@@ -839,6 +879,31 @@ export default async function PropertyEditPage({
     synchronizePropertyIntegrationAction
   }
 />
+
+{currentUser.role === "SUPER_ADMIN" ? (
+  <PropertyAlloggiatiCredentialsSection
+    propertyId={property.id}
+    connection={
+      alloggiatiConnection
+        ? {
+            accountName:
+              alloggiatiConnection.account.name,
+            apartmentId:
+              alloggiatiConnection.apartmentId,
+            updatedAt:
+              alloggiatiConnection.updatedAt,
+          }
+        : null
+    }
+    accounts={alloggiatiAccounts}
+    createAccountAction={
+      saveAlloggiatiCredentialsAction
+    }
+    linkAccountAction={
+      linkExistingAlloggiatiAccountAction
+    }
+  />
+) : null}
 
 <PropertyChannelPricingSettings
   propertyId={property.id}

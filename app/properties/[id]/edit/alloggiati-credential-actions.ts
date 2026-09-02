@@ -22,6 +22,15 @@ export async function saveAlloggiatiCredentialsAction(
     "Identificativo immobile mancante.",
   );
 
+  const accountName = readRequired(
+    formData,
+    "accountName",
+    "Nome account Alloggiati Web obbligatorio.",
+  );
+
+  const apartmentId =
+    readApartmentId(formData);
+
   const username = readRequired(
     formData,
     "username",
@@ -56,6 +65,12 @@ export async function saveAlloggiatiCredentialsAction(
       },
       select: {
         id: true,
+        ownerId: true,
+        alloggiatiWebProperty: {
+          select: {
+            accountId: true,
+          },
+        },
       },
     });
 
@@ -65,49 +80,146 @@ export async function saveAlloggiatiCredentialsAction(
     );
   }
 
-  await prisma.alloggiatiWebCredential.upsert({
-    where: {
-      propertyId,
-    },
-    create: {
-      propertyId,
-      usernameEncrypted:
-        encryptCredential(
-          username,
-          encryptionKey,
-        ),
-      passwordEncrypted:
-        encryptCredential(
-          password,
-          encryptionKey,
-        ),
-      wsKeyEncrypted:
-        encryptCredential(
-          wsKey,
-          encryptionKey,
-        ),
+  ensureNotLinked(
+    property.alloggiatiWebProperty,
+  );
+
+  await prisma.alloggiatiWebAccount.create({
+    data: {
+      ownerId: property.ownerId,
+      name: accountName,
+      usernameEncrypted: encryptCredential(
+        username,
+        encryptionKey,
+      ),
+      passwordEncrypted: encryptCredential(
+        password,
+        encryptionKey,
+      ),
+      wsKeyEncrypted: encryptCredential(
+        wsKey,
+        encryptionKey,
+      ),
       keyVersion: 1,
-    },
-    update: {
-      usernameEncrypted:
-        encryptCredential(
-          username,
-          encryptionKey,
-        ),
-      passwordEncrypted:
-        encryptCredential(
-          password,
-          encryptionKey,
-        ),
-      wsKeyEncrypted:
-        encryptCredential(
-          wsKey,
-          encryptionKey,
-        ),
-      keyVersion: 1,
+      properties: {
+        create: {
+          propertyId,
+          apartmentId,
+        },
+      },
     },
   });
 
+  revalidateProperty(propertyId);
+}
+
+export async function linkExistingAlloggiatiAccountAction(
+  formData: FormData,
+): Promise<void> {
+  await requireRoles(["SUPER_ADMIN"]);
+
+  const propertyId = readRequired(
+    formData,
+    "propertyId",
+    "Identificativo immobile mancante.",
+  );
+
+  const accountId = readRequired(
+    formData,
+    "accountId",
+    "Account Alloggiati Web obbligatorio.",
+  );
+
+  const apartmentId =
+    readApartmentId(formData);
+
+  const property =
+    await prisma.property.findUnique({
+      where: {
+        id: propertyId,
+      },
+      select: {
+        id: true,
+        ownerId: true,
+        alloggiatiWebProperty: {
+          select: {
+            accountId: true,
+          },
+        },
+      },
+    });
+
+  if (!property) {
+    throw new Error(
+      "Immobile non trovato.",
+    );
+  }
+
+  ensureNotLinked(
+    property.alloggiatiWebProperty,
+  );
+
+  const account =
+    await prisma.alloggiatiWebAccount.findFirst({
+      where: {
+        id: accountId,
+        ownerId: property.ownerId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+  if (!account) {
+    throw new Error(
+      "Account Alloggiati Web non disponibile per questa struttura.",
+    );
+  }
+
+  await prisma.alloggiatiWebProperty.create({
+    data: {
+      propertyId,
+      accountId: account.id,
+      apartmentId,
+    },
+  });
+
+  revalidateProperty(propertyId);
+}
+
+function readApartmentId(
+  formData: FormData,
+): string {
+  const apartmentId = readRequired(
+    formData,
+    "apartmentId",
+    "IdAppartamento Alloggiati Web obbligatorio.",
+  );
+
+  if (!/^\d+$/.test(apartmentId)) {
+    throw new Error(
+      "IdAppartamento Alloggiati Web non valido.",
+    );
+  }
+
+  return apartmentId;
+}
+
+function ensureNotLinked(
+  connection: {
+    accountId: string;
+  } | null,
+): void {
+  if (connection) {
+    throw new Error(
+      "La struttura è già collegata a un account Alloggiati Web.",
+    );
+  }
+}
+
+function revalidateProperty(
+  propertyId: string,
+): void {
   revalidatePath(
     `/properties/${propertyId}/edit`,
   );

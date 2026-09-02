@@ -62,11 +62,10 @@ export async function updatePropertyIntegrationAction(
 
   if (
     providerValue ===
-      INTEGRATION_PROVIDERS.ALLOGGIATI_WEB &&
-    !/^\d+$/.test(externalPropertyId)
+    INTEGRATION_PROVIDERS.ALLOGGIATI_WEB
   ) {
     throw new Error(
-      "IdAppartamento Alloggiati Web non valido.",
+      "Alloggiati Web deve essere configurato nella sezione Compliance.",
     );
   }
 

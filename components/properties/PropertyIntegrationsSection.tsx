@@ -47,13 +47,6 @@ const PROVIDERS: Array<{
     synchronizationAvailable: false,
   },
   {
-    value: "ALLOGGIATI_WEB",
-    label: "Alloggiati Web",
-    description:
-      "Configura il riferimento usato per gli adempimenti di pubblica sicurezza.",
-    synchronizationAvailable: false,
-  },
-  {
     value: "ISTAT",
     label: "ISTAT",
     description:

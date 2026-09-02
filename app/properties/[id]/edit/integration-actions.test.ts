@@ -50,9 +50,7 @@ import {
   updatePropertyIntegrationAction,
 } from "./integration-actions";
 
-function createFormData(
-  externalPropertyId: string,
-) {
+function createFormData() {
   const formData = new FormData();
 
   formData.set(
@@ -67,7 +65,7 @@ function createFormData(
 
   formData.set(
     "externalPropertyId",
-    externalPropertyId,
+    "123",
   );
 
   return formData;
@@ -82,17 +80,17 @@ describe(
       requirePropertyRoleMock.mockResolvedValue({
         id: "user-1",
       });
-
-      upsertMappingMock.mockResolvedValue({
-        id: "mapping-1",
-      });
     });
 
     it(
-      "accetta un IdAppartamento numerico",
+      "richiede i permessi sulla struttura",
       async () => {
-        await updatePropertyIntegrationAction(
-          createFormData("123"),
+        await expect(
+          updatePropertyIntegrationAction(
+            createFormData(),
+          ),
+        ).rejects.toThrow(
+          "Alloggiati Web deve essere configurato nella sezione Compliance.",
         );
 
         expect(
@@ -101,30 +99,26 @@ describe(
           "property-1",
           ["OWNER", "MANAGER"],
         );
-
-        expect(
-          upsertMappingMock,
-        ).toHaveBeenCalledWith({
-          provider: "ALLOGGIATI_WEB",
-          propertyId: "property-1",
-          externalPropertyId: "123",
-        });
       },
     );
 
     it(
-      "rifiuta un IdAppartamento non numerico",
+      "rifiuta sempre il mapping generico Alloggiati Web",
       async () => {
         await expect(
           updatePropertyIntegrationAction(
-            createFormData("APT-123"),
+            createFormData(),
           ),
         ).rejects.toThrow(
-          "IdAppartamento Alloggiati Web non valido.",
+          "Alloggiati Web deve essere configurato nella sezione Compliance.",
         );
 
         expect(
           upsertMappingMock,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          revalidatePathMock,
         ).not.toHaveBeenCalled();
       },
     );

@@ -96,7 +96,7 @@ describe(
             propertyId: "property-1",
           }),
         ).rejects.toThrow(
-          "Credenziali Alloggiati Web non configurate per la struttura.",
+          "Account Alloggiati Web non collegato alla struttura.",
         );
       },
     );

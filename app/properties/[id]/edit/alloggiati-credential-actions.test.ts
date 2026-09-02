@@ -1,3 +1,5 @@
+import { randomBytes } from "node:crypto";
+
 import {
   afterEach,
   beforeEach,
@@ -6,7 +8,6 @@ import {
   it,
   vi,
 } from "vitest";
-import { randomBytes } from "node:crypto";
 
 const requireRolesMock = vi.hoisted(() =>
   vi.fn(),
@@ -16,7 +17,15 @@ const propertyFindUniqueMock = vi.hoisted(() =>
   vi.fn(),
 );
 
-const credentialUpsertMock = vi.hoisted(() =>
+const accountCreateMock = vi.hoisted(() =>
+  vi.fn(),
+);
+
+const accountFindFirstMock = vi.hoisted(() =>
+  vi.fn(),
+);
+
+const connectionCreateMock = vi.hoisted(() =>
   vi.fn(),
 );
 
@@ -33,8 +42,12 @@ vi.mock("@/lib/prisma", () => ({
     property: {
       findUnique: propertyFindUniqueMock,
     },
-    alloggiatiWebCredential: {
-      upsert: credentialUpsertMock,
+    alloggiatiWebAccount: {
+      create: accountCreateMock,
+      findFirst: accountFindFirstMock,
+    },
+    alloggiatiWebProperty: {
+      create: connectionCreateMock,
     },
   },
 }));
@@ -48,40 +61,49 @@ import {
 } from "@/lib/security/credential-crypto";
 
 import {
+  linkExistingAlloggiatiAccountAction,
   saveAlloggiatiCredentialsAction,
 } from "./alloggiati-credential-actions";
 
 const ENV_NAME =
   "HORIZON_CREDENTIAL_ENCRYPTION_KEY";
 
-function createFormData() {
+function createNewAccountFormData() {
   const formData = new FormData();
 
+  formData.set("propertyId", "property-1");
   formData.set(
-    "propertyId",
-    "property-1",
+    "accountName",
+    "Account Alloggiati Milano",
   );
-
-  formData.set(
-    "username",
-    "test-user",
-  );
-
-  formData.set(
-    "password",
-    "test-password",
-  );
-
-  formData.set(
-    "wsKey",
-    "test-wskey",
-  );
+  formData.set("apartmentId", "123");
+  formData.set("username", "test-user");
+  formData.set("password", "test-password");
+  formData.set("wsKey", "test-wskey");
 
   return formData;
 }
 
+function createExistingAccountFormData() {
+  const formData = new FormData();
+
+  formData.set("propertyId", "property-1");
+  formData.set("accountId", "account-1");
+  formData.set("apartmentId", "456");
+
+  return formData;
+}
+
+function mockAvailableProperty() {
+  propertyFindUniqueMock.mockResolvedValue({
+    id: "property-1",
+    ownerId: "owner-1",
+    alloggiatiWebProperty: null,
+  });
+}
+
 describe(
-  "saveAlloggiatiCredentialsAction",
+  "Alloggiati Web credential actions",
   () => {
     beforeEach(() => {
       vi.clearAllMocks();
@@ -93,12 +115,18 @@ describe(
         id: "admin-1",
       });
 
-      propertyFindUniqueMock.mockResolvedValue({
-        id: "property-1",
+      mockAvailableProperty();
+
+      accountCreateMock.mockResolvedValue({
+        id: "account-new",
       });
 
-      credentialUpsertMock.mockResolvedValue({
-        id: "credential-1",
+      accountFindFirstMock.mockResolvedValue({
+        id: "account-1",
+      });
+
+      connectionCreateMock.mockResolvedValue({
+        id: "connection-1",
       });
     });
 
@@ -107,10 +135,10 @@ describe(
     });
 
     it(
-      "richiede SUPER_ADMIN",
+      "richiede SUPER_ADMIN per creare un account",
       async () => {
         await saveAlloggiatiCredentialsAction(
-          createFormData(),
+          createNewAccountFormData(),
         );
 
         expect(
@@ -130,7 +158,7 @@ describe(
 
         await expect(
           saveAlloggiatiCredentialsAction(
-            createFormData(),
+            createNewAccountFormData(),
           ),
         ).rejects.toThrow(
           "Accesso negato.",
@@ -141,10 +169,11 @@ describe(
         ).not.toHaveBeenCalled();
 
         expect(
-          credentialUpsertMock,
+          accountCreateMock,
         ).not.toHaveBeenCalled();
       },
     );
+
     it(
       "fallisce senza chiave di cifratura",
       async () => {
@@ -152,14 +181,39 @@ describe(
 
         await expect(
           saveAlloggiatiCredentialsAction(
-            createFormData(),
+            createNewAccountFormData(),
           ),
         ).rejects.toThrow(
           "HORIZON_CREDENTIAL_ENCRYPTION_KEY non configurata.",
         );
 
         expect(
-          credentialUpsertMock,
+          accountCreateMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rifiuta IdAppartamento non numerico per nuovo account",
+      async () => {
+        const formData =
+          createNewAccountFormData();
+
+        formData.set(
+          "apartmentId",
+          "APT-123",
+        );
+
+        await expect(
+          saveAlloggiatiCredentialsAction(
+            formData,
+          ),
+        ).rejects.toThrow(
+          "IdAppartamento Alloggiati Web non valido.",
+        );
+
+        expect(
+          propertyFindUniqueMock,
         ).not.toHaveBeenCalled();
       },
     );
@@ -173,74 +227,108 @@ describe(
 
         await expect(
           saveAlloggiatiCredentialsAction(
-            createFormData(),
+            createNewAccountFormData(),
           ),
         ).rejects.toThrow(
           "Immobile non trovato.",
         );
 
         expect(
-          credentialUpsertMock,
+          accountCreateMock,
         ).not.toHaveBeenCalled();
       },
     );
 
     it(
-      "salva solo credenziali cifrate",
+      "impedisce un secondo collegamento creando un account",
       async () => {
-        await saveAlloggiatiCredentialsAction(
-          createFormData(),
+        propertyFindUniqueMock.mockResolvedValue({
+          id: "property-1",
+          ownerId: "owner-1",
+          alloggiatiWebProperty: {
+            accountId: "account-existing",
+          },
+        });
+
+        await expect(
+          saveAlloggiatiCredentialsAction(
+            createNewAccountFormData(),
+          ),
+        ).rejects.toThrow(
+          "La struttura è già collegata a un account Alloggiati Web.",
         );
 
         expect(
-          credentialUpsertMock,
+          accountCreateMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "crea account cifrato con nome esplicito e collega IdAppartamento",
+      async () => {
+        await saveAlloggiatiCredentialsAction(
+          createNewAccountFormData(),
+        );
+
+        expect(
+          accountCreateMock,
         ).toHaveBeenCalledTimes(1);
 
         const call =
-          credentialUpsertMock.mock.calls[0][0];
+          accountCreateMock.mock.calls[0][0];
 
-        const create = call.create;
-        const update = call.update;
+        const data = call.data;
 
-        expect(call.where).toEqual({
+        expect(data.ownerId).toBe(
+          "owner-1",
+        );
+
+        expect(data.name).toBe(
+          "Account Alloggiati Milano",
+        );
+
+        expect(
+          data.properties.create,
+        ).toEqual({
           propertyId: "property-1",
+          apartmentId: "123",
         });
 
         expect(
-          create.usernameEncrypted,
+          data.usernameEncrypted,
         ).not.toBe("test-user");
 
         expect(
-          create.passwordEncrypted,
+          data.passwordEncrypted,
         ).not.toBe("test-password");
 
         expect(
-          create.wsKeyEncrypted,
+          data.wsKeyEncrypted,
         ).not.toBe("test-wskey");
 
         expect(
           decryptCredential(
-            create.usernameEncrypted,
+            data.usernameEncrypted,
             process.env[ENV_NAME]!,
           ),
         ).toBe("test-user");
 
         expect(
           decryptCredential(
-            create.passwordEncrypted,
+            data.passwordEncrypted,
             process.env[ENV_NAME]!,
           ),
         ).toBe("test-password");
 
         expect(
           decryptCredential(
-            create.wsKeyEncrypted,
+            data.wsKeyEncrypted,
             process.env[ENV_NAME]!,
           ),
         ).toBe("test-wskey");
 
-        expect(create.keyVersion).toBe(1);
-        expect(update.keyVersion).toBe(1);
+        expect(data.keyVersion).toBe(1);
 
         expect(
           JSON.stringify(call),
@@ -253,6 +341,153 @@ describe(
         ).not.toContain(
           '"test-wskey"',
         );
+
+        expect(
+          revalidatePathMock,
+        ).toHaveBeenCalledWith(
+          "/properties/property-1/edit",
+        );
+      },
+    );
+
+    it(
+      "richiede SUPER_ADMIN per collegare un account esistente",
+      async () => {
+        await linkExistingAlloggiatiAccountAction(
+          createExistingAccountFormData(),
+        );
+
+        expect(
+          requireRolesMock,
+        ).toHaveBeenCalledWith([
+          "SUPER_ADMIN",
+        ]);
+      },
+    );
+
+    it(
+      "rifiuta IdAppartamento non numerico per account esistente",
+      async () => {
+        const formData =
+          createExistingAccountFormData();
+
+        formData.set(
+          "apartmentId",
+          "APT-456",
+        );
+
+        await expect(
+          linkExistingAlloggiatiAccountAction(
+            formData,
+          ),
+        ).rejects.toThrow(
+          "IdAppartamento Alloggiati Web non valido.",
+        );
+
+        expect(
+          propertyFindUniqueMock,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          connectionCreateMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "impedisce un secondo collegamento con account esistente",
+      async () => {
+        propertyFindUniqueMock.mockResolvedValue({
+          id: "property-1",
+          ownerId: "owner-1",
+          alloggiatiWebProperty: {
+            accountId: "account-existing",
+          },
+        });
+
+        await expect(
+          linkExistingAlloggiatiAccountAction(
+            createExistingAccountFormData(),
+          ),
+        ).rejects.toThrow(
+          "La struttura è già collegata a un account Alloggiati Web.",
+        );
+
+        expect(
+          accountFindFirstMock,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          connectionCreateMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "rifiuta un account non disponibile per l'owner della struttura",
+      async () => {
+        accountFindFirstMock.mockResolvedValue(
+          null,
+        );
+
+        await expect(
+          linkExistingAlloggiatiAccountAction(
+            createExistingAccountFormData(),
+          ),
+        ).rejects.toThrow(
+          "Account Alloggiati Web non disponibile per questa struttura.",
+        );
+
+        expect(
+          accountFindFirstMock,
+        ).toHaveBeenCalledWith({
+          where: {
+            id: "account-1",
+            ownerId: "owner-1",
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        expect(
+          connectionCreateMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "collega un account esistente autorizzato senza leggere credenziali",
+      async () => {
+        await linkExistingAlloggiatiAccountAction(
+          createExistingAccountFormData(),
+        );
+
+        expect(
+          accountFindFirstMock,
+        ).toHaveBeenCalledWith({
+          where: {
+            id: "account-1",
+            ownerId: "owner-1",
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        expect(
+          connectionCreateMock,
+        ).toHaveBeenCalledWith({
+          data: {
+            propertyId: "property-1",
+            accountId: "account-1",
+            apartmentId: "456",
+          },
+        });
+
+        expect(
+          accountCreateMock,
+        ).not.toHaveBeenCalled();
 
         expect(
           revalidatePathMock,

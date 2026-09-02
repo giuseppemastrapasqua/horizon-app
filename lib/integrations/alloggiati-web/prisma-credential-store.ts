@@ -10,17 +10,24 @@ export class PrismaAlloggiatiWebCredentialStore
   async findByPropertyId(
     propertyId: string,
   ) {
-    return prisma.alloggiatiWebCredential.findUnique({
-      where: {
-        propertyId,
-      },
-      select: {
-        usernameEncrypted: true,
-        passwordEncrypted: true,
-        wsKeyEncrypted: true,
-        keyVersion: true,
-      },
-    });
+    const connection =
+      await prisma.alloggiatiWebProperty.findUnique({
+        where: {
+          propertyId,
+        },
+        select: {
+          account: {
+            select: {
+              usernameEncrypted: true,
+              passwordEncrypted: true,
+              wsKeyEncrypted: true,
+              keyVersion: true,
+            },
+          },
+        },
+      });
+
+    return connection?.account ?? null;
   }
 }
 

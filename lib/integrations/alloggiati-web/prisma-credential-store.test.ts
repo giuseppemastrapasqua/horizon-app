@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    alloggiatiWebCredential: {
+    alloggiatiWebProperty: {
       findUnique: mocks.findUnique,
     },
   },
@@ -30,13 +30,15 @@ describe(
     });
 
     it(
-      "legge solo le credenziali cifrate della struttura",
+      "legge le credenziali cifrate dall'account collegato alla struttura",
       async () => {
         mocks.findUnique.mockResolvedValue({
-          usernameEncrypted: "user-cipher",
-          passwordEncrypted: "password-cipher",
-          wsKeyEncrypted: "wskey-cipher",
-          keyVersion: 1,
+          account: {
+            usernameEncrypted: "user-cipher",
+            passwordEncrypted: "password-cipher",
+            wsKeyEncrypted: "wskey-cipher",
+            keyVersion: 1,
+          },
         });
 
         const store =
@@ -60,17 +62,21 @@ describe(
             propertyId: "property-1",
           },
           select: {
-            usernameEncrypted: true,
-            passwordEncrypted: true,
-            wsKeyEncrypted: true,
-            keyVersion: true,
+            account: {
+              select: {
+                usernameEncrypted: true,
+                passwordEncrypted: true,
+                wsKeyEncrypted: true,
+                keyVersion: true,
+              },
+            },
           },
         });
       },
     );
 
     it(
-      "restituisce null se non configurato",
+      "restituisce null se la struttura non ha un account collegato",
       async () => {
         mocks.findUnique.mockResolvedValue(null);
 

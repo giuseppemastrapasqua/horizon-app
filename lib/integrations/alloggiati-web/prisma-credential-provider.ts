@@ -1,7 +1,3 @@
-import type {
-  AlloggiatiWebCredential,
-} from "@prisma/client";
-
 import {
   decryptCredential,
 } from "@/lib/security/credential-crypto";
@@ -10,18 +6,17 @@ import type {
   AlloggiatiWebCredentialProvider,
 } from "./credential-provider";
 
-type CredentialRecord = Pick<
-  AlloggiatiWebCredential,
-  | "usernameEncrypted"
-  | "passwordEncrypted"
-  | "wsKeyEncrypted"
-  | "keyVersion"
->;
+export type AlloggiatiWebCredentialRecord = {
+  usernameEncrypted: string;
+  passwordEncrypted: string;
+  wsKeyEncrypted: string;
+  keyVersion: number;
+};
 
 export interface AlloggiatiWebCredentialStore {
   findByPropertyId(
     propertyId: string,
-  ): Promise<CredentialRecord | null>;
+  ): Promise<AlloggiatiWebCredentialRecord | null>;
 }
 
 export class PrismaAlloggiatiWebCredentialProvider
@@ -46,7 +41,7 @@ export class PrismaAlloggiatiWebCredentialProvider
 
     if (!record) {
       throw new Error(
-        "Credenziali Alloggiati Web non configurate per la struttura.",
+        "Account Alloggiati Web non collegato alla struttura.",
       );
     }
 

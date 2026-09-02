@@ -80,6 +80,7 @@ model User {
   taskAssignments           PropertyTaskAssignment[]
   propertyAccesses          PropertyAccess[]
   createdAvailabilityBlocks PropertyAvailabilityBlock[] @relation("PropertyAvailabilityBlockCreatedBy")
+  alloggiatiWebAccounts     AlloggiatiWebAccount[]
 
   @@index([role])
   @@index([status])
@@ -167,7 +168,7 @@ model Property {
   revenueDailySignals                 RevenueDailySignal[]
   revenueRecommendations              RevenueRecommendation[]
   financeReportTemplate               FinanceReportTemplate?
-  alloggiatiWebCredential             AlloggiatiWebCredential?
+  alloggiatiWebProperty               AlloggiatiWebProperty?
 
   @@index([ownerId])
   @@index([status])
@@ -1382,9 +1383,10 @@ model RevenueRecommendation {
   @@index([marketSnapshotId])
 }
 
-model AlloggiatiWebCredential {
+model AlloggiatiWebAccount {
   id                String   @id @default(cuid())
-  propertyId        String   @unique
+  ownerId           String
+  name              String
   usernameEncrypted String
   passwordEncrypted String
   wsKeyEncrypted    String
@@ -1392,7 +1394,24 @@ model AlloggiatiWebCredential {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  owner      User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  properties AlloggiatiWebProperty[]
 
+  @@index([ownerId])
+}
+
+model AlloggiatiWebProperty {
+  id          String   @id @default(cuid())
+  accountId   String
+  propertyId  String   @unique
+  apartmentId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  account  AlloggiatiWebAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  property Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, apartmentId])
+  @@index([accountId])
   @@index([propertyId])
 }
