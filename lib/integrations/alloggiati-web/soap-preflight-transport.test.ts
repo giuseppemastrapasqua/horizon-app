@@ -342,29 +342,537 @@ describe(
     );
 
     it(
-      "non abilita mai Send",
+      "invia con GestioneAppartamenti_Send",
       async () => {
-        const fetchMock = vi.fn<typeof fetch>();
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <GestioneAppartamenti_SendResponse>
+                <result>
+                  <SchedineValide>2</SchedineValide>
+                  <Dettaglio></Dettaglio>
+                </result>
+              </GestioneAppartamenti_SendResponse>
+            `),
+          );
 
         const transport =
           new SoapPreflightAlloggiatiWebTransport(
             fetchMock as typeof fetch,
           );
 
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
         await expect(
           transport.submit(
+            session,
             {
-              token: "token-123",
+              records: [
+                "record<&1",
+                "record-2",
+              ],
+              apartmentId: "123",
             },
+          ),
+        ).resolves.toEqual({
+          acceptedRecords: 2,
+          resultCode: undefined,
+          message: undefined,
+        });
+
+        const [, options] =
+          fetchMock.mock.calls[1];
+
+        expect(
+          options?.headers,
+        ).toMatchObject({
+          SOAPAction:
+            '"AlloggiatiService/GestioneAppartamenti_Send"',
+        });
+
+        const body =
+          String(options?.body);
+
+        expect(body).toContain(
+          "<Utente>user</Utente>",
+        );
+
+        expect(body).toContain(
+          "<token>token-123</token>",
+        );
+
+        expect(body).toContain(
+          "<IdAppartamento>123</IdAppartamento>",
+        );
+
+        expect(body).toContain(
+          "<string>record&lt;&amp;1</string>",
+        );
+
+        expect(body).toContain(
+          "<string>record-2</string>",
+        );
+      },
+    );
+
+    it(
+      "propaga acquisizione parziale dal Send",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <GestioneAppartamenti_SendResponse>
+                <result>
+                  <SchedineValide>1</SchedineValide>
+                  <ErroreCod>E01</ErroreCod>
+                  <ErroreDes>Scheda non valida</ErroreDes>
+                </result>
+              </GestioneAppartamenti_SendResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.submit(
+            session,
+            {
+              records: [
+                "record-1",
+                "record-2",
+              ],
+              apartmentId: "123",
+            },
+          ),
+        ).resolves.toEqual({
+          acceptedRecords: 1,
+          resultCode: "E01",
+          message: "Scheda non valida",
+        });
+      },
+    );
+
+    it(
+      "propaga zero schedine acquisite dal Send",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <GestioneAppartamenti_SendResponse>
+                <result>
+                  <SchedineValide>0</SchedineValide>
+                  <ErroreCod>E02</ErroreCod>
+                  <ErroreDes>Invio rifiutato</ErroreDes>
+                </result>
+              </GestioneAppartamenti_SendResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.submit(
+            session,
+            {
+              records: ["record-1"],
+              apartmentId: "123",
+            },
+          ),
+        ).resolves.toEqual({
+          acceptedRecords: 0,
+          resultCode: "E02",
+          message: "Invio rifiutato",
+        });
+      },
+    );
+
+    it(
+      "rifiuta Send senza apartmentId",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.submit(
+            session,
             {
               records: ["record-1"],
             },
           ),
         ).rejects.toThrow(
-          "Invio SOAP Alloggiati Web non ancora abilitato.",
+          "IdAppartamento Alloggiati Web non valido.",
         );
 
-        expect(fetchMock).not.toHaveBeenCalled();
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      "rifiuta Send con apartmentId non numerico",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.submit(
+            session,
+            {
+              records: ["record-1"],
+              apartmentId: "abc",
+            },
+          ),
+        ).rejects.toThrow(
+          "IdAppartamento Alloggiati Web non valido.",
+        );
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+      },
+    );
+
+    it(
+      "rifiuta risposta Send non classificabile",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <GestioneAppartamenti_SendResponse>
+                <result></result>
+              </GestioneAppartamenti_SendResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.submit(
+            session,
+            {
+              records: ["record-1"],
+              apartmentId: "123",
+            },
+          ),
+        ).rejects.toThrow(
+          "Risposta Alloggiati Web senza SchedineValide.",
+        );
+      },
+    );
+    it(
+      "propaga SOAP Fault durante Send",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <soap:Envelope
+                xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+              >
+                <soap:Body>
+                  <soap:Fault>
+                    <faultcode>soap:Server</faultcode>
+                    <faultstring>Errore remoto Send</faultstring>
+                  </soap:Fault>
+                </soap:Body>
+              </soap:Envelope>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.submit(
+            session,
+            {
+              records: ["record-1"],
+              apartmentId: "123",
+            },
+          ),
+        ).rejects.toThrow(
+          "Alloggiati Web SOAP Fault: Errore remoto Send",
+        );
+      },
+    );
+
+    it(
+      "propaga errore HTTP durante Send",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            new Response(
+              "<html>Service unavailable</html>",
+              {
+                status: 503,
+              },
+            ),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.submit(
+            session,
+            {
+              records: ["record-1"],
+              apartmentId: "123",
+            },
+          ),
+        ).rejects.toThrow(
+          "Alloggiati Web HTTP 503.",
+        );
+      },
+    );
+
+    it(
+      "propaga errore di rete durante Send",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockRejectedValueOnce(
+            new Error(
+              "Connessione interrotta.",
+            ),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.submit(
+            session,
+            {
+              records: ["record-1"],
+              apartmentId: "123",
+            },
+          ),
+        ).rejects.toThrow(
+          "Connessione interrotta.",
+        );
+      },
+    );
+
+    it(
+      "normalizza timeout durante Send",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockImplementationOnce(
+            async (_input, init) =>
+              new Promise<Response>(
+                (_resolve, reject) => {
+                  const signal =
+                    init?.signal;
+
+                  if (!signal) {
+                    reject(
+                      new Error(
+                        "AbortSignal mancante.",
+                      ),
+                    );
+                    return;
+                  }
+
+                  signal.addEventListener(
+                    "abort",
+                    () => {
+                      reject(
+                        new DOMException(
+                          "Aborted",
+                          "AbortError",
+                        ),
+                      );
+                    },
+                    { once: true },
+                  );
+                },
+              ),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+            10,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.submit(
+            session,
+            {
+              records: ["record-1"],
+              apartmentId: "123",
+            },
+          ),
+        ).rejects.toThrow(
+          "Timeout Alloggiati Web dopo 10 ms.",
+        );
       },
     );
   },

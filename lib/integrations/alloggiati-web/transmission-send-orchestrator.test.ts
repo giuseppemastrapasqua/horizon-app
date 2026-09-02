@@ -94,7 +94,6 @@ describe(
 
         const sender = {
           submit: vi.fn().mockResolvedValue({
-            success: true,
             acceptedRecords: 3,
           }),
         };
@@ -132,7 +131,6 @@ describe(
 
         const sender = {
           submit: vi.fn().mockResolvedValue({
-            success: false,
             acceptedRecords: 2,
             message: "Una schedina rifiutata.",
           }),
@@ -168,7 +166,6 @@ describe(
 
         const sender = {
           submit: vi.fn().mockResolvedValue({
-            success: false,
             acceptedRecords: 0,
             message: "Schedine rifiutate.",
           }),
@@ -282,7 +279,6 @@ describe(
 
         const sender = {
           submit: vi.fn().mockResolvedValue({
-            success: true,
             acceptedRecords: 3,
           }),
         };
@@ -301,13 +297,12 @@ describe(
     );
 
     it(
-      "rifiuta acceptedRecords incoerente senza classificare l'esito",
+      "marca OUTCOME_UNKNOWN con acceptedRecords incoerente",
       async () => {
         const store = createStore();
 
         const sender = {
           submit: vi.fn().mockResolvedValue({
-            success: true,
             acceptedRecords: 4,
           }),
         };
@@ -332,6 +327,51 @@ describe(
 
         expect(
           store.markRejected,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          store.markOutcomeUnknown,
+        ).toHaveBeenCalledWith(
+          "transmission-1",
+          "Risposta Alloggiati Web non coerente con il payload inviato.",
+        );
+      },
+    );
+    it(
+      "rende non retryable il rifiuto del Send gate",
+      async () => {
+        const store = createStore();
+
+        store.beginSending.mockResolvedValue(
+          false,
+        );
+
+        const sender = {
+          submit: vi.fn(),
+        };
+
+        const promise =
+          sendAlloggiatiTransmission(
+            "transmission-1",
+            createSubmission(),
+            sender,
+            store,
+          );
+
+        await expect(
+          promise,
+        ).rejects.toBeInstanceOf(
+          NonRetryableBackgroundJobError,
+        );
+
+        await expect(
+          promise,
+        ).rejects.toThrow(
+          "Transmission Alloggiati Web non autorizzata all'invio.",
+        );
+
+        expect(
+          sender.submit,
         ).not.toHaveBeenCalled();
 
         expect(

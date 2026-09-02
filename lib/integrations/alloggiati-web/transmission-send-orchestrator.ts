@@ -43,10 +43,19 @@ export async function sendAlloggiatiTransmission(
   sender: AlloggiatiSubmissionSender,
   store: AlloggiatiTransmissionOrchestratorStore,
 ): Promise<void> {
-  await authorizeAlloggiatiTransmissionSend(
-    transmissionId,
-    store,
-  );
+  try {
+    await authorizeAlloggiatiTransmissionSend(
+      transmissionId,
+      store,
+    );
+  } catch (error) {
+    throw new NonRetryableBackgroundJobError(
+      errorMessage(
+        error,
+        "Transmission Alloggiati Web non autorizzata all'invio.",
+      ),
+    );
+  }
 
   let result: AlloggiatiWebSubmissionResult;
 
@@ -78,8 +87,18 @@ export async function sendAlloggiatiTransmission(
     result.acceptedRecords >
       submission.records.length
   ) {
+    const message =
+      "Risposta Alloggiati Web non coerente con il payload inviato.";
+
+    await persistSafely(() =>
+      store.markOutcomeUnknown(
+        transmissionId,
+        message,
+      ),
+    );
+
     throw new NonRetryableBackgroundJobError(
-      "Risposta Alloggiati Web non coerente con il payload inviato.",
+      message,
     );
   }
 

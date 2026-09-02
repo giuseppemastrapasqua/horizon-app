@@ -11,6 +11,9 @@ import type {
 import type {
   AlloggiatiWebTransport,
 } from "./transport";
+import {
+  parseAlloggiatiSendResponse,
+} from "./send-response-parser";
 
 const SERVICE_URL =
   "https://alloggiatiweb.poliziadistato.it/service/Service.asmx";
@@ -164,11 +167,62 @@ export class SoapPreflightAlloggiatiWebTransport
   }
 
   async submit(
-    _session: AlloggiatiWebSession,
-    _submission: AlloggiatiWebSubmission,
+    session: AlloggiatiWebSession,
+    submission: AlloggiatiWebSubmission,
   ): Promise<AlloggiatiWebSubmissionResult> {
-    throw new Error(
-      "Invio SOAP Alloggiati Web non ancora abilitato.",
+    const username =
+      this.getUsername(session);
+
+    const apartmentId =
+      submission.apartmentId?.trim();
+
+    if (
+      !apartmentId ||
+      !/^\d+$/.test(apartmentId)
+    ) {
+      throw new Error(
+        "IdAppartamento Alloggiati Web non valido.",
+      );
+    }
+
+    if (submission.records.length === 0) {
+      throw new Error(
+        "Invio Alloggiati Web senza schedine.",
+      );
+    }
+
+    const records = submission.records
+      .map((record) => {
+        if (!record.trim()) {
+          throw new Error(
+            "Schedina Alloggiati Web vuota.",
+          );
+        }
+
+        return (
+          `<string>${escapeXml(record)}</string>`
+        );
+      })
+      .join("");
+
+    const xml = await this.postSoap(
+      "GestioneAppartamenti_Send",
+      `
+        <GestioneAppartamenti_Send xmlns="AlloggiatiService">
+          <Utente>${escapeXml(username)}</Utente>
+          <token>${escapeXml(session.token)}</token>
+          <ElencoSchedine>${records}</ElencoSchedine>
+          <IdAppartamento>${apartmentId}</IdAppartamento>
+          <result>
+            <SchedineValide>0</SchedineValide>
+            <Dettaglio></Dettaglio>
+          </result>
+        </GestioneAppartamenti_Send>
+      `,
+    );
+
+    return parseAlloggiatiSendResponse(
+      xml,
     );
   }
 
