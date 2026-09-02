@@ -61,7 +61,7 @@ describe("AlloggiatiWebAdapter", () => {
     });
 
     expect(result).toEqual({
-      success: true,
+      acceptedRecords: 1,
       resultCode: "MOCK_OK",
     });
 
