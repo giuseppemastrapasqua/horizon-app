@@ -56,12 +56,41 @@ vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
 }));
 
+const listApartmentsMock = vi.hoisted(() =>
+  vi.fn(),
+);
+
+vi.mock(
+  "@/lib/integrations/alloggiati-web/runtime-apartment-directory",
+  () => ({
+    createRuntimeAlloggiatiWebApartmentDirectory:
+      () => ({
+        listApartments:
+          listApartmentsMock,
+      }),
+  }),
+);
+
+const discoverApartmentsMock = vi.hoisted(() =>
+  vi.fn(),
+);
+
+vi.mock(
+  "@/lib/integrations/alloggiati-web/apartment-discovery",
+  () => ({
+    discoverAlloggiatiApartments:
+      discoverApartmentsMock,
+  }),
+);
+
 import {
   decryptCredential,
 } from "@/lib/security/credential-crypto";
 
 import {
+  discoverAlloggiatiApartmentsAction,
   linkExistingAlloggiatiAccountAction,
+  listAlloggiatiApartmentsAction,
   saveAlloggiatiCredentialsAction,
 } from "./alloggiati-credential-actions";
 
@@ -128,6 +157,28 @@ describe(
       connectionCreateMock.mockResolvedValue({
         id: "connection-1",
       });
+
+      listApartmentsMock.mockResolvedValue([
+        {
+          apartmentId: "123",
+          description: "Casa Centro",
+        },
+        {
+          apartmentId: "456",
+          description: "Casa Mare",
+        },
+      ]);
+
+      discoverApartmentsMock.mockResolvedValue([
+        {
+          apartmentId: "123",
+          description: "Casa Centro",
+        },
+        {
+          apartmentId: "456",
+          description: "Casa Mare",
+        },
+      ]);
     });
 
     afterEach(() => {
@@ -496,5 +547,255 @@ describe(
         );
       },
     );
-  },
+
+    it(
+      "richiede SUPER_ADMIN per leggere ListaAppartamenti",
+      async () => {
+        await listAlloggiatiApartmentsAction(
+          "property-1",
+          "account-1",
+        );
+
+        expect(
+          requireRolesMock,
+        ).toHaveBeenCalledWith([
+          "SUPER_ADMIN",
+        ]);
+      },
+    );
+
+    it(
+      "blocca discovery senza propertyId",
+      async () => {
+        await expect(
+          listAlloggiatiApartmentsAction(
+            " ",
+            "account-1",
+          ),
+        ).rejects.toThrow(
+          "Identificativo immobile mancante.",
+        );
+
+        expect(
+          propertyFindUniqueMock,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          listApartmentsMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "blocca discovery senza accountId",
+      async () => {
+        await expect(
+          listAlloggiatiApartmentsAction(
+            "property-1",
+            " ",
+          ),
+        ).rejects.toThrow(
+          "Account Alloggiati Web obbligatorio.",
+        );
+
+        expect(
+          propertyFindUniqueMock,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          listApartmentsMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "blocca discovery per immobile inesistente",
+      async () => {
+        propertyFindUniqueMock.mockResolvedValue(
+          null,
+        );
+
+        await expect(
+          listAlloggiatiApartmentsAction(
+            "property-1",
+            "account-1",
+          ),
+        ).rejects.toThrow(
+          "Immobile non trovato.",
+        );
+
+        expect(
+          listApartmentsMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "restituisce ListaAppartamenti usando owner della struttura",
+      async () => {
+        const result =
+          await listAlloggiatiApartmentsAction(
+            " property-1 ",
+            " account-1 ",
+          );
+
+        expect(
+          propertyFindUniqueMock,
+        ).toHaveBeenCalledWith({
+          where: {
+            id: "property-1",
+          },
+          select: {
+            ownerId: true,
+          },
+        });
+
+        expect(
+          listApartmentsMock,
+        ).toHaveBeenCalledWith(
+          "account-1",
+          "owner-1",
+        );
+
+        expect(result).toEqual([
+          {
+            apartmentId: "123",
+            description: "Casa Centro",
+          },
+          {
+            apartmentId: "456",
+            description: "Casa Mare",
+          },
+        ]);
+
+        expect(
+          accountCreateMock,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          connectionCreateMock,
+        ).not.toHaveBeenCalled();
+
+        expect(
+          revalidatePathMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+    it("richiede SUPER_ADMIN per discovery con nuove credenziali", async () => {
+      requireRolesMock.mockRejectedValueOnce(
+        new Error("Forbidden"),
+      );
+
+      const formData = new FormData();
+      formData.set("username", "utente");
+      formData.set("password", "password");
+      formData.set("wsKey", "ws-key");
+
+      await expect(
+        discoverAlloggiatiApartmentsAction(
+          formData,
+        ),
+      ).rejects.toThrow("Forbidden");
+
+      expect(
+        discoverApartmentsMock,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("richiede username per discovery con nuove credenziali", async () => {
+      const formData = new FormData();
+      formData.set("password", "password");
+      formData.set("wsKey", "ws-key");
+
+      await expect(
+        discoverAlloggiatiApartmentsAction(
+          formData,
+        ),
+      ).rejects.toThrow(
+        "Username Alloggiati Web obbligatorio.",
+      );
+
+      expect(
+        discoverApartmentsMock,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("richiede password per discovery con nuove credenziali", async () => {
+      const formData = new FormData();
+      formData.set("username", "utente");
+      formData.set("wsKey", "ws-key");
+
+      await expect(
+        discoverAlloggiatiApartmentsAction(
+          formData,
+        ),
+      ).rejects.toThrow(
+        "Password Alloggiati Web obbligatoria.",
+      );
+
+      expect(
+        discoverApartmentsMock,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("richiede WSKEY per discovery con nuove credenziali", async () => {
+      const formData = new FormData();
+      formData.set("username", "utente");
+      formData.set("password", "password");
+
+      await expect(
+        discoverAlloggiatiApartmentsAction(
+          formData,
+        ),
+      ).rejects.toThrow(
+        "WSKEY Alloggiati Web obbligatoria.",
+      );
+
+      expect(
+        discoverApartmentsMock,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("scopre ListaAppartamenti senza persistere le nuove credenziali", async () => {
+      const formData = new FormData();
+      formData.set("username", " utente ");
+      formData.set("password", " password ");
+      formData.set("wsKey", " ws-key ");
+
+      const result =
+        await discoverAlloggiatiApartmentsAction(
+          formData,
+        );
+
+      expect(
+        discoverApartmentsMock,
+      ).toHaveBeenCalledWith({
+        username: "utente",
+        password: "password",
+        wsKey: "ws-key",
+      });
+
+      expect(result).toEqual([
+        {
+          apartmentId: "123",
+          description: "Casa Centro",
+        },
+        {
+          apartmentId: "456",
+          description: "Casa Mare",
+        },
+      ]);
+
+      expect(
+        accountCreateMock,
+      ).not.toHaveBeenCalled();
+
+      expect(
+        connectionCreateMock,
+      ).not.toHaveBeenCalled();
+
+      expect(
+        revalidatePathMock,
+      ).not.toHaveBeenCalled();
+    });  },
 );

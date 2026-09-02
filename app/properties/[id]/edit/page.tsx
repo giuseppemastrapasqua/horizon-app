@@ -45,7 +45,9 @@ import {
   updatePropertyIntegrationAction,
 } from "./integration-actions";
 import {
+  discoverAlloggiatiApartmentsAction,
   linkExistingAlloggiatiAccountAction,
+  listAlloggiatiApartmentsAction,
   saveAlloggiatiCredentialsAction,
 } from "./alloggiati-credential-actions";
 import { updatePropertyChannelPricingAction } from "./channel-pricing-actions";
@@ -901,6 +903,12 @@ export default async function PropertyEditPage({
     }
     linkAccountAction={
       linkExistingAlloggiatiAccountAction
+    }
+    listApartmentsAction={
+      listAlloggiatiApartmentsAction
+    }
+    discoverApartmentsAction={
+      discoverAlloggiatiApartmentsAction
     }
   />
 ) : null}

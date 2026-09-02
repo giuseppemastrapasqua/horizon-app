@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 
 import { requireRoles } from "@/lib/auth/guards";
+import {
+  createRuntimeAlloggiatiWebApartmentDirectory,
+} from "@/lib/integrations/alloggiati-web/runtime-apartment-directory";
+import {
+  discoverAlloggiatiApartments,
+} from "@/lib/integrations/alloggiati-web/apartment-discovery";
 import { prisma } from "@/lib/prisma";
 import {
   encryptCredential,
@@ -10,6 +16,89 @@ import {
 
 const ENCRYPTION_KEY_ENV =
   "HORIZON_CREDENTIAL_ENCRYPTION_KEY";
+
+export type AlloggiatiApartmentOption = {
+  apartmentId: string;
+  description: string;
+};
+
+export async function discoverAlloggiatiApartmentsAction(
+  formData: FormData,
+): Promise<AlloggiatiApartmentOption[]> {
+  await requireRoles(["SUPER_ADMIN"]);
+
+  const username = readRequired(
+    formData,
+    "username",
+    "Username Alloggiati Web obbligatorio.",
+  );
+
+  const password = readRequired(
+    formData,
+    "password",
+    "Password Alloggiati Web obbligatoria.",
+  );
+
+  const wsKey = readRequired(
+    formData,
+    "wsKey",
+    "WSKEY Alloggiati Web obbligatoria.",
+  );
+
+  return discoverAlloggiatiApartments({
+    username,
+    password,
+    wsKey,
+  });
+}
+export async function listAlloggiatiApartmentsAction(
+  propertyId: string,
+  accountId: string,
+): Promise<AlloggiatiApartmentOption[]> {
+  await requireRoles(["SUPER_ADMIN"]);
+
+  const normalizedPropertyId =
+    propertyId.trim();
+
+  const normalizedAccountId =
+    accountId.trim();
+
+  if (!normalizedPropertyId) {
+    throw new Error(
+      "Identificativo immobile mancante.",
+    );
+  }
+
+  if (!normalizedAccountId) {
+    throw new Error(
+      "Account Alloggiati Web obbligatorio.",
+    );
+  }
+
+  const property =
+    await prisma.property.findUnique({
+      where: {
+        id: normalizedPropertyId,
+      },
+      select: {
+        ownerId: true,
+      },
+    });
+
+  if (!property) {
+    throw new Error(
+      "Immobile non trovato.",
+    );
+  }
+
+  const directory =
+    createRuntimeAlloggiatiWebApartmentDirectory();
+
+  return directory.listApartments(
+    normalizedAccountId,
+    property.ownerId,
+  );
+}
 
 export async function saveAlloggiatiCredentialsAction(
   formData: FormData,
