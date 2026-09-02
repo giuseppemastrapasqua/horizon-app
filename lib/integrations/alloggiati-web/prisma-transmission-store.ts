@@ -50,23 +50,54 @@ export class PrismaAlloggiatiTransmissionStore {
     return result.count === 1;
   }
 
-  async confirm(
+  async recordAcceptedRecords(
     transmissionId: string,
+    acceptedRecords: number,
   ): Promise<boolean> {
-    const result =
+    if (
+      !Number.isInteger(acceptedRecords) ||
+      acceptedRecords <= 0
+    ) {
+      return false;
+    }
+
+    const confirmed =
       await prisma.alloggiatiWebTransmission.updateMany({
         where: {
           id: transmissionId,
           status: "SENDING",
+          recordsCount: acceptedRecords,
         },
         data: {
           status: "CONFIRMED",
+          acceptedRecords,
           confirmedAt: new Date(),
           lastError: null,
         },
       });
 
-    return result.count === 1;
+    if (confirmed.count === 1) {
+      return true;
+    }
+
+    const partiallyConfirmed =
+      await prisma.alloggiatiWebTransmission.updateMany({
+        where: {
+          id: transmissionId,
+          status: "SENDING",
+          recordsCount: {
+            gt: acceptedRecords,
+          },
+        },
+        data: {
+          status: "PARTIALLY_CONFIRMED",
+          acceptedRecords,
+          partiallyConfirmedAt: new Date(),
+          lastError: null,
+        },
+      });
+
+    return partiallyConfirmed.count === 1;
   }
 
   async markRejected(

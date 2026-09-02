@@ -1389,26 +1389,29 @@ enum AlloggiatiWebTransmissionStatus {
   PREPARED
   SENDING
   CONFIRMED
+  PARTIALLY_CONFIRMED
   OUTCOME_UNKNOWN
   REJECTED
 }
 
 model AlloggiatiWebTransmission {
-  id               String                          @id @default(cuid())
-  bookingId        String
-  propertyId       String
-  apartmentId      String
-  status           AlloggiatiWebTransmissionStatus @default(PREPARED)
-  payloadHash      String
-  recordsCount     Int
-  preparedAt       DateTime                        @default(now())
-  sendStartedAt    DateTime?
-  confirmedAt      DateTime?
-  outcomeUnknownAt DateTime?
-  rejectedAt       DateTime?
-  lastError        String?
-  createdAt        DateTime                        @default(now())
-  updatedAt        DateTime                        @updatedAt
+  id                   String                          @id @default(cuid())
+  bookingId            String
+  propertyId           String
+  apartmentId          String
+  status               AlloggiatiWebTransmissionStatus @default(PREPARED)
+  payloadHash          String
+  recordsCount         Int
+  acceptedRecords      Int?
+  preparedAt           DateTime                        @default(now())
+  sendStartedAt        DateTime?
+  confirmedAt          DateTime?
+  partiallyConfirmedAt DateTime?
+  outcomeUnknownAt     DateTime?
+  rejectedAt           DateTime?
+  lastError            String?
+  createdAt            DateTime                        @default(now())
+  updatedAt            DateTime                        @updatedAt
 
   booking  Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)

@@ -129,9 +129,9 @@ describe(
     );
 
     it(
-      "conferma solo una transmission SENDING",
+      "conferma quando tutti i record sono accettati",
       async () => {
-        updateManyMock.mockResolvedValue({
+        updateManyMock.mockResolvedValueOnce({
           count: 1,
         });
 
@@ -139,10 +139,15 @@ describe(
           new PrismaAlloggiatiTransmissionStore();
 
         await expect(
-          store.confirm(
+          store.recordAcceptedRecords(
             "transmission-1",
+            2,
           ),
         ).resolves.toBe(true);
+
+        expect(
+          updateManyMock,
+        ).toHaveBeenCalledTimes(1);
 
         expect(
           updateManyMock,
@@ -150,14 +155,122 @@ describe(
           where: {
             id: "transmission-1",
             status: "SENDING",
+            recordsCount: 2,
           },
           data: {
             status: "CONFIRMED",
+            acceptedRecords: 2,
             confirmedAt:
               expect.any(Date),
             lastError: null,
           },
         });
+      },
+    );
+
+    it(
+      "marca PARTIALLY_CONFIRMED quando solo parte dei record e accettata",
+      async () => {
+        updateManyMock
+          .mockResolvedValueOnce({
+            count: 0,
+          })
+          .mockResolvedValueOnce({
+            count: 1,
+          });
+
+        const store =
+          new PrismaAlloggiatiTransmissionStore();
+
+        await expect(
+          store.recordAcceptedRecords(
+            "transmission-1",
+            1,
+          ),
+        ).resolves.toBe(true);
+
+        expect(
+          updateManyMock,
+        ).toHaveBeenNthCalledWith(
+          2,
+          {
+            where: {
+              id: "transmission-1",
+              status: "SENDING",
+              recordsCount: {
+                gt: 1,
+              },
+            },
+            data: {
+              status:
+                "PARTIALLY_CONFIRMED",
+              acceptedRecords: 1,
+              partiallyConfirmedAt:
+                expect.any(Date),
+              lastError: null,
+            },
+          },
+        );
+      },
+    );
+
+    it(
+      "rifiuta un numero di record accettati non valido",
+      async () => {
+        const store =
+          new PrismaAlloggiatiTransmissionStore();
+
+        await expect(
+          store.recordAcceptedRecords(
+            "transmission-1",
+            0,
+          ),
+        ).resolves.toBe(false);
+
+        await expect(
+          store.recordAcceptedRecords(
+            "transmission-1",
+            -1,
+          ),
+        ).resolves.toBe(false);
+
+        await expect(
+          store.recordAcceptedRecords(
+            "transmission-1",
+            1.5,
+          ),
+        ).resolves.toBe(false);
+
+        expect(
+          updateManyMock,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "non conferma se acceptedRecords supera recordsCount",
+      async () => {
+        updateManyMock
+          .mockResolvedValueOnce({
+            count: 0,
+          })
+          .mockResolvedValueOnce({
+            count: 0,
+          });
+
+        const store =
+          new PrismaAlloggiatiTransmissionStore();
+
+        await expect(
+          store.recordAcceptedRecords(
+            "transmission-1",
+            3,
+          ),
+        ).resolves.toBe(false);
+
+        expect(
+          updateManyMock,
+        ).toHaveBeenCalledTimes(2);
       },
     );
 
