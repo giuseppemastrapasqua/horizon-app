@@ -1,8 +1,16 @@
-﻿import { AuditAction } from "@prisma/client";
+import { AuditAction } from "@prisma/client";
 
+import {
+  buildBookingFinanceBreakdown,
+} from "@/lib/finance/calculations/build-booking-finance-breakdown";
+import {
+  getPropertyOtaCommissionByChannel,
+  resolveOtaCommissionPercent,
+} from "@/lib/finance/get-property-ota-commissions";
 import {
   buildFinancePreview,
 } from "@/lib/finance/preview";
+import { upsertCommissionInvoiceDraft } from "@/lib/invoices/upsert-commission-invoice-draft";
 import { prisma } from "@/lib/prisma";
 import { AuditService } from "@/services/audit/AuditService";
 
@@ -11,20 +19,30 @@ type CreateFinanceReportParams = {
   referenceMonth: Date | string;
   createdById?: string | null;
   title?: string;
+  existingReportId?: string | null;
 };
+
+const HORIZON_STANDARD_NAME =
+  "Horizon Standard";
+
+const HORIZON_STANDARD_VERSION =
+  1;
+
+const F24_PERCENT = 21;
 
 export async function createFinanceReport({
   propertyId,
   referenceMonth,
   createdById = null,
   title,
+  existingReportId = null,
 }: CreateFinanceReportParams) {
   const normalizedPropertyId =
     propertyId.trim();
 
   if (!normalizedPropertyId) {
     throw new Error(
-      "Ãˆ necessario specificare l'immobile.",
+      "È necessario specificare l'immobile.",
     );
   }
 
@@ -39,7 +57,7 @@ export async function createFinanceReport({
     )
   ) {
     throw new Error(
-      "Il mese di riferimento non Ã¨ valido.",
+      "Il mese di riferimento non è valido.",
     );
   }
 
@@ -58,18 +76,6 @@ export async function createFinanceReport({
     calculation,
   } = preview;
 
-  if (!formula) {
-    throw new Error(
-      "Non Ã¨ disponibile alcuna formula finanziaria per questo immobile.",
-    );
-  }
-
-  if (!calculation) {
-    throw new Error(
-      "Non Ã¨ stato possibile calcolare il rendiconto finanziario.",
-    );
-  }
-
   const currencies = Array.from(
     new Set(
       bookings.map(
@@ -84,6 +90,126 @@ export async function createFinanceReport({
     );
   }
 
+  const currency =
+    currencies[0] ??
+    calculation?.currency ??
+    "EUR";
+
+  const financeSettings =
+    await prisma.property.findUnique({
+      where: {
+        id: property.id,
+      },
+      select: {
+        cleaningCost: true,
+        propertyManagementCommissionPercent:
+          true,
+        propertyManagementCommissionVatPercent:
+          true,
+        propertyManagementCommissionVatMode:
+          true,
+      },
+    });
+
+  if (!financeSettings) {
+    throw new Error(
+      "Immobile non trovato.",
+    );
+  }
+
+  const otaCommissionByChannel =
+    await getPropertyOtaCommissionByChannel(
+      property.id,
+    );
+
+  const bookingBreakdowns =
+    await Promise.all(
+      bookings.map(
+        async (booking) =>
+          buildBookingFinanceBreakdown({
+            formulaId:
+              formula?.id ?? null,
+
+            grossRevenue:
+              Number(
+                booking.grossAmount,
+              ),
+
+            cleaningCost:
+              Number(
+                financeSettings.cleaningCost,
+              ),
+
+            otaCommissionPercent:
+              resolveOtaCommissionPercent({
+                channel:
+                  booking.channel,
+                commissions:
+                  otaCommissionByChannel,
+              }),
+
+            propertyManagementCommissionPercent:
+              Number(
+                financeSettings.propertyManagementCommissionPercent,
+              ),
+
+            propertyManagementCommissionVatPercent:
+              Number(
+                financeSettings.propertyManagementCommissionVatPercent,
+              ),
+
+            propertyManagementCommissionVatMode:
+              financeSettings.propertyManagementCommissionVatMode,
+
+            currency:
+              booking.currency,
+
+            channel:
+              booking.channel,
+          }),
+      ),
+    );
+
+  const grossRevenue =
+    bookingBreakdowns.reduce(
+      (total, breakdown) =>
+        total +
+        breakdown.grossBooking,
+      0,
+    );
+
+  const finalAmount =
+    bookingBreakdowns.reduce(
+      (total, breakdown) =>
+        total +
+        breakdown.netProperty,
+      0,
+    );
+
+  const managementCommissionTaxableBaseTotal =
+    bookingBreakdowns.reduce(
+      (total, breakdown) =>
+        total +
+        breakdown.managementCommissionTaxableBase,
+      0,
+    );
+
+  const managementCommissionVatTotal =
+    bookingBreakdowns.reduce(
+      (total, breakdown) =>
+        total +
+        breakdown.managementCommissionVat,
+      0,
+    );
+
+  const managementCommissionTotal =
+    bookingBreakdowns.reduce(
+      (total, breakdown) =>
+        total +
+        breakdown.managementCommissionTotal,
+      0,
+    );
+
   const normalizedCreatedById =
     createdById?.trim() || null;
 
@@ -94,77 +220,128 @@ export async function createFinanceReport({
       referenceMonth: monthStart,
     });
 
-  const formulaSnapshot = {
-    id: formula.id,
-    name: formula.name,
-    description:
-      formula.description,
-    scope: formula.scope,
-    status: formula.status,
-    propertyId:
-      formula.propertyId,
+  const formulaSnapshot =
+    formula
+      ? {
+          id: formula.id,
+          name: formula.name,
+          description:
+            formula.description,
+          scope: formula.scope,
+          status: formula.status,
+          propertyId:
+            formula.propertyId,
 
-    rules: formula.rules.map(
-      (rule) => ({
-        id: rule.id,
-        name: rule.name,
-        description:
-          rule.description,
-        order: rule.order,
-        isEnabled:
-          rule.isEnabled,
-        operation:
-          rule.operation,
-        valueType:
-          rule.valueType,
-        base: rule.base,
-        category:
-          rule.category,
-        value: Number(rule.value),
-        referencedFormulaId:
-          rule.referencedFormulaId,
-      }),
-    ),
-  };
+          rules: formula.rules.map(
+            (rule) => ({
+              id: rule.id,
+              name: rule.name,
+              description:
+                rule.description,
+              order: rule.order,
+              isEnabled:
+                rule.isEnabled,
+              operation:
+                rule.operation,
+              valueType:
+                rule.valueType,
+              base: rule.base,
+              category:
+                rule.category,
+              value:
+                Number(rule.value),
+              referencedFormulaId:
+                rule.referencedFormulaId,
+            }),
+          ),
+        }
+      : {
+          type:
+            "HORIZON_STANDARD",
+          version:
+            HORIZON_STANDARD_VERSION,
+          name:
+            HORIZON_STANDARD_NAME,
+          propertyId:
+            property.id,
+          cleaningCost:
+            Number(
+              financeSettings.cleaningCost,
+            ),
+          propertyManagementCommissionPercent:
+            Number(
+              financeSettings.propertyManagementCommissionPercent,
+            ),
+          propertyManagementCommissionVatPercent:
+            Number(
+              financeSettings.propertyManagementCommissionVatPercent,
+            ),
+          propertyManagementCommissionVatMode:
+            financeSettings.propertyManagementCommissionVatMode,
+          managementCommissionTaxableBaseTotal,
+          managementCommissionVatTotal,
+          managementCommissionTotal,
+          f24Percent:
+            F24_PERCENT,
+          otaCommissions:
+            Object.fromEntries(
+              otaCommissionByChannel,
+            ),
+        };
 
-  return prisma.$transaction(
+  const reportRules =
+    calculation?.rules ?? [];
+
+  const report = await prisma.$transaction(
     async (transaction) => {
-      const report =
-        await transaction.financeReport.create({
-          data: {
-            propertyId: property.id,
-            ownerId: property.owner.id,
+      if (existingReportId) {
+        await transaction.financeReportRule.deleteMany({
+          where: {
+            reportId: existingReportId,
+          },
+        });
+      }
 
-            formulaId: formula.id,
+      const reportData = {
+            propertyId:
+              property.id,
+
+            ownerId:
+              property.owner.id,
+
+            formulaId:
+              formula?.id ?? null,
 
             createdById:
               normalizedCreatedById,
 
-            referenceMonth: monthStart,
-            title: reportTitle,
+            referenceMonth:
+              monthStart,
 
-            currency:
-              calculation.currency,
+            title:
+              reportTitle,
 
-            grossRevenue:
-              calculation.grossRevenue,
+            currency,
 
-            finalAmount:
-              calculation.finalAmount,
+            grossRevenue,
+
+            finalAmount,
 
             formulaName:
-              calculation.formulaName,
+              formula?.name ??
+              HORIZON_STANDARD_NAME,
 
             formulaSnapshot,
 
             rules: {
               create:
-                calculation.rules.map(
+                reportRules.map(
                   (rule) => ({
                     sourceRuleId:
                       rule.ruleId,
 
-                    order: rule.order,
+                    order:
+                      rule.order,
 
                     ruleName:
                       rule.ruleName,
@@ -196,9 +373,9 @@ export async function createFinanceReport({
                   }),
                 ),
             },
-          },
+          };
 
-          include: {
+      const reportInclude = {
             property: {
               select: {
                 id: true,
@@ -236,34 +413,56 @@ export async function createFinanceReport({
 
             rules: {
               orderBy: {
-                order: "asc",
+                order: "asc" as const,
               },
             },
-          },
-        });
+          };
+
+      const report =
+        existingReportId
+          ? await transaction.financeReport.update({
+              where: {
+                id: existingReportId,
+              },
+              data: reportData,
+              include: reportInclude,
+            })
+          : await transaction.financeReport.create({
+              data: reportData,
+              include: reportInclude,
+            });
 
       await AuditService.log(
         {
           actorId:
             normalizedCreatedById,
-          action: AuditAction.CREATE,
+          action:
+            existingReportId
+              ? AuditAction.UPDATE
+              : AuditAction.CREATE,
           propertyId:
             report.propertyId,
           entityType:
             "FINANCE_REPORT",
-          entityId: report.id,
+          entityId:
+            report.id,
           description:
             "Rendiconto finanziario creato.",
           metadata: {
-            title: report.title,
+            title:
+              report.title,
             referenceMonth:
               report.referenceMonth.toISOString(),
             currency:
               report.currency,
             grossRevenue:
-              Number(report.grossRevenue),
+              Number(
+                report.grossRevenue,
+              ),
             finalAmount:
-              Number(report.finalAmount),
+              Number(
+                report.finalAmount,
+              ),
             ownerId:
               report.ownerId,
             formulaId:
@@ -274,36 +473,45 @@ export async function createFinanceReport({
               bookings.length,
             rulesCount:
               report.rules.length,
-            rules: report.rules.map(
-              (rule) => ({
-                id: rule.id,
-                sourceRuleId:
-                  rule.sourceRuleId,
-                order: rule.order,
-                ruleName:
-                  rule.ruleName,
-                operation:
-                  rule.operation,
-                valueType:
-                  rule.valueType,
-                category:
-                  rule.category,
-                baseAmount:
-                  Number(rule.baseAmount),
-                configuredValue:
-                  Number(
-                    rule.configuredValue,
-                  ),
-                calculatedAmount:
-                  Number(
-                    rule.calculatedAmount,
-                  ),
-                totalBefore:
-                  Number(rule.totalBefore),
-                totalAfter:
-                  Number(rule.totalAfter),
-              }),
-            ),
+            rules:
+              report.rules.map(
+                (rule) => ({
+                  id:
+                    rule.id,
+                  sourceRuleId:
+                    rule.sourceRuleId,
+                  order:
+                    rule.order,
+                  ruleName:
+                    rule.ruleName,
+                  operation:
+                    rule.operation,
+                  valueType:
+                    rule.valueType,
+                  category:
+                    rule.category,
+                  baseAmount:
+                    Number(
+                      rule.baseAmount,
+                    ),
+                  configuredValue:
+                    Number(
+                      rule.configuredValue,
+                    ),
+                  calculatedAmount:
+                    Number(
+                      rule.calculatedAmount,
+                    ),
+                  totalBefore:
+                    Number(
+                      rule.totalBefore,
+                    ),
+                  totalAfter:
+                    Number(
+                      rule.totalAfter,
+                    ),
+                }),
+              ),
           },
         },
         transaction,
@@ -312,7 +520,17 @@ export async function createFinanceReport({
       return report;
     },
   );
+
+  await upsertCommissionInvoiceDraft({
+    reportId: report.id,
+    managementCommissionTaxableBaseTotal,
+    managementCommissionVatTotal,
+    managementCommissionTotal,
+  });
+
+  return report;
 }
+
 
 function createDefaultReportTitle({
   propertyName,
@@ -322,13 +540,16 @@ function createDefaultReportTitle({
   referenceMonth: Date;
 }): string {
   const formattedMonth =
-    new Intl.DateTimeFormat("it-IT", {
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    }).format(referenceMonth);
+    new Intl.DateTimeFormat(
+      "it-IT",
+      {
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      },
+    ).format(referenceMonth);
 
-  return `Rendiconto ${propertyName} Â· ${capitalizeFirstLetter(
+  return `Rendiconto ${propertyName} · ${capitalizeFirstLetter(
     formattedMonth,
   )}`;
 }
@@ -345,6 +566,3 @@ function capitalizeFirstLetter(
     value.slice(1)
   );
 }
-
-
-

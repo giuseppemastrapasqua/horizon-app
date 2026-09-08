@@ -18,6 +18,7 @@ import {
   prisma,
 } from "@/lib/prisma";
 import { getAccessiblePropertyIds } from "@/lib/auth/guards";
+import { BillingIssuerProfileCard } from "@/components/invoices/BillingIssuerProfileCard";
 
 type InvoicesPageProps = {
   searchParams?: Promise<{
@@ -126,6 +127,7 @@ export default async function InvoicesPage({
     invoices,
     owners,
     properties,
+    billingIssuerProfile,
   ] =
     await Promise.all([
       prisma.document.findMany({
@@ -181,6 +183,23 @@ export default async function InvoicesPage({
           name: true,
         },
       }),
+
+      prisma.billingIssuerProfile.findUnique({
+        where: { profileKey: "DEFAULT" },
+        select: {
+          businessName: true,
+          vatNumber: true,
+          taxCode: true,
+          address: true,
+          postalCode: true,
+          city: true,
+          province: true,
+          country: true,
+          email: true,
+          pec: true,
+        logoPath: true,
+        },
+      })
     ]);
 
   const draftCount =
@@ -212,6 +231,8 @@ export default async function InvoicesPage({
         title="Fatture"
         subtitle="Fatture commissioni, documenti emessi e storico per proprietario e immobile."
       >
+        <BillingIssuerProfileCard profile={billingIssuerProfile} />
+
         <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <SummaryCard
             label="Totali"
@@ -460,7 +481,7 @@ export default async function InvoicesPage({
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <Link
-                            href={`/documents/${invoice.id}`}
+                            href={`/invoices/${invoice.id}/pdf`}
                             className="text-[15px] font-black tracking-[-0.025em] text-slate-950 transition hover:text-blue-600"
                           >
                             {
@@ -541,18 +562,12 @@ export default async function InvoicesPage({
                     <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
                       <div className="flex gap-2">
                         <Link
-                          href={`/documents/${invoice.id}`}
+                          href={`/invoices/${invoice.id}/pdf`}
                           className="inline-flex h-8 items-center rounded-lg bg-[#2563EB] px-3 text-[8px] font-bold text-white transition hover:bg-[#1D4ED8]"
                         >
-                          Apri
+                          Apri PDF
                         </Link>
 
-                        <Link
-                          href={`/documents/${invoice.id}/versions`}
-                          className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[8px] font-bold text-slate-500 transition hover:bg-blue-50 hover:text-blue-600"
-                        >
-                          Versioni
-                        </Link>
                       </div>
 
                       <span className="text-[8px] text-slate-400">

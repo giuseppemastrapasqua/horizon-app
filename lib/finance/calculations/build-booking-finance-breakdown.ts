@@ -15,41 +15,38 @@ type BookingChannel =
   | "DIRECT"
   | "OTHER";
 
+type VatMode =
+  | "NONE"
+  | "EXCLUDED"
+  | "INCLUDED";
+
 type Input = {
-  formulaId: string;
+  formulaId?: string | null;
   grossRevenue: number;
   cleaningCost: number;
   otaCommissionPercent: number;
   propertyManagementCommissionPercent: number;
+  propertyManagementCommissionVatPercent?: number;
+  propertyManagementCommissionVatMode?: VatMode;
   currency: string;
   channel: BookingChannel;
 };
 
 export type BookingFinanceBreakdown = {
   grossBooking: number;
-
-  otaCommission:
-    | number
-    | null;
-
+  otaCommission: number | null;
   cleaningCost: number;
-
   grossProperty: number;
-
-  managementCommission:
-    | number
-    | null;
-
-  taxAmount:
-    | number
-    | null;
-
-  otherAmount:
-    | number
-    | null;
-
+  managementCommission: number | null;
+  managementCommissionTaxableBase: number;
+  managementCommissionVat: number;
+  managementCommissionTotal: number;
+  taxAmount: number | null;
+  otherAmount: number | null;
   netProperty: number;
 };
+
+const F24_RATE = 0.21;
 
 export async function buildBookingFinanceBreakdown({
   formulaId,
@@ -57,156 +54,105 @@ export async function buildBookingFinanceBreakdown({
   cleaningCost,
   otaCommissionPercent,
   propertyManagementCommissionPercent,
+  propertyManagementCommissionVatPercent = 0,
+  propertyManagementCommissionVatMode = "NONE",
   currency,
   channel,
 }: Input): Promise<BookingFinanceBreakdown> {
-  const calculation =
-    await calculatePropertyFinanceFormula({
-      formulaId,
-      grossRevenue,
-      bookingCount: 1,
-      cleaningCost,
-      currency,
-      channel,
-    });
+  const calculation = formulaId
+    ? await calculatePropertyFinanceFormula({
+        formulaId,
+        grossRevenue,
+        bookingCount: 1,
+        cleaningCost,
+        currency,
+        channel,
+      })
+    : null;
+
   const otaCommission =
     grossRevenue *
-    (
-      Math.max(
-        0,
-        otaCommissionPercent,
-      ) /
-      100
-    );
+    (Math.max(0, otaCommissionPercent) / 100);
 
-  const calculatedCleaning =
-    getCategorySignedAmount(
-      calculation,
-      "CLEANING",
-    );
+  const calculatedCleaning = calculation
+    ? getCategorySignedAmount(calculation, "CLEANING")
+    : null;
 
-  const taxAmount =
-    getCategorySignedAmount(
-      calculation,
-      "TAX",
-    );
-
-  const otherAmount =
-    getCategorySignedAmount(
-      calculation,
-      "OTHER",
-    );
+  const otherAmount = calculation
+    ? getCategorySignedAmount(calculation, "OTHER")
+    : null;
 
   const effectiveCleaning =
     calculatedCleaning === null
       ? cleaningCost
-      : Math.abs(
-          calculatedCleaning,
-        );
+      : Math.abs(calculatedCleaning);
 
-  /*
-   * Lordo proprietà:
-   * Lordo prenotazione
-   * - Commissione OTA
-   * - Pulizie
-   *
-   * Le due voci sono trattate
-   * come costi, indipendentemente
-   * dalla rappresentazione visiva.
-   */
-  const grossProperty =
+  const grossProperty = Math.max(
+    0,
     grossRevenue -
-    Math.abs(
-      otaCommission,
-    ) -
-    Math.abs(
-      effectiveCleaning,
-    );
-
-  const normalizedGrossProperty =
-    Math.max(
-      0,
-      grossProperty,
-    );
+      Math.abs(otaCommission) -
+      Math.abs(effectiveCleaning),
+  );
 
   const managementCommission =
-    normalizedGrossProperty *
-    (
-      Math.max(
-        0,
-        propertyManagementCommissionPercent,
-      ) /
-      100
-    );
+    grossProperty *
+    (Math.max(0, propertyManagementCommissionPercent) / 100);
 
-  const taxSignedAmount =
-    taxAmount ?? 0;
+  const vatRate =
+    Math.max(0, propertyManagementCommissionVatPercent) / 100;
 
-  const otherSignedAmount =
-    otherAmount ?? 0;
+  const managementCommissionTaxableBase =
+    propertyManagementCommissionVatMode === "INCLUDED" && vatRate > 0
+      ? managementCommission / (1 + vatRate)
+      : managementCommission;
+
+  const managementCommissionVat =
+    propertyManagementCommissionVatMode === "NONE"
+      ? 0
+      : propertyManagementCommissionVatMode === "INCLUDED"
+        ? managementCommission - managementCommissionTaxableBase
+        : managementCommissionTaxableBase * vatRate;
+
+  const managementCommissionTotal =
+    propertyManagementCommissionVatMode === "EXCLUDED"
+      ? managementCommissionTaxableBase + managementCommissionVat
+      : managementCommission;
+
+  const f24Base = Math.max(
+    0,
+    grossProperty - managementCommissionTotal,
+  );
+
+  const taxAmount = f24Base * F24_RATE;
+  const otherSignedAmount = otherAmount ?? 0;
 
   const netProperty =
-    normalizedGrossProperty -
-    managementCommission +
-    taxSignedAmount +
-    otherSignedAmount;
+    f24Base - taxAmount + otherSignedAmount;
 
   return {
-    grossBooking:
-      grossRevenue,
-
-    otaCommission:
-      Math.abs(
-        otaCommission,
-      ),
-
-    cleaningCost:
-      Math.abs(
-        effectiveCleaning,
-      ),
-
-    grossProperty:
-      normalizedGrossProperty,
-
-    managementCommission:
-      managementCommission,
-
-    taxAmount:
-      taxAmount === null
-        ? null
-        : Math.abs(
-            taxAmount,
-          ),
-
-    /*
-     * VARIE mantiene il segno.
-     * Una regola OTHER in ADD
-     * deve restare positiva;
-     * una SUBTRACT negativa.
-     */
+    grossBooking: grossRevenue,
+    otaCommission: Math.abs(otaCommission),
+    cleaningCost: Math.abs(effectiveCleaning),
+    grossProperty,
+    managementCommission,
+    managementCommissionTaxableBase,
+    managementCommissionVat,
+    managementCommissionTotal,
+    taxAmount,
     otherAmount,
-
-    netProperty:
-      netProperty,
+    netProperty,
   };
 }
 
 function getCategorySignedAmount(
-  calculation:
-    FinanceCalculationResult,
-  category:
-    FinanceRuleCategory,
+  calculation: FinanceCalculationResult,
+  category: FinanceRuleCategory,
 ) {
-  const matchingRules =
-    calculation.rules.filter(
-      (rule) =>
-        rule.category ===
-        category,
-    );
+  const matchingRules = calculation.rules.filter(
+    (rule) => rule.category === category,
+  );
 
-  if (
-    matchingRules.length === 0
-  ) {
+  if (matchingRules.length === 0) {
     return null;
   }
 
@@ -222,14 +168,8 @@ function getCategorySignedAmount(
 }
 
 function getSignedRuleAmount(
-  operation:
-    FinanceRuleOperation,
+  operation: FinanceRuleOperation,
   amount: number,
 ) {
-  return operation === "ADD"
-    ? amount
-    : -amount;
+  return operation === "ADD" ? amount : -amount;
 }
-
-
-

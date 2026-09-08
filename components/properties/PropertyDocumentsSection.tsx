@@ -46,7 +46,7 @@ const documentTypes: Array<{
   },
   {
     value: "IDENTITY_DOCUMENT",
-    label: "Documento di identitÃ ",
+    label: "Documento di identit\u00e0",
   },
   {
     value: "FLOOR_PLAN",
@@ -232,7 +232,7 @@ export function PropertyDocumentsSection({
                             : "Numero documento non specificato"}
 
                           {document.issuer
-                            ? ` Â· ${document.issuer}`
+                            ? ` \u00b7 ${document.issuer}`
                             : ""}
                         </p>
                       </div>
@@ -247,8 +247,7 @@ export function PropertyDocumentsSection({
                         </span>
 
                         <span className="text-sm font-semibold text-slate-500 transition group-open:rotate-180">
-                          â†“
-                        </span>
+                          {"\u2193"}</span>
                       </div>
                     </div>
                   }
@@ -260,7 +259,16 @@ export function PropertyDocumentsSection({
 attachment={
   <div className="space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      {document.fileUrl ? (
+      {document.storageKey ? (
+        <a
+          href={`/properties/${propertyId}/documents/${document.id}/file`}
+          target="_blank"
+          rel="noreferrer"
+          className="text-sm font-semibold text-blue-700 transition hover:text-blue-900"
+        >
+          Apri file allegato
+        </a>
+      ) : document.fileUrl ? (
         <a
           href={document.fileUrl}
           target="_blank"
@@ -275,7 +283,7 @@ attachment={
         </span>
       )}
 
-      {document.fileUrl ? (
+      {document.storageKey || document.fileUrl ? (
         <>
           <input
             type="hidden"
@@ -503,7 +511,7 @@ function DocumentFields({
           }
           className="mb-2 block text-sm font-medium text-slate-700"
         >
-          Stato validitÃ 
+          Stato validit{"\u00e0"}
         </label>
 
         <select
@@ -658,55 +666,64 @@ function DocumentFields({
         />
       </div>
 
-      <div>
-        <label
-          htmlFor={
-            document
-              ? `fileUrl-${document.id}`
-              : "new-document-file-url"
-          }
-          className="mb-2 block text-sm font-medium text-slate-700"
-        >
-          URL file
-        </label>
+      {document ? (
+        <>
+          <div className="md:col-span-2">
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              File allegato
+            </span>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              {document.filename ?? "Nessun file allegato"}
+              {document.storageKey ? (
+                <span className="ml-2 text-xs font-medium text-slate-500">
+                  Allegato protetto
+                </span>
+              ) : null}
+            </div>
+          </div>
 
-        <input
-          id={
-            document
-              ? `fileUrl-${document.id}`
-              : "new-document-file-url"
-          }
-          name="fileUrl"
-          type="url"
-          defaultValue={document?.fileUrl ?? ""}
-          className={inputClassName}
-        />
-      </div>
+          <div className="md:col-span-2">
+            <label
+              htmlFor={`document-file-${document.id}`}
+              className="mb-2 block text-sm font-medium text-slate-700"
+            >
+              Sostituisci allegato
+            </label>
+            <input
+              id={`document-file-${document.id}`}
+              name="file"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+              className={inputClassName}
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Opzionale. PDF, JPG, PNG o WEBP. Massimo 25 MB.
+            </p>
+          </div>
+        </>
+      ) : (
+        <div className="md:col-span-2">
+          <label
+            htmlFor="new-document-file"
+            className="mb-2 block text-sm font-medium text-slate-700"
+          >
+            File
+          </label>
 
-      <div>
-        <label
-          htmlFor={
-            document
-              ? `filename-${document.id}`
-              : "new-document-filename"
-          }
-          className="mb-2 block text-sm font-medium text-slate-700"
-        >
-          Nome file
-        </label>
+          <input
+            id="new-document-file"
+            name="file"
+            type="file"
+            required
+            accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+            className={inputClassName}
+          />
 
-        <input
-          id={
-            document
-              ? `filename-${document.id}`
-              : "new-document-filename"
-          }
-          name="filename"
-          type="text"
-          defaultValue={document?.filename ?? ""}
-          className={inputClassName}
-        />
-      </div>
+          <p className="mt-2 text-xs text-slate-500">
+            PDF, JPG, PNG o WEBP. Massimo 25 MB.
+          </p>
+        </div>
+      )}
 
       <div className="md:col-span-2">
         <label

@@ -45,7 +45,7 @@ export function PropertyFinanceReportSettings({
             </h2>
 
             <p className="mt-2 text-sm text-slate-600">
-              Personalizza il documento senza modificare i calcoli finanziari.
+              Personalizza il rendiconto mantenendo invariati i calcoli finanziari.
             </p>
           </div>
 
@@ -187,7 +187,7 @@ export function PropertyFinanceReportSettings({
             type="submit"
             className="text-sm font-semibold text-slate-600"
           >
-            Ripristina Horizon Default
+            Ripristina configurazione Horizon
           </button>
         </form>
       ) : null}

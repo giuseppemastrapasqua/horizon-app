@@ -82,6 +82,22 @@ export class MistralDocumentOcrProvider
   async extractText(
     input: DocumentOcrInput,
   ): Promise<DocumentOcrResult> {
+    const document =
+      input.sourceType === "url"
+        ? {
+            type: "document_url",
+            document_url: input.fileUrl,
+          }
+        : input.contentType.startsWith("image/")
+          ? {
+              type: "image_url",
+              image_url: input.dataUrl,
+            }
+          : {
+              type: "document_url",
+              document_url: input.dataUrl,
+            };
+
     const response = await fetch(
       MISTRAL_OCR_ENDPOINT,
       {
@@ -93,10 +109,7 @@ export class MistralDocumentOcrProvider
         },
         body: JSON.stringify({
           model: MISTRAL_OCR_MODEL,
-          document: {
-            type: "document_url",
-            document_url: input.fileUrl,
-          },
+          document,
         }),
       },
     );

@@ -149,6 +149,18 @@ export async function createProperty(
     formData.get("cleaningCost") || 0,
   );
 
+  const propertyManagementCommissionPercent = Number(
+    formData.get("propertyManagementCommissionPercent") || 0,
+  );
+
+  const propertyManagementCommissionVatPercent = Number(
+    formData.get("propertyManagementCommissionVatPercent") || 0,
+  );
+
+  const propertyManagementCommissionVatMode = String(
+    formData.get("propertyManagementCommissionVatMode") || "NONE",
+  );
+
   const notes = String(
     formData.get("notes") || "",
   ).trim();
@@ -189,6 +201,18 @@ export async function createProperty(
     );
   }
 
+  if (!Number.isFinite(propertyManagementCommissionPercent) || propertyManagementCommissionPercent < 0 || propertyManagementCommissionPercent >= 100) {
+    throw new Error("La commissione di gestione deve essere compresa tra 0 e 99,99.");
+  }
+
+  if (!Number.isFinite(propertyManagementCommissionVatPercent) || propertyManagementCommissionVatPercent < 0 || propertyManagementCommissionVatPercent >= 100) {
+    throw new Error("L'IVA sulla commissione deve essere compresa tra 0 e 99,99.");
+  }
+
+
+  if (!["NONE", "EXCLUDED", "INCLUDED"].includes(propertyManagementCommissionVatMode)) {
+    throw new Error("Modalità IVA commissione non valida.");
+  }
 
   const initialScore = calculateInitialScore({
     zone,
@@ -212,6 +236,9 @@ export async function createProperty(
               bedrooms,
               bathrooms,
               cleaningCost,
+              propertyManagementCommissionPercent,
+              propertyManagementCommissionVatPercent,
+              propertyManagementCommissionVatMode: propertyManagementCommissionVatMode as "NONE" | "EXCLUDED" | "INCLUDED",
               initialScore,
               currentScore: initialScore,
               notes,

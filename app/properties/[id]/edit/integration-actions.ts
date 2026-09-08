@@ -1,10 +1,15 @@
 "use server";
 
+import {
+  BookingChannel,
+  IntegrationTransport,
+  type Prisma,
+} from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 import { requirePropertyRole } from "@/lib/auth/guards";
-import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
 import { prisma } from "@/lib/prisma";
+import { synchronizeIcalConnectionProperty } from "@/lib/integrations/ical/synchronize-ical-connection-property";
 import { upsertIntegrationPropertyMapping } from "@/lib/integrations/shared/upsert-integration-property-mapping";
 import {
   INTEGRATION_PROVIDERS,
@@ -40,15 +45,15 @@ export async function updatePropertyIntegrationAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(
+    propertyId,
+    ["OWNER", "MANAGER"],
+  );
 
-  if (!providerValue) {
-    throw new Error(
-      "Provider di integrazione mancante.",
-    );
-  }
-
-  if (!isIntegrationProvider(providerValue)) {
+  if (
+    !providerValue ||
+    !isIntegrationProvider(providerValue)
+  ) {
     throw new Error(
       `Provider di integrazione non valido: "${providerValue}".`,
     );
@@ -56,7 +61,7 @@ export async function updatePropertyIntegrationAction(
 
   if (!externalPropertyId) {
     throw new Error(
-      "Inserisci l’identificativo esterno dell’immobile.",
+      "Inserisci l'identificativo esterno dell'immobile.",
     );
   }
 
@@ -74,6 +79,29 @@ export async function updatePropertyIntegrationAction(
     propertyId,
     externalPropertyId,
   });
+
+  if (
+    providerValue ===
+    INTEGRATION_PROVIDERS.BOOKING_COM
+  ) {
+    const feedUrl = String(
+      formData.get("feedUrl") ?? "",
+    ).trim();
+
+    if (!feedUrl) {
+      throw new Error(
+        "Inserisci l'URL del calendario iCal esportato da Booking.com.",
+      );
+    }
+
+    validateFeedUrl(feedUrl);
+
+    await saveBookingIcalConnection({
+      propertyId,
+      externalPropertyId,
+      feedUrl,
+    });
+  }
 
   revalidatePropertyPaths(propertyId);
 }
@@ -95,7 +123,10 @@ export async function synchronizePropertyIntegrationAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(
+    propertyId,
+    ["OWNER", "MANAGER"],
+  );
 
   if (!isIntegrationProvider(providerValue)) {
     throw new Error(
@@ -112,39 +143,195 @@ export async function synchronizePropertyIntegrationAction(
     );
   }
 
-  const mapping =
-    await prisma.integrationPropertyMapping.findFirst({
+  const connections =
+    await prisma.integrationConnectionProperty.findMany({
       where: {
         propertyId,
-        provider: "BOOKING_COM",
+        connection: {
+          connectorKey: "ical",
+          transport:
+            IntegrationTransport.ICAL,
+          enabled: true,
+        },
       },
       select: {
-        externalPropertyId: true,
+        connectionId: true,
+        config: true,
       },
     });
 
-  if (!mapping) {
+  const bookingConnection =
+    connections.find(
+      (connection) =>
+        getJsonString(
+          connection.config,
+          "channel",
+        ) === BookingChannel.BOOKING,
+    );
+
+  if (!bookingConnection) {
     throw new Error(
-      "Configurazione Booking.com non trovata per questo immobile.",
+      "Calendario iCal Booking.com non configurato per questo immobile.",
     );
   }
 
-  const externalPropertyId =
-    mapping.externalPropertyId;
-
-  await enqueueBackgroundJob({
-    type: "BOOKING_SYNC",
-    payload: {
-      provider: providerValue,
-      externalPropertyId,
-      pageLimit: 50,
-      maxPages: 20,
-    },
-    deduplicationKey:
-      `booking-sync:${providerValue}:${propertyId}:${externalPropertyId}`,
+  await synchronizeIcalConnectionProperty({
+    connectionId:
+      bookingConnection.connectionId,
+    propertyId,
+    pageLimit: 50,
+    maxPages: 20,
   });
 
   revalidatePropertyPaths(propertyId);
+}
+
+async function saveBookingIcalConnection({
+  propertyId,
+  externalPropertyId,
+  feedUrl,
+}: {
+  propertyId: string;
+  externalPropertyId: string;
+  feedUrl: string;
+}): Promise<void> {
+  const property =
+    await prisma.property.findUnique({
+      where: {
+        id: propertyId,
+      },
+      select: {
+        id: true,
+        name: true,
+        ownerId: true,
+      },
+    });
+
+  if (!property) {
+    throw new Error(
+      "Immobile Horizon non trovato.",
+    );
+  }
+
+  const existingProperties =
+    await prisma.integrationConnectionProperty.findMany({
+      where: {
+        propertyId,
+        connection: {
+          connectorKey: "ical",
+          transport:
+            IntegrationTransport.ICAL,
+        },
+      },
+      select: {
+        id: true,
+        connectionId: true,
+        config: true,
+      },
+    });
+
+  const existing =
+    existingProperties.find(
+      (item) =>
+        getJsonString(
+          item.config,
+          "channel",
+        ) === BookingChannel.BOOKING,
+    );
+
+  const config: Prisma.InputJsonObject = {
+    feedUrl,
+    channel:
+      BookingChannel.BOOKING,
+  };
+
+  if (existing) {
+    await prisma.$transaction([
+      prisma.integrationConnection.update({
+        where: {
+          id: existing.connectionId,
+        },
+        data: {
+          enabled: true,
+          name:
+            `Booking.com iCal · ${property.name}`,
+        },
+      }),
+      prisma.integrationConnectionProperty.update({
+        where: {
+          id: existing.id,
+        },
+        data: {
+          externalPropertyId,
+          config,
+        },
+      }),
+    ]);
+
+    return;
+  }
+
+  await prisma.integrationConnection.create({
+    data: {
+      ownerId: property.ownerId,
+      connectorKey: "ical",
+      transport:
+        IntegrationTransport.ICAL,
+      name:
+        `Booking.com iCal · ${property.name}`,
+      enabled: true,
+      properties: {
+        create: {
+          propertyId,
+          externalPropertyId,
+          config,
+        },
+      },
+    },
+  });
+}
+
+function validateFeedUrl(
+  value: string,
+): void {
+  let url: URL;
+
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(
+      "L'URL del calendario Booking.com non è valido.",
+    );
+  }
+
+  if (
+    url.protocol !== "https:" &&
+    url.protocol !== "http:"
+  ) {
+    throw new Error(
+      "Il calendario Booking.com deve utilizzare un URL HTTP o HTTPS.",
+    );
+  }
+}
+
+function getJsonString(
+  value: Prisma.JsonValue | null,
+  key: string,
+): string | undefined {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return undefined;
+  }
+
+  const property =
+    value[key];
+
+  return typeof property === "string"
+    ? property
+    : undefined;
 }
 
 function revalidatePropertyPaths(
@@ -157,4 +344,7 @@ function revalidatePropertyPaths(
   revalidatePath(
     `/properties/${propertyId}/edit`,
   );
+
+  revalidatePath("/calendar");
+  revalidatePath("/bookings");
 }

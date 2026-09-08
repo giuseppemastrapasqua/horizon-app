@@ -354,12 +354,12 @@ export default async function FinanceReportDetailPage({
               Apri immobile
             </Link>
 
-            <Link
-              href={`/reports/monthly/${report.id}/pdf`}
+            <a
+              href={`/reports/monthly/${report.id}/pdf`} download
               style={primaryLinkStyle}
             >
               Scarica PDF
-            </Link>
+            </a>
           </div>
 
           <span style={savedBadgeStyle}>
@@ -628,7 +628,7 @@ export default async function FinanceReportDetailPage({
       </th>
 
       <th className="px-3 py-3 text-right text-[7px] font-bold uppercase tracking-[0.08em] text-white">
-        Cedolare
+        F24
       </th>
 
       <th className="px-3 py-3 text-right text-[7px] font-bold uppercase tracking-[0.08em] text-white">

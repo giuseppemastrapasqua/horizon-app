@@ -13,6 +13,7 @@ import { requirePropertyAccess, requirePropertyRole, requireUser } from "@/lib/a
 import { emitEvent } from "@/lib/events/emit";
 import { processPendingEvents } from "@/lib/events/process-pending";
 import { prisma } from "@/lib/prisma";
+import { findOrCreateGuest } from "@/lib/guests";
 import { AuditService } from "@/services/audit/AuditService";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 
@@ -257,6 +258,201 @@ export async function createBooking(
   redirect(`/properties/${property.id}`);
 }
 
+export async function updateBookingDetails(
+  formData: FormData,
+): Promise<void> {
+  const user = await requireUser();
+
+  const bookingId = String(
+    formData.get("bookingId") || "",
+  ).trim();
+
+  if (!bookingId) {
+    throw new Error("Prenotazione non trovata.");
+  }
+
+  const existingBooking =
+    await prisma.booking.findUnique({
+      where: {
+        id: bookingId,
+      },
+      select: {
+        id: true,
+        propertyId: true,
+        guestId: true,
+        guestName: true,
+        guestEmail: true,
+        guestPhone: true,
+        guests: true,
+        grossAmount: true,
+        currency: true,
+        property: {
+          select: {
+            maxGuests: true,
+          },
+        },
+      },
+    });
+
+  if (!existingBooking) {
+    throw new Error("Prenotazione non trovata.");
+  }
+
+  await requirePropertyRole(
+    existingBooking.propertyId,
+    ["OWNER", "MANAGER"],
+  );
+
+  const guestName = String(
+    formData.get("guestName") || "",
+  ).trim();
+
+  const guestEmail = optionalText(
+    formData.get("guestEmail"),
+  );
+
+  const guestPhone = optionalText(
+    formData.get("guestPhone"),
+  );
+
+  const guests = Number(
+    formData.get("guests") || 0,
+  );
+
+  const grossAmount = Number(
+    formData.get("grossAmount") || 0,
+  );
+
+  const currency = String(
+    formData.get("currency") || "",
+  )
+    .trim()
+    .toUpperCase();
+
+  if (!guestName) {
+    throw new Error(
+      "Inserisci il nome dell'ospite.",
+    );
+  }
+
+  if (
+    !Number.isInteger(guests) ||
+    guests < 1
+  ) {
+    throw new Error(
+      "Il numero di ospiti non è valido.",
+    );
+  }
+
+  if (
+    guests >
+    existingBooking.property.maxGuests
+  ) {
+    throw new Error(
+      "Il numero di ospiti supera la capienza dell'immobile.",
+    );
+  }
+
+  if (
+    !Number.isFinite(grossAmount) ||
+    grossAmount < 0
+  ) {
+    throw new Error(
+      "L'importo della prenotazione non è valido.",
+    );
+  }
+
+  if (!/^[A-Z]{3}$/.test(currency)) {
+    throw new Error(
+      "La valuta deve essere un codice di 3 lettere.",
+    );
+  }
+
+  await prisma.$transaction(
+    async (transaction) => {
+      const { guest } =
+        await findOrCreateGuest(
+          {
+            fullName: guestName,
+            email: guestEmail,
+            phone: guestPhone,
+          },
+          transaction,
+        );
+
+      const updatedBooking =
+        await transaction.booking.update({
+          where: {
+            id: existingBooking.id,
+          },
+          data: {
+            guestId: guest.id,
+            guestName,
+            guestEmail,
+            guestPhone,
+            guests,
+            grossAmount,
+            currency,
+            guestDataManuallyEdited: true,
+            pricingDataManuallyEdited: true,
+          },
+        });
+
+      await AuditService.log(
+        {
+          actorId: user.id,
+          action: AuditAction.UPDATE,
+          propertyId:
+            existingBooking.propertyId,
+          entityType:
+            AUDIT_ENTITY_TYPES.BOOKING,
+          entityId:
+            existingBooking.id,
+          description:
+            "Dati della prenotazione modificati manualmente.",
+          metadata: {
+            source: "MANUAL",
+            previous: {
+              guestId:
+                existingBooking.guestId,
+              guestName:
+                existingBooking.guestName,
+              guestEmail:
+                existingBooking.guestEmail,
+              guestPhone:
+                existingBooking.guestPhone,
+              guests:
+                existingBooking.guests,
+              grossAmount:
+                existingBooking.grossAmount,
+              currency:
+                existingBooking.currency,
+            },
+            current: {
+              guestId:
+                updatedBooking.guestId,
+              guestName:
+                updatedBooking.guestName,
+              guestEmail:
+                updatedBooking.guestEmail,
+              guestPhone:
+                updatedBooking.guestPhone,
+              guests:
+                updatedBooking.guests,
+              grossAmount:
+                updatedBooking.grossAmount,
+              currency:
+                updatedBooking.currency,
+            },
+          },
+        },
+        transaction,
+      );
+    },
+  );
+
+  redirect(`/bookings/${existingBooking.id}`);
+}
 export async function setBookingOperationalStatus(
   bookingId: string,
   operationalStatus:

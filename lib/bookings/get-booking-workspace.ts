@@ -20,6 +20,7 @@ export async function getBookingWorkspace(bookingId: string) {
           dueDate: "asc",
         },
       },
+      guestCheckInLink: true,
     },
   });
 
@@ -101,6 +102,18 @@ export async function getBookingWorkspace(bookingId: string) {
       internalNotes: booking.internalNotes,
       createdAt: booking.createdAt,
       updatedAt: booking.updatedAt,
+      guestCheckInLink: booking.guestCheckInLink
+        ? {
+            status:
+              booking.guestCheckInLink.revokedAt !== null
+                ? ("REVOKED" as const)
+                : booking.guestCheckInLink.expiresAt <= now
+                  ? ("EXPIRED" as const)
+                  : ("ACTIVE" as const),
+            expiresAt: booking.guestCheckInLink.expiresAt,
+            updatedAt: booking.guestCheckInLink.updatedAt,
+          }
+        : null,
       property: {
         id: booking.property.id,
         name: booking.property.name,

@@ -1,4 +1,4 @@
-﻿import { HORIZON_LOGO_BASE64 } from "./horizon-logo-data";
+import { HORIZON_LOGO_BASE64 } from "./horizon-logo-data";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
@@ -33,6 +33,18 @@ export type FinanceReportPdfBooking = {
     | null;
 
   managementCommission:
+    | number
+    | null;
+
+  managementCommissionTaxableBase:
+    | number
+    | null;
+
+  managementCommissionVat:
+    | number
+    | null;
+
+  managementCommissionTotal:
     | number
     | null;
 
@@ -131,6 +143,7 @@ type TableColumn = {
     | "cleaning"
     | "grossProperty"
     | "managementCommission"
+    | "managementCommissionVat"
     | "tax"
     | "other"
     | "netProperty";
@@ -175,7 +188,7 @@ const TABLE_COLUMNS: TableColumn[] = [
   {
     key: "guest",
     label: "OSPITE",
-    width: 122,
+    width: 108,
   },
   {
     key: "checkIn",
@@ -229,12 +242,18 @@ const TABLE_COLUMNS: TableColumn[] = [
   {
     key: "managementCommission",
     label: "COMM. PM",
-    width: 62,
+    width: 58,
+    align: "right",
+  },
+  {
+    key: "managementCommissionVat",
+    label: "IVA PM",
+    width: 44,
     align: "right",
   },
   {
     key: "tax",
-    label: "CEDOLARE",
+    label: "F24",
     width: 60,
     align: "right",
   },
@@ -246,7 +265,7 @@ const TABLE_COLUMNS: TableColumn[] = [
   },
   {
     key: "netProperty",
-    label: "NETTO PROP.",
+    label: "BONIFICO",
     width: 70,
     align: "right",
   },
@@ -1166,6 +1185,13 @@ if (
       0
     );
 
+
+  const totalTaxAmount =
+    input.bookings.reduce(
+      (total, booking) =>
+        total + (booking.taxAmount ?? 0),
+      0
+    );
   const adjustedFinalAmount =
     input.finalAmount +
     manualAdjustmentsTotal;
@@ -1209,6 +1235,47 @@ if (
     width: rightWidth,
   });
 
+
+  page.drawText(
+    "CEDOLARE SECCA (F24)",
+    {
+      x: rightX + 12,
+      y:
+        summaryY +
+        SUMMARY_HEIGHT -
+        69,
+      size: 8,
+      font: boldFont,
+      color: rgb(
+        0.75,
+        0.08,
+        0.18
+      ),
+    }
+  );
+
+  drawRightAlignedText({
+    page,
+    text: formatCurrency(
+      totalTaxAmount,
+      input.currency
+    ),
+    xRight:
+      rightX +
+      rightWidth -
+      12,
+    y:
+      summaryY +
+      SUMMARY_HEIGHT -
+      69,
+    size: 8,
+    font: boldFont,
+    color: rgb(
+      0.75,
+      0.08,
+      0.18
+    ),
+  });
   page.drawLine({
     start: {
       x: rightX + 12,
@@ -1437,10 +1504,22 @@ function getBookingCellValue({
     column.key ===
     "managementCommission"
   ) {
-    return booking.managementCommission === null
+    return booking.managementCommissionTaxableBase === null
       ? "-"
       : formatCurrency(
-          booking.managementCommission,
+          booking.managementCommissionTaxableBase,
+          booking.currency
+        );
+  }
+
+  if (
+    column.key ===
+    "managementCommissionVat"
+  ) {
+    return booking.managementCommissionVat === null
+      ? "-"
+      : formatCurrency(
+          booking.managementCommissionVat,
           booking.currency
         );
   }

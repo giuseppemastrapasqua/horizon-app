@@ -74,12 +74,12 @@ export function PropertyPhotosSection({
         </div>
 
         <h3 className="mt-5 text-lg font-semibold text-slate-900">
-          Carica una foto
+          Carica le foto
         </h3>
 
         <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">
-          Seleziona un&apos;immagine dell&apos;alloggio. Sono accettati file
-          JPG, PNG e WebP con una dimensione massima di 10 MB.
+          Seleziona una o più immagini dell&apos;alloggio. Sono accettati file
+          JPG, PNG e WebP, fino a 20 foto alla volta e massimo 10 MB per file.
         </p>
 
         <div className="mx-auto mt-6 max-w-lg text-left">
@@ -92,9 +92,10 @@ export function PropertyPhotosSection({
 
           <input
             id="property-image"
-            name="file"
+            name="files"
             type="file"
             accept="image/jpeg,image/png,image/webp"
+            multiple
             required
             className="block w-full cursor-pointer rounded-xl border border-slate-300 bg-white text-sm text-slate-600 file:mr-4 file:border-0 file:border-r file:border-slate-200 file:bg-slate-100 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-slate-800 hover:file:bg-slate-200"
           />
@@ -104,7 +105,7 @@ export function PropertyPhotosSection({
           type="submit"
           className="mt-6 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Carica foto
+          Carica foto selezionate
         </button>
 
         <p className="mt-3 text-xs text-slate-500">

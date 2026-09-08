@@ -7,15 +7,27 @@ import {
 
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 import { getDocumentOcrProvider } from "@/lib/ocr/get-document-ocr-provider";
+import type { DocumentOcrInput } from "@/lib/ocr/document-ocr-provider";
 import { prisma } from "@/lib/prisma";
+import { decryptDocument } from "@/lib/security/document-crypto";
+import { defaultPrivateStorageProvider } from "@/lib/storage/default-private-storage-provider";
 import { AuditService } from "@/services/audit/AuditService";
+
+const DOCUMENT_ENCRYPTION_KEY_ENV =
+  "HORIZON_DOCUMENT_ENCRYPTION_KEY";
 
 type PropertyDocumentOcrJobPayload = {
   documentId: string;
   propertyId: string;
-  fileUrl: string;
   filename?: string;
-};
+} & (
+  | {
+      storageKey: string;
+    }
+  | {
+      fileUrl: string;
+    }
+);
 
 function isJsonObject(
   value: Prisma.JsonValue,
@@ -29,10 +41,7 @@ function isJsonObject(
 
 function readRequiredString(
   payload: Prisma.JsonObject,
-  key:
-    | "documentId"
-    | "propertyId"
-    | "fileUrl",
+  key: "documentId" | "propertyId",
 ): string {
   const value = payload[key];
 
@@ -50,7 +59,7 @@ function readRequiredString(
 
 function readOptionalString(
   payload: Prisma.JsonObject,
-  key: "filename",
+  key: "filename" | "fileUrl" | "storageKey",
 ): string | undefined {
   const value = payload[key];
 
@@ -74,28 +83,52 @@ function parsePayload(
 ): PropertyDocumentOcrJobPayload {
   if (!isJsonObject(payload)) {
     throw new Error(
-      "Il payload del job OCR non è un oggetto JSON valido.",
+      "Il payload del job OCR non \u00e8 un oggetto JSON valido.",
     );
   }
 
-  return {
-    documentId: readRequiredString(
-      payload,
-      "documentId",
-    ),
-    propertyId: readRequiredString(
-      payload,
-      "propertyId",
-    ),
-    fileUrl: readRequiredString(
-      payload,
-      "fileUrl",
-    ),
-    filename: readOptionalString(
-      payload,
-      "filename",
-    ),
-  };
+  const documentId = readRequiredString(
+    payload,
+    "documentId",
+  );
+  const propertyId = readRequiredString(
+    payload,
+    "propertyId",
+  );
+  const filename = readOptionalString(
+    payload,
+    "filename",
+  );
+  const storageKey = readOptionalString(
+    payload,
+    "storageKey",
+  );
+  const fileUrl = readOptionalString(
+    payload,
+    "fileUrl",
+  );
+
+  if (storageKey) {
+    return {
+      documentId,
+      propertyId,
+      storageKey,
+      ...(filename ? { filename } : {}),
+    };
+  }
+
+  if (fileUrl) {
+    return {
+      documentId,
+      propertyId,
+      fileUrl,
+      ...(filename ? { filename } : {}),
+    };
+  }
+
+  throw new Error(
+    "Il payload del job OCR non contiene storageKey o fileUrl.",
+  );
 }
 
 function getErrorMessage(error: unknown): string {
@@ -104,6 +137,19 @@ function getErrorMessage(error: unknown): string {
   }
 
   return "Errore sconosciuto durante l'elaborazione OCR.";
+}
+
+function getEncryptionKey(): string {
+  const encryptionKey =
+    process.env[DOCUMENT_ENCRYPTION_KEY_ENV]?.trim();
+
+  if (!encryptionKey) {
+    throw new Error(
+      `${DOCUMENT_ENCRYPTION_KEY_ENV} non configurata.`,
+    );
+  }
+
+  return encryptionKey;
 }
 
 export async function processPropertyDocumentOcrJob(
@@ -126,6 +172,9 @@ export async function processPropertyDocumentOcrJob(
       select: {
         id: true,
         fileUrl: true,
+        storageKey: true,
+        contentType: true,
+        encryptionVersion: true,
       },
     });
 
@@ -133,11 +182,20 @@ export async function processPropertyDocumentOcrJob(
     return;
   }
 
-  const currentFileUrl =
-    document.fileUrl?.trim() ?? null;
+  if ("storageKey" in payload) {
+    const currentStorageKey =
+      document.storageKey?.trim() ?? null;
 
-  if (currentFileUrl !== payload.fileUrl) {
-    return;
+    if (currentStorageKey !== payload.storageKey) {
+      return;
+    }
+  } else {
+    const currentFileUrl =
+      document.fileUrl?.trim() ?? null;
+
+    if (currentFileUrl !== payload.fileUrl) {
+      return;
+    }
   }
 
   await prisma.$transaction(async (transaction) => {
@@ -168,6 +226,10 @@ export async function processPropertyDocumentOcrJob(
         metadata: {
           status:
             PropertyDocumentOcrStatus.PROCESSING,
+          source:
+            "storageKey" in payload
+              ? "encrypted-storage"
+              : "legacy-url",
         },
       },
       transaction,
@@ -178,16 +240,66 @@ export async function processPropertyDocumentOcrJob(
     const provider =
       getDocumentOcrProvider();
 
-    const result =
-      await provider.extractText({
+    let ocrInput: DocumentOcrInput;
+
+    if ("storageKey" in payload) {
+      if (
+        document.encryptionVersion &&
+        document.encryptionVersion !== "v1"
+      ) {
+        throw new Error(
+          "Versione di cifratura documento non supportata.",
+        );
+      }
+
+      const contentType =
+        document.contentType?.trim().toLowerCase();
+
+      if (!contentType) {
+        throw new Error(
+          "Il documento protetto non contiene un content type valido.",
+        );
+      }
+
+      const encrypted =
+        await defaultPrivateStorageProvider.read(
+          payload.storageKey,
+        );
+
+      const plaintext = decryptDocument(
+        encrypted,
+        getEncryptionKey(),
+      );
+
+      const dataUrl = [
+        `data:${contentType};base64,`,
+        Buffer.from(plaintext).toString("base64"),
+      ].join("");
+
+      plaintext.fill(0);
+
+      ocrInput = {
         documentId: document.id,
+        sourceType: "data",
+        dataUrl,
+        contentType,
+        ...(payload.filename
+          ? { filename: payload.filename }
+          : {}),
+      };
+    } else {
+      ocrInput = {
+        documentId: document.id,
+        sourceType: "url",
         fileUrl: payload.fileUrl,
         ...(payload.filename
-          ? {
-              filename: payload.filename,
-            }
+          ? { filename: payload.filename }
           : {}),
-      });
+      };
+    }
+
+    const result =
+      await provider.extractText(ocrInput);
 
     const finalStatus = result.reviewRequired
       ? PropertyDocumentOcrStatus.REVIEW_REQUIRED

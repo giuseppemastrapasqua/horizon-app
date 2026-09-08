@@ -52,7 +52,12 @@ export async function uploadPropertyImageAction(
     formData.get("propertyId") ?? "",
   ).trim();
 
-  const fileValue = formData.get("file");
+  const files = formData
+    .getAll("files")
+    .filter(
+      (value): value is File =>
+        value instanceof File && value.size > 0,
+    );
 
   if (!propertyId) {
     throw new Error(
@@ -60,18 +65,48 @@ export async function uploadPropertyImageAction(
     );
   }
 
-  if (!(fileValue instanceof File)) {
+  if (files.length === 0) {
     throw new Error(
-      "Seleziona un'immagine da caricare.",
+      "Seleziona almeno un'immagine da caricare.",
     );
+  }
+
+  if (files.length > 20) {
+    throw new Error(
+      "Puoi caricare al massimo 20 immagini alla volta.",
+    );
+  }
+
+  const allowedTypes = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ]);
+
+  const maxFileSize = 10 * 1024 * 1024;
+
+  for (const file of files) {
+    if (file.size > maxFileSize) {
+      throw new Error(
+        `L'immagine "${file.name}" supera la dimensione massima di 10 MB.`,
+      );
+    }
+
+    if (!allowedTypes.has(file.type)) {
+      throw new Error(
+        `L'immagine "${file.name}" ha un formato non supportato.`,
+      );
+    }
   }
 
   await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
-  await createPropertyImage({
-    propertyId,
-    file: fileValue,
-  });
+  for (const file of files) {
+    await createPropertyImage({
+      propertyId,
+      file,
+    });
+  }
 
   revalidatePath(`/properties/${propertyId}`);
   revalidatePath(

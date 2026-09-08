@@ -21,12 +21,21 @@ vi.mock("@/lib/prisma", () => ({
     property: {
       findUnique: vi.fn(),
     },
+    user: {
+      findUnique: vi.fn(),
+    },
+    propertyAccess: {
+      findFirst: vi.fn(),
+      updateMany: vi.fn(),
+    },
     propertyOwnerInvite: {
       findFirst: vi.fn(),
       create: vi.fn(),
       updateMany: vi.fn(),
       update: vi.fn(),
+      deleteMany: vi.fn(),
     },
+    $transaction: vi.fn(async (operations) => Promise.all(operations)),
   },
 }));
 
@@ -35,6 +44,8 @@ import { prisma } from "@/lib/prisma";
 
 import {
   createPropertyOwnerInviteAction,
+  deleteSuperAdminOwnerInviteAction,
+  revokeAcceptedOwnerAccessAction,
   resendPropertyOwnerInviteAction,
   revokePropertyOwnerInviteAction,
 } from "./property-owner-invite-actions";
@@ -42,6 +53,12 @@ import {
 const mockedRequireRoles = vi.mocked(requireRoles);
 const mockedPropertyFindUnique =
   vi.mocked(prisma.property.findUnique);
+const mockedUserFindUnique =
+  vi.mocked(prisma.user.findUnique);
+const mockedPropertyAccessFindFirst =
+  vi.mocked(prisma.propertyAccess.findFirst);
+const mockedPropertyAccessUpdateMany =
+  vi.mocked(prisma.propertyAccess.updateMany);
 const mockedInviteFindFirst =
   vi.mocked(prisma.propertyOwnerInvite.findFirst);
 const mockedInviteCreate =
@@ -50,6 +67,9 @@ const mockedInviteUpdateMany =
   vi.mocked(prisma.propertyOwnerInvite.updateMany);
 const mockedInviteUpdate =
   vi.mocked(prisma.propertyOwnerInvite.update);
+const mockedInviteDeleteMany =
+  vi.mocked(prisma.propertyOwnerInvite.deleteMany);
+const mockedTransaction = vi.mocked(prisma.$transaction);
 
 function makeFormData(values: Record<string, string>) {
   const formData = new FormData();
@@ -133,8 +153,75 @@ describe("property owner invite actions", () => {
         }),
       ),
     ).rejects.toThrow(
-      "Esiste già un invito attivo",
+      "Esiste",
     );
+
+    expect(mockedInviteCreate).not.toHaveBeenCalled();
+  });
+
+  it("blocks an invite when the email belongs to a SUPER_ADMIN", async () => {
+    mockedPropertyFindUnique.mockResolvedValue({
+      id: "property-1",
+    } as never);
+
+    mockedInviteFindFirst.mockResolvedValue(null);
+    mockedUserFindUnique.mockResolvedValue({
+      id: "admin-1",
+      role: "SUPER_ADMIN",
+    } as never);
+
+    await expect(
+      createPropertyOwnerInviteAction(
+        makeFormData({
+          propertyId: "property-1",
+          fullName: "Admin Test",
+          email: "admin@example.com",
+        }),
+      ),
+    ).rejects.toThrow(
+      "Il Super Admin dispone",
+    );
+
+    expect(mockedPropertyAccessFindFirst).not.toHaveBeenCalled();
+    expect(mockedInviteCreate).not.toHaveBeenCalled();
+  });
+
+  it("blocks a new invite when the email already has active OWNER access", async () => {
+    mockedPropertyFindUnique.mockResolvedValue({
+      id: "property-1",
+    } as never);
+
+    mockedInviteFindFirst.mockResolvedValue(null);
+
+    mockedUserFindUnique.mockResolvedValue({
+      id: "owner-1",
+    } as never);
+
+    mockedPropertyAccessFindFirst.mockResolvedValue({
+      id: "access-1",
+    } as never);
+
+    await expect(
+      createPropertyOwnerInviteAction(
+        makeFormData({
+          propertyId: "property-1",
+          fullName: "Mario Rossi",
+          email: "mario@example.com",
+        }),
+      ),
+    ).rejects.toThrow(
+      "Questo proprietario ha",
+    );
+
+    expect(mockedPropertyAccessFindFirst).toHaveBeenCalledWith({
+      where: {
+        propertyId: "property-1",
+        userId: "owner-1",
+        role: "OWNER",
+        active: true,
+      },
+      select: { id: true },
+    });
 
     expect(mockedInviteCreate).not.toHaveBeenCalled();
   });
@@ -162,6 +249,157 @@ describe("property owner invite actions", () => {
         revokedAt: expect.any(Date),
       },
     });
+  });
+
+  it("allows a new invite after a previous invite was revoked", async () => {
+    mockedPropertyFindUnique.mockResolvedValue({
+      id: "property-1",
+    } as never);
+
+    mockedInviteFindFirst.mockResolvedValue(null);
+    mockedUserFindUnique.mockResolvedValue(null);
+
+    mockedInviteCreate.mockResolvedValue({
+      id: "invite-new",
+      expiresAt: new Date("2026-09-03T00:00:00.000Z"),
+    } as never);
+
+    const result = await createPropertyOwnerInviteAction(
+      makeFormData({
+        propertyId: "property-1",
+        fullName: "Mario Rossi",
+        email: "mario@example.com",
+      }),
+    );
+
+    expect(mockedInviteCreate).toHaveBeenCalledTimes(1);
+    expect(result.inviteId).toBe("invite-new");
+  });
+
+  it("deletes a SUPER_ADMIN owner invite and disables the accidental OWNER access", async () => {
+    mockedInviteFindFirst.mockResolvedValue({
+      id: "invite-admin",
+      email: "admin@example.com",
+    } as never);
+
+    mockedUserFindUnique.mockResolvedValue({
+      id: "admin-1",
+      role: "SUPER_ADMIN",
+    } as never);
+
+    mockedInviteDeleteMany.mockResolvedValue({
+      count: 3,
+    } as never);
+
+    mockedPropertyAccessUpdateMany.mockResolvedValue({
+      count: 1,
+    } as never);
+
+    await deleteSuperAdminOwnerInviteAction(
+      makeFormData({
+        propertyId: "property-1",
+        inviteId: "invite-admin",
+      }),
+    );
+
+    expect(mockedInviteDeleteMany).toHaveBeenCalledWith({
+      where: {
+        propertyId: "property-1",
+        email: "admin@example.com",
+      },
+    });
+
+    expect(mockedPropertyAccessUpdateMany).toHaveBeenCalledWith({
+      where: {
+        propertyId: "property-1",
+        userId: "admin-1",
+        role: "OWNER",
+        active: true,
+      },
+      data: {
+        active: false,
+      },
+    });
+
+    expect(mockedTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("revokes OWNER access from an accepted invite", async () => {
+    mockedInviteFindFirst.mockResolvedValue({
+      email: "owner@example.com",
+    } as never);
+    mockedUserFindUnique.mockResolvedValue({
+      id: "owner-1",
+      role: "OWNER",
+    } as never);
+    mockedPropertyAccessUpdateMany.mockResolvedValue({
+      count: 1,
+    } as never);
+    mockedInviteUpdateMany.mockResolvedValue({
+      count: 1,
+    } as never);
+
+    await revokeAcceptedOwnerAccessAction(
+      makeFormData({
+        propertyId: "property-1",
+        inviteId: "invite-accepted",
+      }),
+    );
+
+    expect(mockedInviteFindFirst).toHaveBeenCalledWith({
+      where: {
+        id: "invite-accepted",
+        propertyId: "property-1",
+        acceptedAt: { not: null },
+        revokedAt: null,
+      },
+      select: { email: true },
+    });
+
+    expect(mockedPropertyAccessUpdateMany).toHaveBeenCalledWith({
+      where: {
+        propertyId: "property-1",
+        userId: "owner-1",
+        role: "OWNER",
+        active: true,
+      },
+      data: { active: false },
+    });
+
+    expect(mockedInviteUpdateMany).toHaveBeenCalledWith({
+      where: {
+        id: "invite-accepted",
+        propertyId: "property-1",
+        acceptedAt: { not: null },
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: expect.any(Date),
+      },
+    });
+
+    expect(mockedTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not revoke SUPER_ADMIN access from an accepted invite", async () => {
+    mockedInviteFindFirst.mockResolvedValue({
+      email: "admin@example.com",
+    } as never);
+    mockedUserFindUnique.mockResolvedValue({
+      id: "admin-1",
+      role: "SUPER_ADMIN",
+    } as never);
+
+    await expect(
+      revokeAcceptedOwnerAccessAction(
+        makeFormData({
+          propertyId: "property-1",
+          inviteId: "invite-accepted",
+        }),
+      ),
+    ).rejects.toThrow("Il Super Admin dispone");
+
+    expect(mockedPropertyAccessUpdateMany).not.toHaveBeenCalled();
   });
 
   it("rotates token and expiry when resending", async () => {
@@ -209,7 +447,7 @@ describe("property owner invite actions", () => {
         }),
       ),
     ).rejects.toThrow(
-      "Un invito già accettato non può essere reinviato.",
+      "Un invito",
     );
 
     expect(mockedInviteUpdate).not.toHaveBeenCalled();

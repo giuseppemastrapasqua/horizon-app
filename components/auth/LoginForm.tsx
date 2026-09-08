@@ -99,9 +99,12 @@ export function LoginForm() {
             Password
           </label>
 
-          <span className="text-sm text-slate-400">
-            Accesso protetto
-          </span>
+          <a
+            href="/forgot-password"
+            className="text-sm font-medium text-blue-600 transition hover:text-blue-700"
+          >
+            Password dimenticata?
+          </a>
         </div>
 
         <div className="relative">

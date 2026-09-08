@@ -41,11 +41,22 @@ export async function updatePropertyAction(
         "propertyManagementCommissionPercent"
       ) ?? 0
     );
+
+  const propertyManagementCommissionVatPercent = Number(
+    formData.get("propertyManagementCommissionVatPercent") ?? 0,
+  );
+  const propertyManagementCommissionVatMode = String(
+    formData.get("propertyManagementCommissionVatMode") ?? "NONE",
+  );
   const horizonCommissionPercent = Number(
     formData.get(
       "horizonCommissionPercent",
     ) ?? 0,
   );
+
+  if (!["NONE", "EXCLUDED", "INCLUDED"].includes(propertyManagementCommissionVatMode)) {
+    throw new Error("Modalità IVA commissione non valida.");
+  }
 
   if (!propertyId) {
     throw new Error(
@@ -119,6 +130,8 @@ export async function updatePropertyAction(
             cleaningCost: true,
             horizonCommissionPercent: true,
             propertyManagementCommissionPercent: true,
+            propertyManagementCommissionVatPercent: true,
+            propertyManagementCommissionVatMode: true,
           },
         });
 
@@ -186,6 +199,14 @@ export async function updatePropertyAction(
         );
       }
 
+      if (Number(currentProperty.propertyManagementCommissionVatPercent) !== propertyManagementCommissionVatPercent) {
+        changedFields.push("propertyManagementCommissionVatPercent");
+      }
+
+      if (currentProperty.propertyManagementCommissionVatMode !== propertyManagementCommissionVatMode) {
+        changedFields.push("propertyManagementCommissionVatMode");
+      }
+
       await transaction.property.update({
         where: {
           id: propertyId,
@@ -199,6 +220,8 @@ export async function updatePropertyAction(
             cleaningCostValue,
           horizonCommissionPercent,
           propertyManagementCommissionPercent,
+          propertyManagementCommissionVatPercent,
+          propertyManagementCommissionVatMode: propertyManagementCommissionVatMode as "NONE" | "EXCLUDED" | "INCLUDED",
         },
       });
 
@@ -266,7 +289,9 @@ export async function updatePropertyAction(
 
               horizonCommissionPercent,
           propertyManagementCommissionPercent,
-            },
+          propertyManagementCommissionVatPercent,
+          propertyManagementCommissionVatMode: propertyManagementCommissionVatMode as "NONE" | "EXCLUDED" | "INCLUDED",
+        },
           },
         },
         transaction,

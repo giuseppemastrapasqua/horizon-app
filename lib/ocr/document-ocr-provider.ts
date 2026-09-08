@@ -1,8 +1,18 @@
+type DocumentOcrSource =
+  | {
+      sourceType: "url";
+      fileUrl: string;
+    }
+  | {
+      sourceType: "data";
+      dataUrl: string;
+      contentType: string;
+    };
+
 export type DocumentOcrInput = {
   documentId: string;
-  fileUrl: string;
   filename?: string;
-};
+} & DocumentOcrSource;
 
 export type DocumentOcrResult = {
   extractedText: string;

@@ -21,8 +21,6 @@ import { PropertyChannelPricingSettings } from "@/components/properties/Property
 import { getPropertyChannelPricingSettings } from "@/lib/pricing/get-property-channel-pricing-settings";
 import { getPropertyWorkspace } from "@/lib/properties/get-property-workspace";
 import { PropertyCodeVerificationHistory } from "@/components/properties/PropertyCodeVerificationHistory";
-import { AuditService } from "@/services/audit/AuditService";
-import { PropertyTimeline } from "@/components/properties/PropertyTimeline";
 import { prisma } from "@/lib/prisma";
 import { hasPropertyRole, requirePropertyAccess } from "@/lib/auth/guards";
 import { PropertyAccessSection } from "@/components/properties/PropertyAccessSection";
@@ -177,6 +175,7 @@ export default async function PropertyEditPage({
           prisma.propertyOwnerInvite.findMany({
             where: {
               propertyId: id,
+              revokedAt: null,
             },
             orderBy: {
               createdAt: "desc",
@@ -194,7 +193,28 @@ export default async function PropertyEditPage({
         ])
       : [[], [], []];
 
-  const timeline = await AuditService.getPropertyTimeline(id);
+  const ownerBillingProfile =
+    currentUser.role === "SUPER_ADMIN"
+      ? await prisma.ownerBillingProfile.findUnique({
+          where: { ownerId: workspace.property.owner.id },
+          select: {
+            entityType: true,
+            firstName: true,
+            lastName: true,
+            businessName: true,
+            taxCode: true,
+            vatNumber: true,
+            address: true,
+            postalCode: true,
+            city: true,
+            province: true,
+            country: true,
+            email: true,
+            pec: true,
+            recipientCode: true,
+          },
+        })
+      : null;
 
   const {
     property,
@@ -343,8 +363,8 @@ export default async function PropertyEditPage({
                   </p>
 
                   <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Horizon ottimizzerà automaticamente la tariffa considerando
-                    domanda, eventi, stagionalità e performance
+                    Horizon ottimizzerÃ  automaticamente la tariffa considerando
+                    domanda, eventi, stagionalitÃ  e performance
                     dell&apos;immobile.
                   </p>
                 </div>
@@ -472,7 +492,7 @@ export default async function PropertyEditPage({
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Dotazioni e caratteristiche.
+                  Dotazioni, comfort e caratteristiche della struttura.
                 </p>
               </a>
 
@@ -518,7 +538,7 @@ export default async function PropertyEditPage({
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-600">
-                  Prezzi ottimizzati da Horizon.
+                  Prezzi e strategie ottimizzati da Horizon.
                 </p>
               </a>
 
@@ -538,7 +558,7 @@ export default async function PropertyEditPage({
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Pubblicazione e visibilità.
+                  Pubblicazione e visibilitÃ .
                 </p>
               </div>
             </div>
@@ -560,7 +580,7 @@ export default async function PropertyEditPage({
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-600">
-                    Identità, contenuti pubblici e dati operativi.
+                    IdentitÃ , contenuti pubblici e dati operativi.
                   </p>
                 </div>
               </div>
@@ -630,43 +650,93 @@ export default async function PropertyEditPage({
                   />
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Questo contenuto potrà essere ottimizzato automaticamente
+                    Questo contenuto potrà  essere ottimizzato automaticamente
                     dall&apos;AI per il marketplace.
                   </p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-                <h3 className="text-lg font-semibold text-slate-900">
-                  Operatività
-                </h3>
+              <div>
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+  <div className="flex flex-col gap-5 border-b border-slate-200 bg-slate-50/70 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex items-start gap-4">
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-7 w-7">
+          <path d="M3.75 7.5 7.5 11l4.5-6 4.5 6 3.75-3.5-1.5 9.5H6.25L3.75 7.5Z" fill="currentColor" />
+          <path d="M6 20h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </div>
+      <div>
+        <div className="flex flex-wrap items-center gap-3">
+          <h3 className="text-xl font-semibold tracking-tight text-slate-950">Operatività</h3>
+          <span className="rounded-full bg-gradient-to-r from-blue-600 to-blue-500 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-sm">Premium</span>
+        </div>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+          Informazioni utilizzate internamente dal gestionale Horizon e non mostrate agli ospiti.
+        </p>
+      </div>
+    </div>
 
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Informazioni utilizzate internamente dal gestionale Horizon
-                  e non mostrate agli ospiti.
-                </p>
+    <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-blue-100 bg-white px-4 py-3 shadow-sm backdrop-blur">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
+          <path d="m12 3 7 5-7 13L5 8l7-5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+          <path d="M5 8h14M9 3l3 5 3-5M9 8l3 13 3-13" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-blue-700">Funzionalità Premium</p>
+        <p className="mt-0.5 text-xs text-slate-500">Gestione avanzata della struttura</p>
+      </div>
+    </div>
+  </div>
 
-                <div className="mt-6">
-                  <label
-                    htmlFor="cleaningCost"
-                    className="mb-2 block text-sm font-medium text-slate-700"
-                  >
-                    Costo pulizia per prenotazione (€)
-                  </label>
+  <div className="px-6 py-7">
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div>
+        <label htmlFor="cleaningCost" className="mb-2 block text-sm font-semibold text-slate-700">Costo pulizia per prenotazione (€)</label>
+        <input id="cleaningCost" name="cleaningCost" type="number" min="0" step="0.01" required defaultValue={Number(property.cleaningCost)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10" />
+        <p className="mt-2 text-xs leading-5 text-slate-500">Costo fisso applicato alla pulizia tra un soggiorno e l'altro.</p>
+      </div>
 
-                  <input
-                    id="cleaningCost"
-                    name="cleaningCost"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    required
-                    defaultValue={Number(property.cleaningCost)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
-                  />
-                </div>
+      <div>
+        <label htmlFor="propertyManagementCommissionPercent" className="mb-2 block text-sm font-semibold text-slate-700">Commissione Property Manager (%)</label>
+        <input id="propertyManagementCommissionPercent" name="propertyManagementCommissionPercent" type="number" min="0" max="99.99" step="0.01" required defaultValue={Number(property.propertyManagementCommissionPercent)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10" />
+        <p className="mt-2 text-xs leading-5 text-slate-500">Percentuale di commissione riconosciuta al Property Manager.</p>
+      </div>
+
+      <div>
+        <label htmlFor="propertyManagementCommissionVatPercent" className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+          IVA commissione (%)
+          <span title="Aliquota IVA applicata alla commissione del Property Manager" className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-[11px] font-bold text-slate-500">i</span>
+        </label>
+        <input id="propertyManagementCommissionVatPercent" name="propertyManagementCommissionVatPercent" type="number" min="0" max="99.99" step="0.01" required defaultValue={Number(property.propertyManagementCommissionVatPercent)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10" />
+        <p className="mt-2 text-xs leading-5 text-slate-500">Aliquota IVA applicata alla commissione.</p>
+      </div>
+
+      <div>
+        <label htmlFor="propertyManagementCommissionVatMode" className="mb-2 block text-sm font-semibold text-slate-700">Modalità IVA commissione</label>
+        <select id="propertyManagementCommissionVatMode" name="propertyManagementCommissionVatMode" defaultValue={property.propertyManagementCommissionVatMode} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10">
+          <option value="NONE">Nessuna IVA</option>
+          <option value="EXCLUDED">IVA in aggiunta</option>
+          <option value="INCLUDED">IVA compresa</option>
+        </select>
+        <p className="mt-2 text-xs leading-5 text-slate-500">Definisce se l'IVA è assente, aggiunta alla commissione o già compresa.</p>
+      </div>
+    </div>
+
+    <div className="mt-7 flex gap-4 rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-sm">i</div>
+      <div>
+        <p className="text-sm font-semibold text-slate-800">Nota</p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          Questi dati sono utilizzati per i calcoli finanziari e per la generazione di rendiconti e fatture ai proprietari. Le informazioni in questa sezione non sono visibili agli ospiti.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
               </div>
-
               <div className="flex justify-end border-t border-slate-200 pt-6">
                 <button
                   type="submit"
@@ -682,6 +752,14 @@ export default async function PropertyEditPage({
             <>
               <PropertyOwnerInvitesSection
                 propertyId={property.id}
+                ownerBillingProfile={ownerBillingProfile}
+                activeOwners={propertyAccesses
+                  .filter((access) => access.role === "OWNER")
+                  .map((access) => ({
+                    userId: access.userId,
+                    email: access.user.email,
+                    isSuperAdmin: access.user.role === "SUPER_ADMIN",
+                  }))}
                 invites={propertyOwnerInvites.map((invite) => ({
                   ...invite,
                   expiresAt: invite.expiresAt.toISOString(),
@@ -719,7 +797,7 @@ export default async function PropertyEditPage({
                   </h2>
 
                   <p className="mt-1 text-sm text-slate-600">
-                    Horizon assegnerà automaticamente i task alla persona configurata per ciascuna funzione.
+                    Horizon assegnerà  automaticamente i task alla persona configurata per ciascuna funzione.
                   </p>
                 </div>
               </div>
@@ -825,14 +903,14 @@ export default async function PropertyEditPage({
                   </select>
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Riceve check-in, check-out, documenti ospite, issue e attività amministrative.
+                    Riceve check-in, check-out, documenti ospite, issue e attivitÃ  amministrative.
                   </p>
                 </label>
               </div>
 
               <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4">
                 <p className="text-sm font-medium text-blue-900">
-                  Una sola persona può essere responsabile di tutte le funzioni.
+                  Una sola persona puÃ² essere responsabile di tutte le funzioni.
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-blue-700">
@@ -975,23 +1053,7 @@ export default async function PropertyEditPage({
   }
 />
 
-<PropertyFinanceReportSettings
-  propertyId={property.id}
-  template={effectiveFinanceTemplate}
-  isCustomized={Boolean(
-    propertyFinanceTemplate
-  )}
-  updateAction={
-    updateFinanceReportTemplateAction
-  }
-  resetAction={
-    resetFinanceReportTemplateAction
-  }
-/>
-
-<PropertyTimeline timeline={timeline} />
-
-          <section
+<section
             id="revenue-ai"
             className="scroll-mt-8 overflow-hidden rounded-3xl border border-blue-200 bg-white shadow-sm"
           >
@@ -1009,15 +1071,15 @@ export default async function PropertyEditPage({
                       </h2>
 
                       <p className="mt-1 text-sm text-violet-200">
-                        Il motore intelligente per la gestione dei prezzi.
+                        Ottimizza prezzi e disponibilità sulla base dei dati della struttura.
                       </p>
                     </div>
                   </div>
 
                   <p className="mt-6 max-w-2xl text-sm leading-6 text-slate-300">
-                    Horizon analizzerà mercato, domanda, stagionalità, eventi
+                    Horizon analizzerÃ  mercato, domanda, stagionalitÃ , eventi
                     e andamento delle prenotazioni per determinare
-                    automaticamente la tariffa più efficace.
+                    automaticamente la tariffa piÃ¹ efficace.
                   </p>
                 </div>
 
@@ -1030,7 +1092,7 @@ export default async function PropertyEditPage({
             <div className="grid gap-8 p-8 lg:grid-cols-[1fr_320px]">
               <div>
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                  Funzionalità previste
+                  FunzionalitÃ  previste
                 </h3>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -1040,7 +1102,7 @@ export default async function PropertyEditPage({
                       className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
                     >
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                        ✓
+                        âœ“
                       </span>
 
                       <span className="text-sm font-medium text-slate-800">
@@ -1061,7 +1123,7 @@ export default async function PropertyEditPage({
                 </h3>
 
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Ogni decisione del Revenue Engine sarà accompagnata da una
+                  Ogni decisione del Revenue Engine sarÃ  accompagnata da una
                   motivazione chiara. Il gestore mantiene sempre il controllo finale.
                 </p>
 
@@ -1072,7 +1134,7 @@ export default async function PropertyEditPage({
 
                   <p className="mt-1 text-sm font-semibold text-slate-900">
                     {revenueRatePlan
-                      ? `${revenueRatePlan.basePrice} € · ${revenueRatePlan.name}`
+                      ? `${revenueRatePlan.basePrice} â‚¬ · ${revenueRatePlan.name}`
                       : "Da configurare"}
                   </p>
 
@@ -1120,7 +1182,7 @@ export default async function PropertyEditPage({
 
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-slate-600">
-                    Tariffa base €
+                    Tariffa base â‚¬
                   </label>
                   <input
                     name="basePrice"
@@ -1196,7 +1258,7 @@ export default async function PropertyEditPage({
               </h2>
 
               <p className="mt-2 text-sm text-slate-600">
-                Archivia la struttura senza perdere dati o storico operativo.
+                Archivia la struttura mantenendo dati, configurazioni e storico operativo.
               </p>
             </div>
 
@@ -1209,8 +1271,8 @@ export default async function PropertyEditPage({
 
                   <p className="mt-1 text-sm text-slate-600">
                     {property.status === "ARCHIVED"
-                      ? "La struttura è archiviata."
-                      : `La struttura è attualmente ${property.status.toLowerCase()}.`}
+                      ? "La struttura Ã¨ archiviata."
+                      : `La struttura Ã¨ attualmente ${property.status.toLowerCase()}.`}
                   </p>
                 </div>
 
@@ -1244,7 +1306,7 @@ export default async function PropertyEditPage({
 
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-red-800">
                     Disponibile solo per strutture archiviate e senza storico operativo
-                    protetto. L&apos;operazione non può essere annullata.
+                    protetto. L&apos;operazione non puÃ² essere annullata.
                   </p>
 
                   {property.status === "ARCHIVED" ? (

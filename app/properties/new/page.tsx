@@ -113,6 +113,38 @@ export default async function NewPropertyPage() {
                 required
               />
 
+              <Input
+                name="propertyManagementCommissionPercent"
+                label="Commissione Property Manager (%)"
+                type="number"
+                defaultValue="0"
+                required
+              />
+
+              <Input
+                name="propertyManagementCommissionVatPercent"
+                label="IVA commissione (%)"
+                type="number"
+                defaultValue="0"
+                required
+              />
+
+              <div>
+                <label htmlFor="propertyManagementCommissionVatMode" className="mb-2 block text-sm font-semibold text-slate-700">
+                  Modalità IVA commissione
+                </label>
+                <select
+                  id="propertyManagementCommissionVatMode"
+                  name="propertyManagementCommissionVatMode"
+                  defaultValue="NONE"
+                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10"
+                >
+                  <option value="NONE">Nessuna IVA</option>
+                  <option value="EXCLUDED">IVA in aggiunta</option>
+                  <option value="INCLUDED">IVA compresa</option>
+                </select>
+              </div>
+
               <div className="sm:col-span-2">
                 <label
                   htmlFor="notes"

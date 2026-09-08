@@ -4,6 +4,10 @@ vi.mock("bcryptjs", () => ({
   hash: vi.fn(async () => "bcrypt-hash"),
 }));
 
+vi.mock("@/lib/notifications/email/send-email", () => ({
+  sendEmail: vi.fn(),
+}));
+
 vi.mock("@/lib/auth/property-owner-invite-token", () => ({
   hashOwnerInviteToken: vi.fn(() => "token-hash"),
   isOwnerInviteUsable: vi.fn(
@@ -40,6 +44,7 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+import { sendEmail } from "@/lib/notifications/email/send-email";
 import { prisma } from "@/lib/prisma";
 
 import {
@@ -135,6 +140,31 @@ describe("accept property owner invite", () => {
     );
   });
 
+  it("blocks an existing SUPER_ADMIN account", async () => {
+    tx.user.findUnique.mockResolvedValue({
+      id: "admin-1",
+      email: "owner@example.com",
+      role: "SUPER_ADMIN",
+      status: "ACTIVE",
+      passwordHash: "existing-hash",
+    });
+
+    await expect(
+      acceptPropertyOwnerInviteAction(form()),
+    ).rejects.toThrow(
+      "Il Super Admin dispone",
+    );
+
+    expect(tx.user.create).not.toHaveBeenCalled();
+    expect(tx.user.update).not.toHaveBeenCalled();
+    expect(
+      tx.propertyAccess.upsert,
+    ).not.toHaveBeenCalled();
+    expect(
+      tx.propertyOwnerInvite.updateMany,
+    ).not.toHaveBeenCalled();
+  });
+
   it("reuses an active existing account without changing its password or role", async () => {
     tx.user.findUnique.mockResolvedValue({
       id: "user-existing",
@@ -227,5 +257,46 @@ describe("accept property owner invite", () => {
         acceptedAt: expect.any(Date),
       },
     });
+  });
+
+  it("sends the activation confirmation email", async () => {
+    tx.user.findUnique.mockResolvedValue(null);
+    tx.user.create.mockResolvedValue({ id: "user-1" });
+
+    await acceptPropertyOwnerInviteAction(form());
+
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "owner@example.com",
+        subject: "Horizon - Accesso attivato",
+        html: expect.stringContaining("http://localhost:3000/login"),
+      }),
+    );
+
+    const emailCall = vi.mocked(sendEmail).mock.calls[0]?.[0];
+    expect(emailCall?.html).toContain("owner@example.com");
+    expect(emailCall?.html).not.toContain("Password123!");
+  });
+
+  it("keeps the activation valid when confirmation email fails", async () => {
+    tx.user.findUnique.mockResolvedValue(null);
+    tx.user.create.mockResolvedValue({ id: "user-1" });
+    vi.mocked(sendEmail).mockRejectedValueOnce(new Error("email down"));
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const result = await acceptPropertyOwnerInviteAction(form());
+
+    expect(result).toEqual({
+      userId: "user-1",
+      email: "owner@example.com",
+    });
+    expect(tx.propertyAccess.upsert).toHaveBeenCalled();
+    expect(tx.propertyOwnerInvite.updateMany).toHaveBeenCalled();
+    expect(consoleError).toHaveBeenCalledWith(
+      "Invio email attivazione owner fallito.",
+      expect.any(Error),
+    );
+
+    consoleError.mockRestore();
   });
 });

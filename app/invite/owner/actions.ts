@@ -12,6 +12,7 @@ import {
   hashOwnerInviteToken,
   isOwnerInviteUsable,
 } from "@/lib/auth/property-owner-invite-token";
+import { sendEmail } from "@/lib/notifications/email/send-email";
 import { prisma } from "@/lib/prisma";
 
 const acceptInviteSchema = z
@@ -28,6 +29,20 @@ const acceptInviteSchema = z
       path: ["confirmPassword"],
     },
   );
+
+function getBaseUrl() {
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL;
+
+  if (configuredUrl) {
+    return new URL(configuredUrl).origin;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_APP_URL non configurata.");
+  }
+
+  return "http://localhost:3000";
+}
 
 export async function acceptPropertyOwnerInviteAction(
   formData: FormData,
@@ -115,6 +130,12 @@ export async function acceptPropertyOwnerInviteAction(
             passwordHash: true,
           },
         });
+
+      if (existingUser?.role === UserRole.SUPER_ADMIN) {
+        throw new Error(
+          "Il Super Admin dispone già di accesso globale e non può accettare un invito proprietario.",
+        );
+      }
 
       let userId: string;
 
@@ -209,6 +230,45 @@ export async function acceptPropertyOwnerInviteAction(
       };
     },
   );
+
+  try {
+    const loginUrl = new URL("/login", getBaseUrl()).toString();
+
+    await sendEmail({
+      to: result.email,
+      subject: "Horizon - Accesso attivato",
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#0f172a">
+          <div style="padding:24px 0;border-bottom:1px solid #e2e8f0">
+            <div style="font-size:22px;font-weight:800;color:#2563eb">Horizon</div>
+            <div style="margin-top:4px;font-size:12px;color:#64748b">Accesso proprietario attivato</div>
+          </div>
+
+          <div style="padding:28px 0">
+            <h1 style="margin:0;font-size:24px;line-height:1.25">Il tuo accesso e attivo</h1>
+
+            <p style="margin:16px 0 0;font-size:14px;line-height:1.6;color:#475569">
+              Il tuo accesso proprietario a Horizon e stato attivato correttamente.
+            </p>
+
+            <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#475569">
+              Email di accesso: <strong>${result.email}</strong>
+            </p>
+
+            <a href="${loginUrl}" style="display:inline-block;margin-top:24px;padding:12px 18px;border-radius:10px;background:#2563eb;color:#fff;text-decoration:none;font-size:14px;font-weight:700">
+              Accedi a Horizon
+            </a>
+          </div>
+
+          <div style="padding:18px 0;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8">
+            Horizon Property Management OS
+          </div>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error("Invio email attivazione owner fallito.", error);
+  }
 
   return result;
 }

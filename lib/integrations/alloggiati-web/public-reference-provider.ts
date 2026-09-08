@@ -3,6 +3,7 @@ import {
 } from "./public-reference-data-parser";
 import {
   TableAlloggiatiReferenceResolver,
+  type AlloggiatiReferenceData,
 } from "./table-reference-resolver";
 
 const BASE_URL =
@@ -40,6 +41,7 @@ export class PublicAlloggiatiReferenceProvider {
   private cached:
     | {
         expiresAt: number;
+        data: AlloggiatiReferenceData;
         resolver: TableAlloggiatiReferenceResolver;
       }
     | undefined;
@@ -90,11 +92,27 @@ export class PublicAlloggiatiReferenceProvider {
       new TableAlloggiatiReferenceResolver(data);
 
     this.cached = {
+      data,
       resolver,
       expiresAt: this.now() + this.ttlMs,
     };
 
     return resolver;
+  }
+
+  async getData(): Promise<AlloggiatiReferenceData> {
+    if (
+      !this.cached ||
+      this.cached.expiresAt <= this.now()
+    ) {
+      await this.getResolver();
+    }
+
+    if (!this.cached) {
+      throw new Error("Dati pubblici Alloggiati non disponibili.");
+    }
+
+    return this.cached.data;
   }
 
   private async download(

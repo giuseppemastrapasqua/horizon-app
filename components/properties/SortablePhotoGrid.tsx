@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   closestCenter,
@@ -63,6 +66,9 @@ function SortablePhotoGridContent({
   reorderAction,
   onOrderChange,
 }: SortablePhotoGridProps) {
+  const [mounted, setMounted] =
+    useState(false);
+
   const [items, setItems] =
     useState(images);
 
@@ -71,6 +77,10 @@ function SortablePhotoGridContent({
 
   const [saveError, setSaveError] =
     useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -163,6 +173,15 @@ function SortablePhotoGridContent({
     } finally {
       setIsSaving(false);
     }
+  }
+
+  if (!mounted) {
+    return (
+      <div
+        className="min-h-[120px]"
+        aria-hidden="true"
+      />
+    );
   }
 
   return (

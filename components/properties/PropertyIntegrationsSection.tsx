@@ -1,4 +1,11 @@
-import type { IntegrationProvider } from "@prisma/client";
+import {
+  BookingChannel,
+  IntegrationTransport,
+  type IntegrationProvider,
+  type Prisma,
+} from "@prisma/client";
+
+import { prisma } from "@/lib/prisma";
 
 type IntegrationMapping = {
   id: string;
@@ -29,58 +36,64 @@ const PROVIDERS: Array<{
     value: "BOOKING_COM",
     label: "Booking.com",
     description:
-      "Collega il listing Booking.com all’immobile Horizon.",
+      "Importa le prenotazioni dal calendario iCal esportato da Booking.com.",
     synchronizationAvailable: true,
   },
   {
     value: "AIRBNB",
     label: "Airbnb",
     description:
-      "Collega il listing Airbnb all’immobile Horizon.",
+      "Collega il listing Airbnb all'immobile Horizon.",
     synchronizationAvailable: false,
   },
   {
     value: "VRBO",
     label: "VRBO",
     description:
-      "Collega il listing VRBO all’immobile Horizon.",
+      "Collega il listing VRBO all'immobile Horizon.",
     synchronizationAvailable: false,
   },
   {
     value: "ISTAT",
     label: "ISTAT",
     description:
-      "Configura il riferimento per i flussi statistici.",
+      "Configura il collegamento per i flussi statistici.",
     synchronizationAvailable: false,
   },
   {
     value: "SOGGIORNIAMO",
     label: "Soggiorniamo",
     description:
-      "Configura il riferimento per la trasmissione dei flussi turistici.",
+      "Configura il collegamento per la trasmissione dei flussi turistici.",
     synchronizationAvailable: false,
   },
   {
     value: "STRIPE",
     label: "Stripe",
     description:
-      "Collega il riferimento di pagamento associato all’immobile.",
+      "Collega il riferimento di pagamento associato all'immobile.",
     synchronizationAvailable: false,
   },
 ];
 
-export function PropertyIntegrationsSection({
+export async function PropertyIntegrationsSection({
   propertyId,
   mappings,
   updateAction,
   synchronizeAction,
 }: PropertyIntegrationsSectionProps) {
-  const mappingsByProvider = new Map(
-    mappings.map((mapping) => [
-      mapping.provider,
-      mapping,
-    ]),
-  );
+  const mappingsByProvider =
+    new Map(
+      mappings.map((mapping) => [
+        mapping.provider,
+        mapping,
+      ]),
+    );
+
+  const bookingIcal =
+    await loadBookingIcal(
+      propertyId,
+    );
 
   return (
     <section
@@ -99,9 +112,9 @@ export function PropertyIntegrationsSection({
             </h2>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Collega l’immobile Horizon ai provider esterni.
-              Gli identificativi salvati verranno usati per
-              sincronizzazioni, webhook e adempimenti.
+              Collega la struttura ai servizi esterni utilizzati da Horizon.
+              Booking.com utilizza il calendario iCal per
+              importare le prenotazioni.
             </p>
           </div>
 
@@ -117,6 +130,18 @@ export function PropertyIntegrationsSection({
             mappingsByProvider.get(
               provider.value,
             );
+
+          const isBooking =
+            provider.value ===
+            "BOOKING_COM";
+
+          const connected =
+            isBooking
+              ? Boolean(
+                  mapping &&
+                    bookingIcal?.feedUrl,
+                )
+              : Boolean(mapping);
 
           return (
             <div
@@ -151,12 +176,12 @@ export function PropertyIntegrationsSection({
 
                   <span
                     className={
-                      mapping
+                      connected
                         ? "rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700"
                         : "rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
                     }
                   >
-                    {mapping
+                    {connected
                       ? "Collegata"
                       : "Non collegata"}
                   </span>
@@ -184,6 +209,34 @@ export function PropertyIntegrationsSection({
                   />
                 </div>
 
+                {isBooking ? (
+                  <div className="mt-5">
+                    <label
+                      htmlFor="booking-feed-url"
+                      className="mb-2 block text-sm font-medium text-slate-700"
+                    >
+                      URL calendario Booking.com
+                    </label>
+
+                    <input
+                      id="booking-feed-url"
+                      name="feedUrl"
+                      type="url"
+                      required
+                      defaultValue={
+                        bookingIcal?.feedUrl ??
+                        ""
+                      }
+                      placeholder="https://...calendar.ics"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
+                    />
+
+                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                      Incolla l'URL iCal esportato dal calendario della struttura su Booking.com.
+                    </p>
+                  </div>
+                ) : null}
+
                 {mapping ? (
                   <p className="mt-3 text-xs text-slate-500">
                     Ultimo aggiornamento:{" "}
@@ -193,19 +246,43 @@ export function PropertyIntegrationsSection({
                   </p>
                 ) : null}
 
+                {isBooking &&
+                bookingIcal?.lastSyncAt ? (
+                  <div className="mt-3 text-xs leading-5 text-slate-500">
+                    <p>
+                      Ultima sincronizzazione:{" "}
+                      {bookingIcal.lastSyncAt.toLocaleString(
+                        "it-IT",
+                      )}
+                    </p>
+
+                    <p>
+                      Stato:{" "}
+                      {bookingIcal.lastSyncStatus ??
+                        "—"}
+                    </p>
+
+                    {bookingIcal.lastSyncError ? (
+                      <p className="text-red-600">
+                        {bookingIcal.lastSyncError}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <div className="mt-6 flex justify-end">
                   <button
                     type="submit"
                     className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                   >
-                    {mapping
+                    {connected
                       ? "Aggiorna collegamento"
                       : "Salva collegamento"}
                   </button>
                 </div>
               </form>
 
-              {mapping &&
+              {connected &&
               provider.synchronizationAvailable ? (
                 <form
                   action={synchronizeAction}
@@ -223,14 +300,6 @@ export function PropertyIntegrationsSection({
                     value={provider.value}
                   />
 
-                  <input
-                    type="hidden"
-                    name="externalPropertyId"
-                    value={
-                      mapping.externalPropertyId
-                    }
-                  />
-
                   <button
                     type="submit"
                     className="w-full rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50"
@@ -245,4 +314,88 @@ export function PropertyIntegrationsSection({
       </div>
     </section>
   );
+}
+
+async function loadBookingIcal(
+  propertyId: string,
+): Promise<{
+  feedUrl: string;
+  lastSyncAt: Date | null;
+  lastSyncStatus: string | null;
+  lastSyncError: string | null;
+} | null> {
+  const connections =
+    await prisma.integrationConnectionProperty.findMany({
+      where: {
+        propertyId,
+        connection: {
+          connectorKey: "ical",
+          transport:
+            IntegrationTransport.ICAL,
+        },
+      },
+      select: {
+        config: true,
+        connection: {
+          select: {
+            lastSyncAt: true,
+            lastSyncStatus: true,
+            lastSyncError: true,
+          },
+        },
+      },
+    });
+
+  const booking =
+    connections.find(
+      (item) =>
+        getJsonString(
+          item.config,
+          "channel",
+        ) === BookingChannel.BOOKING,
+    );
+
+  if (!booking) {
+    return null;
+  }
+
+  const feedUrl =
+    getJsonString(
+      booking.config,
+      "feedUrl",
+    );
+
+  if (!feedUrl) {
+    return null;
+  }
+
+  return {
+    feedUrl,
+    lastSyncAt:
+      booking.connection.lastSyncAt,
+    lastSyncStatus:
+      booking.connection.lastSyncStatus,
+    lastSyncError:
+      booking.connection.lastSyncError,
+  };
+}
+
+function getJsonString(
+  value: Prisma.JsonValue | null,
+  key: string,
+): string | undefined {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return undefined;
+  }
+
+  const property =
+    value[key];
+
+  return typeof property === "string"
+    ? property
+    : undefined;
 }

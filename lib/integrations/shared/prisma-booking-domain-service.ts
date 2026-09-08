@@ -288,6 +288,14 @@ export class PrismaBookingDomainService
 
                   operationalStatus:
                     true,
+
+
+                  guestDataManuallyEdited:
+                    true,
+
+
+                  pricingDataManuallyEdited:
+                    true,
                 },
               })
             : await transaction.booking.findFirst({
@@ -348,23 +356,73 @@ export class PrismaBookingDomainService
 
                   operationalStatus:
                     true,
+
+
+                  guestDataManuallyEdited:
+                    true,
+
+
+                  pricingDataManuallyEdited:
+                    true,
                 },
               });
 
-        const { guest } =
-          await findOrCreateGuest(
-            {
-              fullName:
-                guestName,
+        const effectiveGuestName =
+          existingBooking?.guestDataManuallyEdited
+            ? existingBooking.guestName
+            : guestName;
 
-              email:
-                guestEmail,
+        const effectiveGuestEmail =
+          existingBooking?.guestDataManuallyEdited
+            ? existingBooking.guestEmail
+            : guestEmail;
 
-              phone:
-                guestPhone,
-            },
-            transaction,
-          );
+        const effectiveGuestPhone =
+          existingBooking?.guestDataManuallyEdited
+            ? existingBooking.guestPhone
+            : guestPhone;
+
+        const effectiveBooking = {
+          ...booking,
+
+          guests:
+            existingBooking?.guestDataManuallyEdited
+              ? existingBooking.guests
+              : booking.guests,
+
+          grossAmount:
+            existingBooking?.pricingDataManuallyEdited
+              ? Number(existingBooking.grossAmount)
+              : booking.grossAmount,
+
+          currency:
+            existingBooking?.pricingDataManuallyEdited
+              ? existingBooking.currency
+              : booking.currency,
+        };
+
+        const guest =
+          existingBooking?.guestDataManuallyEdited &&
+          existingBooking.guestId
+            ? {
+                id:
+                  existingBooking.guestId,
+              }
+            : (
+                await findOrCreateGuest(
+                  {
+                    fullName:
+                      effectiveGuestName,
+
+                    email:
+                      effectiveGuestEmail,
+
+                    phone:
+                      effectiveGuestPhone,
+                  },
+                  transaction,
+                )
+              ).guest;
 
         if (!existingBooking) {
           const createdBooking =
@@ -522,13 +580,13 @@ export class PrismaBookingDomainService
             guest.id ||
 
           existingBooking.guestName !==
-            guestName ||
+            effectiveGuestName ||
 
           existingBooking.guestEmail !==
-            guestEmail ||
+            effectiveGuestEmail ||
 
           existingBooking.guestPhone !==
-            guestPhone ||
+            effectiveGuestPhone ||
 
           existingBooking.checkIn.getTime() !==
             booking.checkIn.getTime() ||
@@ -540,15 +598,15 @@ export class PrismaBookingDomainService
             nights ||
 
           existingBooking.guests !==
-            booking.guests ||
+            effectiveBooking.guests ||
 
           Number(
             existingBooking.grossAmount,
           ) !==
-            booking.grossAmount ||
+            effectiveBooking.grossAmount ||
 
           existingBooking.currency !==
-            booking.currency ||
+            effectiveBooking.currency ||
 
           existingBooking.bookingStatus !==
             bookingStatus;
@@ -579,9 +637,9 @@ export class PrismaBookingDomainService
             guestId:
               guest.id,
 
-            guestName,
-            guestEmail,
-            guestPhone,
+            guestName: effectiveGuestName,
+            guestEmail: effectiveGuestEmail,
+            guestPhone: effectiveGuestPhone,
 
             checkIn:
               booking.checkIn,
@@ -592,13 +650,13 @@ export class PrismaBookingDomainService
             nights,
 
             guests:
-              booking.guests,
+              effectiveBooking.guests,
 
             grossAmount:
-              booking.grossAmount,
+              effectiveBooking.grossAmount,
 
             currency:
-              booking.currency,
+              effectiveBooking.currency,
 
             bookingStatus,
           },
@@ -655,7 +713,7 @@ export class PrismaBookingDomainService
           ownerId:
             resolvedProperty.ownerId,
 
-          guestName,
+          guestName: effectiveGuestName,
 
           checkIn:
             booking.checkIn.toISOString(),
@@ -707,11 +765,11 @@ export class PrismaBookingDomainService
         ) {
           const fingerprint =
             createBookingUpdateFingerprint({
-              booking,
+              booking: effectiveBooking,
               bookingStatus,
-              guestName,
-              guestEmail,
-              guestPhone,
+              guestName: effectiveGuestName,
+              guestEmail: effectiveGuestEmail,
+              guestPhone: effectiveGuestPhone,
 
               propertyId:
                 resolvedProperty.propertyId,

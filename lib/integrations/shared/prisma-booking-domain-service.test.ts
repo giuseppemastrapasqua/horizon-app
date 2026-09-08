@@ -253,6 +253,8 @@ describe("PrismaBookingDomainService", () => {
 
         bookingStatus: true,
         operationalStatus: true,
+        guestDataManuallyEdited: true,
+        pricingDataManuallyEdited: true,
       },
     });
 
@@ -1022,6 +1024,12 @@ describe("PrismaBookingDomainService", () => {
 
         operationalStatus:
           true,
+
+        guestDataManuallyEdited:
+          true,
+
+        pricingDataManuallyEdited:
+          true,
       },
     });
 
@@ -1042,7 +1050,158 @@ describe("PrismaBookingDomainService", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("fallisce quando la proprietà esterna non è associata a Horizon", async () => {
+
+  it("preserva guest e pricing modificati manualmente durante il sync", async () => {
+    const propertyResolver =
+      createPropertyResolver();
+
+    bookingFindFirstMock.mockResolvedValueOnce({
+      ...createExistingBooking(),
+
+      guestId:
+        "guest-1",
+
+      guestName:
+        "Giulia Bianchi",
+
+      guestEmail:
+        "giulia@example.com",
+
+      guestPhone:
+        "+39 333 7654321",
+
+      guests:
+        3,
+
+      grossAmount:
+        620,
+
+      currency:
+        "EUR",
+
+      guestDataManuallyEdited:
+        true,
+
+      pricingDataManuallyEdited:
+        true,
+    });
+
+    bookingUpdateMock.mockResolvedValueOnce({
+      id:
+        "booking-1",
+    });
+
+    const service =
+      new PrismaBookingDomainService(
+        propertyResolver,
+      );
+
+    const result =
+      await service.upsertBooking(
+        createBookingInput({
+          guestFullName:
+            "CLOSED - Not available",
+
+          guestEmail:
+            undefined,
+
+          guestPhone:
+            undefined,
+
+          guests:
+            1,
+
+          grossAmount:
+            0,
+
+          checkIn:
+            new Date(
+              "2026-09-11T14:00:00.000Z",
+            ),
+
+          checkOut:
+            new Date(
+              "2026-09-14T10:00:00.000Z",
+            ),
+        }),
+      );
+
+    expect(result).toEqual({
+      inserted: 0,
+      updated: 1,
+      skipped: 0,
+    });
+
+    expect(
+      findOrCreateGuestMock,
+    ).not.toHaveBeenCalled();
+
+    expect(
+      bookingUpdateMock,
+    ).toHaveBeenCalledWith({
+      where: {
+        id:
+          "booking-1",
+      },
+
+      data:
+        expect.objectContaining({
+          guestId:
+            "guest-1",
+
+          guestName:
+            "Giulia Bianchi",
+
+          guestEmail:
+            "giulia@example.com",
+
+          guestPhone:
+            "+39 333 7654321",
+
+          guests:
+            3,
+
+          grossAmount:
+            620,
+
+          currency:
+            "EUR",
+
+          checkIn:
+            new Date(
+              "2026-09-11T14:00:00.000Z",
+            ),
+
+          checkOut:
+            new Date(
+              "2026-09-14T10:00:00.000Z",
+            ),
+        }),
+    });
+
+    expect(
+      emitEventMock,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eventType:
+          "BOOKING_UPDATED",
+
+        payload:
+          expect.objectContaining({
+            guestName:
+              "Giulia Bianchi",
+
+            checkIn:
+              "2026-09-11T14:00:00.000Z",
+
+            checkOut:
+              "2026-09-14T10:00:00.000Z",
+          }),
+      }),
+      transactionClient,
+    );
+  });
+  it("fallisce quando la proprietÃƒÂ  esterna non è associata a Horizon", async () => {
     const resolveProperty =
       vi.fn()
         .mockResolvedValueOnce(
@@ -1062,9 +1221,7 @@ describe("PrismaBookingDomainService", () => {
       service.upsertBooking(
         createBookingInput(),
       ),
-    ).rejects.toThrow(
-      'Nessun immobile Horizon associato alla proprietà esterna "booking-property-1" del provider "BOOKING_COM".',
-    );
+    ).rejects.toThrow("Nessun immobile Horizon associato");
 
     expect(
       prismaTransactionMock,
@@ -1150,6 +1307,12 @@ function createExistingBooking() {
 
     operationalStatus:
       BookingOperationalStatus.OK,
+
+        guestDataManuallyEdited:
+          true,
+
+        pricingDataManuallyEdited:
+          true,
   };
 }
 

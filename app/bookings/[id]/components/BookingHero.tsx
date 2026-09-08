@@ -282,7 +282,7 @@ function getStayLabel({
 
 const heroStyle = {
   display: "grid",
-  gridTemplateColumns: "1fr 250px",
+  gridTemplateColumns: "minmax(0, 1fr) minmax(220px, 250px)",
   gap: uiTokens.spacing.lg,
   alignItems: "stretch",
   marginBottom: uiTokens.spacing.lg,
@@ -296,6 +296,7 @@ const heroStyle = {
 
 const contentStyle = {
   display: "grid",
+  minWidth: 0,
   gap: uiTokens.spacing.lg,
 };
 
@@ -375,6 +376,9 @@ const summaryCardStyle = {
   color: uiTokens.colors.primaryText,
   boxShadow: uiTokens.shadow.elevated,
   textAlign: "center" as const,
+  minWidth: 0,
+  maxWidth: "100%",
+  overflow: "hidden",
 };
 
 const summaryEyebrowStyle = {
@@ -427,6 +431,9 @@ const summaryCodeStyle = {
   color: "#ffffff",
   fontSize: "15px",
   letterSpacing: "0.06em",
+  maxWidth: "100%",
+  overflowWrap: "anywhere" as const,
+  wordBreak: "break-word" as const,
 };
 
 const summaryMetaStyle = {

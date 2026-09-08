@@ -11,6 +11,8 @@ import { revalidatePath } from "next/cache";
 import { requirePropertyRole } from "@/lib/auth/guards";
 import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
 import { prisma } from "@/lib/prisma";
+import { uploadPropertyDocument } from "@/lib/properties/upload-property-document";
+import { defaultPrivateStorageProvider } from "@/lib/storage/default-private-storage-provider";
 import { AuditService } from "@/services/audit/AuditService";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 
@@ -43,6 +45,19 @@ function getRequiredString(
 
   if (!value) {
     throw new Error(errorMessage);
+  }
+
+  return value;
+}
+
+function getOptionalFile(
+  formData: FormData,
+  fieldName: string,
+): File | null {
+  const value = formData.get(fieldName);
+
+  if (!(value instanceof File) || value.size === 0) {
+    return null;
   }
 
   return value;
@@ -200,284 +215,201 @@ export async function createPropertyDocumentAction(
     "Il titolo del documento è obbligatorio.",
   );
 
-  const fileUrl = getOptionalString(
-    formData,
-    "fileUrl",
+  const file = getOptionalFile(formData, "file");
+
+  if (!file) {
+    throw new Error(
+      "Seleziona il documento da caricare.",
+    );
+  }
+
+  const uploaded = await uploadPropertyDocument(
+    propertyId,
+    file,
   );
 
-  const filename = getOptionalString(
-    formData,
-    "filename",
-  );
-
-  const ocrRequestedAt = fileUrl
-    ? new Date()
-    : null;
-
-  await prisma.$transaction(
-    async (transaction) => {
-      const document =
-        await transaction.propertyDocument.create({
-          data: {
-            propertyId,
-            type,
-            title,
-            documentNumber: getOptionalString(
-              formData,
-              "documentNumber",
-            ),
-            issuer: getOptionalString(
-              formData,
-              "issuer",
-            ),
-            issueDate,
-            expiryDate,
-            validity: getDocumentValidity(formData),
-            fileUrl,
-            filename,
-            ocrStatus: fileUrl
-              ? PropertyDocumentOcrStatus.QUEUED
-              : PropertyDocumentOcrStatus.NOT_REQUESTED,
-            ocrRequestedAt,
-            notes: getOptionalString(
-              formData,
-              "notes",
-            ),
-          },
-          select: {
-            id: true,
-          },
-        });
-
-      if (fileUrl && ocrRequestedAt) {
-        await enqueueBackgroundJob(
-          {
-            type: "PROPERTY_DOCUMENT_OCR",
-            payload: {
-              documentId: document.id,
+  try {
+    await prisma.$transaction(
+      async (transaction) => {
+        const document =
+          await transaction.propertyDocument.create({
+            data: {
               propertyId,
-              fileUrl,
-              ...(filename
-                ? {
-                    filename,
-                  }
-                : {}),
-            },
-            deduplicationKey:
-              getOcrDeduplicationKey(
-                document.id,
-                ocrRequestedAt,
+              type,
+              title,
+              documentNumber: getOptionalString(
+                formData,
+                "documentNumber",
               ),
+              issuer: getOptionalString(
+                formData,
+                "issuer",
+              ),
+              issueDate,
+              expiryDate,
+              validity: getDocumentValidity(formData),
+              fileUrl: null,
+              filename: uploaded.filename,
+              storageKey: uploaded.storageKey,
+              contentType: uploaded.contentType,
+              fileSize: uploaded.fileSize,
+              encryptionVersion:
+                uploaded.encryptionVersion,
+              ocrStatus:
+                PropertyDocumentOcrStatus.NOT_REQUESTED,
+              ocrRequestedAt: null,
+              notes: getOptionalString(
+                formData,
+                "notes",
+              ),
+            },
+            select: {
+              id: true,
+            },
+          });
+
+        await AuditService.log(
+          {
+            actorId: user.id,
+            action: AuditAction.CREATE,
+            propertyId,
+            entityType:
+              AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
+            entityId: document.id,
+            description:
+              "Documento immobile creato.",
+            metadata: {
+              propertyId,
+              title,
+              type,
+              encryptedStorage: true,
+              ocrRequested: false,
+            },
           },
           transaction,
         );
-      }
-
-      await AuditService.log(
-        {
-          actorId: user.id,
-          action: AuditAction.CREATE,
-          propertyId,
-          entityType:
-            AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
-          entityId: document.id,
-          description:
-            "Documento immobile creato.",
-          metadata: {
-            propertyId,
-            title,
-            type,
-            ocrRequested: Boolean(fileUrl),
-          },
-        },
-        transaction,
+      },
+    );
+  } catch (error) {
+    try {
+      await defaultPrivateStorageProvider.delete(
+        uploaded.storageKey,
       );
-    },
-  );
+    } catch (cleanupError) {
+      console.error(
+        "Cleanup documento cifrato fallito.",
+        cleanupError,
+      );
+    }
+
+    throw error;
+  }
+
   revalidatePropertyPaths(propertyId);
 }
-
 export async function updatePropertyDocumentAction(
   formData: FormData,
 ): Promise<void> {
-  const propertyId = getRequiredString(
-    formData,
-    "propertyId",
-    "Immobile non specificato.",
-  );
-
+  const propertyId = getRequiredString(formData, "propertyId", "Immobile non specificato.");
   const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  const documentId = getRequiredString(formData, "documentId", "Documento non specificato.");
 
-  const documentId = getRequiredString(
-    formData,
-    "documentId",
-    "Documento non specificato.",
-  );
-
-  const document =
-    await prisma.propertyDocument.findFirst({
-      where: {
-        id: documentId,
-        propertyId,
-      },
-      select: {
-        id: true,
-        fileUrl: true,
-      },
-    });
+  const document = await prisma.propertyDocument.findFirst({
+    where: { id: documentId, propertyId },
+    select: { id: true, storageKey: true },
+  });
 
   if (!document) {
     throw new Error("Documento non trovato.");
   }
 
-  const issueDate = getOptionalDate(
-    formData,
-    "issueDate",
-  );
+  const issueDate = getOptionalDate(formData, "issueDate");
+  const expiryDate = getOptionalDate(formData, "expiryDate");
 
-  const expiryDate = getOptionalDate(
-    formData,
-    "expiryDate",
-  );
-
-  if (
-    issueDate &&
-    expiryDate &&
-    expiryDate < issueDate
-  ) {
-    throw new Error(
-      "La data di scadenza non può precedere la data di rilascio.",
-    );
+  if (issueDate && expiryDate && expiryDate < issueDate) {
+    throw new Error("La data di scadenza non può precedere la data di rilascio.");
   }
 
-  const fileUrl = getOptionalString(
-    formData,
-    "fileUrl",
-  );
+  const replacementFile = getOptionalFile(formData, "file");
+  const replacement = replacementFile
+    ? await uploadPropertyDocument(propertyId, replacementFile)
+    : null;
 
-  const filename = getOptionalString(
-    formData,
-    "filename",
-  );
-
-  const fileUrlChanged =
-    fileUrl !== document.fileUrl;
-
-  const ocrRequestedAt =
-    fileUrlChanged && fileUrl
-      ? new Date()
-      : null;
-
-  await prisma.$transaction(
-    async (transaction) => {
+  try {
+    await prisma.$transaction(async (transaction) => {
       await transaction.propertyDocument.update({
-        where: {
-          id: document.id,
-        },
+        where: { id: document.id },
         data: {
           type: getDocumentType(formData),
-          title: getRequiredString(
-            formData,
-            "title",
-            "Il titolo del documento è obbligatorio.",
-          ),
-          documentNumber: getOptionalString(
-            formData,
-            "documentNumber",
-          ),
-          issuer: getOptionalString(
-            formData,
-            "issuer",
-          ),
+          title: getRequiredString(formData, "title", "Il titolo del documento è obbligatorio."),
+          documentNumber: getOptionalString(formData, "documentNumber"),
+          issuer: getOptionalString(formData, "issuer"),
           issueDate,
           expiryDate,
           validity: getDocumentValidity(formData),
-          fileUrl,
-          filename,
-          notes: getOptionalString(
-            formData,
-            "notes",
-          ),
-          ...(fileUrlChanged
-            ? fileUrl
-              ? {
-                  ocrStatus:
-                    PropertyDocumentOcrStatus.QUEUED,
-                  ocrRequestedAt,
-                  ocrStartedAt: null,
-                  ocrCompletedAt: null,
-                  ocrExtractedText: null,
-                  ocrProvider: null,
-                  ocrProviderVersion: null,
-                  ocrError: null,
-                }
-              : {
-                  ocrStatus:
-                    PropertyDocumentOcrStatus.NOT_REQUESTED,
-                  ocrRequestedAt: null,
-                  ocrStartedAt: null,
-                  ocrCompletedAt: null,
-                  ocrExtractedText: null,
-                  ocrProvider: null,
-                  ocrProviderVersion: null,
-                  ocrError: null,
-                }
+          notes: getOptionalString(formData, "notes"),
+          ...(replacement
+            ? {
+                fileUrl: null,
+                filename: replacement.filename,
+                storageKey: replacement.storageKey,
+                contentType: replacement.contentType,
+                fileSize: replacement.fileSize,
+                encryptionVersion: replacement.encryptionVersion,
+                ocrStatus: PropertyDocumentOcrStatus.NOT_REQUESTED,
+                ocrRequestedAt: null,
+                ocrStartedAt: null,
+                ocrCompletedAt: null,
+                ocrExtractedText: null,
+                ocrProvider: null,
+                ocrProviderVersion: null,
+                ocrError: null,
+              }
             : {}),
         },
       });
-
-      if (
-        fileUrlChanged &&
-        fileUrl &&
-        ocrRequestedAt
-      ) {
-        await enqueueBackgroundJob(
-          {
-            type: "PROPERTY_DOCUMENT_OCR",
-            payload: {
-              documentId: document.id,
-              propertyId,
-              fileUrl,
-              ...(filename
-                ? {
-                    filename,
-                  }
-                : {}),
-            },
-            deduplicationKey:
-              getOcrDeduplicationKey(
-                document.id,
-                ocrRequestedAt,
-              ),
-          },
-          transaction,
-        );
-      }
 
       await AuditService.log(
         {
           actorId: user.id,
           action: AuditAction.UPDATE,
           propertyId,
-          entityType:
-            AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
+          entityType: AUDIT_ENTITY_TYPES.PROPERTY_DOCUMENT,
           entityId: document.id,
-          description:
-            "Documento immobile aggiornato.",
+          description: "Documento immobile aggiornato.",
           metadata: {
             propertyId,
-            fileUrlChanged,
-            ocrRequested:
-              fileUrlChanged &&
-              Boolean(fileUrl),
+            attachmentReplaced: Boolean(replacement),
+            encryptedStorage: Boolean(replacement),
+            ocrRequested: false,
           },
         },
         transaction,
       );
-    },
-  );
+    });
+  } catch (error) {
+    if (replacement) {
+      try {
+        await defaultPrivateStorageProvider.delete(replacement.storageKey);
+      } catch (cleanupError) {
+        console.error("Cleanup nuovo allegato cifrato fallito.", cleanupError);
+      }
+    }
+
+    throw error;
+  }
+
+  if (replacement && document.storageKey) {
+    try {
+      await defaultPrivateStorageProvider.delete(document.storageKey);
+    } catch (cleanupError) {
+      console.error("Cleanup precedente allegato cifrato fallito.", cleanupError);
+    }
+  }
+
   revalidatePropertyPaths(propertyId);
 }
+
 
 export async function retryPropertyDocumentOcrAction(
   formData: FormData,
@@ -505,6 +437,7 @@ export async function retryPropertyDocumentOcrAction(
       select: {
         id: true,
         fileUrl: true,
+        storageKey: true,
         filename: true,
         ocrStatus: true,
       },
@@ -514,7 +447,7 @@ export async function retryPropertyDocumentOcrAction(
     throw new Error("Documento non trovato.");
   }
 
-  if (!document.fileUrl) {
+  if (!document.storageKey && !document.fileUrl) {
     throw new Error(
       "Non è possibile avviare l'OCR senza un file allegato.",
     );
@@ -526,9 +459,8 @@ export async function retryPropertyDocumentOcrAction(
     document.ocrStatus ===
       PropertyDocumentOcrStatus.PROCESSING
   ) {
-    throw new Error(
-      "È già presente un'elaborazione OCR in corso.",
-    );
+    revalidatePropertyPaths(propertyId);
+    return;
   }
 
   const ocrRequestedAt = new Date();
@@ -558,9 +490,8 @@ export async function retryPropertyDocumentOcrAction(
     });
 
   if (result.count !== 1) {
-    throw new Error(
-      "È già presente un'elaborazione OCR in corso.",
-    );
+    revalidatePropertyPaths(propertyId);
+    return;
   }
 
   try {
@@ -569,7 +500,9 @@ export async function retryPropertyDocumentOcrAction(
       payload: {
         documentId: document.id,
         propertyId,
-        fileUrl: document.fileUrl,
+        ...(document.storageKey
+          ? { storageKey: document.storageKey }
+          : { fileUrl: document.fileUrl! }),
         ...(document.filename
           ? {
               filename: document.filename,
@@ -616,6 +549,7 @@ export async function retryPropertyDocumentOcrAction(
     metadata: {
       propertyId,
       previousStatus: document.ocrStatus,
+      source: document.storageKey ? "encrypted-storage" : "legacy-url",
       requestedAt: ocrRequestedAt.toISOString(),
     },
   });
@@ -648,6 +582,7 @@ export async function deletePropertyDocumentAction(
       },
       select: {
         id: true,
+        storageKey: true,
       },
     });
 
@@ -675,11 +610,26 @@ export async function deletePropertyDocumentAction(
             "Documento immobile eliminato.",
           metadata: {
             propertyId,
+            encryptedStorage: Boolean(document.storageKey),
           },
         },
         transaction,
       );
     },
   );
+
+  if (document.storageKey) {
+    try {
+      await defaultPrivateStorageProvider.delete(
+        document.storageKey,
+      );
+    } catch (cleanupError) {
+      console.error(
+        "Impossibile eliminare l allegato protetto.",
+        cleanupError,
+      );
+    }
+  }
+
   revalidatePropertyPaths(propertyId);
 }

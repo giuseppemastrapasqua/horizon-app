@@ -79,6 +79,8 @@ export async function GET(
             zone: true,
             cleaningCost: true,
             propertyManagementCommissionPercent: true,
+            propertyManagementCommissionVatPercent: true,
+            propertyManagementCommissionVatMode: true,
           },
         },
 
@@ -145,6 +147,7 @@ export async function GET(
       where: {
         propertyId: report.property.id,
 
+        bookingStatus: { not: "CANCELLED" },
         checkIn: {
           gte: monthStart,
           lt: nextMonthStart,
@@ -179,52 +182,62 @@ export async function GET(
     );
 
   const bookingBreakdowns =
-    report.formulaId
-      ? await Promise.all(
-          bookings.map(
-            async (booking) => {
-              const breakdown =
-                await buildBookingFinanceBreakdown({
-                  formulaId:
-                    report.formulaId!,
-                  grossRevenue:
-                    Number(
-                      booking.grossAmount
-                    ),
-                  cleaningCost:
-                    Number(
-                      report.property.cleaningCost
-                    ),
+    await Promise.all(
+      bookings.map(
+        async (booking) => {
+          const breakdown =
+            await buildBookingFinanceBreakdown({
+              formulaId:
+                report.formulaId ?? null,
 
-                  propertyManagementCommissionPercent:
-                    Number(
-                      report.property.propertyManagementCommissionPercent
-                    ),
-                  otaCommissionPercent:
-                    resolveOtaCommissionPercent({
-                      channel:
-                        booking.channel,
+              grossRevenue:
+                Number(
+                  booking.grossAmount
+                ),
 
-                      commissions:
-                        otaCommissionByChannel,
-                    }),
+              cleaningCost:
+                Number(
+                  report.property.cleaningCost
+                ),
 
-                  currency:
-                    booking.currency,
+              propertyManagementCommissionPercent:
+                Number(
+                  report.property.propertyManagementCommissionPercent
+                ),
+
+              propertyManagementCommissionVatPercent:
+                Number(
+                  report.property.propertyManagementCommissionVatPercent
+                ),
+
+              propertyManagementCommissionVatMode:
+                report.property.propertyManagementCommissionVatMode,
+
+              otaCommissionPercent:
+                resolveOtaCommissionPercent({
                   channel:
                     booking.channel,
-                });
 
-              return {
-                bookingId:
-                  booking.id,
-                ...breakdown,
-              };
-            },
-          ),
-        )
-      : [];
+                  commissions:
+                    otaCommissionByChannel,
+                }),
 
+              currency:
+                booking.currency,
+
+              channel:
+                booking.channel,
+            });
+
+          return {
+            bookingId:
+              booking.id,
+
+            ...breakdown,
+          };
+        },
+      ),
+    );
   const bookingBreakdownById =
     new Map(
       bookingBreakdowns.map(
@@ -432,6 +445,18 @@ export async function GET(
 
           managementCommission:
             breakdown?.managementCommission ??
+            null,
+
+          managementCommissionTaxableBase:
+            breakdown?.managementCommissionTaxableBase ??
+            null,
+
+          managementCommissionVat:
+            breakdown?.managementCommissionVat ??
+            null,
+
+          managementCommissionTotal:
+            breakdown?.managementCommissionTotal ??
             null,
 
           taxAmount:

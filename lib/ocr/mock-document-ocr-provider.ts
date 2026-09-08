@@ -19,7 +19,7 @@ export class MockDocumentOcrProvider
         "=== MOCK OCR ===",
         `Documento: ${input.documentId}`,
         `File: ${input.filename ?? "Sconosciuto"}`,
-        `URL: ${input.fileUrl}`,
+        `Sorgente: ${input.sourceType === "url" ? input.fileUrl : "documento protetto in memoria"}`,
         "",
         "Questo è un testo simulato prodotto dal provider OCR.",
       ].join("\n"),

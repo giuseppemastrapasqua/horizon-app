@@ -7,11 +7,13 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { getBookingWorkspace } from "@/lib/bookings/get-booking-workspace";
 
 import { BookingHero } from "./components/BookingHero";
+import { BookingEditForm } from "./components/BookingEditForm";
 import { BookingKPIs } from "./components/BookingKPIs";
 import { BookingTasks } from "./components/BookingTasks";
 import { BookingTimeline } from "./components/BookingTimeline";
 import { BookingDocuments } from "./components/BookingDocuments";
 import { BookingQuickActions } from "./components/BookingQuickActions";
+import { BookingGuestCheckInPanel } from "./components/BookingGuestCheckInPanel";
 import { WorkspaceGrid } from "@/components/ui/WorkspaceGrid";
 import { WorkspaceTopBar } from "@/components/ui/WorkspaceTopBar";
 
@@ -75,6 +77,8 @@ export default async function BookingPage({
           stayProgress={metrics.stayProgress}
         />
 
+        <BookingEditForm booking={booking} />
+
         <BookingKPIs
           grossAmount={booking.grossAmount}
           currency={booking.currency}
@@ -109,6 +113,12 @@ export default async function BookingPage({
   right={
     <>
       <BookingTimeline items={timeline} />
+
+      <BookingGuestCheckInPanel
+        bookingId={booking.id}
+        guestEmail={booking.guestEmail}
+        initialLink={booking.guestCheckInLink}
+      />
 
       <BookingQuickActions
         bookingId={booking.id}

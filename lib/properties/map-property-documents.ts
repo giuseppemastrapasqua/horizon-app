@@ -12,6 +12,10 @@ export type PropertyDocumentWorkspaceData = {
   validity: PropertyDocument["validity"];
   fileUrl: string | null;
   filename: string | null;
+  storageKey: string | null;
+  contentType: string | null;
+  fileSize: number | null;
+  encryptionVersion: string | null;
   notes: string | null;
   ocrStatus: PropertyDocument["ocrStatus"];
   ocrRequestedAt: Date | null;
@@ -40,6 +44,10 @@ export function mapPropertyDocuments(
     validity: document.validity,
     fileUrl: document.fileUrl,
     filename: document.filename,
+    storageKey: document.storageKey,
+    contentType: document.contentType,
+    fileSize: document.fileSize,
+    encryptionVersion: document.encryptionVersion,
     notes: document.notes,
     ocrStatus: document.ocrStatus,
     ocrRequestedAt: document.ocrRequestedAt,

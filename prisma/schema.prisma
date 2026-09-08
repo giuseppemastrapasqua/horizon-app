@@ -68,6 +68,7 @@ model User {
   createdAt                 DateTime                    @default(now())
   updatedAt                 DateTime                    @updatedAt
   passwordHash              String?
+  passwordResetTokens       PasswordResetToken[]
   auditLogs                 AuditLog[]
   bookings                  Booking[]
   documents                 Document[]
@@ -81,9 +82,54 @@ model User {
   propertyAccesses          PropertyAccess[]
   createdAvailabilityBlocks PropertyAvailabilityBlock[] @relation("PropertyAvailabilityBlockCreatedBy")
   alloggiatiWebAccounts     AlloggiatiWebAccount[]
+  ownerBillingProfile       OwnerBillingProfile?
 
   @@index([role])
   @@index([status])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum OwnerBillingEntityType {
+  PRIVATE
+  VAT_REGISTERED
+}
+
+model OwnerBillingProfile {
+  id            String                 @id @default(cuid())
+  ownerId       String                 @unique
+  entityType    OwnerBillingEntityType
+  firstName     String?
+  lastName      String?
+  businessName  String?
+  taxCode       String?
+  vatNumber     String?
+  address       String
+  postalCode    String
+  city          String
+  province      String?
+  country       String                 @default("IT")
+  email         String
+  pec           String?
+  recipientCode String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  owner         User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([entityType])
+  @@index([taxCode])
+  @@index([vatNumber])
 }
 
 model AuditLog {
@@ -109,67 +155,69 @@ model AuditLog {
 }
 
 model Property {
-  horizonCommissionPercent            Decimal                         @default(0) @db.Decimal(5, 2)
-  id                                  String                          @id @default(cuid())
-  name                                String
-  address                             String
-  city                                String                          @default("Milano")
-  latitude                            Decimal?                        @db.Decimal(10, 7)
-  longitude                           Decimal?                        @db.Decimal(10, 7)
-  zone                                String?
-  maxGuests                           Int
-  bedrooms                            Int?
-  bathrooms                           Int?
-  status                              PropertyStatus                  @default(DRAFT)
-  commercialClass                     PropertyCommercialClass         @default(SOLID_PERFORMER)
-  victoryModel                        PropertyVictoryModel            @default(BALANCED_WINNER)
-  initialScore                        Int                             @default(70)
-  currentScore                        Int                             @default(70)
-  notes                               String?
-  createdAt                           DateTime                        @default(now())
-  updatedAt                           DateTime                        @updatedAt
-  ownerId                             String
-  cleaningCost                        Decimal                         @default(0) @db.Decimal(10, 2)
-  propertyManagementCommissionPercent Decimal                         @default(0) @db.Decimal(5, 2)
-  description                         String?
+  horizonCommissionPercent               Decimal                         @default(0) @db.Decimal(5, 2)
+  id                                     String                          @id @default(cuid())
+  name                                   String
+  address                                String
+  city                                   String                          @default("Milano")
+  latitude                               Decimal?                        @db.Decimal(10, 7)
+  longitude                              Decimal?                        @db.Decimal(10, 7)
+  zone                                   String?
+  maxGuests                              Int
+  bedrooms                               Int?
+  bathrooms                              Int?
+  status                                 PropertyStatus                  @default(DRAFT)
+  commercialClass                        PropertyCommercialClass         @default(SOLID_PERFORMER)
+  victoryModel                           PropertyVictoryModel            @default(BALANCED_WINNER)
+  initialScore                           Int                             @default(70)
+  currentScore                           Int                             @default(70)
+  notes                                  String?
+  createdAt                              DateTime                        @default(now())
+  updatedAt                              DateTime                        @updatedAt
+  ownerId                                String
+  cleaningCost                           Decimal                         @default(0) @db.Decimal(10, 2)
+  propertyManagementCommissionPercent    Decimal                         @default(0) @db.Decimal(5, 2)
+  propertyManagementCommissionVatPercent Decimal                         @default(0) @db.Decimal(5, 2)
+  propertyManagementCommissionVatMode    PropertyManagementCommissionVatMode @default(NONE)
+  description                            String?
   /// *
   ///    * Codici identificativi dell'alloggio.
-  ///    * La verifica incrociata verrà eseguita successivamente
+  ///    * La verifica incrociata verrÃ  eseguita successivamente
   ///    * dal servizio di verifica AI.
-  cin                                 String?                         @unique
-  cir                                 String?                         @unique
-  codeVerificationNotes               String?
-  codeVerificationStatus              PropertyCodeVerificationStatus  @default(NOT_VERIFIED)
-  codeVerifiedAt                      DateTime?
-  bookings                            Booking[]
-  channelCommissions                  PropertyChannelCommission[]
-  documents                           Document[]
-  financeFormulas                     FinanceFormula[]
-  financeReports                      FinanceReport[]
-  integrationConnections              IntegrationConnectionProperty[]
-  integrationMappings                 IntegrationPropertyMapping[]
-  owner                               User                            @relation(fields: [ownerId], references: [id])
-  amenities                           PropertyAmenity[]
-  checkInConfiguration                PropertyCheckInConfiguration?
-  propertyCodeVerifications           PropertyCodeVerification[]
-  propertyDocuments                   PropertyDocument[]
-  houseRules                          PropertyHouseRule[]
-  images                              PropertyImage[]
-  ratePlans                           PropertyRatePlan[]
-  rateRules                           PropertyRateRule[]
-  priceOverrides                      PropertyPriceOverride[]
-  tasks                               Task[]
-  taskAssignments                     PropertyTaskAssignment[]
-  accesses                            PropertyAccess[]
-  ownerInvites                        PropertyOwnerInvite[]
-  availabilityBlocks                  PropertyAvailabilityBlock[]
-  revenueMarketSnapshots              RevenueMarketSnapshot[]
-  revenueComparables                  RevenueComparable[]
-  revenueDailySignals                 RevenueDailySignal[]
-  revenueRecommendations              RevenueRecommendation[]
-  financeReportTemplate               FinanceReportTemplate?
-  alloggiatiWebProperty               AlloggiatiWebProperty?
-  alloggiatiWebTransmissions          AlloggiatiWebTransmission[]
+  cin                                    String?                         @unique
+  cir                                    String?                         @unique
+  codeVerificationNotes                  String?
+  codeVerificationStatus                 PropertyCodeVerificationStatus  @default(NOT_VERIFIED)
+  codeVerifiedAt                         DateTime?
+  bookings                               Booking[]
+  channelCommissions                     PropertyChannelCommission[]
+  documents                              Document[]
+  financeFormulas                        FinanceFormula[]
+  financeReports                         FinanceReport[]
+  integrationConnections                 IntegrationConnectionProperty[]
+  integrationMappings                    IntegrationPropertyMapping[]
+  owner                                  User                            @relation(fields: [ownerId], references: [id])
+  amenities                              PropertyAmenity[]
+  checkInConfiguration                   PropertyCheckInConfiguration?
+  propertyCodeVerifications              PropertyCodeVerification[]
+  propertyDocuments                      PropertyDocument[]
+  houseRules                             PropertyHouseRule[]
+  images                                 PropertyImage[]
+  ratePlans                              PropertyRatePlan[]
+  rateRules                              PropertyRateRule[]
+  priceOverrides                         PropertyPriceOverride[]
+  tasks                                  Task[]
+  taskAssignments                        PropertyTaskAssignment[]
+  accesses                               PropertyAccess[]
+  ownerInvites                           PropertyOwnerInvite[]
+  availabilityBlocks                     PropertyAvailabilityBlock[]
+  revenueMarketSnapshots                 RevenueMarketSnapshot[]
+  revenueComparables                     RevenueComparable[]
+  revenueDailySignals                    RevenueDailySignal[]
+  revenueRecommendations                 RevenueRecommendation[]
+  financeReportTemplate                  FinanceReportTemplate?
+  alloggiatiWebProperty                  AlloggiatiWebProperty?
+  alloggiatiWebTransmissions             AlloggiatiWebTransmission[]
 
   @@index([ownerId])
   @@index([status])
@@ -468,6 +516,10 @@ model PropertyDocument {
   validity           PropertyDocumentValidity  @default(VALID)
   fileUrl            String?
   filename           String?
+  storageKey         String?
+  contentType        String?
+  fileSize           Int?
+  encryptionVersion  String?
   notes              String?
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
@@ -506,6 +558,8 @@ model Booking {
   bookingStatus              BookingStatus               @default(CONFIRMED)
   operationalStatus          BookingOperationalStatus    @default(OK)
   internalNotes              String?
+  guestDataManuallyEdited    Boolean                     @default(false)
+  pricingDataManuallyEdited  Boolean                     @default(false)
   createdAt                  DateTime                    @default(now())
   updatedAt                  DateTime                    @updatedAt
   guestId                    String?
@@ -517,6 +571,7 @@ model Booking {
   tasks                      Task[]
   bookingGuests              BookingGuest[]
   alloggiatiWebTransmissions AlloggiatiWebTransmission[]
+  guestCheckInLink           GuestCheckInLink?
 
   @@unique([integrationConnectionId, externalBookingId])
   @@index([channel, externalBookingId])
@@ -530,6 +585,21 @@ model Booking {
   @@index([externalBookingId])
   @@index([guestId])
   @@index([integrationConnectionId])
+}
+
+model GuestCheckInLink {
+  id        String    @id @default(cuid())
+  bookingId String    @unique
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([revokedAt])
 }
 
 enum BookingGuestRole {
@@ -1250,7 +1320,7 @@ model RevenueComparable {
 
   /**
    * 0-100.
-   * Più è alto, più l'alloggio è
+   * PiÃ¹ Ã¨ alto, piÃ¹ l'alloggio Ã¨
    * realmente comparabile alla property.
    */
   similarityScore Decimal? @db.Decimal(5, 2)
@@ -1454,4 +1524,29 @@ model AlloggiatiWebProperty {
   @@unique([accountId, apartmentId])
   @@index([accountId])
   @@index([propertyId])
+}
+
+
+enum PropertyManagementCommissionVatMode {
+  NONE
+  EXCLUDED
+  INCLUDED
+}
+
+model BillingIssuerProfile {
+  id           String   @id @default(cuid())
+  profileKey   String   @unique @default("DEFAULT")
+  businessName String
+  vatNumber    String
+  taxCode      String?
+  address      String
+  postalCode   String
+  city         String
+  province     String?
+  country      String   @default("IT")
+  email        String
+  pec          String?
+  logoPath     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

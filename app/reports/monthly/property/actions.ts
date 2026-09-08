@@ -41,10 +41,11 @@ export async function generateFinanceReportAction(
     });
 
   const report =
-    existingReport ??
     await createFinanceReport({
       propertyId,
       referenceMonth,
+      existingReportId:
+        existingReport?.id ?? null,
     });
 
   redirect(
@@ -143,12 +144,14 @@ export async function generateFinanceReportsBatchAction(
         });
 
       const report =
-        existingReport ??
         await createFinanceReport({
           propertyId:
             property.id,
 
           referenceMonth,
+
+          existingReportId:
+            existingReport?.id ?? null,
         });
 
       createdReports.push({
