@@ -20,6 +20,7 @@ import {
 import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { BillingIssuerProfileCard } from "@/components/invoices/BillingIssuerProfileCard";
 
+import { requireUser } from "@/lib/auth/guards";
 type InvoicesPageProps = {
   searchParams?: Promise<{
     status?: string;
@@ -32,6 +33,11 @@ type InvoicesPageProps = {
 export default async function InvoicesPage({
   searchParams,
 }: InvoicesPageProps) {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
   const params =
     await searchParams;
   const accessiblePropertyIds = await getAccessiblePropertyIds();

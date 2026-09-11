@@ -16,6 +16,10 @@ import {
 } from "@/components/AppShell";
 
 import {
+  requireUser,
+} from "@/lib/auth/guards";
+
+import {
   getPropertiesPageData,
 } from "@/lib/properties/get-properties-page-data";
 
@@ -24,6 +28,12 @@ import {
 } from "@/lib/intelligence";
 
 export default async function Home() {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
+
   const [
     properties,
     intelligence,

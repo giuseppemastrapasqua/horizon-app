@@ -5,7 +5,14 @@ import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 
+import { requireUser } from "@/lib/auth/guards";
 export default async function OwnersPage() {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
+
   const accessiblePropertyIds = await getAccessiblePropertyIds();
   const now = new Date();
 

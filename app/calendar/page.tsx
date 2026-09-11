@@ -28,6 +28,7 @@ import {
 
 import {
   getAccessiblePropertyIds,
+  requireUser,
 } from "@/lib/auth/guards";
 
 import {
@@ -101,6 +102,9 @@ type RatePlanData = {
 export default async function CalendarPage({
   searchParams,
 }: CalendarPageProps) {
+  const user = await requireUser();
+  const isOperator = user.role === "OPERATOR";
+
   const params =
     await searchParams;
 
@@ -182,7 +186,7 @@ export default async function CalendarPage({
     null;
 
   const channelConnections =
-    selectedProperty
+    selectedProperty && !isOperator
       ? await prisma.integrationConnectionProperty.findMany({
           where: {
             propertyId:
@@ -230,8 +234,8 @@ export default async function CalendarPage({
           ] => item !== null,
         ),
     );
-  const propertyData =
-    selectedProperty
+  const managementPropertyData =
+    selectedProperty && !isOperator
       ? await prisma.property.findUnique({
           where: {
             id:
@@ -379,6 +383,93 @@ export default async function CalendarPage({
         })
       : null;
 
+  const operatorPropertyData =
+    selectedProperty && isOperator
+      ? await prisma.property.findUnique({
+          where: {
+            id:
+              selectedProperty.id,
+          },
+
+          select: {
+            id: true,
+            name: true,
+
+            bookings: {
+              where: {
+                bookingStatus: {
+                  not:
+                    "CANCELLED",
+                },
+
+                checkIn: {
+                  lt:
+                    nextMonth,
+                },
+
+                checkOut: {
+                  gt:
+                    monthStart,
+                },
+              },
+
+              orderBy: {
+                checkIn:
+                  "asc",
+              },
+
+              select: {
+                id: true,
+                guestName: true,
+                checkIn: true,
+                checkOut: true,
+                guests: true,
+                channel: true,
+                bookingStatus: true,
+              },
+            },
+
+            availabilityBlocks: {
+              where: {
+                startDate: {
+                  lt:
+                    nextMonth,
+                },
+
+                endDate: {
+                  gte:
+                    monthStart,
+                },
+              },
+
+              orderBy: {
+                startDate:
+                  "asc",
+              },
+
+              select: {
+                id: true,
+                startDate: true,
+                endDate: true,
+                source: true,
+                note: true,
+              },
+            },
+          },
+        })
+      : null;
+
+  const propertyData =
+    isOperator
+      ? operatorPropertyData
+        ? {
+            ...operatorPropertyData,
+            horizonCommissionPercent: null,
+            ratePlans: [],
+            priceOverrides: [],
+          }
+        : null
+      : managementPropertyData;
   const ratePlans: RatePlanData[] =
     propertyData?.ratePlans.map(
       (ratePlan) => ({
@@ -748,38 +839,40 @@ export default async function CalendarPage({
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-start gap-3">
+                  {!isOperator ? (
+                    <div className="flex shrink-0 items-start gap-3">
 
-                    <CalendarRangeController
-                      key={`${toCalendarDateValue(rangeFrom)}-${toCalendarDateValue(rangeTo)}-${selectedProperty?.id ?? ""}`}
-                      from={toCalendarDateValue(rangeFrom)}
-                      to={toCalendarDateValue(rangeTo)}
-                      propertyId={selectedProperty?.id ?? ""}
-                      month={formatMonthParam(monthStart)}
-                    />
-
-                    <div className="flex w-[225px] flex-col gap-2">
-                      <CalendarPeriodEditor
-                        propertyId={selectedProperty?.id ?? ""}
-                        month={formatMonthParam(monthStart)}
+                      <CalendarRangeController
+                        key={`${toCalendarDateValue(rangeFrom)}-${toCalendarDateValue(rangeTo)}-${selectedProperty?.id ?? ""}`}
                         from={toCalendarDateValue(rangeFrom)}
                         to={toCalendarDateValue(rangeTo)}
-                        price={effectiveStandardPrice}
-                        source={effectiveStandardSource}
-                        minimumStay={standardRate?.minimumStay ?? 1}
-                        closed={selectedPeriodClosed}
-                        revenueAiAvailable={Boolean(standardRate)}
+                        propertyId={selectedProperty?.id ?? ""}
+                        month={formatMonthParam(monthStart)}
                       />
 
-                      <Link
-                        href={`/bookings/new?propertyId=${encodeURIComponent(selectedProperty?.id ?? "")}`}
-                        className="inline-flex h-10 w-[225px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
-                      >
-                        <CalendarPlus size={14} />
-                        Crea prenotazione
-                      </Link>
+                      <div className="flex w-[225px] flex-col gap-2">
+                        <CalendarPeriodEditor
+                          propertyId={selectedProperty?.id ?? ""}
+                          month={formatMonthParam(monthStart)}
+                          from={toCalendarDateValue(rangeFrom)}
+                          to={toCalendarDateValue(rangeTo)}
+                          price={effectiveStandardPrice}
+                          source={effectiveStandardSource}
+                          minimumStay={standardRate?.minimumStay ?? 1}
+                          closed={selectedPeriodClosed}
+                          revenueAiAvailable={Boolean(standardRate)}
+                        />
+
+                        <Link
+                          href={`/bookings/new?propertyId=${encodeURIComponent(selectedProperty?.id ?? "")}`}
+                          className="inline-flex h-10 w-[225px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                        >
+                          <CalendarPlus size={14} />
+                          Crea prenotazione
+                        </Link>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                 </div>
               </div>
               <section className="min-w-0 overflow-hidden rounded-[24px] border border-slate-200/70 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.055)]">
@@ -1005,37 +1098,45 @@ export default async function CalendarPage({
                                 ) : null}
                               </Link>
                             ) : block ? (
-                              <ClosedAvailabilityRibbon
-                                dateKey={calendarDate}
-                                price={dayOriginPrice}
-                                source={
-                                  dayOriginSource === "AI"
-                                    ? "Revenue AI"
-                                    : dayOriginSource === "MANUAL"
-                                      ? "Manuale"
-                                      : "Configurata"
-                                }
-                                minimumStay={standardRate?.minimumStay ?? 1}
-                                isStart={isSameDay(day, block.startDate)}
-                                isEnd={isSameDay(day, block.endDate)}
-                              />
+                              isOperator ? (
+                                <div className="mt-4 rounded-lg bg-slate-100 px-2 py-1.5 text-[9px] font-bold text-slate-500">
+                                  Bloccato
+                                </div>
+                              ) : (
+                                <ClosedAvailabilityRibbon
+                                  dateKey={calendarDate}
+                                  price={dayOriginPrice}
+                                  source={
+                                    dayOriginSource === "AI"
+                                      ? "Revenue AI"
+                                      : dayOriginSource === "MANUAL"
+                                        ? "Manuale"
+                                        : "Configurata"
+                                  }
+                                  minimumStay={standardRate?.minimumStay ?? 1}
+                                  isStart={isSameDay(day, block.startDate)}
+                                  isEnd={isSameDay(day, block.endDate)}
+                                />
+                              )
                             ) : (
-                            <div className="mb-2">
-                              <CalendarDayPricing
-                                dateKey={calendarDate}
-                                dayLabel={day.toLocaleDateString("it-IT", {
-                                  day: "numeric",
-                                  month: "long",
-                                  year: "numeric",
-                                })}
-                                price={dayOriginPrice}
-                                source={dayOriginSource}
-                                channels={dayOriginChannelPrices}
-                                minimumStay={standardRate?.minimumStay ?? 1}
-                                closed={Boolean(block)}
-                              />
-                            </div>
-                          )
+                              <div className="mb-2">
+                                {!isOperator ? (
+                                  <CalendarDayPricing
+                                    dateKey={calendarDate}
+                                    dayLabel={day.toLocaleDateString("it-IT", {
+                                      day: "numeric",
+                                      month: "long",
+                                      year: "numeric",
+                                    })}
+                                    price={dayOriginPrice}
+                                    source={dayOriginSource}
+                                    channels={dayOriginChannelPrices}
+                                    minimumStay={standardRate?.minimumStay ?? 1}
+                                    closed={Boolean(block)}
+                                  />
+                                ) : null}
+                              </div>
+                            )
                         ) : null}
                       </div>
                     );
@@ -1049,6 +1150,7 @@ export default async function CalendarPage({
 
 
             <div className="space-y-4">
+              {!isOperator ? (
               <section className="rounded-[24px] border border-slate-200/70 bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
@@ -1213,6 +1315,7 @@ export default async function CalendarPage({
                     )}
                 </div>
               </section>
+              ) : null}
 
             </div>
           </div>

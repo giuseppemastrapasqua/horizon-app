@@ -11,6 +11,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
+import { requireUser } from "@/lib/auth/guards";
 type FinanceReportsPageProps = {
   searchParams: Promise<{
     propertyId?: string | string[];
@@ -20,6 +21,11 @@ type FinanceReportsPageProps = {
 export default async function FinanceReportsPage({
   searchParams,
 }: FinanceReportsPageProps) {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
   const resolvedSearchParams = await searchParams;
 
   const propertyIdValue = resolvedSearchParams.propertyId;

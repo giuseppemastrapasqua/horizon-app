@@ -18,17 +18,27 @@ type GuestCheckInLinkStatus = "ACTIVE" | "REVOKED" | "EXPIRED";
 type BookingGuestCheckInPanelProps = {
   bookingId: string;
   guestEmail: string | null;
+  guestRegistration: {
+    status: "TO_COMPLETE" | "READY" | "SENDING" | "SENT" | "PARTIAL" | "OUTCOME_UNKNOWN" | "REJECTED";
+    completedGuests: number;
+    expectedGuests: number;
+    latestTransmissionStatus: string | null;
+    lastError: string | null;
+  };
   initialLink: {
     status: GuestCheckInLinkStatus;
     expiresAt: Date;
     updatedAt: Date;
   } | null;
+  canSubmitToAlloggiati?: boolean;
 };
 
 export function BookingGuestCheckInPanel({
   bookingId,
   guestEmail,
+  guestRegistration,
   initialLink,
+  canSubmitToAlloggiati = true,
 }: BookingGuestCheckInPanelProps) {
   const [status, setStatus] = useState<GuestCheckInLinkStatus | "NONE">(
     initialLink?.status ?? "NONE",
@@ -101,6 +111,23 @@ export function BookingGuestCheckInPanel({
     }
   }
 
+  const registrationLabel =
+    guestRegistration.status === "SENT" ? "Inviata"
+      : guestRegistration.status === "READY" ? "Pronta invio"
+        : guestRegistration.status === "SENDING" ? "Invio in corso"
+          : guestRegistration.status === "PARTIAL" ? "Invio parziale"
+            : guestRegistration.status === "OUTCOME_UNKNOWN" ? "Esito da verificare"
+              : guestRegistration.status === "REJECTED" ? "Errore invio"
+                : "Da compilare";
+
+  const registrationDescription =
+    guestRegistration.status === "SENT" ? "I dati ospiti risultano confermati da Alloggiati Web."
+      : guestRegistration.status === "READY" ? "I dati ospiti sono completi e pronti per l invio ad Alloggiati Web."
+        : guestRegistration.status === "SENDING" ? "La trasmissione ad Alloggiati Web è in preparazione o in corso."
+          : guestRegistration.status === "PARTIAL" ? "Alloggiati Web ha confermato solo una parte dei dati trasmessi."
+            : guestRegistration.status === "OUTCOME_UNKNOWN" ? "L esito della trasmissione non è certo e richiede verifica."
+              : guestRegistration.status === "REJECTED" ? "La trasmissione è stata rifiutata e richiede un nuovo controllo."
+                : "I dati ospiti devono ancora essere compilati completamente.";
   const statusLabel =
     status === "ACTIVE"
       ? "Link attivo"
@@ -118,8 +145,23 @@ export function BookingGuestCheckInPanel({
       />
 
       <div style={{ display: "grid", gap: uiTokens.spacing.md }}>
+        <div style={{ padding: uiTokens.spacing.md, border: `1px solid ${uiTokens.colors.border}`, borderRadius: uiTokens.radius.lg, background: uiTokens.colors.surfaceSoft }}>
+          <p style={{ margin: 0, color: uiTokens.colors.textMuted, fontSize: uiTokens.fontSize.sm }}>Stato schedina</p>
+          <strong style={{ display: "block", marginTop: uiTokens.spacing.xs, color: uiTokens.colors.textPrimary }}>{registrationLabel}</strong>
+          <p style={{ margin: `${uiTokens.spacing.xs} 0 0`, color: uiTokens.colors.textMuted, fontSize: uiTokens.fontSize.sm }}>{registrationDescription}</p>
+          <p style={{ margin: `${uiTokens.spacing.xs} 0 0`, color: uiTokens.colors.textMuted, fontSize: uiTokens.fontSize.sm }}>
+            Ospiti compilati: {guestRegistration.completedGuests} / {guestRegistration.expectedGuests}
+          </p>
+          {guestRegistration.lastError && (guestRegistration.status === "REJECTED" || guestRegistration.status === "OUTCOME_UNKNOWN" || guestRegistration.status === "PARTIAL") ? (
+            <p style={{ margin: `${uiTokens.spacing.xs} 0 0`, color: uiTokens.colors.textMuted, fontSize: uiTokens.fontSize.sm }}>
+              Dettaglio: {guestRegistration.lastError}
+            </p>
+          ) : null}
+        </div>
+
         <div>
-          <strong style={{ color: uiTokens.colors.textPrimary }}>{statusLabel}</strong>
+          <p style={{ margin: 0, color: uiTokens.colors.textMuted, fontSize: uiTokens.fontSize.sm }}>Stato link</p>
+          <strong style={{ display: "block", marginTop: uiTokens.spacing.xs, color: uiTokens.colors.textPrimary }}>{statusLabel}</strong>
           {expiresAt ? (
             <p style={{ margin: `${uiTokens.spacing.xs} 0 0`, color: uiTokens.colors.textMuted, fontSize: uiTokens.fontSize.sm }}>
               Scadenza: {new Date(expiresAt).toLocaleString("it-IT")}

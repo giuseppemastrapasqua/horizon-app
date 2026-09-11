@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
 import { Navigation } from "@/components/Navigation";
+import { requireUser } from "@/lib/auth/guards";
 import { PropertyCard } from "@/components/properties/PropertyCard";
 import { PropertySearchForm } from "@/components/properties/PropertySearchForm";
 import { PropertySortSelect } from "@/components/properties/PropertySortSelect";
@@ -20,6 +21,11 @@ type PropertiesPageProps = {
 export default async function PropertiesPage({
   searchParams,
 }: PropertiesPageProps) {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
   const {
     search = "",
     sort = "newest",

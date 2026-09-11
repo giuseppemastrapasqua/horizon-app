@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { createBooking } from "../actions";
 import { BookingCreateForm } from "./BookingCreateForm";
 
+import { requireUser } from "@/lib/auth/guards";
 type NewBookingPageProps = {
   searchParams?: Promise<{
     propertyId?: string;
@@ -15,6 +16,11 @@ type NewBookingPageProps = {
 export default async function NewBookingPage({
   searchParams,
 }: NewBookingPageProps) {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
   const params = await searchParams;
   const selectedPropertyId = params?.propertyId;
 

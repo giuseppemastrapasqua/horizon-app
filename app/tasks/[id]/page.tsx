@@ -36,25 +36,65 @@ export default async function TaskDetailPage({
   const { id } =
     await params;
 
-  const task =
+  const taskReference =
     await prisma.task.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        propertyId: true,
+      },
+    });
+
+  if (!taskReference) {
+    notFound();
+  }
+
+  const currentUser =
+    await requirePropertyAccess(
+      taskReference.propertyId,
+    );
+
+  const isOperator =
+    currentUser.role === "OPERATOR";
+
+  const task =
+    await prisma.task.findFirst({
       where: {
         id,
+        propertyId: taskReference.propertyId,
       },
-
-      include: {
-        property: true,
-        booking: true,
-        owner: true,
+      select: {
+        id: true,
+        propertyId: true,
+        ownerId: true,
+        title: true,
+        description: true,
+        type: true,
+        status: true,
+        dueDate: true,
+        property: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        booking: {
+          select: {
+            id: true,
+            guestName: true,
+          },
+        },
+        owner: {
+          select: {
+            fullName: true,
+          },
+        },
       },
     });
 
   if (!task) {
     notFound();
   }
-
-  await requirePropertyAccess(task.propertyId);
-
   const statusLabel =
     task.status === "DONE"
       ? "Completato"
@@ -190,7 +230,7 @@ export default async function TaskDetailPage({
                   />
                 }
                 label="Immobile"
-                href={`/properties/${task.property.id}`}
+                href={isOperator ? undefined : `/properties/${task.property.id}`}
                 value={
                   task.property
                     .name

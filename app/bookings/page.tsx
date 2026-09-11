@@ -30,7 +30,7 @@ import {
   prisma,
 } from "@/lib/prisma";
 
-import { getAccessiblePropertyIds } from "@/lib/auth/guards";
+import { getAccessiblePropertyIds, requireUser } from "@/lib/auth/guards";
 
 import {
   formatCurrency,
@@ -56,6 +56,9 @@ export default async function BookingsPage({
 }: BookingsPageProps) {
   const params =
     await searchParams;
+
+  const user = await requireUser();
+  const isOperator = user.role === "OPERATOR";
 
   const propertyId =
     getStringParam(
@@ -176,62 +179,79 @@ export default async function BookingsPage({
 
   const accessiblePropertyIds = await getAccessiblePropertyIds();
 
-  const [
-    bookings,
-    properties,
-  ] =
-    await Promise.all([
-      prisma.booking.findMany({
-        where: {
-          ...(accessiblePropertyIds
-            ? { propertyId: { in: accessiblePropertyIds } }
-            : {}),
+  if (propertyId) {
+    const canAccessPropertyFilter =
+      accessiblePropertyIds === null ||
+      accessiblePropertyIds.includes(propertyId);
 
-          ...(propertyId
-            ? {
-                propertyId,
-              }
-            : {}),
+    if (!canAccessPropertyFilter) {
+      throw new Error("Accesso non autorizzato.");
+    }
+  }
 
-          ...bookingDateWhere,
-        },
+  const bookingWhere = {
+    ...(accessiblePropertyIds
+      ? { propertyId: { in: accessiblePropertyIds } }
+      : {}),
+    ...(propertyId ? { propertyId } : {}),
+    ...bookingDateWhere,
+  };
 
-        orderBy: [
-          {
-            checkIn:
-              "asc",
-          },
-          {
-            createdAt:
-              "desc",
-          },
-        ],
-
-        include: {
-          property: {
-            select: {
-              id: true,
-              name: true,
+  const bookingsPromise = isOperator
+    ? prisma.booking
+        .findMany({
+          where: bookingWhere,
+          orderBy: [
+            { checkIn: "asc" },
+            { createdAt: "desc" },
+          ],
+          select: {
+            id: true,
+            guestName: true,
+            guestEmail: true,
+            externalBookingId: true,
+            checkIn: true,
+            checkOut: true,
+            nights: true,
+            guests: true,
+            channel: true,
+            bookingStatus: true,
+            operationalStatus: true,
+            property: {
+              select: { id: true, name: true },
             },
           },
+        })
+        .then((items) =>
+          items.map((booking) => ({
+            ...booking,
+            grossAmount: 0,
+            currency: "EUR",
+          })),
+        )
+    : prisma.booking.findMany({
+        where: bookingWhere,
+        orderBy: [
+          { checkIn: "asc" },
+          { createdAt: "desc" },
+        ],
+        include: {
+          property: {
+            select: { id: true, name: true },
+          },
         },
-      }),
+      });
 
-      prisma.property.findMany({
-        where: accessiblePropertyIds
-          ? { id: { in: accessiblePropertyIds } }
-          : undefined,
-        orderBy: {
-          name: "asc",
-        },
-
-        select: {
-          id: true,
-          name: true,
-        },
-      }),
-    ]);
-
+  const [bookings, properties] = await Promise.all([
+    bookingsPromise,
+    prisma.property.findMany({
+      where: accessiblePropertyIds
+        ? { id: { in: accessiblePropertyIds } }
+        : undefined,
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
   const normalizedSearch =
     search
       .trim()
@@ -385,6 +405,7 @@ export default async function BookingsPage({
             </p>
           </div>
 
+          {!isOperator ? (
           <Link
             href={
               propertyId
@@ -401,6 +422,7 @@ export default async function BookingsPage({
 
             Nuova prenotazione
           </Link>
+          ) : null}
         </div>
 
         <section className="mb-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -688,14 +710,18 @@ export default async function BookingsPage({
                         </div>
                       </div>
 
-                      <Link
-                        href={`/properties/${booking.property.id}`}
-                        className="truncate text-[10px] font-semibold text-slate-600 transition hover:text-blue-700"
-                      >
-                        {
-                          booking.property.name
-                        }
-                      </Link>
+                      {isOperator ? (
+                        <span className="truncate text-[10px] font-semibold text-slate-600">
+                          {booking.property.name}
+                        </span>
+                      ) : (
+                        <Link
+                          href={`/properties/${booking.property.id}`}
+                          className="truncate text-[10px] font-semibold text-slate-600 transition hover:text-blue-700"
+                        >
+                          {booking.property.name}
+                        </Link>
+                      )}
 
                       <div>
                         <p className="text-[9px] font-bold text-slate-700">
@@ -737,6 +763,7 @@ export default async function BookingsPage({
                         }
                       </div>
 
+                      {!isOperator ? (
                       <p className="flex items-center gap-1 text-[10px] font-bold text-slate-900">
                         <CircleDollarSign
                           size={12}
@@ -750,6 +777,9 @@ export default async function BookingsPage({
                           booking.currency,
                         )}
                       </p>
+                      ) : (
+                        <div aria-hidden="true" />
+                      )}
 
                       <div className="flex flex-col items-start gap-1">
                         <BookingStatusBadge
@@ -783,6 +813,7 @@ export default async function BookingsPage({
           )}
         </section>
 
+        {!isOperator ? (
         <section className="mt-3 grid gap-2 md:grid-cols-3">
           <MoneySummary
             label="Incasso prenotazioni"
@@ -831,6 +862,7 @@ export default async function BookingsPage({
             highlight
           />
         </section>
+        ) : null}
       </AppShell>
     </>
   );

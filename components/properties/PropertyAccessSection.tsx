@@ -25,6 +25,7 @@ const roleLabels: Record<PropertyAccessRole, string> = {
   MANAGER: "Property Manager",
   FINANCE: "Amministrazione",
   VIEWER: "Sola lettura",
+  OPERATOR: "Collaboratore operativo",
 };
 
 export function PropertyAccessSection({

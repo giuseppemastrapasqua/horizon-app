@@ -13,6 +13,7 @@ import {
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 
+import { requireUser } from "@/lib/auth/guards";
 type DocumentsPageProps = {
   searchParams?: Promise<{
     type?: string;
@@ -26,6 +27,11 @@ type DocumentsPageProps = {
 export default async function DocumentsPage({
   searchParams,
 }: DocumentsPageProps) {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
   const params = await searchParams;
   const accessiblePropertyIds = await getAccessiblePropertyIds();
 

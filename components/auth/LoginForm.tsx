@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   LoaderCircle,
@@ -11,8 +10,6 @@ import {
 } from "lucide-react";
 
 export function LoginForm() {
-  const router = useRouter();
-
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,8 +46,7 @@ export function LoginForm() {
         return;
       }
 
-      router.replace("/dashboard");
-      router.refresh();
+      window.location.assign("/login");
     } catch {
       setError(
         "Non è stato possibile completare l’accesso. Riprova tra poco.",

@@ -6,7 +6,16 @@ import {
   AppShell,
 } from "@/components/AppShell";
 
-export default function PerformancePage() {
+import {
+  requireUser,
+} from "@/lib/auth/guards";
+
+export default async function PerformancePage() {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
   return (
     <AppShell
       title="Performance giornaliera"

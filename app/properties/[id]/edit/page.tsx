@@ -88,6 +88,9 @@ export default async function PropertyEditPage({
   const { id } = await params;
 
   const currentUser = await requirePropertyAccess(id);
+  if (currentUser.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
 
   const canManageProperty = await hasPropertyRole(
     id,

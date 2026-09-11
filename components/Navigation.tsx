@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,20 +13,21 @@ import {
   ReceiptText,
   Settings,
   Tags,
+  Users,
 } from "lucide-react";
 
 import { UserMenu } from "@/components/auth/UserMenu";
 import { HorizonLogo } from "@/components/ui/HorizonLogo";
 
 const navigationItems = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
-  { href: "/bookings", label: "Prenotazioni", icon: CalendarDays },
-  { href: "/calendar", label: "Calendario", icon: CalendarDays },
-  { href: "/tasks", label: "Task", icon: ClipboardCheck },
-  { href: "/documents", label: "Documenti", icon: FileText },
-  { href: "/invoices", label: "Fatture", icon: ReceiptText },
-  { href: "/rate-types", label: "Tipologie tariffe", icon: Tags },
-  { href: "/reports/finance", label: "Rendiconto", icon: BarChart3 },
+  { href: "/dashboard", label: "Dashboard", icon: Home, operatorVisible: false },
+  { href: "/bookings", label: "Prenotazioni", icon: CalendarDays, operatorVisible: true },
+  { href: "/calendar", label: "Calendario", icon: CalendarDays, operatorVisible: true },
+  { href: "/tasks", label: "Task", icon: ClipboardCheck, operatorVisible: true },
+  { href: "/documents", label: "Documenti", icon: FileText, operatorVisible: false },
+  { href: "/invoices", label: "Fatture", icon: ReceiptText, operatorVisible: false },
+  { href: "/rate-types", label: "Tipologie tariffe", icon: Tags, operatorVisible: false },
+  { href: "/reports/finance", label: "Rendiconto", icon: BarChart3, operatorVisible: false },
 ];
 
 export function Navigation() {
@@ -39,7 +40,7 @@ export function Navigation() {
 
         <div className="flex h-[94px] shrink-0 items-center border-b border-white/[0.08] px-5">
           <Link
-            href="/dashboard"
+            href={session?.user?.role === "OPERATOR" ? "/bookings" : "/dashboard"}
             aria-label="Horizon Dashboard"
             className="block rounded-xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/20"
           >
@@ -51,7 +52,23 @@ export function Navigation() {
 
         <nav className="min-h-0 flex-1 px-3 py-4">
           <div className="space-y-1">
-            {navigationItems.map((item) => {
+            {[
+              ...navigationItems.filter(
+                (item) =>
+                  session?.user?.role !== "OPERATOR" ||
+                  item.operatorVisible,
+              ),
+              ...(session?.user?.role === "SUPER_ADMIN"
+                ? [
+                    {
+                      href: "/collaborators",
+                      label: "Collaboratori",
+                      icon: Users,
+                      operatorVisible: false,
+                    },
+                  ]
+                : []),
+            ].map((item) => {
               const active =
                 item.href === "/dashboard"
                   ? pathname === item.href
@@ -94,18 +111,20 @@ export function Navigation() {
         </nav>
 
         <div className="shrink-0 border-t border-white/[0.08] px-3 pb-4 pt-3">
-          <Link
-            href="/settings"
-            className="mb-2 flex h-[38px] items-center gap-3 rounded-xl px-3.5 text-[12px] font-medium text-blue-50/75 transition hover:bg-white/[0.07] hover:text-white"
-          >
-            <Settings
-              size={16}
-              strokeWidth={1.8}
-              className="shrink-0"
-            />
+          {session?.user?.role !== "OPERATOR" ? (
+            <Link
+              href="/settings"
+              className="mb-2 flex h-[38px] items-center gap-3 rounded-xl px-3.5 text-[12px] font-medium text-blue-50/75 transition hover:bg-white/[0.07] hover:text-white"
+            >
+              <Settings
+                size={16}
+                strokeWidth={1.8}
+                className="shrink-0"
+              />
 
-            <span>Impostazioni</span>
-          </Link>
+              <span>Impostazioni</span>
+            </Link>
+          ) : null}
 
           <UserMenu
             name={session?.user?.name}

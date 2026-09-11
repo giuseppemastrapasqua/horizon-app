@@ -209,6 +209,7 @@ model Property {
   tasks                                  Task[]
   taskAssignments                        PropertyTaskAssignment[]
   accesses                               PropertyAccess[]
+  operatorInvites                         PropertyOperatorInvite[]
   ownerInvites                           PropertyOwnerInvite[]
   availabilityBlocks                     PropertyAvailabilityBlock[]
   revenueMarketSnapshots                 RevenueMarketSnapshot[]
@@ -233,6 +234,26 @@ model PropertyOwnerInvite {
   propertyId String
   email      String
   fullName   String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model PropertyOperatorInvite {
+  id         String    @id @default(cuid())
+  propertyId String
+  email      String
+  fullName   String
+  phone      String?
   tokenHash  String    @unique
   expiresAt  DateTime
   acceptedAt DateTime?
@@ -670,6 +691,7 @@ enum PropertyAccessRole {
   MANAGER
   FINANCE
   VIEWER
+  OPERATOR
 }
 
 model PropertyAccess {

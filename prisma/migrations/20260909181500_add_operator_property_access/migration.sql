@@ -1,0 +1,1 @@
+ALTER TYPE "PropertyAccessRole" ADD VALUE 'OPERATOR';

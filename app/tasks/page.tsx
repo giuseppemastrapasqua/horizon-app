@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 import {
   Prisma,
@@ -34,6 +34,7 @@ import {
 
 import {
   getAccessiblePropertyIds,
+  requireUser,
 } from "@/lib/auth/guards";
 
 import {
@@ -60,6 +61,9 @@ export default async function TasksPage({
 }: TasksPageProps) {
   const params =
     await searchParams;
+
+  const user = await requireUser();
+  const isOperator = user.role === "OPERATOR";
 
   const accessiblePropertyIds =
     await getAccessiblePropertyIds();
@@ -145,6 +149,18 @@ export default async function TasksPage({
   if (
     propertyFilter !== "all"
   ) {
+    const canAccessPropertyFilter =
+      accessiblePropertyIds === null ||
+      accessiblePropertyIds.includes(
+        propertyFilter,
+      );
+
+    if (!canAccessPropertyFilter) {
+      throw new Error(
+        "Accesso non autorizzato.",
+      );
+    }
+
     where.propertyId =
       propertyFilter;
   }
@@ -207,52 +223,74 @@ export default async function TasksPage({
     };
   }
 
-  const [
-    tasks,
-    properties,
-  ] =
-    await Promise.all([
-      prisma.task.findMany({
+  const tasksPromise = isOperator
+    ? prisma.task.findMany({
         where,
-
         orderBy: [
-          {
-            dueDate: "asc",
-          },
-          {
-            createdAt:
-              "desc",
-          },
+          { dueDate: "asc" },
+          { createdAt: "desc" },
         ],
-
+        select: {
+          id: true,
+          propertyId: true,
+          ownerId: true,
+          title: true,
+          description: true,
+          type: true,
+          status: true,
+          dueDate: true,
+          property: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          booking: {
+            select: {
+              id: true,
+              guestName: true,
+            },
+          },
+          owner: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      })
+    : prisma.task.findMany({
+        where,
+        orderBy: [
+          { dueDate: "asc" },
+          { createdAt: "desc" },
+        ],
         include: {
           property: true,
           booking: true,
           owner: true,
         },
-      }),
+      });
 
-      prisma.property.findMany({
-        where:
-          accessiblePropertyIds !== null
-            ? {
-                id: {
-                  in: accessiblePropertyIds,
-                },
-              }
-            : undefined,
-
-        orderBy: {
-          name: "asc",
-        },
-
-        select: {
-          id: true,
-          name: true,
-        },
-      }),
-    ]);
-
+  const [tasks, properties] = await Promise.all([
+    tasksPromise,
+    prisma.property.findMany({
+      where:
+        accessiblePropertyIds !== null
+          ? {
+              id: {
+                in: accessiblePropertyIds,
+              },
+            }
+          : undefined,
+      orderBy: {
+        name: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    }),
+  ]);
   const openTaskCount =
     tasks.filter(
       (task) =>
@@ -956,16 +994,18 @@ export default async function TasksPage({
                           }
                           label="Immobile"
                         >
-                          <Link
-                            href={`/properties/${task.property.id}`}
-                            className="truncate font-bold text-[#2563EB] hover:underline"
-                          >
-                            {
-                              task
-                                .property
-                                .name
-                            }
-                          </Link>
+                          {isOperator ? (
+                            <span className="truncate font-bold text-slate-800">
+                              {task.property.name}
+                            </span>
+                          ) : (
+                            <Link
+                              href={`/properties/${task.property.id}`}
+                              className="truncate font-bold text-[#2563EB] hover:underline"
+                            >
+                              {task.property.name}
+                            </Link>
+                          )}
                         </TaskMetric>
 
                         <TaskMetric

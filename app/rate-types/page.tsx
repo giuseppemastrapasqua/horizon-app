@@ -37,6 +37,7 @@ import {
   updateCustomRateAction,
 } from "./actions";
 
+import { requireUser } from "@/lib/auth/guards";
 type RateTypesPageProps = {
   searchParams: Promise<{
     propertyId?:
@@ -48,6 +49,11 @@ type RateTypesPageProps = {
 export default async function RateTypesPage({
   searchParams,
 }: RateTypesPageProps) {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
   const params =
     await searchParams;
 
