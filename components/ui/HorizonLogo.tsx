@@ -1,4 +1,4 @@
-﻿import Image from "next/image";
+import Image from "next/image";
 
 type HorizonLogoProps = {
   compact?: boolean;
@@ -20,8 +20,11 @@ export function HorizonLogo({
         className={
           compact
             ? "h-10 w-10 object-contain"
-            : "h-auto w-[150px] object-contain"
+            : "w-[150px] object-contain"
         }
+        style={{
+          height: compact ? "40px" : "auto",
+        }}
       />
     </div>
   );
