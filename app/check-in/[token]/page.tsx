@@ -18,14 +18,6 @@ export const metadata: Metadata = {
 
 const referenceProvider = new PublicAlloggiatiReferenceProvider();
 
-function formatDate(value: Date) {
-  return value.toLocaleDateString("it-IT", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-}
-
 function formatInputDate(value: Date) {
   return value.toISOString().slice(0, 10);
 }
@@ -40,13 +32,13 @@ export default async function GuestCheckInPage({
 
   if (!link) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+      <main className="flex min-h-screen items-center justify-center bg-[#050B11] px-4 py-12">
         <div className="w-full max-w-lg">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/40">
-            <div className="text-2xl font-extrabold text-blue-600">Horizon</div>
-            <h1 className="mt-5 text-2xl font-bold text-slate-950">Link non disponibile</h1>
-            <p className="mt-3 text-sm leading-6 text-slate-500">
-              Questo link non è valido oppure non è più disponibile. Contatta la struttura per ricevere un nuovo link.
+          <div className="rounded-3xl border border-[#D8B367]/20 bg-[#09131C] p-8 shadow-xl shadow-black/30">
+            <div className="text-sm font-semibold uppercase tracking-[0.28em] text-[#D8B367]">Horizon</div>
+            <h1 className="mt-5 font-serif text-3xl font-normal text-[#FFF8EA]">Link non disponibile</h1>
+            <p className="mt-3 text-sm leading-6 text-[#8EA0AE]">
+              Questo link non Ã¨ valido oppure non Ã¨ piÃ¹ disponibile. Contatta la struttura per ricevere un nuovo link.
             </p>
           </div>
         </div>
@@ -82,43 +74,18 @@ export default async function GuestCheckInPage({
   }));
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12">
+    <main className="min-h-screen bg-[#050B11] px-4 py-12">
       <div className="mx-auto w-full max-w-2xl">
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sm:p-8">
-          <div className="text-2xl font-extrabold text-blue-600">Horizon</div>
+        <div className="rounded-3xl border border-[#D8B367]/20 bg-[#09131C] p-6 shadow-xl shadow-black/30 sm:p-8">
+          <div className="text-sm font-semibold uppercase tracking-[0.28em] text-[#D8B367]">Horizon</div>
 
           <div className="mt-5">
-            <p className="text-sm font-semibold text-blue-600">{booking.property.name}</p>
-            <h1 className="mt-2 text-2xl font-bold text-slate-950">Dati ospiti per il soggiorno</h1>
-            <p className="mt-3 text-sm leading-6 text-slate-500">
-              Inserisci i dati degli ospiti necessari alla registrazione del soggiorno.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm">
-            <div>
-              <div className="font-medium text-slate-500">Prenotazione</div>
-              <div className="mt-1 font-semibold text-slate-900">{booking.guestName}</div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="font-medium text-slate-500">Check-in</div>
-                <div className="mt-1 font-semibold text-slate-900">{formatDate(booking.checkIn)}</div>
-              </div>
-              <div>
-                <div className="font-medium text-slate-500">Check-out</div>
-                <div className="mt-1 font-semibold text-slate-900">{formatDate(booking.checkOut)}</div>
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-slate-500">Numero ospiti</div>
-              <div className="mt-1 font-semibold text-slate-900">{booking.guests}</div>
-            </div>
-          </div>
-
-          <div className="mt-8">
             <GuestCheckInForm
               token={token}
+              propertyName={booking.property.name}
+              guestName={booking.guestName}
+              checkIn={formatInputDate(booking.checkIn)}
+              checkOut={formatInputDate(booking.checkOut)}
               guestCount={booking.guests}
               initialGuests={initialGuests}
               countries={countries}

@@ -317,10 +317,10 @@ export default async function PropertyEditPage({
       <Navigation />
 
       <AppShell
-        title={`Scheda immobile · ${property.name}`}
+      title={`Scheda immobile \u00B7 ${property.name}`}
         subtitle="Gestisci tutte le informazioni operative e pubbliche dell'immobile."
       >
-        <div className="mx-auto max-w-6xl space-y-8">
+        <div className="property-edit-theme mx-auto max-w-6xl space-y-8">
           <WorkspaceTopBar
             backLabel="Torna alla scheda immobile"
             backHref={`/properties/${property.id}`}
@@ -333,84 +333,84 @@ export default async function PropertyEditPage({
             }
           />
 
-          <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-            <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-sky-500 px-8 py-10 text-white">
+          <section className="overflow-hidden rounded-3xl border border-white/[0.07] bg-[#09131C]/95 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-[#0D1923] via-[#09131C] to-[#07111A] px-8 py-10 text-[#FFF8EA]">
               <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <div className="mb-4 flex flex-wrap gap-3">
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium ring-1 ring-inset ring-white/10">
+                    <span className="rounded-full bg-[#D8B367]/[0.08] px-3 py-1 text-xs font-medium text-[#D8B367] ring-1 ring-inset ring-[#D8B367]/20">
                       Scheda immobile
                     </span>
 
-                    <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-200 ring-1 ring-inset ring-emerald-400/20">
+                    <span className="rounded-full bg-emerald-400/[0.08] px-3 py-1 text-xs font-medium text-emerald-300 ring-1 ring-inset ring-emerald-400/20">
                       Configurazione attiva
                     </span>
                   </div>
 
-                  <h1 className="text-4xl font-bold tracking-tight">
+                  <h1 className="text-4xl font-semibold tracking-[-0.025em] text-[#FFF8EA] [font-family:Georgia,Cambria,Times_New_Roman,serif]">
                     {property.name}
                   </h1>
 
-                  <p className="mt-3 text-slate-300">
+                  <p className="mt-3 text-[#8EA0AE]">
                     {property.address}
                   </p>
                 </div>
 
-                <div className="max-w-md rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
-                  <p className="text-xs font-medium uppercase tracking-widest text-slate-400">
+                <div className="max-w-md rounded-2xl border border-[#D8B367]/20 bg-[#07111A]/70 p-5 shadow-[0_16px_40px_rgba(0,0,0,0.14)] backdrop-blur">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#D8B367]">
                     Revenue Engine
                   </p>
 
-                  <p className="mt-2 text-lg font-semibold">
+                  <p className="mt-2 text-lg font-semibold text-[#FFF8EA]">
                     Prezzo gestito dall&apos;AI
                   </p>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-300">
-                    Horizon ottimizzerÃ  automaticamente la tariffa considerando
-                    domanda, eventi, stagionalitÃ  e performance
+                  <p className="mt-2 text-sm leading-6 text-[#8EA0AE]">
+                Horizon ottimizzer\u00E0 automaticamente la tariffa considerando
+                domanda, eventi, stagionalit\u00E0 e performance
                     dell&apos;immobile.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-6 border-t border-slate-200 bg-slate-50 p-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-0 border-t border-white/[0.07] bg-[#07111A]/65 p-0 sm:grid-cols-2 lg:grid-cols-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6F7E8A]">
                   Stato
                 </p>
 
-                <p className="mt-2 font-semibold text-emerald-600">
+                <p className="mt-2 font-semibold text-emerald-300">
                   Attivo
                 </p>
               </div>
 
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6F7E8A]">
                   Marketplace
                 </p>
 
-                <p className="mt-2 font-semibold text-slate-900">
+                <p className="mt-2 font-semibold text-[#FFF8EA]">
                   In preparazione
                 </p>
               </div>
 
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6F7E8A]">
                   Revenue AI
                 </p>
 
-                <p className="mt-2 font-semibold text-slate-900">
+                <p className="mt-2 font-semibold text-[#FFF8EA]">
                   Automatico
                 </p>
               </div>
 
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6F7E8A]">
                   Configurazione
                 </p>
 
-                <p className="mt-2 font-semibold text-slate-900">
+                <p className="mt-2 font-semibold text-[#FFF8EA]">
                   Dati principali
                 </p>
               </div>
@@ -419,11 +419,11 @@ export default async function PropertyEditPage({
 
           <section>
             <div className="mb-4">
-              <h2 className="text-lg font-semibold text-slate-950">
+              <h2 className="text-lg font-semibold text-[#FFF8EA]">
                 Configurazione immobile
               </h2>
 
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-[#82909C]">
                 Completa progressivamente tutte le aree necessarie alla
                 gestione e alla futura pubblicazione.
               </p>
@@ -432,10 +432,10 @@ export default async function PropertyEditPage({
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
               <a
                 href="#informazioni"
-                className="rounded-2xl border border-blue-600 bg-blue-600 p-5 text-white shadow-sm transition hover:-translate-y-0.5"
+                className="rounded-2xl border border-[#D8B367]/40 bg-[#D8B367]/[0.08] p-5 text-[#FFF8EA] shadow-sm transition hover:-translate-y-0.5 hover:border-[#D8B367]/70"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-lg">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8B367] text-sm font-semibold text-[#07111A]">
                     01
                   </span>
 
@@ -455,113 +455,113 @@ export default async function PropertyEditPage({
 
               <a
                 href="#foto"
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+                className="rounded-2xl border border-white/[0.07] bg-[#09131C]/95 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#D8B367]/30"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8B367]/[0.08] text-sm font-semibold text-[#D8B367] ring-1 ring-inset ring-[#D8B367]/15">
                     02
                   </span>
 
-                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                  <span className="rounded-full bg-emerald-400/[0.08] px-2.5 py-1 text-xs font-medium text-emerald-300 ring-1 ring-inset ring-emerald-400/20">
                     Attiva
                   </span>
                 </div>
 
-                <p className="mt-6 font-semibold text-slate-900">
+                <p className="mt-6 font-semibold text-[#FFF8EA]">
                   Foto
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <p className="mt-1 text-xs leading-5 text-[#82909C]">
                   Galleria e copertina.
                 </p>
               </a>
 
               <a
                 href="#servizi"
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+                className="rounded-2xl border border-white/[0.07] bg-[#09131C]/95 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#D8B367]/30"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8B367]/[0.08] text-sm font-semibold text-[#D8B367] ring-1 ring-inset ring-[#D8B367]/15">
                     03
                   </span>
 
-                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                  <span className="rounded-full bg-emerald-400/[0.08] px-2.5 py-1 text-xs font-medium text-emerald-300 ring-1 ring-inset ring-emerald-400/20">
                     Attiva
                   </span>
                 </div>
 
-                <p className="mt-6 font-semibold text-slate-900">
+                <p className="mt-6 font-semibold text-[#FFF8EA]">
                   Servizi
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <p className="mt-1 text-xs leading-5 text-[#82909C]">
                   Dotazioni, comfort e caratteristiche della struttura.
                 </p>
               </a>
 
               <a
                 href="#documentazione"
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+                className="rounded-2xl border border-white/[0.07] bg-[#09131C]/95 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#D8B367]/30"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8B367]/[0.08] text-sm font-semibold text-[#D8B367] ring-1 ring-inset ring-[#D8B367]/15">
                     04
                   </span>
 
-                  <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                  <span className="rounded-full bg-emerald-400/[0.08] px-2.5 py-1 text-xs font-medium text-emerald-300 ring-1 ring-inset ring-emerald-400/20">
                     Attiva
                   </span>
                 </div>
 
-                <p className="mt-6 font-semibold text-slate-900">
+                <p className="mt-6 font-semibold text-[#FFF8EA]">
                   Documenti
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-slate-500">
+                <p className="mt-1 text-xs leading-5 text-[#82909C]">
                   Licenze e certificazioni.
                 </p>
               </a>
 
               <a
                 href="#revenue-ai"
-                className="rounded-2xl border border-blue-200 bg-blue-50 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300"
+                className="rounded-2xl border border-[#D8B367]/20 bg-[#09131C]/95 p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#D8B367]/40"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-sm font-semibold text-blue-700">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8B367]/[0.10] text-sm font-semibold text-[#D8B367] ring-1 ring-inset ring-[#D8B367]/20">
                     AI
                   </span>
 
-                  <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700">
+                  <span className="rounded-full bg-[#D8B367]/[0.10] px-2.5 py-1 text-xs font-medium text-[#D8B367] ring-1 ring-inset ring-[#D8B367]/20">
                     Automatico
                   </span>
                 </div>
 
-                <p className="mt-6 font-semibold text-slate-900">
+                <p className="mt-6 font-semibold text-[#FFF8EA]">
                   Revenue AI
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-slate-600">
+                <p className="mt-1 text-xs leading-5 text-[#82909C]">
                   Prezzi e strategie ottimizzati da Horizon.
                 </p>
               </a>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="rounded-2xl border border-white/[0.07] bg-[#09131C]/95 p-5 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-sm font-semibold text-slate-600">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8B367]/[0.08] text-sm font-semibold text-[#D8B367] ring-1 ring-inset ring-[#D8B367]/15">
                     06
                   </span>
 
-                  <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
+                  <span className="rounded-full bg-amber-400/[0.08] px-2.5 py-1 text-xs font-medium text-amber-300 ring-1 ring-inset ring-amber-400/20">
                     In preparazione
                   </span>
                 </div>
 
-                <p className="mt-6 font-semibold text-slate-900">
+                <p className="mt-6 font-semibold text-[#FFF8EA]">
                   Marketplace
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Pubblicazione e visibilitÃ .
+                <p className="mt-1 text-xs leading-5 text-[#82909C]">
+                  {"Pubblicazione e visibilit\u00E0."}
                 </p>
               </div>
             </div>
@@ -569,21 +569,21 @@ export default async function PropertyEditPage({
 
           <section
             id="informazioni"
-            className="scroll-mt-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
+            className="scroll-mt-8 rounded-3xl border border-white/[0.07] bg-[#09131C]/95 p-8 shadow-[0_18px_50px_rgba(0,0,0,0.16)]"
           >
             <div className="mb-8">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8B367] text-sm font-semibold text-[#07111A]">
                   01
                 </span>
 
                 <div>
-                  <h2 className="text-2xl font-semibold text-slate-900">
+                  <h2 className="text-2xl font-semibold text-[#FFF8EA]">
                     Informazioni generali
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-600">
-                    IdentitÃ , contenuti pubblici e dati operativi.
+                  <p className="mt-1 text-sm text-[#82909C]">
+              {"Identit\u00E0, contenuti pubblici e dati operativi."}
                   </p>
                 </div>
               </div>
@@ -603,7 +603,7 @@ export default async function PropertyEditPage({
                 <div>
                   <label
                     htmlFor="name"
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    className="mb-2 block text-sm font-medium text-[#C8D0D6]"
                   >
                     Nome immobile
                   </label>
@@ -614,14 +614,14 @@ export default async function PropertyEditPage({
                     type="text"
                     required
                     defaultValue={property.name}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
+                    className="w-full rounded-xl border border-white/[0.10] bg-[#07111A] px-4 py-3 text-[#FFF8EA] outline-none transition placeholder:text-[#56636E] focus:border-[#D8B367]/70 focus:ring-2 focus:ring-[#D8B367]/10"
                   />
                 </div>
 
                 <div>
                   <label
                     htmlFor="address"
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    className="mb-2 block text-sm font-medium text-[#C8D0D6]"
                   >
                     Indirizzo
                   </label>
@@ -632,14 +632,14 @@ export default async function PropertyEditPage({
                     type="text"
                     required
                     defaultValue={property.address}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
+                    className="w-full rounded-xl border border-white/[0.10] bg-[#07111A] px-4 py-3 text-[#FFF8EA] outline-none transition placeholder:text-[#56636E] focus:border-[#D8B367]/70 focus:ring-2 focus:ring-[#D8B367]/10"
                   />
                 </div>
 
                 <div>
                   <label
                     htmlFor="description"
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    className="mb-2 block text-sm font-medium text-[#C8D0D6]"
                   >
                     Descrizione pubblica
                   </label>
@@ -649,18 +649,18 @@ export default async function PropertyEditPage({
                     name="description"
                     rows={8}
                     defaultValue={property.description ?? ""}
-                    className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
+                    className="w-full resize-y rounded-xl border border-white/[0.10] bg-[#07111A] px-4 py-3 text-[#FFF8EA] outline-none transition placeholder:text-[#56636E] focus:border-[#D8B367]/70 focus:ring-2 focus:ring-[#D8B367]/10"
                   />
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Questo contenuto potrà  essere ottimizzato automaticamente
+                    {"Questo contenuto potr\u00E0 essere ottimizzato automaticamente"}
                     dall&apos;AI per il marketplace.
                   </p>
                 </div>
               </div>
 
               <div>
-                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                <div className="overflow-hidden rounded-3xl border border-white/[0.07] bg-[#09131C]/95 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
   <div className="flex flex-col gap-5 border-b border-slate-200 bg-slate-50/70 px-6 py-6 lg:flex-row lg:items-center lg:justify-between">
     <div className="flex items-start gap-4">
       <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 shadow-sm ring-1 ring-blue-100">
@@ -671,7 +671,7 @@ export default async function PropertyEditPage({
       </div>
       <div>
         <div className="flex flex-wrap items-center gap-3">
-          <h3 className="text-xl font-semibold tracking-tight text-slate-950">Operatività</h3>
+          <h3 className="text-xl font-semibold tracking-tight text-slate-950">{"Operativit\u00E0"}</h3>
           <span className="rounded-full bg-gradient-to-r from-blue-600 to-blue-500 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-sm">Premium</span>
         </div>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
@@ -688,7 +688,7 @@ export default async function PropertyEditPage({
         </svg>
       </div>
       <div>
-        <p className="text-sm font-semibold text-blue-700">Funzionalità Premium</p>
+        <p className="text-sm font-semibold text-blue-700">{"Funzionalit\u00E0 Premium"}</p>
         <p className="mt-0.5 text-xs text-slate-500">Gestione avanzata della struttura</p>
       </div>
     </div>
@@ -697,7 +697,7 @@ export default async function PropertyEditPage({
   <div className="px-6 py-7">
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
       <div>
-        <label htmlFor="cleaningCost" className="mb-2 block text-sm font-semibold text-slate-700">Costo pulizia per prenotazione (€)</label>
+        <label htmlFor="cleaningCost" className="mb-2 block text-sm font-semibold text-slate-700">{"Costo pulizia per prenotazione (\u20AC)"}</label>
         <input id="cleaningCost" name="cleaningCost" type="number" min="0" step="0.01" required defaultValue={Number(property.cleaningCost)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10" />
         <p className="mt-2 text-xs leading-5 text-slate-500">Costo fisso applicato alla pulizia tra un soggiorno e l'altro.</p>
       </div>
@@ -718,21 +718,21 @@ export default async function PropertyEditPage({
       </div>
 
       <div>
-        <label htmlFor="propertyManagementCommissionVatMode" className="mb-2 block text-sm font-semibold text-slate-700">Modalità IVA commissione</label>
+        <label htmlFor="propertyManagementCommissionVatMode" className="mb-2 block text-sm font-semibold text-slate-700">{"Modalit\u00E0 IVA commissione"}</label>
         <select id="propertyManagementCommissionVatMode" name="propertyManagementCommissionVatMode" defaultValue={property.propertyManagementCommissionVatMode} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10">
           <option value="NONE">Nessuna IVA</option>
           <option value="EXCLUDED">IVA in aggiunta</option>
           <option value="INCLUDED">IVA compresa</option>
         </select>
-        <p className="mt-2 text-xs leading-5 text-slate-500">Definisce se l'IVA è assente, aggiunta alla commissione o già compresa.</p>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">{"Definisce se l'IVA \u00E8 assente, aggiunta alla commissione o gi\u00E0 compresa."}</p>
       </div>
     </div>
 
-    <div className="mt-7 flex gap-4 rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-sm font-bold text-white shadow-sm">i</div>
+    <div className="mt-7 flex gap-4 rounded-2xl border border-white/[0.08] bg-[#07111A]/80 px-5 py-4">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#38BDF8]/20 bg-[#38BDF8]/10 text-sm font-bold text-[#38BDF8]">i</div>
       <div>
-        <p className="text-sm font-semibold text-slate-800">Nota</p>
-        <p className="mt-1 text-sm leading-6 text-slate-600">
+        <p className="text-sm font-semibold text-[#FFF8EA]">Nota</p>
+        <p className="mt-1 text-sm leading-6 text-[#8EA0AE]">
           Questi dati sono utilizzati per i calcoli finanziari e per la generazione di rendiconti e fatture ai proprietari. Le informazioni in questa sezione non sono visibili agli ospiti.
         </p>
       </div>
@@ -786,21 +786,21 @@ export default async function PropertyEditPage({
           <section
 
             id="responsabili-operativi"
-            className="scroll-mt-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
+            className="scroll-mt-8 rounded-3xl border border-white/[0.07] bg-[#09131C]/95 p-8 shadow-[0_18px_50px_rgba(0,0,0,0.16)]"
           >
             <div className="mb-8">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#D8B367] text-sm font-semibold text-[#07111A]">
                   02
                 </span>
 
                 <div>
-                  <h2 className="text-2xl font-semibold text-slate-900">
+                  <h2 className="text-2xl font-semibold text-[#FFF8EA]">
                     Responsabili operativi
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-600">
-                    Horizon assegnerà  automaticamente i task alla persona configurata per ciascuna funzione.
+                  <p className="mt-1 text-sm text-[#82909C]">
+              {"Horizon assegner\u00E0 automaticamente i task alla persona configurata per ciascuna funzione."}
                   </p>
                 </div>
               </div>
@@ -818,7 +818,7 @@ export default async function PropertyEditPage({
 
               <div className="grid gap-5 lg:grid-cols-3">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                  <span className="mb-2 block text-sm font-medium text-[#C8D0D6]">
                     Pulizie
                   </span>
 
@@ -837,7 +837,7 @@ export default async function PropertyEditPage({
                           key={user.id}
                           value={user.id}
                         >
-                          {user.fullName} · {user.email}
+                          {user.fullName} {"\u00B7"} {user.email}
                         </option>
                       ),
                     )}
@@ -849,7 +849,7 @@ export default async function PropertyEditPage({
                 </label>
 
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                  <span className="mb-2 block text-sm font-medium text-[#C8D0D6]">
                     Manutenzione
                   </span>
 
@@ -868,7 +868,7 @@ export default async function PropertyEditPage({
                           key={user.id}
                           value={user.id}
                         >
-                          {user.fullName} · {user.email}
+                          {user.fullName} {"\u00B7"} {user.email}
                         </option>
                       ),
                     )}
@@ -880,7 +880,7 @@ export default async function PropertyEditPage({
                 </label>
 
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                  <span className="mb-2 block text-sm font-medium text-[#C8D0D6]">
                     Operations / PM
                   </span>
 
@@ -899,24 +899,24 @@ export default async function PropertyEditPage({
                           key={user.id}
                           value={user.id}
                         >
-                          {user.fullName} · {user.email}
+                          {user.fullName} {"\u00B7"} {user.email}
                         </option>
                       ),
                     )}
                   </select>
 
                   <p className="mt-2 text-xs leading-5 text-slate-500">
-                    Riceve check-in, check-out, documenti ospite, issue e attivitÃ  amministrative.
+              {"Riceve check-in, check-out, documenti ospite, issue e attivit\u00E0 amministrative."}
                   </p>
                 </label>
               </div>
 
-              <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4">
-                <p className="text-sm font-medium text-blue-900">
-                  Una sola persona puÃ² essere responsabile di tutte le funzioni.
+              <div className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A]/80 px-5 py-4">
+                <p className="text-sm font-medium text-[#FFF8EA]">
+              {"Una sola persona pu\u00F2 essere responsabile di tutte le funzioni."}
                 </p>
 
-                <p className="mt-1 text-xs leading-5 text-blue-700">
+                <p className="mt-1 text-xs leading-5 text-[#D8B367]">
                   Puoi selezionare lo stesso utente in Pulizie, Manutenzione e Operations.
                 </p>
               </div>
@@ -1058,13 +1058,13 @@ export default async function PropertyEditPage({
 
 <section
             id="revenue-ai"
-            className="scroll-mt-8 overflow-hidden rounded-3xl border border-blue-200 bg-white shadow-sm"
+            className="scroll-mt-8 overflow-hidden rounded-3xl border border-[#D8B367]/20 bg-[#09131C]/95 shadow-[0_18px_50px_rgba(0,0,0,0.18)]"
           >
-            <div className="border-b border-blue-100 bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500 px-8 py-8 text-white">
+            <div className="border-b border-white/[0.07] bg-gradient-to-br from-[#0D1923] via-[#09131C] to-[#07111A] px-8 py-8 text-[#FFF8EA]">
               <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
                 <div>
                   <div className="flex items-center gap-3">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-sm font-semibold ring-1 ring-inset ring-white/10">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#D8B367]/[0.10] text-sm font-semibold text-[#D8B367] ring-1 ring-inset ring-[#D8B367]/20">
                       AI
                     </span>
 
@@ -1073,16 +1073,16 @@ export default async function PropertyEditPage({
                         Revenue AI
                       </h2>
 
-                      <p className="mt-1 text-sm text-violet-200">
-                        Ottimizza prezzi e disponibilità sulla base dei dati della struttura.
+                      <p className="mt-1 text-sm text-[#8EA0AE]">
+              {"Ottimizza prezzi e disponibilit\u00E0 sulla base dei dati della struttura."}
                       </p>
                     </div>
                   </div>
 
                   <p className="mt-6 max-w-2xl text-sm leading-6 text-slate-300">
-                    Horizon analizzerÃ  mercato, domanda, stagionalitÃ , eventi
+              {"Horizon analizzer\u00E0 mercato, domanda, stagionalit\u00E0, eventi"}
                     e andamento delle prenotazioni per determinare
-                    automaticamente la tariffa piÃ¹ efficace.
+              {"automaticamente la tariffa pi\u00F9 efficace."}
                   </p>
                 </div>
 
@@ -1095,7 +1095,7 @@ export default async function PropertyEditPage({
             <div className="grid gap-8 p-8 lg:grid-cols-[1fr_320px]">
               <div>
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                  FunzionalitÃ  previste
+                  {"Funzionalit\u00E0 previste"}
                 </h3>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -1105,7 +1105,7 @@ export default async function PropertyEditPage({
                       className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4"
                     >
                       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700">
-                        âœ“
+                        {"\u2713"}
                       </span>
 
                       <span className="text-sm font-medium text-slate-800">
@@ -1116,47 +1116,47 @@ export default async function PropertyEditPage({
                 </div>
               </div>
 
-              <aside className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
-                <p className="text-xs font-semibold uppercase tracking-wider text-blue-700">
+              <aside className="rounded-2xl border border-[#D8B367]/20 bg-[#07111A]/80 p-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#D8B367]">
                   Controllo umano
                 </p>
 
-                <h3 className="mt-3 text-lg font-semibold text-slate-950">
+                <h3 className="mt-3 text-lg font-semibold text-[#FFF8EA]">
                   Automazione trasparente
                 </h3>
 
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Ogni decisione del Revenue Engine sarÃ  accompagnata da una
+              {"Ogni decisione del Revenue Engine sar\u00E0 accompagnata da una"}
                   motivazione chiara. Il gestore mantiene sempre il controllo finale.
                 </p>
 
-                <div className="mt-6 rounded-xl border border-blue-200 bg-white p-4">
+                <div className="mt-6 rounded-xl border border-white/[0.08] bg-[#09131C] p-4">
                   <p className="text-xs text-slate-500">
                     Baseline tariffaria
                   </p>
 
                   <p className="mt-1 text-sm font-semibold text-slate-900">
                     {revenueRatePlan
-                      ? `${revenueRatePlan.basePrice} â‚¬ · ${revenueRatePlan.name}`
+                  ? `${revenueRatePlan.basePrice} \u20AC \u00B7 ${revenueRatePlan.name}`
                       : "Da configurare"}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-500">
                     {revenueRatePlan
-                      ? `Min ${revenueRatePlan.minimumStay} notti · ${revenueRatePlan.occupancyIncluded} ospiti inclusi`
+                  ? `Min ${revenueRatePlan.minimumStay} notti \u00B7 ${revenueRatePlan.occupancyIncluded} ospiti inclusi`
                       : "Configura una tariffa base ufficiale per attivare il Revenue Engine."}
                   </p>
                 </div>
               </aside>
             </div>
 
-            <div className="border-t border-blue-100 bg-slate-50 p-8">
+            <div className="border-t border-white/[0.07] bg-[#07111A]/55 p-8">
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-slate-950">
+                <h3 className="text-lg font-semibold text-[#FFF8EA]">
                   Piano tariffario base
                 </h3>
 
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-[#82909C]">
                   Definisce la baseline ufficiale della struttura. Gli override del calendario restano separati.
                 </p>
               </div>
@@ -1185,7 +1185,7 @@ export default async function PropertyEditPage({
 
                 <div>
                   <label className="mb-2 block text-xs font-semibold text-slate-600">
-                    Tariffa base â‚¬
+                    {"Tariffa base \u20AC"}
                   </label>
                   <input
                     name="basePrice"
@@ -1272,10 +1272,10 @@ export default async function PropertyEditPage({
                     Stato attuale
                   </p>
 
-                  <p className="mt-1 text-sm text-slate-600">
+                  <p className="mt-1 text-sm text-[#82909C]">
                     {property.status === "ARCHIVED"
-                      ? "La struttura Ã¨ archiviata."
-                      : `La struttura Ã¨ attualmente ${property.status.toLowerCase()}.`}
+                ? "La struttura \u00E8 archiviata."
+                : `La struttura \u00E8 attualmente ${property.status.toLowerCase()}.`}
                   </p>
                 </div>
 
@@ -1303,13 +1303,13 @@ export default async function PropertyEditPage({
                     Zona pericolosa
                   </p>
 
-                  <h3 className="mt-2 text-lg font-semibold text-red-950">
+                  <h3 className="mt-2 text-lg font-semibold text-[#FFF8EA] text-red-950">
                     Eliminazione definitiva
                   </h3>
 
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-red-800">
                     Disponibile solo per strutture archiviate e senza storico operativo
-                    protetto. L&apos;operazione non puÃ² essere annullata.
+                protetto. L&apos;operazione non pu\u00F2 essere annullata.
                   </p>
 
                   {property.status === "ARCHIVED" ? (
@@ -1354,28 +1354,83 @@ export default async function PropertyEditPage({
             </div>
           </section>
         </div>
+        <style>{`
+          .property-edit-theme .bg-white {
+            background-color: #09131C !important;
+          }
+
+          .property-edit-theme .bg-slate-50,
+          .property-edit-theme .bg-slate-100 {
+            background-color: #07111A !important;
+          }
+
+          .property-edit-theme [class*="bg-slate-50/"] {
+            background-color: rgba(7, 17, 26, 0.88) !important;
+          }
+
+          .property-edit-theme .border-slate-100,
+          .property-edit-theme .border-slate-200,
+          .property-edit-theme .border-slate-300 {
+            border-color: rgba(255,255,255,0.08) !important;
+          }
+
+          .property-edit-theme .text-slate-950,
+          .property-edit-theme .text-slate-900,
+          .property-edit-theme .text-slate-800,
+          .property-edit-theme .text-slate-700 {
+            color: #FFF8EA !important;
+          }
+
+          .property-edit-theme .text-slate-600,
+          .property-edit-theme .text-slate-500 {
+            color: #8EA0AE !important;
+          }
+
+          .property-edit-theme .text-slate-400 {
+            color: #6F7E8A !important;
+          }
+
+          .property-edit-theme input,
+          .property-edit-theme textarea,
+          .property-edit-theme select {
+            background-color: #07111A !important;
+            color: #FFF8EA !important;
+            border-color: rgba(255,255,255,0.12) !important;
+          }
+
+          .property-edit-theme input:focus,
+          .property-edit-theme textarea:focus,
+          .property-edit-theme select:focus {
+            border-color: rgba(216,179,103,0.72) !important;
+            box-shadow: 0 0 0 3px rgba(216,179,103,0.08) !important;
+          }
+
+          .property-edit-theme .bg-blue-50,
+          .property-edit-theme .bg-blue-100 {
+            background-color: rgba(216,179,103,0.08) !important;
+          }
+
+          .property-edit-theme .border-blue-100,
+          .property-edit-theme .border-blue-200,
+          .property-edit-theme .border-blue-300 {
+            border-color: rgba(216,179,103,0.20) !important;
+          }
+
+          .property-edit-theme .text-blue-600,
+          .property-edit-theme .text-blue-700 {
+            color: #D8B367 !important;
+          }
+
+          .property-edit-theme section,
+          .property-edit-theme article {
+            color: #FFF8EA;
+          }
+
+          .property-edit-theme hr {
+            border-color: rgba(255,255,255,0.08) !important;
+          }
+        `}</style>
       </AppShell>
     </>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

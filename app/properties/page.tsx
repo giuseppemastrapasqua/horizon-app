@@ -128,8 +128,9 @@ const primaryButtonStyle = {
   display: "inline-block",
   padding: "11px 16px",
   borderRadius: "12px",
-  background: "#0f172a",
-  color: "#ffffff",
+  background: "#D8B367",
+  color: "#07111A",
   textDecoration: "none",
   fontWeight: 800,
+  border: "1px solid #D8B367",
 };

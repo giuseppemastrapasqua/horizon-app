@@ -218,25 +218,25 @@ export default async function DocumentsPage({
             />
           </div>
 
-          <Link href="/documents/new" className="inline-flex h-10 items-center rounded-xl bg-[#2563EB] px-4 text-[10px] font-bold text-white shadow-[0_8px_20px_rgba(37,99,235,0.20)] transition hover:-translate-y-0.5 hover:bg-[#1D4ED8]">
+          <Link href="/documents/new" className="inline-flex h-10 items-center rounded-xl border border-[#D8B367]/50 bg-[#D8B367] px-4 text-[10px] font-bold text-[#07111A] shadow-[0_8px_20px_rgba(216,179,103,0.14)] transition hover:bg-[#E3C37E]">
             + Nuovo documento
           </Link>
         </div>
 
         {documentInsights.length > 0 ? (
-          <section className="mb-5 overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-            <div className="flex items-center justify-between gap-4 border-b border-blue-100 bg-blue-50/60 px-4 py-3">
+          <section className="mb-5 overflow-hidden rounded-2xl border border-white/[0.07] bg-[#09131C]/90 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+            <div className="flex items-center justify-between gap-4 border-b border-white/[0.06] bg-[#0C1822] px-4 py-3">
               <div>
-                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[#D8B367]">
                   Horizon Intelligence
                 </p>
 
-                <p className="mt-0.5 text-[11px] font-bold text-slate-900">
+                <p className="mt-0.5 font-serif text-[14px] font-semibold text-[#FFF8EA]">
                   Documenti che richiedono attenzione
                 </p>
               </div>
 
-              <span className="rounded-full bg-white px-2.5 py-1 text-[8px] font-bold text-blue-700 shadow-sm">
+              <span className="rounded-full border border-[#D8B367]/20 bg-[#07111A] px-2.5 py-1 text-[8px] font-bold text-[#D8B367]">
                 {documentInsights.length}
                 {" "}
                 {documentInsights.length === 1
@@ -308,9 +308,9 @@ export default async function DocumentsPage({
           </section>
         ) : null}
 
-        <section className="mb-6 space-y-5 rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.045)]">
+        <section className="mb-6 space-y-5 rounded-[20px] border border-white/[0.07] bg-[#09131C]/90 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
           <div>
-            <div className="mb-2.5 text-[8px] font-black uppercase tracking-[0.14em] text-slate-400">Tipo documento</div>
+            <div className="mb-2.5 text-[8px] font-bold uppercase tracking-[0.14em] text-[#82909C]">Tipo documento</div>
 
             <div className="flex flex-wrap gap-2">
               <FilterLink
@@ -354,7 +354,7 @@ export default async function DocumentsPage({
           </div>
 
           <div>
-            <div className="mb-2.5 text-[8px] font-black uppercase tracking-[0.14em] text-slate-400">Stato</div>
+            <div className="mb-2.5 text-[8px] font-bold uppercase tracking-[0.14em] text-[#82909C]">Stato</div>
 
             <div className="flex flex-wrap gap-2">
               <FilterLink
@@ -397,7 +397,7 @@ export default async function DocumentsPage({
             </div>
           </div>
 
-          <form method="GET" className="flex flex-wrap items-end gap-3 border-t border-slate-100 pt-5">
+          <form method="GET" className="flex flex-wrap items-end gap-3 border-t border-white/[0.06] pt-5">
             {typeFilter !== "all" && (
               <input type="hidden" name="type" value={typeFilter} />
             )}
@@ -410,24 +410,24 @@ export default async function DocumentsPage({
               />
             )}
 
-            <label className="grid min-w-[280px] flex-1 gap-1.5 text-[9px] font-bold text-slate-500">
+            <label className="grid min-w-[280px] flex-1 gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
               Ricerca
 
               <input
                 name="q"
                 defaultValue={searchQuery}
                 placeholder="Titolo, numero, owner o immobile"
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-medium text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className="h-10 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-3 text-[10px] font-medium text-[#E8E1D5] outline-none [color-scheme:dark] transition placeholder:text-[#526472] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
               />
             </label>
 
-            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-slate-500">
+            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
               Proprietario
 
               <select
                 name="ownerId"
                 defaultValue={ownerFilter}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-medium text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className="h-10 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-3 text-[10px] font-medium text-[#E8E1D5] outline-none [color-scheme:dark] transition placeholder:text-[#526472] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
               >
                 <option value="all">Tutti i proprietari</option>
 
@@ -439,13 +439,13 @@ export default async function DocumentsPage({
               </select>
             </label>
 
-            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-slate-500">
+            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
               Immobile
 
               <select
                 name="propertyId"
                 defaultValue={propertyFilter}
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-medium text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className="h-10 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-3 text-[10px] font-medium text-[#E8E1D5] outline-none [color-scheme:dark] transition placeholder:text-[#526472] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
               >
                 <option value="all">Tutti gli immobili</option>
 
@@ -457,21 +457,21 @@ export default async function DocumentsPage({
               </select>
             </label>
 
-            <button type="submit" className="h-10 rounded-xl bg-[#2563EB] px-5 text-[10px] font-bold text-white shadow-[0_6px_16px_rgba(37,99,235,0.16)] transition hover:bg-[#1D4ED8]">
+            <button type="submit" className="h-10 rounded-xl bg-[#D8B367] px-5 text-[10px] font-bold text-[#07111A] transition hover:bg-[#E3C37E]">
               Applica
             </button>
 
-            <Link href="/documents" className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-[10px] font-bold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600">
+            <Link href="/documents" className="inline-flex h-10 items-center rounded-xl border border-white/[0.08] bg-[#07111A] px-4 text-[10px] font-bold text-[#A4AFB8] transition hover:border-[#D8B367]/40 hover:text-[#D8B367]">
               Azzera
             </Link>
           </form>
         </section>
 
         {documents.length === 0 ? (
-          <section className="rounded-[20px] border border-dashed border-slate-300 bg-white px-6 py-10 text-center shadow-[0_8px_24px_rgba(15,23,42,0.035)]">
+          <section className="rounded-[20px] border border-dashed border-white/[0.10] bg-[#09131C]/90 px-6 py-10 text-center shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
             <strong>Nessun documento trovato</strong>
 
-            <p className="mt-2 text-[9px] text-slate-400">
+            <p className="mt-2 text-[9px] text-[#82909C]">
               I report salvati, le fatture e i rendiconti compariranno
               qui.
             </p>
@@ -484,14 +484,14 @@ export default async function DocumentsPage({
                 document.currentVersion;
 
               return (
-                <section key={document.id} className="group rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.045)] transition duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_16px_36px_rgba(37,99,235,0.08)]">
+                <section key={document.id} className="group rounded-[20px] border border-white/[0.07] bg-[#09131C]/90 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)] transition duration-300 hover:-translate-y-0.5 hover:border-[#D8B367]/25">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="m-0 text-[15px] font-black tracking-[-0.025em] text-slate-950">
+                        <h2 className="m-0 font-serif text-[16px] font-semibold tracking-[-0.02em] text-[#FFF8EA]">
                           <Link
                             href={`/documents/${document.id}`}
-                            className="text-slate-950 no-underline transition group-hover:text-blue-600"
+                            className="text-[#FFF8EA] no-underline transition group-hover:text-[#D8B367]"
                           >
                             {document.title}
                           </Link>
@@ -503,19 +503,19 @@ export default async function DocumentsPage({
                         />
                       </div>
 
-                      <p className="mt-1.5 text-[9px] font-medium text-slate-400">
+                      <p className="mt-1.5 text-[9px] font-medium text-[#82909C]">
                         {document.subtitle ??
                           "Nessun sottotitolo"}
                       </p>
                     </div>
 
-                    <div className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-[8px] font-bold text-slate-400">
+                    <div className="rounded-lg border border-white/[0.06] bg-[#07111A] px-2.5 py-1.5 text-[8px] font-bold text-[#82909C]">
                       {document.documentNumber ??
                         "Numero non assegnato"}
                     </div>
                   </div>
 
-                  <div className="mt-5 grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 lg:grid-cols-5">
+                  <div className="mt-5 grid gap-4 border-t border-white/[0.06] pt-4 sm:grid-cols-2 lg:grid-cols-5">
                     <MiniMetric
                       label="Proprietario"
                       value={
@@ -560,31 +560,31 @@ export default async function DocumentsPage({
                     />
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                  <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
                     <div className="flex flex-wrap gap-2">
                       <Link
                         href={`/documents/${document.id}`}
-                        className="inline-flex h-8 items-center rounded-lg bg-[#2563EB] px-3 text-[8px] font-bold text-white transition hover:bg-[#1D4ED8]"
+                        className="inline-flex h-8 items-center rounded-lg bg-[#D8B367] px-3 text-[8px] font-bold text-[#07111A] transition hover:bg-[#E3C37E]"
                       >
                         Apri
                       </Link>
 
                       <Link
                         href={`/documents/${document.id}/versions`}
-                        className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[8px] font-bold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+                        className="inline-flex h-8 items-center rounded-lg border border-white/[0.08] bg-[#07111A] px-3 text-[8px] font-bold text-[#A4AFB8] transition hover:border-[#D8B367]/40 hover:text-[#D8B367]"
                       >
                         Versioni
                       </Link>
 
                       <Link
                         href={getSourceHref(document)}
-                        className="inline-flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[8px] font-bold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+                        className="inline-flex h-8 items-center rounded-lg border border-white/[0.08] bg-[#07111A] px-3 text-[8px] font-bold text-[#A4AFB8] transition hover:border-[#D8B367]/40 hover:text-[#D8B367]"
                       >
                         Apri sorgente
                       </Link>
                     </div>
 
-                    <span className="text-[8px] font-medium text-slate-400">
+                    <span className="text-[8px] font-medium text-[#6F7E8A]">
                       Creato il{" "}
                       {document.createdAt.toLocaleDateString(
                         "it-IT"
@@ -729,10 +729,10 @@ function FilterLink({
         padding: "9px 13px",
         borderRadius: "999px",
         border: active
-          ? "1px solid #0f172a"
-          : "1px solid #cbd5e1",
-        background: active ? "#0f172a" : "#ffffff",
-        color: active ? "#ffffff" : "#334155",
+          ? "1px solid rgba(216,179,103,0.45)"
+          : "1px solid rgba(255,255,255,0.08)",
+        background: active ? "rgba(216,179,103,0.10)" : "#07111A",
+        color: active ? "#D8B367" : "#A4AFB8",
         textDecoration: "none",
         fontSize: "13px",
         fontWeight: 800,
@@ -754,24 +754,24 @@ function SummaryBadge({
 }) {
   const styles = {
     default: {
-      background: "#ffffff",
-      color: "#0f172a",
-      border: "1px solid #e2e8f0",
+      background: "#09131C",
+      color: "#F4EEDF",
+      border: "1px solid rgba(255,255,255,0.07)",
     },
     yellow: {
-      background: "#fffbeb",
-      color: "#a16207",
-      border: "1px solid #fde68a",
+      background: "rgba(216,179,103,0.08)",
+      color: "#D8B367",
+      border: "1px solid rgba(216,179,103,0.22)",
     },
     green: {
-      background: "#ecfdf5",
-      color: "#166534",
-      border: "1px solid #bbf7d0",
+      background: "rgba(16,185,129,0.08)",
+      color: "#34D399",
+      border: "1px solid rgba(52,211,153,0.20)",
     },
     blue: {
-      background: "#eff6ff",
-      color: "#1d4ed8",
-      border: "1px solid #bfdbfe",
+      background: "rgba(56,189,248,0.08)",
+      color: "#38BDF8",
+      border: "1px solid rgba(56,189,248,0.20)",
     },
   };
 
@@ -796,7 +796,7 @@ function DocumentTypeBadge({
   type: DocumentType;
 }) {
   return (
-    <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-1 text-[6px] font-black uppercase tracking-[0.08em] text-blue-700">
+    <span className="rounded-full border border-sky-400/20 bg-sky-400/[0.08] px-2 py-1 text-[6px] font-bold uppercase tracking-[0.08em] text-sky-300">
       {formatEnum(type)}
     </span>
   );
@@ -810,10 +810,10 @@ function DocumentStatusBadge({
   const className =
     status === DocumentStatus.FINAL ||
     status === DocumentStatus.ISSUED
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      ? "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300"
       : status === DocumentStatus.ARCHIVED
-        ? "border-slate-200 bg-slate-100 text-slate-500"
-        : "border-amber-200 bg-amber-50 text-amber-700";
+        ? "border-white/[0.08] bg-white/[0.04] text-[#82909C]"
+        : "border-amber-400/20 bg-amber-400/[0.08] text-amber-300";
 
   return (
     <span
@@ -836,11 +836,11 @@ function MiniMetric({
 }) {
   return (
     <div className="min-w-0">
-      <div className="text-[7px] font-bold uppercase tracking-[0.1em] text-slate-400">
+      <div className="text-[7px] font-bold uppercase tracking-[0.1em] text-[#6F7E8A]">
         {label}
       </div>
 
-      <strong className="mt-1 block truncate text-[9px] font-bold text-slate-700">
+      <strong className="mt-1 block truncate text-[9px] font-semibold text-[#E8E1D5]">
         {value}
       </strong>
     </div>

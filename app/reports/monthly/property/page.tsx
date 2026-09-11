@@ -85,22 +85,22 @@ export default async function PropertyReportPage({
             style={{
               maxWidth: "640px",
               margin: "0 auto",
-              border: "1px solid #e2e8f0",
+              border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: "22px",
-              background: "#ffffff",
+              background: "#09131C",
               overflow: "hidden",
             }}
           >
             <div
               style={{
                 padding: "28px 32px",
-                borderBottom: "1px solid #e2e8f0",
-                background: "#f8fafc",
+                borderBottom: "1px solid rgba(255,255,255,0.07)",
+                background: "#0C1822",
               }}
             >
               <div
                 style={{
-                  color: "#2563eb",
+                  color: "#D8B367",
                   fontSize: "11px",
                   fontWeight: 800,
                   letterSpacing: "0.08em",
@@ -112,7 +112,7 @@ export default async function PropertyReportPage({
               <h2
                 style={{
                   margin: "6px 0 0",
-                  color: "#0f172a",
+                  color: "#FFF8EA",
                   fontSize: "25px",
                 }}
               >
@@ -122,7 +122,7 @@ export default async function PropertyReportPage({
               <p
                 style={{
                   margin: "8px 0 0",
-                  color: "#64748b",
+                  color: "#82909C",
                   lineHeight: 1.6,
                 }}
               >
@@ -146,7 +146,7 @@ export default async function PropertyReportPage({
                   style={{
                     display: "block",
                     marginBottom: "8px",
-                    color: "#334155",
+                    color: "#A4AFB8",
                     fontSize: "14px",
                     fontWeight: 700,
                   }}
@@ -165,10 +165,10 @@ export default async function PropertyReportPage({
                     width: "100%",
                     boxSizing: "border-box",
                     padding: "13px 14px",
-                    border: "1px solid #cbd5e1",
+                    border: "1px solid #243B49",
                     borderRadius: "12px",
-                    background: "#ffffff",
-                    color: "#0f172a",
+                    background: "#09131C",
+                    color: "#FFF8EA",
                     fontSize: "15px",
                   }}
                 />
@@ -179,7 +179,7 @@ export default async function PropertyReportPage({
                   style={{
                     display: "block",
                     marginBottom: "8px",
-                    color: "#334155",
+                    color: "#A4AFB8",
                     fontSize: "14px",
                     fontWeight: 700,
                   }}
@@ -194,10 +194,10 @@ export default async function PropertyReportPage({
                   style={{
                     width: "100%",
                     padding: "13px 14px",
-                    border: "1px solid #cbd5e1",
+                    border: "1px solid #243B49",
                     borderRadius: "12px",
-                    background: "#ffffff",
-                    color: "#0f172a",
+                    background: "#09131C",
+                    color: "#FFF8EA",
                     fontSize: "15px",
                   }}
                 >
@@ -228,7 +228,7 @@ export default async function PropertyReportPage({
                   alignItems: "center",
                   gap: "12px",
                   paddingTop: "18px",
-                  borderTop: "1px solid #e2e8f0",
+                  borderTop: "1px solid rgba(255,255,255,0.07)",
                 }}
               >
                 <Link
@@ -510,14 +510,14 @@ const headerStyle: CSSProperties = {
   gap: "20px",
   padding: "24px",
   marginBottom: "20px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid rgba(255,255,255,0.07)",
   borderRadius: "20px",
-  background: "#ffffff",
+  background: "#09131C",
   flexWrap: "wrap",
 };
 
 const eyebrowStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#D8B367",
   fontSize: "12px",
   fontWeight: 800,
   letterSpacing: "0.08em",
@@ -525,18 +525,18 @@ const eyebrowStyle: CSSProperties = {
 
 const reportTitleStyle: CSSProperties = {
   margin: "6px 0 0",
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "30px",
 };
 
 const ownerStyle: CSSProperties = {
   margin: "8px 0 0",
-  color: "#64748b",
+  color: "#82909C",
 };
 
 const referenceMonthTextStyle: CSSProperties = {
   margin: "6px 0 0",
-  color: "#475569",
+  color: "#A4AFB8",
   fontSize: "14px",
 };
 
@@ -554,7 +554,7 @@ const monthFormStyle: CSSProperties = {
 };
 
 const monthLabelStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#82909C",
   fontSize: "12px",
   fontWeight: 700,
 };
@@ -568,20 +568,20 @@ const monthControlsStyle: CSSProperties = {
 const monthInputStyle: CSSProperties = {
   minHeight: "40px",
   padding: "0 11px",
-  border: "1px solid #cbd5e1",
+  border: "1px solid #243B49",
   borderRadius: "10px",
-  background: "#ffffff",
-  color: "#0f172a",
+  background: "#09131C",
+  color: "#FFF8EA",
   font: "inherit",
 };
 
 const secondaryButtonStyle: CSSProperties = {
   minHeight: "40px",
   padding: "0 14px",
-  border: "1px solid #cbd5e1",
+  border: "1px solid #243B49",
   borderRadius: "10px",
-  background: "#ffffff",
-  color: "#334155",
+  background: "#09131C",
+  color: "#A4AFB8",
   fontWeight: 700,
   cursor: "pointer",
 };
@@ -591,8 +591,8 @@ const generateButtonStyle: CSSProperties = {
   padding: "0 16px",
   border: 0,
   borderRadius: "10px",
-  background: "#2563eb",
-  color: "#ffffff",
+  background: "#D8B367",
+  color: "#07111A",
   fontWeight: 800,
   cursor: "pointer",
 };
@@ -644,8 +644,8 @@ const primaryLinkStyle: CSSProperties = {
   minHeight: "40px",
   padding: "0 16px",
   borderRadius: "10px",
-  background: "#2563eb",
-  color: "#ffffff",
+  background: "#D8B367",
+  color: "#07111A",
   fontWeight: 700,
   textDecoration: "none",
 };
@@ -655,10 +655,10 @@ const secondaryLinkStyle: CSSProperties = {
   alignItems: "center",
   minHeight: "40px",
   padding: "0 16px",
-  border: "1px solid #cbd5e1",
+  border: "1px solid #243B49",
   borderRadius: "10px",
-  background: "#ffffff",
-  color: "#334155",
+  background: "#09131C",
+  color: "#A4AFB8",
   fontWeight: 700,
   textDecoration: "none",
 };

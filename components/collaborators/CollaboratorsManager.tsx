@@ -102,7 +102,7 @@ export function CollaboratorsManager({
       setMessage(
         result.emailSent
           ? "Invito creato e email inviata."
-          : "Invito creato, ma l'email non è stata inviata. Usa il link di fallback.",
+          : "Invito creato, ma l'email non Ã¨ stata inviata. Usa il link di fallback.",
       );
 
       form.reset();
@@ -141,7 +141,7 @@ export function CollaboratorsManager({
       setMessage(
         result.emailSent
           ? "Invito rigenerato e email inviata."
-          : "Invito rigenerato, ma l'email non è stata inviata. Usa il nuovo link di fallback.",
+          : "Invito rigenerato, ma l'email non Ã¨ stata inviata. Usa il nuovo link di fallback.",
       );
 
       router.refresh();
@@ -278,12 +278,12 @@ export function CollaboratorsManager({
         />
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
+      <section className="rounded-2xl border border-white/[0.07] bg-[#09131C]/90 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
+        <h2 className="font-serif text-lg font-semibold tracking-[-0.02em] text-[#FFF8EA]">
           Nuovo collaboratore
         </h2>
 
-        <p className="mt-1 text-sm leading-6 text-slate-500">
+        <p className="mt-1 text-sm leading-6 text-[#82909C]">
           Invia un accesso operativo per una struttura.
           L'email viene inviata automaticamente e Horizon
           genera anche un link di fallback.
@@ -296,7 +296,7 @@ export function CollaboratorsManager({
           <div>
             <label
               htmlFor="fullName"
-              className="text-sm font-medium text-slate-700"
+              className="text-sm font-medium text-[#A4AFB8]"
             >
               Nome e cognome
             </label>
@@ -307,14 +307,14 @@ export function CollaboratorsManager({
               required
               minLength={2}
               maxLength={120}
-              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-2 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-4 py-3 text-sm text-[#E8E1D5] outline-none [color-scheme:dark] transition focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
             />
           </div>
 
           <div>
             <label
               htmlFor="email"
-              className="text-sm font-medium text-slate-700"
+              className="text-sm font-medium text-[#A4AFB8]"
             >
               Email
             </label>
@@ -324,14 +324,14 @@ export function CollaboratorsManager({
               name="email"
               type="email"
               required
-              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-2 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-4 py-3 text-sm text-[#E8E1D5] outline-none [color-scheme:dark] transition focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
             />
           </div>
 
           <div>
             <label
               htmlFor="phone"
-              className="text-sm font-medium text-slate-700"
+              className="text-sm font-medium text-[#A4AFB8]"
             >
               Telefono
             </label>
@@ -340,14 +340,14 @@ export function CollaboratorsManager({
               id="phone"
               name="phone"
               maxLength={40}
-              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-2 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-4 py-3 text-sm text-[#E8E1D5] outline-none [color-scheme:dark] transition focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
             />
           </div>
 
           <div>
             <label
               htmlFor="propertyId"
-              className="text-sm font-medium text-slate-700"
+              className="text-sm font-medium text-[#A4AFB8]"
             >
               Struttura
             </label>
@@ -357,7 +357,7 @@ export function CollaboratorsManager({
               name="propertyId"
               required
               defaultValue=""
-              className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-2 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-4 py-3 text-sm text-[#E8E1D5] outline-none [color-scheme:dark] transition focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
             >
               <option value="" disabled>
                 Seleziona struttura
@@ -370,7 +370,7 @@ export function CollaboratorsManager({
                 >
                   {property.name}
                   {property.city
-                    ? ` · ${property.city}`
+                    ? ` Â· ${property.city}`
                     : ""}
                 </option>
               ))}
@@ -384,7 +384,7 @@ export function CollaboratorsManager({
                 pendingAction === "create" ||
                 properties.length === 0
               }
-              className="inline-flex rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex rounded-xl bg-[#D8B367] px-5 py-3 text-sm font-semibold text-[#07111A] transition hover:bg-[#E3C37E] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {pendingAction === "create"
                 ? "Invio in corso..."
@@ -430,13 +430,13 @@ export function CollaboratorsManager({
         ) : null}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
+      <section className="rounded-2xl border border-white/[0.07] bg-[#09131C]/90 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
+        <h2 className="font-serif text-lg font-semibold tracking-[-0.02em] text-[#FFF8EA]">
           Collaboratori
         </h2>
 
         {collaborators.length === 0 ? (
-          <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+          <p className="mt-4 rounded-xl border border-dashed border-white/[0.10] bg-[#07111A]/70 p-4 text-sm text-[#82909C]">
             Nessun collaboratore operativo attivo.
           </p>
         ) : (
@@ -444,18 +444,18 @@ export function CollaboratorsManager({
             {collaborators.map((collaborator) => (
               <article
                 key={collaborator.id}
-                className="rounded-2xl border border-slate-200 p-5"
+                className="rounded-2xl border border-white/[0.08] bg-[#07111A]/70 p-5"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <h3 className="font-semibold text-slate-900">
+                    <h3 className="font-semibold text-[#FFF8EA]">
                       {collaborator.fullName}
                     </h3>
 
                     <p className="mt-1 text-sm text-slate-500">
                       {collaborator.email}
                       {collaborator.phone
-                        ? ` · ${collaborator.phone}`
+                        ? ` Â· ${collaborator.phone}`
                         : ""}
                     </p>
                   </div>
@@ -465,7 +465,7 @@ export function CollaboratorsManager({
                   </span>
                 </div>
 
-                <div className="mt-4 border-t border-slate-100 pt-4">
+                <div className="mt-4 border-t border-white/[0.07] pt-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                     Strutture assegnate
                   </p>
@@ -480,11 +480,11 @@ export function CollaboratorsManager({
                         (access) => (
                           <span
                             key={access.id}
-                            className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700"
+                            className="rounded-lg border border-white/[0.07] bg-white/[0.05] px-3 py-2 text-sm text-[#A4AFB8]"
                           >
                             {access.property.name}
                             {access.property.city
-                              ? ` · ${access.property.city}`
+                              ? ` Â· ${access.property.city}`
                               : ""}
                           </span>
                         ),
@@ -498,13 +498,13 @@ export function CollaboratorsManager({
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">
+      <section className="rounded-2xl border border-white/[0.07] bg-[#09131C]/90 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
+        <h2 className="font-serif text-lg font-semibold tracking-[-0.02em] text-[#FFF8EA]">
           Inviti da gestire
         </h2>
 
         {pendingInvites.length === 0 ? (
-          <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+          <p className="mt-4 rounded-xl border border-dashed border-white/[0.10] bg-[#07111A]/70 p-4 text-sm text-[#82909C]">
             Nessun invito in attesa o scaduto.
           </p>
         ) : (
@@ -524,8 +524,8 @@ export function CollaboratorsManager({
       </section>
 
       {historicalInvites.length > 0 ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-900">
+        <section className="rounded-2xl border border-white/[0.07] bg-[#09131C]/90 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
+          <h2 className="font-serif text-lg font-semibold tracking-[-0.02em] text-[#FFF8EA]">
             Storico inviti
           </h2>
 
@@ -561,14 +561,14 @@ function InviteRow({
   onRevokeAccepted: (invite: Invite) => Promise<void>;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-4">
+    <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-[#07111A]/70 px-4 py-4">
       <div>
-        <p className="font-medium text-slate-900">
+        <p className="font-medium text-[#FFF8EA]">
           {invite.fullName}
         </p>
 
         <p className="mt-1 text-sm text-slate-500">
-          {invite.email} · {invite.property.name}
+          {invite.email} Â· {invite.property.name}
         </p>
       </div>
 
@@ -584,7 +584,7 @@ function InviteRow({
                 pendingAction === `resend:${invite.id}`
               }
               onClick={() => onResend(invite)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              className="rounded-lg border border-[#D8B367]/25 bg-[#D8B367]/[0.06] px-3 py-2 text-xs font-semibold text-[#D8B367] transition hover:bg-[#D8B367]/[0.12] disabled:opacity-60"
             >
               {pendingAction === `resend:${invite.id}`
                 ? "Invio..."
@@ -598,7 +598,7 @@ function InviteRow({
                   pendingAction === `revoke:${invite.id}`
                 }
                 onClick={() => onRevokePending(invite)}
-                className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+                className="rounded-lg border border-rose-400/25 bg-rose-400/[0.06] px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-400/[0.12] disabled:opacity-60"
               >
                 Revoca invito
               </button>
@@ -613,7 +613,7 @@ function InviteRow({
               pendingAction === `access:${invite.id}`
             }
             onClick={() => onRevokeAccepted(invite)}
-            className="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+            className="rounded-lg border border-rose-400/25 bg-rose-400/[0.06] px-3 py-2 text-xs font-semibold text-rose-300 transition hover:bg-rose-400/[0.12] disabled:opacity-60"
           >
             {pendingAction === `access:${invite.id}`
               ? "Revoca..."
@@ -633,12 +633,12 @@ function SummaryCard({
   value: number;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-sm font-semibold text-slate-500">
+    <div className="rounded-2xl border border-white/[0.07] bg-[#09131C]/90 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
+      <p className="text-sm font-semibold text-[#82909C]">
         {title}
       </p>
 
-      <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+      <p className="mt-2 text-3xl font-semibold tracking-[-0.02em] text-[#FFF8EA]">
         {value}
       </p>
     </div>
@@ -658,7 +658,7 @@ function InviteStatus({
   };
 
   return (
-    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+    <span className="rounded-full border border-white/[0.10] bg-white/[0.05] px-3 py-1 text-xs font-semibold text-[#A4AFB8]">
       {labels[status]}
     </span>
   );

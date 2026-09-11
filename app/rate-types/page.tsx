@@ -176,11 +176,11 @@ export default async function RateTypesPage({
       >
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-600">
+            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#D8B367]">
               Revenue configuration
             </p>
 
-            <p className="mt-1 text-[10px] text-slate-500">
+            <p className="mt-1 text-[10px] text-[#82909C]">
               Sconti, durata minima e durata massima
               vengono definiti per ogni singola tariffa.
             </p>
@@ -190,7 +190,7 @@ export default async function RateTypesPage({
             method="get"
             className="flex items-center gap-2"
           >
-            <span className="text-[9px] font-semibold text-slate-400">
+            <span className="text-[9px] font-semibold text-[#82909C]">
               Struttura
             </span>
 
@@ -200,7 +200,7 @@ export default async function RateTypesPage({
                 selectedProperty?.id ??
                 ""
               }
-              className="h-10 min-w-[240px] rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              className="h-10 min-w-[240px] rounded-xl border border-white/[0.08] bg-[#07111A] px-3 text-[10px] font-semibold text-[#E8E1D5] outline-none [color-scheme:dark] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
             >
               {properties.map(
                 (property) => (
@@ -222,7 +222,7 @@ export default async function RateTypesPage({
 
             <button
               type="submit"
-              className="h-10 rounded-xl border border-blue-200 bg-blue-50 px-3 text-[9px] font-semibold text-blue-700 transition hover:bg-blue-100"
+              className="h-10 rounded-xl border border-[#D8B367]/30 bg-[#D8B367]/[0.07] px-3 text-[9px] font-semibold text-[#D8B367] transition hover:bg-[#D8B367]/[0.12]"
             >
               Apri
             </button>
@@ -236,29 +236,29 @@ export default async function RateTypesPage({
               className="mx-auto text-blue-500"
             />
 
-            <h2 className="mt-3 text-sm font-bold text-slate-900">
+            <h2 className="mt-3 font-serif text-sm font-semibold text-[#FFF8EA]">
               Nessuna struttura disponibile
             </h2>
           </section>
         ) : (
           <>
-            <section className="mb-4 rounded-2xl border border-blue-100 bg-blue-50/40 px-5 py-4">
+            <section className="mb-4 rounded-2xl border border-white/[0.07] bg-[#09131C]/90 px-5 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#D8B367]">
                     {
                       selectedProperty.name
                     }
                   </p>
 
-                  <p className="mt-1 max-w-3xl text-[10px] leading-4 text-slate-500">
+                  <p className="mt-1 max-w-3xl text-[10px] leading-4 text-[#82909C]">
                     Ogni tariffa può avere uno sconto,
                     un minimo soggiorno e un massimo soggiorno
                     completamente personalizzati.
                   </p>
                 </div>
 
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.1em] text-emerald-700">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/[0.08] px-3 py-1.5 text-[8px] font-bold uppercase tracking-[0.1em] text-emerald-300">
                   <Check
                     size={11}
                   />
@@ -344,7 +344,7 @@ export default async function RateTypesPage({
                     <Field
                       label="Vendita"
                     >
-                      <div className="flex h-11 items-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 text-[9px] font-semibold text-emerald-700">
+                      <div className="flex h-11 items-center rounded-xl border border-emerald-400/20 bg-emerald-400/[0.07] px-3 text-[9px] font-semibold text-emerald-300">
                         Sempre attiva
                       </div>
                     </Field>
@@ -484,7 +484,7 @@ export default async function RateTypesPage({
               <div className="mt-4 flex justify-end">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-[10px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#D8B367] px-5 py-3 text-[10px] font-semibold text-[#07111A] shadow-[0_8px_20px_rgba(216,179,103,0.12)] transition hover:bg-[#E3C37E]"
                 >
                   <Save
                     size={14}
@@ -498,15 +498,15 @@ export default async function RateTypesPage({
             <section className="mt-8">
               <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
                 <div>
-                  <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-blue-600">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#D8B367]">
                     Tariffe personalizzate
                   </p>
 
-                  <h2 className="mt-1 text-lg font-bold tracking-tight text-slate-900">
+                  <h2 className="mt-1 font-serif text-lg font-semibold tracking-tight text-[#FFF8EA]">
                     Piani tariffari aggiuntivi
                   </h2>
 
-                  <p className="mt-1 text-[9px] text-slate-400">
+                  <p className="mt-1 text-[9px] text-[#82909C]">
                     Ogni piano deriva dalla Standard Rate
                     della struttura.
                   </p>
@@ -525,7 +525,7 @@ export default async function RateTypesPage({
                         action={
                           updateCustomRateAction
                         }
-                        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                        className="rounded-2xl border border-white/[0.07] bg-[#09131C]/90 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.16)]"
                       >
                         <input
                           type="hidden"
@@ -545,18 +545,18 @@ export default async function RateTypesPage({
 
                         <div className="mb-4 flex items-start justify-between gap-3">
                           <div className="flex items-start gap-3">
-                            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#D8B367]/20 bg-[#D8B367]/[0.07] text-[#D8B367]">
                               <Tags
                                 size={17}
                               />
                             </span>
 
                             <div>
-                              <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-blue-600">
+                              <p className="text-[8px] font-bold uppercase tracking-[0.12em] text-[#D8B367]">
                                 Personalizzata
                               </p>
 
-                              <p className="mt-1 text-[8px] font-medium text-slate-400">
+                              <p className="mt-1 text-[8px] font-medium text-[#6F7E8A]">
                                 {
                                   ratePlan.code
                                 }
@@ -651,11 +651,11 @@ export default async function RateTypesPage({
                           />
                         </div>
 
-                        <div className="mt-3 flex items-center justify-end border-t border-slate-100 pt-3">
+                        <div className="mt-3 flex items-center justify-end border-t border-white/[0.06] pt-3">
                           <div className="flex gap-2">
                             <button
                               type="submit"
-                              className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[8px] font-semibold text-blue-700 transition hover:bg-blue-100"
+                              className="rounded-lg border border-[#D8B367]/30 bg-[#D8B367]/[0.07] px-3 py-2 text-[8px] font-semibold text-[#D8B367] transition hover:bg-[#D8B367]/[0.12]"
                             >
                               Salva
                             </button>
@@ -664,7 +664,7 @@ export default async function RateTypesPage({
                               formAction={
                                 deleteCustomRateAction
                               }
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[8px] font-semibold text-rose-700 transition hover:bg-rose-100"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/20 bg-rose-400/[0.07] px-3 py-2 text-[8px] font-semibold text-rose-300 transition hover:bg-rose-400/[0.12]"
                             >
                               <Trash2
                                 size={11}
@@ -679,15 +679,15 @@ export default async function RateTypesPage({
                   )}
                 </div>
               ) : (
-                <div className="mb-4 rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-7 text-center">
-                  <p className="text-[10px] font-semibold text-slate-600">
+                <div className="mb-4 rounded-2xl border border-dashed border-white/[0.10] bg-[#09131C]/90 px-5 py-7 text-center">
+                  <p className="text-[10px] font-semibold text-[#A4AFB8]">
                     Nessuna tariffa personalizzata.
                   </p>
                 </div>
               )}
 
-              <details className="rounded-2xl border border-blue-100 bg-blue-50/40 p-4">
-                <summary className="flex cursor-pointer list-none items-center gap-2 text-[10px] font-bold text-blue-700">
+              <details className="rounded-2xl border border-[#D8B367]/20 bg-[#09131C]/90 p-4">
+                <summary className="flex cursor-pointer list-none items-center gap-2 text-[10px] font-bold text-[#D8B367]">
                   <Plus
                     size={14}
                   />
@@ -776,7 +776,7 @@ export default async function RateTypesPage({
                   <div className="mt-4 flex justify-end">
                     <button
                       type="submit"
-                      className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-[9px] font-semibold text-white transition hover:bg-blue-700"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#D8B367] px-4 py-2.5 text-[9px] font-semibold text-[#07111A] transition hover:bg-[#E3C37E]"
                     >
                       <Plus
                         size={13}
@@ -796,7 +796,7 @@ export default async function RateTypesPage({
 }
 
 const inputClass =
-  "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-[11px] font-semibold text-slate-800 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100";
+  "h-11 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-3 text-[11px] font-semibold text-[#E8E1D5] outline-none [color-scheme:dark] transition placeholder:text-[#526472] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10";
 
 function RateCard({
   icon,
@@ -817,20 +817,20 @@ function RateCard({
 }) {
   const accentClasses = {
     blue:
-      "border-blue-100 bg-blue-50 text-blue-600",
+      "border-[#D8B367]/20 bg-[#D8B367]/[0.07] text-[#D8B367]",
 
     emerald:
-      "border-emerald-100 bg-emerald-50 text-emerald-600",
+      "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-300",
 
     sky:
-      "border-sky-100 bg-sky-50 text-sky-600",
+      "border-sky-400/20 bg-sky-400/[0.07] text-sky-300",
 
     indigo:
-      "border-indigo-100 bg-indigo-50 text-indigo-600",
+      "border-indigo-400/20 bg-indigo-400/[0.07] text-indigo-300",
   };
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <article className="rounded-2xl border border-white/[0.07] bg-[#09131C]/90 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
       <div className="mb-4 flex items-start gap-3">
         <span
           className={[
@@ -846,11 +846,11 @@ function RateCard({
         </span>
 
         <div>
-          <h2 className="text-sm font-bold text-slate-900">
+          <h2 className="font-serif text-sm font-semibold text-[#FFF8EA]">
             {title}
           </h2>
 
-          <p className="mt-1 text-[9px] leading-4 text-slate-400">
+          <p className="mt-1 text-[9px] leading-4 text-[#82909C]">
             {description}
           </p>
         </div>
@@ -999,7 +999,7 @@ function ExtraGuestPriceField({
   return (
     <Field label="Extra ospite">
       <div className="relative">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#82909C]">
           €
         </span>
 
@@ -1042,7 +1042,7 @@ function DiscountField({
           className={inputClass}
         />
 
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[#82909C]">
           %
         </span>
       </div>
@@ -1102,7 +1102,7 @@ function AdjustmentValueField({
           className={inputClass}
         />
 
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-bold text-[#82909C]">
           %
         </span>
       </div>
@@ -1162,8 +1162,8 @@ function ActiveField({
     <Field
       label="Vendita"
     >
-      <label className="flex h-11 cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-white px-3">
-        <span className="text-[9px] font-semibold text-slate-600">
+      <label className="flex h-11 cursor-pointer items-center justify-between rounded-xl border border-white/[0.08] bg-[#07111A] px-3">
+        <span className="text-[9px] font-semibold text-[#E8E1D5]">
           Attiva
         </span>
 
@@ -1173,7 +1173,7 @@ function ActiveField({
           defaultChecked={
             checked
           }
-          className="h-4 w-4 accent-blue-600"
+          className="h-4 w-4 accent-[#D8B367]"
         />
       </label>
     </Field>
@@ -1189,7 +1189,7 @@ function Field({
 }) {
   return (
     <label className="block min-w-0">
-      <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-slate-400">
+      <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
         {label}
       </span>
 

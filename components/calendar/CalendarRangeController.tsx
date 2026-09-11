@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useEffect,
@@ -48,7 +48,7 @@ export function CalendarRangeController({
       () =>
         rangeFrom === rangeTo
           ? formatDate(rangeFrom)
-          : `${formatDate(rangeFrom)} â†’ ${formatDate(rangeTo)}`,
+          : `${formatDate(rangeFrom)} \u2192 ${formatDate(rangeTo)}`,
       [rangeFrom, rangeTo],
     );
 
@@ -315,7 +315,7 @@ export function CalendarRangeController({
     <div className="min-w-0">
       <div className="grid grid-cols-2 gap-2">
         <label>
-          <span className="mb-1 block text-[7px] font-bold uppercase tracking-[0.1em] text-slate-400">
+          <span className="mb-1 block text-[7px] font-bold uppercase tracking-[0.1em] text-[#A4AFB8]">
             Da
           </span>
 
@@ -342,12 +342,12 @@ export function CalendarRangeController({
                 );
               }
             }}
-            className="h-10 w-[158px] rounded-xl border border-slate-200 bg-white px-2.5 text-[8px] font-medium tracking-[-0.02em] text-[#334155] shadow-[0_4px_14px_rgba(15,23,42,0.04)] outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+            className="h-10 w-[158px] rounded-xl border border-[#243B49] bg-[#091723] px-3 text-[10px] font-medium tracking-[-0.02em] text-[#F4EEDF] outline-none transition [color-scheme:dark] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
           />
         </label>
 
         <label>
-          <span className="mb-1 block text-[7px] font-bold uppercase tracking-[0.1em] text-slate-400">
+          <span className="mb-1 block text-[7px] font-bold uppercase tracking-[0.1em] text-[#A4AFB8]">
             A
           </span>
 
@@ -374,23 +374,23 @@ export function CalendarRangeController({
                 );
               }
             }}
-            className="h-10 w-[158px] rounded-xl border border-slate-200 bg-white px-2.5 text-[8px] font-medium tracking-[-0.02em] text-[#334155] shadow-[0_4px_14px_rgba(15,23,42,0.04)] outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+            className="h-10 w-[158px] rounded-xl border border-[#243B49] bg-[#091723] px-3 text-[10px] font-medium tracking-[-0.02em] text-[#F4EEDF] outline-none transition [color-scheme:dark] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
           />
         </label>
       </div>
 
-      <div className="mt-2 rounded-xl border border-blue-100/80 bg-[#F4F8FF] px-3 py-2">
+      <div className="mt-2 rounded-xl border border-[#243B49] bg-[#091723] px-3 py-2">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[7px] font-semibold text-[#2563EB]">
+          <span className="text-[7px] font-semibold text-[#D8B367]">
             Periodo
           </span>
 
-          <strong className="text-[8px] font-semibold text-[#1E40AF]">
+          <strong className="text-[8px] font-semibold text-[#F4EEDF]">
             {selectedLabel}
           </strong>
         </div>
 
-        <p className="mt-1 text-[7px] leading-3 text-blue-500">
+        <p className="mt-1 text-[7px] leading-3 text-[#82909C]">
           {selectingEnd
             ? "Seleziona ora la data finale sul calendario."
             : "Clicca sul calendario per selezionare un nuovo periodo."}
@@ -431,10 +431,13 @@ function highlightRange(
               date <= to,
           );
 
-        element.classList.toggle(
+        element.classList.remove(
           "bg-blue-50/70",
-          selected,
         );
+
+        element.style.backgroundImage = "";
+
+        element.style.boxShadow = "";
       },
     );
 }

@@ -46,7 +46,7 @@ export function PropertySortSelect({
         id="sort"
         name="sort"
         defaultValue={defaultValue}
-        className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+        className="h-11 rounded-xl border border-white/[0.08] bg-[#09131C] px-4 text-sm text-[#E8E1D5] outline-none [color-scheme:dark] transition focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
       >
         {options.map((option) => (
           <option

@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 * {
   box-sizing: border-box;
@@ -28,17 +28,306 @@ select {
   font: inherit;
 }
 
-/* HORIZON PRIMARY CTA TEXT */
-a[class*="bg-[#2563EB]"],
-button[class*="bg-[#2563EB]"],
-a[class*="bg-blue-600"],
-button[class*="bg-blue-600"] {
-  color: #ffffff !important;
+/* =========================================================
+   HORIZON BOOK DESIGN — GLOBAL APPLICATION THEME
+   ========================================================= */
+
+[data-horizon-theme="app"] {
+  --hz-bg: #050b11;
+  --hz-surface: #09131c;
+  --hz-surface-deep: #07111a;
+  --hz-surface-soft: #0d1923;
+
+  --hz-border: rgba(255, 255, 255, 0.07);
+  --hz-border-strong: rgba(255, 255, 255, 0.12);
+
+  --hz-gold: #d8b367;
+  --hz-gold-hover: #e4c47e;
+  --hz-ivory: #fff8ea;
+
+  --hz-text: #e8e1d5;
+  --hz-muted: #8ea0ae;
+  --hz-muted-2: #6f7e8a;
+
+  --hz-green: #34d399;
+  --hz-amber: #fbbf24;
+  --hz-red: #f87171;
+  --hz-info: #38bdf8;
+
+  min-height: 100vh;
+  background: var(--hz-bg);
+  color: var(--hz-text);
+
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  scrollbar-color: #56636e var(--hz-surface-deep);
 }
 
-a[class*="bg-[#1D4ED8]"],
-button[class*="bg-[#1D4ED8]"],
-a[class*="bg-blue-700"],
-button[class*="bg-blue-700"] {
-  color: #ffffff !important;
+/* =========================================================
+   TYPOGRAPHY
+   Titles = Gestione soggiorni
+   UI / KPI / numbers = sans-serif
+   ========================================================= */
+
+[data-horizon-theme="app"] h1,
+[data-horizon-theme="app"] h2,
+[data-horizon-theme="app"] h3 {
+  margin-top: 0;
+  font-family:
+    Georgia,
+    Cambria,
+    "Times New Roman",
+    serif;
+  color: var(--hz-ivory);
+}
+
+[data-horizon-theme="app"] h1 {
+  letter-spacing: -0.035em;
+}
+
+[data-horizon-theme="app"] h2 {
+  letter-spacing: -0.025em;
+}
+
+[data-horizon-theme="app"] h3 {
+  letter-spacing: -0.015em;
+}
+
+[data-horizon-theme="app"] h4,
+[data-horizon-theme="app"] h5,
+[data-horizon-theme="app"] h6 {
+  color: var(--hz-ivory);
+}
+
+[data-horizon-theme="app"] button,
+[data-horizon-theme="app"] input,
+[data-horizon-theme="app"] textarea,
+[data-horizon-theme="app"] select,
+[data-horizon-theme="app"] table,
+[data-horizon-theme="app"] label {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+/* =========================================================
+   LEGACY LIGHT SURFACES
+   ========================================================= */
+
+[data-horizon-theme="app"] .bg-white {
+  background-color: var(--hz-surface) !important;
+}
+
+[data-horizon-theme="app"] [class*="bg-slate-50"],
+[data-horizon-theme="app"] [class*="bg-slate-100"] {
+  background-color: var(--hz-surface-soft) !important;
+}
+
+[data-horizon-theme="app"] [class*="border-slate-100"],
+[data-horizon-theme="app"] [class*="border-slate-200"],
+[data-horizon-theme="app"] [class*="border-slate-300"] {
+  border-color: var(--hz-border) !important;
+}
+
+/* =========================================================
+   LEGACY TEXT
+   ========================================================= */
+
+[data-horizon-theme="app"] .text-slate-950,
+[data-horizon-theme="app"] .text-slate-900,
+[data-horizon-theme="app"] .text-slate-800,
+[data-horizon-theme="app"] .text-slate-700 {
+  color: var(--hz-text) !important;
+}
+
+[data-horizon-theme="app"] .text-slate-600,
+[data-horizon-theme="app"] .text-slate-500 {
+  color: var(--hz-muted) !important;
+}
+
+[data-horizon-theme="app"] .text-slate-400 {
+  color: var(--hz-muted-2) !important;
+}
+
+/* =========================================================
+   CARDS / PANELS
+   ========================================================= */
+
+[data-horizon-theme="app"] section[class*="rounded-"],
+[data-horizon-theme="app"] article[class*="rounded-"],
+[data-horizon-theme="app"] div[class*="rounded-"][class*="border"] {
+  border-color: var(--hz-border);
+}
+
+[data-horizon-theme="app"] [class*="shadow-sm"],
+[data-horizon-theme="app"] [class*="shadow-md"] {
+  --tw-shadow-color: rgba(0, 0, 0, 0.22);
+}
+
+/* =========================================================
+   FORM FIELDS
+   ========================================================= */
+
+[data-horizon-theme="app"] input:not([type="checkbox"]):not([type="radio"]),
+[data-horizon-theme="app"] textarea,
+[data-horizon-theme="app"] select {
+  background-color: var(--hz-surface-deep) !important;
+  color: var(--hz-ivory) !important;
+  border-color: var(--hz-border-strong) !important;
+}
+
+[data-horizon-theme="app"] input::placeholder,
+[data-horizon-theme="app"] textarea::placeholder {
+  color: #56636e !important;
+}
+
+[data-horizon-theme="app"] input:focus,
+[data-horizon-theme="app"] textarea:focus,
+[data-horizon-theme="app"] select:focus {
+  border-color: rgba(216, 179, 103, 0.72) !important;
+  box-shadow: 0 0 0 3px rgba(216, 179, 103, 0.08) !important;
+  outline: none !important;
+}
+
+[data-horizon-theme="app"] option {
+  background: var(--hz-surface-deep);
+  color: var(--hz-ivory);
+}
+
+[data-horizon-theme="app"] input[type="checkbox"],
+[data-horizon-theme="app"] input[type="radio"] {
+  accent-color: var(--hz-gold);
+}
+
+/* =========================================================
+   PRIMARY ACTIONS
+   Legacy blue buttons become Horizon gold.
+   Functional blue elements remain blue.
+   ========================================================= */
+
+[data-horizon-theme="app"] button[class*="bg-blue-"],
+[data-horizon-theme="app"] a[class*="bg-blue-"] {
+  background-color: var(--hz-gold) !important;
+  border-color: var(--hz-gold) !important;
+  color: var(--hz-surface-deep) !important;
+}
+
+[data-horizon-theme="app"] button[class*="bg-blue-"]:hover,
+[data-horizon-theme="app"] a[class*="bg-blue-"]:hover {
+  background-color: var(--hz-gold-hover) !important;
+  border-color: var(--hz-gold-hover) !important;
+  color: var(--hz-surface-deep) !important;
+}
+
+[data-horizon-theme="app"] button[class*="bg-blue-"]:disabled,
+[data-horizon-theme="app"] a[class*="bg-blue-"][aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   SECONDARY ACTIONS
+   ========================================================= */
+
+[data-horizon-theme="app"] button.bg-white,
+[data-horizon-theme="app"] a.bg-white {
+  background-color: var(--hz-surface-deep) !important;
+  border-color: var(--hz-border-strong) !important;
+  color: var(--hz-text) !important;
+}
+
+[data-horizon-theme="app"] button.bg-white:hover,
+[data-horizon-theme="app"] a.bg-white:hover {
+  background-color: var(--hz-surface-soft) !important;
+  border-color: rgba(216, 179, 103, 0.28) !important;
+}
+
+/* =========================================================
+   SEMANTIC STATUSES
+   ========================================================= */
+
+[data-horizon-theme="app"] [class*="bg-emerald-50"],
+[data-horizon-theme="app"] [class*="bg-emerald-100"] {
+  background-color: rgba(52, 211, 153, 0.08) !important;
+}
+
+[data-horizon-theme="app"] [class*="text-emerald-"] {
+  color: var(--hz-green) !important;
+}
+
+[data-horizon-theme="app"] [class*="border-emerald-"] {
+  border-color: rgba(52, 211, 153, 0.24) !important;
+}
+
+[data-horizon-theme="app"] [class*="bg-amber-50"],
+[data-horizon-theme="app"] [class*="bg-amber-100"] {
+  background-color: rgba(251, 191, 36, 0.08) !important;
+}
+
+[data-horizon-theme="app"] [class*="text-amber-"] {
+  color: var(--hz-amber) !important;
+}
+
+[data-horizon-theme="app"] [class*="border-amber-"] {
+  border-color: rgba(251, 191, 36, 0.24) !important;
+}
+
+[data-horizon-theme="app"] [class*="bg-red-50"],
+[data-horizon-theme="app"] [class*="bg-red-100"] {
+  background-color: rgba(248, 113, 113, 0.08) !important;
+}
+
+[data-horizon-theme="app"] [class*="text-red-"] {
+  color: var(--hz-red) !important;
+}
+
+[data-horizon-theme="app"] [class*="border-red-"] {
+  border-color: rgba(248, 113, 113, 0.24) !important;
+}
+
+/* =========================================================
+   DIVIDERS
+   ========================================================= */
+
+[data-horizon-theme="app"] hr,
+[data-horizon-theme="app"] [class*="border-t"],
+[data-horizon-theme="app"] [class*="border-b"] {
+  border-color: var(--hz-border);
+}
+
+/* =========================================================
+   TABLES
+   ========================================================= */
+
+[data-horizon-theme="app"] table {
+  color: var(--hz-text);
+}
+
+[data-horizon-theme="app"] thead {
+  color: var(--hz-muted);
+}
+
+[data-horizon-theme="app"] tbody tr {
+  border-color: var(--hz-border);
+}
+
+/* =========================================================
+   SELECTION
+   ========================================================= */
+
+[data-horizon-theme="app"] ::selection {
+  background: rgba(216, 179, 103, 0.28);
+  color: var(--hz-ivory);
 }

@@ -58,7 +58,7 @@ export function OwnerInviteActivationForm({
 
         <Link
           href="/login"
-          className="mt-5 inline-flex rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+          className="mt-5 inline-flex rounded-xl bg-[#D8B367] px-4 py-2.5 text-sm font-medium text-[#07111A] hover:bg-[#E4C47E]"
         >
           Vai al login
         </Link>
@@ -78,33 +78,33 @@ export function OwnerInviteActivationForm({
       />
 
       <div>
-        <label className="text-sm font-medium text-slate-700">
+        <label className="text-sm font-medium text-[#FFF8EA]">
           Nome
         </label>
 
         <input
           value={fullName}
           disabled
-          className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600"
+          className="mt-2 w-full rounded-xl border border-white/10 bg-[#07111A] px-4 py-3 text-[#8EA0AE]"
         />
       </div>
 
       <div>
-        <label className="text-sm font-medium text-slate-700">
+        <label className="text-sm font-medium text-[#FFF8EA]">
           Email
         </label>
 
         <input
           value={email}
           disabled
-          className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600"
+          className="mt-2 w-full rounded-xl border border-white/10 bg-[#07111A] px-4 py-3 text-[#8EA0AE]"
         />
       </div>
 
       <div>
         <label
           htmlFor="password"
-          className="text-sm font-medium text-slate-700"
+          className="text-sm font-medium text-[#FFF8EA]"
         >
           Crea la tua password
         </label>
@@ -117,10 +117,10 @@ export function OwnerInviteActivationForm({
           maxLength={128}
           required
           autoComplete="new-password"
-          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          className="mt-2 w-full rounded-xl border border-white/15 bg-[#0D1923] px-4 py-3 outline-none focus:border-[#D8B367] focus:ring-2 focus:ring-[#D8B367]/15"
         />
 
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-[#8EA0AE]">
           Almeno 10 caratteri.
         </p>
       </div>
@@ -128,7 +128,7 @@ export function OwnerInviteActivationForm({
       <div>
         <label
           htmlFor="confirmPassword"
-          className="text-sm font-medium text-slate-700"
+          className="text-sm font-medium text-[#FFF8EA]"
         >
           Conferma password
         </label>
@@ -141,7 +141,7 @@ export function OwnerInviteActivationForm({
           maxLength={128}
           required
           autoComplete="new-password"
-          className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          className="mt-2 w-full rounded-xl border border-white/15 bg-[#0D1923] px-4 py-3 outline-none focus:border-[#D8B367] focus:ring-2 focus:ring-[#D8B367]/15"
         />
       </div>
 
@@ -154,7 +154,7 @@ export function OwnerInviteActivationForm({
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-xl bg-blue-600 px-4 py-3 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-[#D8B367] px-4 py-3 font-medium text-[#07111A] hover:bg-[#E4C47E] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {pending
           ? "Attivazione..."

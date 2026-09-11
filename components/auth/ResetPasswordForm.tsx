@@ -25,7 +25,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       setError(
         caught instanceof Error
           ? caught.message
-          : "Non è stato possibile reimpostare la password.",
+          : "Non Ã¨ stato possibile reimpostare la password.",
       );
     } finally {
       setIsSubmitting(false);
@@ -45,7 +45,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           </div>
         </div>
 
-        <Link href="/login" className="flex h-13 w-full items-center justify-center rounded-2xl bg-blue-600 px-5 py-3 font-medium text-white transition hover:bg-blue-700">
+        <Link href="/login" className="flex h-13 w-full items-center justify-center rounded-2xl bg-[#D8B367] px-5 py-3 font-medium text-[#07111A] transition hover:bg-[#E4C47E]">
           Accedi a Horizon
         </Link>
       </div>
@@ -55,22 +55,22 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form className="space-y-5" onSubmit={handleSubmit} noValidate>
       <div>
-        <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-700">
+        <label htmlFor="password" className="mb-2 block text-sm font-medium text-[#FFF8EA]">
           Nuova password
         </label>
         <div className="relative">
-          <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
-          <input id="password" name="password" type="password" autoComplete="new-password" minLength={10} maxLength={128} required disabled={isSubmitting} placeholder="Almeno 10 caratteri" className="h-13 w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100" />
+          <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#8EA0AE]" />
+          <input id="password" name="password" type="password" autoComplete="new-password" minLength={10} maxLength={128} required disabled={isSubmitting} placeholder="Almeno 10 caratteri" className="h-13 w-full rounded-2xl border border-white/10 bg-[#0D1923] py-3 pl-12 pr-4 text-base text-[#FFF8EA] outline-none transition placeholder:text-[#8EA0AE] focus:border-[#D8B367] focus:ring-4 focus:ring-[#D8B367]/10 disabled:bg-[#07111A]" />
         </div>
       </div>
 
       <div>
-        <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-slate-700">
+        <label htmlFor="confirmPassword" className="mb-2 block text-sm font-medium text-[#FFF8EA]">
           Conferma nuova password
         </label>
         <div className="relative">
-          <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
-          <input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" minLength={10} maxLength={128} required disabled={isSubmitting} placeholder="Ripeti la nuova password" className="h-13 w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:bg-slate-100" />
+          <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#8EA0AE]" />
+          <input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" minLength={10} maxLength={128} required disabled={isSubmitting} placeholder="Ripeti la nuova password" className="h-13 w-full rounded-2xl border border-white/10 bg-[#0D1923] py-3 pl-12 pr-4 text-base text-[#FFF8EA] outline-none transition placeholder:text-[#8EA0AE] focus:border-[#D8B367] focus:ring-4 focus:ring-[#D8B367]/10 disabled:bg-[#07111A]" />
         </div>
       </div>
 
@@ -80,7 +80,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         </div>
       ) : null}
 
-      <button type="submit" disabled={isSubmitting} className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 font-medium text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-blue-400">
+      <button type="submit" disabled={isSubmitting} className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-[#D8B367] px-5 py-3 font-medium text-[#07111A] shadow-lg shadow-black/20 transition hover:bg-[#E4C47E] focus:outline-none focus:ring-4 focus:ring-[#D8B367]/20 disabled:cursor-not-allowed disabled:bg-[#D8B367]/50">
         {isSubmitting ? (
           <>
             <LoaderCircle className="size-5 animate-spin" />

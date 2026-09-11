@@ -390,15 +390,11 @@ export default async function BookingsPage({
       >
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[8px] font-black uppercase tracking-[0.18em] text-blue-600">
-              Operations
+            <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#D8B367]">
+              Gestione soggiorni
             </p>
 
-            <h2 className="mt-1 text-[18px] font-black tracking-[-0.035em] text-slate-950">
-              Gestione soggiorni
-            </h2>
-
-            <p className="mt-1 text-[9px] font-medium text-slate-400">
+            <p className="mt-1 text-[9px] font-medium text-[#82909C]">
               {selectedProperty
                 ? `Prenotazioni di ${selectedProperty.name}`
                 : "Tutte le prenotazioni del portfolio Horizon"}
@@ -414,7 +410,7 @@ export default async function BookingsPage({
                   )}`
                 : "/bookings/new"
             }
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#2563EB] px-4 text-[10px] font-bold text-white shadow-[0_8px_20px_rgba(37,99,235,0.20)] transition hover:-translate-y-0.5 hover:bg-[#1D4ED8] hover:shadow-[0_12px_26px_rgba(37,99,235,0.24)]"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#D8B367]/70 bg-[#D8B367] px-4 text-[10px] font-bold text-[#07111A] shadow-[0_10px_24px_rgba(216,179,103,0.16)] transition hover:-translate-y-0.5 hover:bg-[#E5C47F] hover:shadow-[0_14px_30px_rgba(216,179,103,0.20)]"
           >
             <Plus
               size={14}
@@ -481,19 +477,19 @@ export default async function BookingsPage({
 
         <form
           method="get"
-          className="mb-5 rounded-[18px] border border-slate-200/80 bg-white p-4 shadow-[0_8px_26px_rgba(15,23,42,0.045)]"
+          className="mb-5 rounded-[18px] border border-white/[0.07] bg-[#09131C]/95 p-4 shadow-[0_14px_34px_rgba(0,0,0,0.20)]"
         >
           <div className="grid gap-2 lg:grid-cols-[minmax(180px,1fr)_155px_155px_220px_auto_auto] lg:items-end">
 
             <label className="block">
-              <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-slate-400">
+              <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
                 Cerca
               </span>
 
               <div className="relative">
                 <Search
                   size={14}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#687784]"
                 />
 
                 <input
@@ -503,7 +499,7 @@ export default async function BookingsPage({
                     search
                   }
                   placeholder="Ospite, email o ID..."
-                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-9 pr-3 text-[10px] font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                  className="h-10 w-full rounded-xl border border-white/[0.08] bg-[#050B11]/70 pl-9 pr-3 text-[10px] font-medium text-[#E8E1D5] outline-none transition placeholder:text-[#5F6C76] focus:border-[#D8B367]/60 focus:bg-[#07111A] focus:ring-2 focus:ring-[#D8B367]/10"
                 />
               </div>
             </label>
@@ -514,14 +510,14 @@ export default async function BookingsPage({
             />
 
             <label className="block">
-              <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-slate-400">
+              <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
                 Struttura
               </span>
 
               <div className="relative">
                 <Building2
                   size={14}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#687784]"
                 />
 
                 <select
@@ -529,7 +525,7 @@ export default async function BookingsPage({
                   defaultValue={
                     propertyId
                   }
-                  className="h-10 w-full appearance-none rounded-xl border border-slate-200 bg-white pl-9 pr-8 text-[10px] font-semibold text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                  className="h-10 w-full appearance-none rounded-xl border border-white/[0.08] bg-[#050B11]/70 pl-9 pr-8 text-[10px] font-semibold text-[#E8E1D5] outline-none transition focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
                 >
                   <option value="">
                     Tutte le strutture
@@ -557,14 +553,14 @@ export default async function BookingsPage({
 
             <button
               type="submit"
-              className="h-10 rounded-xl bg-[#2563EB] px-5 text-[10px] font-bold text-white shadow-[0_6px_16px_rgba(37,99,235,0.16)] transition hover:bg-[#1D4ED8]"
+              className="h-10 rounded-xl bg-[#D8B367] px-5 text-[10px] font-bold text-[#07111A] shadow-[0_8px_18px_rgba(216,179,103,0.14)] transition hover:bg-[#E5C47F]"
             >
               Applica
             </button>
 
             <Link
               href="/bookings"
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-[9px] font-semibold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 text-[9px] font-semibold text-[#82909C] transition hover:border-[#D8B367]/40 hover:bg-[#D8B367]/[0.06] hover:text-[#D8B367]"
             >
               <X
                 size={12}
@@ -593,15 +589,15 @@ export default async function BookingsPage({
 
         {day === "today" &&
         type ? (
-          <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2">
-            <p className="text-[9px] font-semibold text-blue-700">
+          <div className="mb-4 rounded-xl border border-[#D8B367]/20 bg-[#D8B367]/[0.06] px-3 py-2">
+            <p className="text-[9px] font-semibold text-[#D8B367]">
               Vista filtrata:{" "}
               {type ===
               "checkout"
                 ? "check-out di oggi"
                 : "check-in di oggi"}
               {selectedProperty
-                ? ` · ${selectedProperty.name}`
+                ? ` \u00B7 ${selectedProperty.name}`
                 : ""}
             </p>
           </div>
@@ -609,11 +605,11 @@ export default async function BookingsPage({
 
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-blue-600">
+            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#D8B367]">
               Periodo di riferimento
             </p>
 
-            <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900">
+            <h2 className="mt-1 font-serif text-xl font-semibold tracking-tight text-[#FFF8EA]">
               {periodLabel}
             </h2>
 
@@ -623,22 +619,22 @@ export default async function BookingsPage({
               1
                 ? "prenotazione valida"
                 : "prenotazioni valide"}
-              {" · "}
+              {" \u00B7 "}
               criterio: data di check-in
             </p>
           </div>
         </div>
 
-        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#09131C]/95 shadow-[0_16px_38px_rgba(0,0,0,0.20)]">
           {filteredBookings.length ===
           0 ? (
             <div className="px-6 py-16 text-center">
               <CalendarDays
                 size={22}
-                className="mx-auto text-blue-500"
+                className="mx-auto text-[#D8B367]"
               />
 
-              <h2 className="mt-3 text-sm font-bold text-slate-900">
+              <h2 className="mt-3 text-sm font-bold text-[#FFF8EA]">
                 Nessuna prenotazione nel periodo
               </h2>
 
@@ -650,7 +646,7 @@ export default async function BookingsPage({
             <div className="overflow-x-auto">
               <div className="min-w-[1160px]">
 
-                <div className="grid grid-cols-[minmax(190px,1.3fr)_minmax(175px,1.1fr)_175px_80px_90px_115px_125px_60px] items-center border-b border-slate-200 bg-slate-50/80 px-4 py-3 text-[8px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                <div className="grid grid-cols-[minmax(190px,1.3fr)_minmax(175px,1.1fr)_175px_80px_90px_115px_125px_60px] items-center border-b border-white/[0.07] bg-white/[0.025] px-4 py-3 text-[8px] font-bold uppercase tracking-[0.12em] text-[#687784]">
                   <span>Ospite</span>
                   <span>Struttura</span>
                   <span>Soggiorno</span>
@@ -673,11 +669,11 @@ export default async function BookingsPage({
                         booking.id
                       }
                       className={[
-                        "grid grid-cols-[minmax(190px,1.3fr)_minmax(175px,1.1fr)_175px_80px_90px_115px_125px_60px] items-center px-4 py-3.5 transition hover:bg-blue-50/30",
+                        "grid grid-cols-[minmax(190px,1.3fr)_minmax(175px,1.1fr)_175px_80px_90px_115px_125px_60px] items-center px-4 py-3.5 transition hover:bg-white/[0.025]",
                         index <
                         filteredBookings.length -
                           1
-                          ? "border-b border-slate-100"
+                          ? "border-b border-white/[0.055]"
                           : "",
                       ].join(
                         " ",
@@ -686,7 +682,7 @@ export default async function BookingsPage({
                       <div className="min-w-0">
                         <Link
                           href={`/bookings/${booking.id}`}
-                          className="block truncate text-[11px] font-bold text-slate-900 transition hover:text-blue-700"
+                          className="block truncate text-[11px] font-bold text-[#F4EEDF] transition hover:text-[#D8B367]"
                         >
                           {
                             booking.guestName
@@ -711,20 +707,20 @@ export default async function BookingsPage({
                       </div>
 
                       {isOperator ? (
-                        <span className="truncate text-[10px] font-semibold text-slate-600">
+                        <span className="truncate text-[10px] font-semibold text-[#A4AFB8]">
                           {booking.property.name}
                         </span>
                       ) : (
                         <Link
                           href={`/properties/${booking.property.id}`}
-                          className="truncate text-[10px] font-semibold text-slate-600 transition hover:text-blue-700"
+                          className="truncate text-[10px] font-semibold text-[#A4AFB8] transition hover:text-[#D8B367]"
                         >
                           {booking.property.name}
                         </Link>
                       )}
 
                       <div>
-                        <p className="text-[9px] font-bold text-slate-700">
+                        <p className="text-[9px] font-bold text-[#D7DDE1]">
                           {formatDate(
                             booking.checkIn,
                           )}
@@ -741,7 +737,7 @@ export default async function BookingsPage({
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#D7DDE1]">
                         <Moon
                           size={12}
                           className="text-slate-400"
@@ -752,7 +748,7 @@ export default async function BookingsPage({
                         }
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-700">
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#D7DDE1]">
                         <Users
                           size={12}
                           className="text-slate-400"
@@ -764,10 +760,10 @@ export default async function BookingsPage({
                       </div>
 
                       {!isOperator ? (
-                      <p className="flex items-center gap-1 text-[10px] font-bold text-slate-900">
+                      <p className="flex items-center gap-1 text-[10px] font-bold text-[#F4EEDF]">
                         <CircleDollarSign
                           size={12}
-                          className="text-blue-500"
+                          className="text-[#D8B367]"
                         />
 
                         {formatCurrency(
@@ -798,7 +794,7 @@ export default async function BookingsPage({
                       <div className="flex justify-end">
                         <Link
                           href={`/bookings/${booking.id}`}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.025] text-[#82909C] transition hover:border-[#D8B367]/40 hover:bg-[#D8B367]/[0.06] hover:text-[#D8B367]"
                         >
                           <ArrowRight
                             size={13}
@@ -836,7 +832,7 @@ export default async function BookingsPage({
                     commissionData.total,
                     "EUR",
                   )
-                : "—"
+                : "\u2014"
             }
             description={
               isFullMonth
@@ -856,7 +852,7 @@ export default async function BookingsPage({
                     netRevenue,
                     "EUR",
                   )
-                : "—"
+                : "\u2014"
             }
             description="Lordo meno commissioni OTA"
             highlight
@@ -1017,17 +1013,17 @@ function SummaryCard({
 }) {
   const classes = {
     blue:
-      "border-blue-100 bg-blue-50 text-blue-600",
+      "border-[#D8B367]/25 bg-[#D8B367]/[0.08] text-[#D8B367]",
     emerald:
-      "border-emerald-100 bg-emerald-50 text-emerald-600",
+      "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300",
     sky:
-      "border-sky-100 bg-sky-50 text-sky-600",
+      "border-sky-400/20 bg-sky-400/[0.08] text-sky-300",
     indigo:
-      "border-indigo-100 bg-indigo-50 text-indigo-600",
+      "border-indigo-400/20 bg-indigo-400/[0.08] text-indigo-300",
   };
 
   return (
-    <div className="flex min-h-[82px] items-center gap-3.5 rounded-[18px] border border-slate-200/80 bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(15,23,42,0.045)] transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-[0_14px_30px_rgba(37,99,235,0.08)]">
+    <div className="flex min-h-[82px] items-center gap-3.5 rounded-[18px] border border-white/[0.07] bg-[#09131C]/95 px-4 py-3.5 shadow-[0_12px_28px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:border-[#D8B367]/25 hover:shadow-[0_16px_34px_rgba(0,0,0,0.24)]">
       <span
         className={[
           "flex h-10 w-10 items-center justify-center rounded-xl border shadow-sm",
@@ -1040,11 +1036,11 @@ function SummaryCard({
       </span>
 
       <div>
-        <p className="text-[8px] font-bold uppercase tracking-[0.11em] text-slate-400">
+        <p className="text-[8px] font-bold uppercase tracking-[0.11em] text-[#82909C]">
           {label}
         </p>
 
-        <p className="mt-0.5 text-[22px] font-black tracking-[-0.04em] text-slate-950 tabular-nums">
+        <p className="mt-0.5 text-[22px] font-black tracking-[-0.04em] text-[#FFF8EA] tabular-nums">
           {value}
         </p>
       </div>
@@ -1068,8 +1064,8 @@ function MoneySummary({
       className={[
         "rounded-2xl border p-4 shadow-sm",
         highlight
-          ? "border-blue-200 bg-blue-50/60"
-          : "border-slate-200 bg-white",
+          ? "border-[#D8B367]/30 bg-[#D8B367]/[0.07]"
+          : "border-white/[0.07] bg-[#09131C]/95",
       ].join(
         " ",
       )}
@@ -1082,8 +1078,8 @@ function MoneySummary({
         className={[
           "mt-1 text-xl font-bold tracking-tight",
           highlight
-            ? "text-blue-700"
-            : "text-slate-900",
+            ? "text-[#D8B367]"
+            : "text-[#F4EEDF]",
         ].join(
           " ",
         )}
@@ -1104,7 +1100,7 @@ function ChannelBadge({
   channel: string;
 }) {
   return (
-    <span className="inline-flex rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[7px] font-bold uppercase tracking-wide text-blue-600">
+    <span className="inline-flex rounded-full border border-[#D8B367]/20 bg-[#D8B367]/[0.07] px-2 py-0.5 text-[7px] font-bold uppercase tracking-wide text-[#D8B367]">
       {formatLabel(
         channel,
       )}
@@ -1126,8 +1122,8 @@ function BookingStatusBadge({
       className={[
         "inline-flex rounded-full border px-2 py-0.5 text-[7px] font-bold",
         cancelled
-          ? "border-rose-200 bg-rose-50 text-rose-700"
-          : "border-emerald-200 bg-emerald-50 text-emerald-700",
+          ? "border-rose-400/20 bg-rose-400/[0.08] text-rose-300"
+          : "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300",
       ].join(
         " ",
       )}
@@ -1150,13 +1146,13 @@ function OperationalStatus({
         "text-[7px] font-semibold",
         status === "OK"
           ? "text-slate-400"
-          : "text-amber-600",
+          : "text-amber-300",
       ].join(
         " ",
       )}
     >
       {status === "OK"
-        ? "Operatività OK"
+        ? "Operativit\u00E0 OK"
         : formatLabel(
             status,
           )}
@@ -1313,7 +1309,7 @@ function formatPeriodLabel(
 
   return `${start.toLocaleDateString(
     "it-IT",
-  )} — ${end.toLocaleDateString(
+  )} \u2014 ${end.toLocaleDateString(
     "it-IT",
   )}`;
 }
@@ -1333,8 +1329,5 @@ function formatLabel(
     )
     .join(" ");
 }
-
-
-
 
 

@@ -355,7 +355,7 @@ export default async function TasksPage({
 
       <AppShell
         title="Task operativi"
-        subtitle="Pulizie, manutenzioni e attivitÃ  operative collegate a immobili e prenotazioni."
+        subtitle={"Pulizie, manutenzioni e attivit\u00E0 operative collegate a immobili e prenotazioni."}
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
@@ -394,7 +394,7 @@ export default async function TasksPage({
 
           <Link
             href="/tasks/new"
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#2563EB] px-4 text-[10px] font-semibold text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)] transition hover:bg-[#1D4ED8]"
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#D8B367] px-4 text-[10px] font-semibold text-[#07111A] shadow-[0_8px_20px_rgba(216,179,103,0.14)] transition hover:bg-[#E3C37E]"
           >
             <Plus size={14} />
 
@@ -403,27 +403,27 @@ export default async function TasksPage({
         </div>
 
         {taskInsights.length > 0 ? (
-          <section className="mb-4 overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-            <div className="flex items-center justify-between gap-4 border-b border-blue-100 bg-blue-50/60 px-4 py-3">
+          <section className="mb-4 overflow-hidden rounded-2xl border border-[#D8B367]/20 bg-[#09131C]/90 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
+            <div className="flex items-center justify-between gap-4 border-b border-white/[0.06] bg-[#0C1822] px-4 py-3">
               <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0B3C98] text-white">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#D8B367]/20 bg-[#D8B367]/[0.08] text-[#D8B367]">
                   <ClipboardCheck
                     size={14}
                   />
                 </span>
 
                 <div>
-                  <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-blue-600">
+                  <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[#D8B367]">
                     Horizon Intelligence
                   </p>
 
-                  <p className="mt-0.5 text-[11px] font-bold text-slate-900">
-                    Attività che richiedono attenzione
+                  <p className="mt-0.5 text-[11px] font-bold text-[#FFF8EA]">
+                    {"Attivit\u00E0 che richiedono attenzione"}
                   </p>
                 </div>
               </div>
 
-              <span className="rounded-full bg-white px-2.5 py-1 text-[8px] font-bold text-blue-700 shadow-sm">
+              <span className="rounded-full border border-[#D8B367]/20 bg-[#D8B367]/[0.07] px-2.5 py-1 text-[8px] font-bold text-[#D8B367]">
                 {taskInsights.length}
                 {" "}
                 {taskInsights.length === 1
@@ -473,7 +473,7 @@ export default async function TasksPage({
 
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-[10px] font-bold text-slate-900">
+                            <p className="text-[10px] font-bold text-[#FFF8EA]">
                               {insight.title}
                             </p>
 
@@ -495,11 +495,11 @@ export default async function TasksPage({
                             </span>
                           </div>
 
-                          <p className="mt-1 text-[9px] leading-4 text-slate-500">
+                          <p className="mt-1 text-[9px] leading-4 text-[#82909C]">
                             {insight.explanation}
                           </p>
 
-                          <p className="mt-1 text-[8px] font-semibold text-slate-400">
+                          <p className="mt-1 text-[8px] font-semibold text-[#6F7E8A]">
                             {insight.propertyName}
                           </p>
                         </div>
@@ -531,21 +531,21 @@ export default async function TasksPage({
           </section>
         ) : null}
 
-        <section className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.04)]">
+        <section className="mb-4 rounded-2xl border border-white/[0.07] bg-[#09131C]/90 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
           <div className="mb-4 flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-[#2563EB]">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D8B367]/[0.08] text-[#D8B367]">
               <Filter
                 size={14}
               />
             </span>
 
             <div>
-              <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-slate-400">
+              <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[#6F7E8A]">
                 Filtri operativi
               </p>
 
-              <p className="text-[10px] font-semibold text-slate-700">
-                Restringi le attivitÃ  da visualizzare
+              <p className="text-[10px] font-semibold text-[#E8E1D5]">
+                {"Restringi le attivit\u00E0 da visualizzare"}
               </p>
             </div>
           </div>
@@ -766,7 +766,7 @@ export default async function TasksPage({
             )}
 
             <label className="grid min-w-[220px] gap-1.5">
-              <span className="text-[8px] font-semibold text-slate-500">
+              <span className="text-[8px] font-semibold text-[#82909C]">
                 Immobile
               </span>
 
@@ -801,7 +801,7 @@ export default async function TasksPage({
             </label>
 
             <label className="grid min-w-[210px] gap-1.5">
-              <span className="text-[8px] font-semibold text-slate-500">
+              <span className="text-[8px] font-semibold text-[#82909C]">
                 Tipo task
               </span>
 
@@ -855,7 +855,7 @@ export default async function TasksPage({
 
             <Link
               href="/tasks"
-              className="flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-[9px] font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-800"
+              className="flex h-10 items-center rounded-xl border border-white/[0.08] bg-[#07111A] px-4 text-[9px] font-semibold text-[#82909C] transition hover:bg-white/[0.04] hover:text-[#E8E1D5]"
             >
               Azzera
             </Link>
@@ -864,17 +864,17 @@ export default async function TasksPage({
 
         {tasks.length ===
         0 ? (
-          <section className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-14 text-center">
+          <section className="rounded-2xl border border-dashed border-white/[0.10] bg-[#09131C]/80 px-6 py-14 text-center">
             <ClipboardCheck
               size={24}
-              className="mx-auto text-blue-400"
+              className="mx-auto text-[#D8B367]"
             />
 
-            <h2 className="mt-3 text-[14px] font-bold text-slate-900">
+            <h2 className="mt-3 text-[14px] font-bold text-[#FFF8EA]">
               Nessun task trovato
             </h2>
 
-            <p className="mt-1 text-[10px] text-slate-400">
+            <p className="mt-1 text-[10px] text-[#6F7E8A]">
               Modifica i filtri oppure crea un nuovo task operativo.
             </p>
           </section>
@@ -970,7 +970,7 @@ export default async function TasksPage({
                             }
                           </Link>
 
-                          <p className="mt-1 line-clamp-2 max-w-3xl text-[10px] leading-4 text-slate-400">
+                          <p className="mt-1 line-clamp-2 max-w-3xl text-[10px] leading-4 text-[#6F7E8A]">
                             {task.description ??
                               "Nessuna descrizione"}
                           </p>
@@ -1078,7 +1078,7 @@ export default async function TasksPage({
                       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                         <Link
                           href={`/tasks/${task.id}`}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[8px] font-semibold text-slate-500 transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563EB]"
+                          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-[8px] font-semibold text-[#82909C] transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#2563EB]"
                         >
                           Dettaglio
                           <ChevronRight
@@ -1259,7 +1259,7 @@ function FilterGroup({
 }) {
   return (
     <div>
-      <p className="mb-2 text-[8px] font-bold uppercase tracking-[0.12em] text-slate-400">
+      <p className="mb-2 text-[8px] font-bold uppercase tracking-[0.12em] text-[#6F7E8A]">
         {label}
       </p>
 
@@ -1285,8 +1285,8 @@ function FilterLink({
       className={[
         "rounded-lg border px-2.5 py-1.5 text-[8px] font-semibold transition",
         active
-          ? "border-blue-200 bg-blue-50 text-[#2563EB]"
-          : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50",
+          ? "border-[#D8B367]/30 bg-[#D8B367]/[0.08] text-[#D8B367]"
+          : "border-white/[0.08] bg-[#07111A] text-[#82909C] hover:bg-white/[0.04]",
       ].join(" ")}
     >
       {label}
@@ -1309,13 +1309,13 @@ function SummaryCard({
 }) {
   const toneClass = {
     blue:
-      "border-blue-100 bg-blue-50 text-[#2563EB]",
+      "border-[#D8B367]/30 bg-[#D8B367]/[0.08] text-[#D8B367]",
     slate:
-      "border-slate-200 bg-white text-slate-700",
+      "border-white/[0.08] bg-[#09131C] text-[#A4AFB8]",
     amber:
-      "border-amber-100 bg-amber-50 text-amber-700",
+      "border-amber-400/20 bg-amber-400/[0.07] text-amber-300",
     rose:
-      "border-rose-100 bg-rose-50 text-rose-700",
+      "border-rose-400/20 bg-rose-400/[0.07] text-rose-300",
   }[tone];
 
   return (
@@ -1362,7 +1362,7 @@ function StatusBadge({
             label:
               "Da fare",
             classes:
-              "border-blue-200 bg-blue-50 text-[#2563EB]",
+              "border-[#D8B367]/30 bg-[#D8B367]/[0.08] text-[#D8B367]",
           };
 
   return (
@@ -1383,7 +1383,7 @@ function TaskTypeBadge({
   type: TaskType;
 }) {
   return (
-    <span className="rounded-full bg-slate-100 px-2 py-1 text-[7px] font-bold uppercase tracking-[0.08em] text-slate-500">
+    <span className="rounded-full bg-slate-100 px-2 py-1 text-[7px] font-bold uppercase tracking-[0.08em] text-[#82909C]">
       {formatTaskType(
         type,
       )}
@@ -1402,7 +1402,7 @@ function TaskMetric({
 }) {
   return (
     <div className="min-w-0 rounded-xl bg-slate-50/70 px-3 py-2.5">
-      <div className="flex items-center gap-1.5 text-slate-400">
+      <div className="flex items-center gap-1.5 text-[#6F7E8A]">
         {icon}
 
         <span className="text-[7px] font-bold uppercase tracking-[0.09em]">
@@ -1451,5 +1451,4 @@ function formatTaskType(
 }
 
 const selectClass =
-  "h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[9px] font-semibold text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100";
-
+  "h-10 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-3 text-[9px] font-semibold text-[#E8E1D5] outline-none [color-scheme:dark] transition focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10";

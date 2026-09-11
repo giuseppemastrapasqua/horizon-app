@@ -14,7 +14,7 @@ export function AppShell({
   children,
 }: AppShellProps) {
   return (
-    <main className="relative min-h-screen min-w-0 overflow-hidden bg-[#050B11] px-4 py-5 text-[#FFF8EA] sm:px-6 lg:ml-[220px] lg:px-7 lg:py-7 xl:px-8">
+    <main data-horizon-theme="app" className="relative min-h-screen min-w-0 overflow-hidden bg-[#050B11] px-4 py-5 text-[#FFF8EA] sm:px-6 lg:ml-[220px] lg:px-7 lg:py-7 xl:px-8">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(ellipse_at_top_right,rgba(216,179,103,0.08),transparent_46%)]" />
       <div className="pointer-events-none absolute left-0 top-[220px] h-[500px] w-[500px] rounded-full bg-[#0C2030]/20 blur-3xl" />
 

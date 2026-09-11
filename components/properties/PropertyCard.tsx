@@ -22,138 +22,72 @@ export function PropertyCard({ property }: PropertyCardProps) {
   ).length;
 
   return (
-    <section
-      style={{
-        background: "#fff",
-        border: "1px solid #e2e8f0",
-        borderRadius: "22px",
-        padding: "26px",
-        boxShadow: "0 10px 30px rgba(15, 23, 42, 0.06)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: "24px",
-          alignItems: "flex-start",
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              fontSize: "24px",
-              margin: "0 0 8px 0",
-              color: "#0f172a",
-            }}
-          >
+    <section className="rounded-2xl border border-white/[0.07] bg-[#09131C]/88 p-6 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+      <div className="flex flex-wrap items-start justify-between gap-5">
+        <div className="min-w-0 flex-1">
+          <h2 className="font-serif text-[24px] font-medium tracking-[-0.02em] text-[#FFF8EA]">
             {property.name}
           </h2>
 
-          <p style={{ margin: "0 0 4px 0", color: "#64748b" }}>
+          <p className="mt-2 text-sm text-[#82909C]">
             {property.address} — {property.zone ?? property.city}
           </p>
 
-          <p style={{ margin: 0, color: "#64748b" }}>
-            Proprietario: <strong>{property.owner.fullName}</strong>
+          <p className="mt-1 text-sm text-[#82909C]">
+            Proprietario:{" "}
+            <strong className="font-semibold text-[#D8DEE4]">
+              {property.owner.fullName}
+            </strong>
           </p>
 
           <Link
             href={`/properties/${property.id}`}
-            style={{
-              display: "inline-block",
-              marginTop: "14px",
-              color: "#0f172a",
-              fontWeight: 800,
-              textDecoration: "none",
-            }}
+            className="mt-4 inline-flex items-center text-sm font-semibold text-[#D8B367] transition hover:text-[#E7CC91]"
           >
             Apri centro immobile →
           </Link>
         </div>
 
-        <div
-          style={{
-            textAlign: "right",
-            background: "#f8fafc",
-            border: "1px solid #e2e8f0",
-            borderRadius: "18px",
-            padding: "16px 20px",
-            minWidth: "130px",
-          }}
-        >
-          <div
-            style={{
-              fontSize: "13px",
-              color: "#64748b",
-            }}
-          >
+        <div className="min-w-[140px] rounded-2xl border border-[#D8B367]/20 bg-[#07111A] px-5 py-4 text-right">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#82909C]">
             Horizon Score
           </div>
 
-          <div
-            style={{
-              fontSize: "38px",
-              fontWeight: 900,
-              color: "#0f172a",
-            }}
-          >
+          <div className="mt-1 text-[38px] font-semibold leading-none tracking-[-0.03em] text-[#D8B367]">
             {property.currentScore}
           </div>
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(140px, 1fr))",
-          gap: "16px",
-          marginTop: "28px",
-        }}
-      >
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MiniMetric title="Stato" value={property.status} />
-
         <MiniMetric
           title="Classe commerciale"
           value={property.commercialClass}
         />
-
         <MiniMetric
           title="Camere"
           value={property.bedrooms ?? "-"}
         />
-
         <MiniMetric
           title="Bagni"
           value={property.bathrooms ?? "-"}
         />
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(140px, 1fr))",
-          gap: "16px",
-          marginTop: "20px",
-          paddingTop: "20px",
-          borderTop: "1px solid #e2e8f0",
-        }}
-      >
+      <div className="mt-4 grid gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-2 xl:grid-cols-4">
         <MiniMetric
           title="Prenotazioni"
           value={property.bookings.length}
         />
-
         <MiniMetric
           title="Task aperti"
           value={openTasksCount}
         />
-
         <MiniMetric
           title="Ricavo demo"
           value={currencyFormatter.format(totalRevenue)}
         />
-
         <MiniMetric
           title="Capacità"
           value={`${property.maxGuests} ospiti`}
@@ -171,24 +105,14 @@ function MiniMetric({
   value: string | number;
 }) {
   return (
-    <div>
-      <div
-        style={{
-          fontSize: "13px",
-          color: "#64748b",
-          marginBottom: "5px",
-        }}
-      >
+    <div className="rounded-xl border border-white/[0.05] bg-[#07111A]/70 px-4 py-3">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#6F7E8A]">
         {title}
       </div>
 
-      <strong
-        style={{
-          color: "#0f172a",
-        }}
-      >
+      <div className="mt-1 text-sm font-semibold text-[#E8E1D5]">
         {value}
-      </strong>
+      </div>
     </div>
   );
 }

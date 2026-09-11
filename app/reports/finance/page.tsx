@@ -594,23 +594,23 @@ export default async function FinanceReportsPage({
         </section>
 
         {allFinanceInsights.length > 0 ? (
-          <section className="mb-5 rounded-3xl border border-blue-100 bg-blue-50/50 p-6 shadow-sm">
+          <section className="mb-5 rounded-3xl border border-[#D8B367]/20 bg-[#09131C]/90 p-6 shadow-sm">
             <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">
+                <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#D8B367]">
                   HORIZON INTELLIGENCE
                 </div>
 
-                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+                <h2 className="mt-2 font-serif text-2xl font-semibold tracking-[-0.02em] text-[#FFF8EA]">
                   Elementi finanziari da verificare
                 </h2>
 
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-[#A4AFB8]">
                   Horizon evidenzia solo variazioni e anomalie economicamente rilevanti.
                 </p>
               </div>
 
-              <span className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
+              <span className="rounded-full bg-[#09131C] px-4 py-2 text-sm font-semibold text-[#D8B367] shadow-sm">
                 {allFinanceInsights.length}{" "}
                 {allFinanceInsights.length === 1
                   ? "segnalazione"
@@ -622,12 +622,12 @@ export default async function FinanceReportsPage({
               {allFinanceInsights.map((insight) => {
                 const severityClass =
                   insight.severity === "CRITICAL"
-                    ? "border-rose-200 bg-rose-50"
+                    ? "border-rose-400/20 bg-rose-400/[0.07]"
                     : insight.severity === "WARNING"
-                      ? "border-amber-200 bg-amber-50"
+                      ? "border-amber-400/20 bg-amber-400/[0.07]"
                       : insight.severity === "OPPORTUNITY"
-                        ? "border-emerald-200 bg-emerald-50"
-                        : "border-blue-100 bg-white";
+                        ? "border-emerald-400/20 bg-emerald-400/[0.07]"
+                        : "border-blue-100 bg-[#09131C]";
 
                 const severityLabel =
                   insight.severity === "CRITICAL"
@@ -646,20 +646,20 @@ export default async function FinanceReportsPage({
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-600">
+                          <span className="rounded-full bg-[#07111A]/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#A4AFB8]">
                             {severityLabel}
                           </span>
 
-                          <span className="text-xs font-semibold text-slate-500">
+                          <span className="text-xs font-semibold text-[#82909C]">
                             {insight.propertyName}
                           </span>
                         </div>
 
-                        <h3 className="mt-3 text-base font-bold text-slate-950">
+                        <h3 className="mt-3 text-base font-bold text-[#FFF8EA]">
                           {insight.title}
                         </h3>
 
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                        <p className="mt-2 text-sm leading-6 text-[#A4AFB8]">
                           {insight.explanation}
                         </p>
                       </div>
@@ -680,23 +680,23 @@ export default async function FinanceReportsPage({
           </section>
         ) : null}
 
-        <section className="mb-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="mb-5 rounded-3xl border border-white/[0.07] bg-[#09131C] p-6 shadow-sm">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+              <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#82909C]">
                 ANDAMENTO
               </div>
 
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+              <h2 className="mt-2 font-serif text-2xl font-semibold tracking-[-0.02em] text-[#FFF8EA]">
                 Storico mensile
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-[#82909C]">
                 Confronto tra lordo e netto proprietari negli ultimi 12 mesi disponibili.
               </p>
             </div>
 
-            <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+            <span className="rounded-full bg-[#09131C]/[0.05] px-4 py-2 text-sm font-semibold text-[#A4AFB8]">
               Ultimi {monthlyHistory.length}{" "}
               {monthlyHistory.length === 1
                 ? "mese"
@@ -705,7 +705,7 @@ export default async function FinanceReportsPage({
           </div>
 
           {monthlyHistory.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 px-6 py-10 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-white/[0.07] px-6 py-10 text-center text-sm text-[#82909C]">
               Nessun dato storico disponibile.
             </div>
           ) : (
@@ -731,24 +731,24 @@ export default async function FinanceReportsPage({
                       key={
                         item.month.toISOString()
                       }
-                      className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-blue-200 hover:shadow-sm"
+                      className="rounded-2xl border border-white/[0.07] bg-[#09131C] p-5 transition hover:border-[#D8B367]/30 hover:shadow-sm"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
-                          <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-blue-600">
+                          <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#D8B367]">
                             <span className="text-lg">
                               ◫
                             </span>
                           </div>
 
                           <div>
-                            <h3 className="text-sm font-bold uppercase tracking-[0.02em] text-slate-950">
+                            <h3 className="text-sm font-bold uppercase tracking-[0.02em] text-[#FFF8EA]">
                               {formatMonth(
                                 item.month
                               )}
                             </h3>
 
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-[#82909C]">
                               {item.reportsCount}{" "}
                               {item.reportsCount === 1
                                 ? "rendiconto"
@@ -759,12 +759,12 @@ export default async function FinanceReportsPage({
                       </div>
 
                       <div className="mt-6 grid grid-cols-2 gap-y-5 sm:grid-cols-4">
-                        <div className="border-r border-slate-100 pr-4">
-                          <div className="text-xs text-slate-500">
+                        <div className="border-r border-white/[0.06] pr-4">
+                          <div className="text-xs text-[#82909C]">
                             Lordo
                           </div>
 
-                          <div className="mt-2 text-lg font-bold tabular-nums text-slate-950">
+                          <div className="mt-2 text-lg font-bold tabular-nums text-[#FFF8EA]">
                             {summaryCurrency
                               ? formatCurrency(
                                   item.grossRevenue,
@@ -774,12 +774,12 @@ export default async function FinanceReportsPage({
                           </div>
                         </div>
 
-                        <div className="border-r border-slate-100 px-4">
-                          <div className="text-xs text-slate-500">
+                        <div className="border-r border-white/[0.06] px-4">
+                          <div className="text-xs text-[#82909C]">
                             Netto proprietario
                           </div>
 
-                          <div className="mt-2 text-lg font-bold tabular-nums text-emerald-600">
+                          <div className="mt-2 text-lg font-bold tabular-nums text-emerald-300">
                             {summaryCurrency
                               ? formatCurrency(
                                   item.finalAmount,
@@ -789,18 +789,18 @@ export default async function FinanceReportsPage({
                           </div>
                         </div>
 
-                        <div className="border-r border-slate-100 px-4">
-                          <div className="text-xs text-slate-500">
+                        <div className="border-r border-white/[0.06] px-4">
+                          <div className="text-xs text-[#82909C]">
                             Rettifiche
                           </div>
 
                           <div
                             className={
                               item.manualAdjustments === 0
-                                ? "mt-2 text-lg font-bold tabular-nums text-slate-950"
+                                ? "mt-2 text-lg font-bold tabular-nums text-[#FFF8EA]"
                                 : item.manualAdjustments < 0
-                                  ? "mt-2 text-lg font-bold tabular-nums text-rose-600"
-                                  : "mt-2 text-lg font-bold tabular-nums text-emerald-600"
+                                  ? "mt-2 text-lg font-bold tabular-nums text-rose-300"
+                                  : "mt-2 text-lg font-bold tabular-nums text-emerald-300"
                             }
                           >
                             {summaryCurrency
@@ -818,17 +818,17 @@ export default async function FinanceReportsPage({
                         </div>
 
                         <div className="pl-4">
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-[#82909C]">
                             Netto / Lordo
                           </div>
 
-                          <div className="mt-2 text-lg font-bold tabular-nums text-blue-600">
+                          <div className="mt-2 text-lg font-bold tabular-nums text-[#D8B367]">
                             {netRatio.toFixed(0)}%
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-200">
+                      <div className="mt-5 h-2 overflow-hidden rounded-full bg-[#09131C]/[0.08]">
                         <div
                           className="h-full rounded-full bg-blue-600"
                           style={{
@@ -845,23 +845,23 @@ export default async function FinanceReportsPage({
           )}
         </section>
 
-        <section className="mb-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="mb-5 rounded-3xl border border-white/[0.07] bg-[#09131C] p-6 shadow-sm">
           <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
             <div>
-              <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+              <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#82909C]">
                 PERFORMANCE STRUTTURE
               </div>
 
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">
+              <h2 className="mt-2 font-serif text-2xl font-semibold tracking-[-0.02em] text-[#FFF8EA]">
                 Risultati per immobile
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-[#82909C]">
                 Confronto tra lordo generato e netto proprietario nel periodo selezionato.
               </p>
             </div>
 
-            <span className="rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+            <span className="rounded-full bg-[#09131C]/[0.05] px-4 py-2 text-sm font-semibold text-[#A4AFB8]">
               {propertyPerformance.length}{" "}
               {propertyPerformance.length === 1
                 ? "struttura"
@@ -870,7 +870,7 @@ export default async function FinanceReportsPage({
           </div>
 
           {propertyPerformance.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 px-6 py-10 text-center text-sm text-slate-500">
+            <div className="rounded-2xl border border-dashed border-white/[0.07] px-6 py-10 text-center text-sm text-[#82909C]">
               Nessun dato disponibile.
             </div>
           ) : (
@@ -894,26 +894,26 @@ export default async function FinanceReportsPage({
                   return (
                     <article
                       key={item.propertyId}
-                      className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-blue-200 hover:shadow-sm"
+                      className="rounded-2xl border border-white/[0.07] bg-[#09131C] p-5 transition hover:border-[#D8B367]/30 hover:shadow-sm"
                     >
                       <div className="flex items-start gap-4">
-                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-sm font-black text-blue-600">
+                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-sm font-black text-[#D8B367]">
                           #{index + 1}
                         </div>
 
                         <div className="min-w-0 flex-1">
                           <Link
                             href={`/properties/${item.propertyId}`}
-                            className="text-lg font-bold tracking-[-0.02em] text-slate-950 no-underline transition hover:text-blue-600"
+                            className="font-serif text-lg font-semibold tracking-[-0.02em] text-[#FFF8EA] no-underline transition hover:text-[#D8B367]"
                           >
                             {item.propertyName}
                           </Link>
 
-                          <div className="mt-1 text-sm text-slate-500">
+                          <div className="mt-1 text-sm text-[#82909C]">
                             {item.address}, {item.city}
                           </div>
 
-                          <div className="mt-1 text-xs text-slate-400">
+                          <div className="mt-1 text-xs text-[#6F7E8A]">
                             {item.reportsCount}{" "}
                             {item.reportsCount === 1
                               ? "rendiconto"
@@ -924,11 +924,11 @@ export default async function FinanceReportsPage({
 
                       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
                         <div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-[#82909C]">
                             Lordo
                           </div>
 
-                          <div className="mt-2 text-lg font-bold tabular-nums text-slate-950">
+                          <div className="mt-2 text-lg font-bold tabular-nums text-[#FFF8EA]">
                             {summaryCurrency
                               ? formatCurrency(
                                   item.grossRevenue,
@@ -939,11 +939,11 @@ export default async function FinanceReportsPage({
                         </div>
 
                         <div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-[#82909C]">
                             Netto proprietario
                           </div>
 
-                          <div className="mt-2 text-lg font-bold tabular-nums text-emerald-600">
+                          <div className="mt-2 text-lg font-bold tabular-nums text-emerald-300">
                             {summaryCurrency
                               ? formatCurrency(
                                   item.finalAmount,
@@ -954,17 +954,17 @@ export default async function FinanceReportsPage({
                         </div>
 
                         <div>
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-[#82909C]">
                             Rettifiche
                           </div>
 
                           <div
                             className={
                               item.manualAdjustments === 0
-                                ? "mt-2 text-lg font-bold tabular-nums text-slate-950"
+                                ? "mt-2 text-lg font-bold tabular-nums text-[#FFF8EA]"
                                 : item.manualAdjustments < 0
-                                  ? "mt-2 text-lg font-bold tabular-nums text-rose-600"
-                                  : "mt-2 text-lg font-bold tabular-nums text-emerald-600"
+                                  ? "mt-2 text-lg font-bold tabular-nums text-rose-300"
+                                  : "mt-2 text-lg font-bold tabular-nums text-emerald-300"
                             }
                           >
                             {summaryCurrency
@@ -982,14 +982,14 @@ export default async function FinanceReportsPage({
                         </div>
                       </div>
 
-                      <div className="mt-6 rounded-2xl bg-emerald-50/70 p-4">
+                      <div className="mt-6 rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.06] p-4">
                         <div className="flex items-end justify-between gap-4">
                           <div>
-                            <div className="text-xs font-semibold text-emerald-700">
+                            <div className="text-xs font-semibold text-emerald-300">
                               Margine proprietario
                             </div>
 
-                            <div className="mt-1 text-2xl font-black tabular-nums text-emerald-800">
+                            <div className="mt-1 text-2xl font-black tabular-nums text-emerald-300">
                               {margin.toFixed(1).replace(
                                 ".",
                                 ","
@@ -997,12 +997,12 @@ export default async function FinanceReportsPage({
                             </div>
                           </div>
 
-                          <div className="text-xs text-emerald-700">
+                          <div className="text-xs text-emerald-300">
                             Netto / Lordo
                           </div>
                         </div>
 
-                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-emerald-100">
+                        <div className="mt-3 h-2 overflow-hidden rounded-full bg-emerald-400/15">
                           <div
                             className="h-full rounded-full bg-emerald-600"
                             style={{
@@ -1263,9 +1263,9 @@ const toolbarStyle: CSSProperties = {
   gap: "18px",
   padding: "20px",
   marginBottom: "20px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #1B2C37",
   borderRadius: "18px",
-  background: "#ffffff",
+  background: "#09131C",
   flexWrap: "wrap",
 };
 
@@ -1279,7 +1279,7 @@ const filterFormStyle: CSSProperties = {
 const filterLabelStyle: CSSProperties = {
   display: "grid",
   gap: "6px",
-  color: "#475569",
+  color: "#A4AFB8",
   fontSize: "13px",
   fontWeight: 700,
 };
@@ -1288,10 +1288,10 @@ const selectStyle: CSSProperties = {
   minWidth: "240px",
   minHeight: "42px",
   padding: "0 12px",
-  border: "1px solid #cbd5e1",
+  border: "1px solid #243B49",
   borderRadius: "10px",
-  background: "#ffffff",
-  color: "#0f172a",
+  background: "#09131C",
+  color: "#FFF8EA",
 };
 
 const filterButtonStyle: CSSProperties = {
@@ -1299,8 +1299,8 @@ const filterButtonStyle: CSSProperties = {
   padding: "0 16px",
   border: 0,
   borderRadius: "10px",
-  background: "#0f172a",
-  color: "#ffffff",
+  background: "#FFF8EA",
+  color: "#09131C",
   fontWeight: 700,
   cursor: "pointer",
 };
@@ -1309,7 +1309,7 @@ const resetLinkStyle: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   minHeight: "42px",
-  color: "#475569",
+  color: "#A4AFB8",
   fontSize: "13px",
   fontWeight: 700,
   textDecoration: "none",
@@ -1322,8 +1322,8 @@ const primaryLinkStyle: CSSProperties = {
   minHeight: "42px",
   padding: "0 16px",
   borderRadius: "10px",
-  background: "#2563eb",
-  color: "#ffffff",
+  background: "#D8B367",
+  color: "#07111A",
   fontWeight: 700,
   textDecoration: "none",
 };
@@ -1340,27 +1340,27 @@ const metricStyle: CSSProperties = {
   display: "grid",
   gap: "8px",
   padding: "20px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #1B2C37",
   borderRadius: "18px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const metricLabelStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#82909C",
   fontSize: "13px",
   fontWeight: 700,
 };
 
 const metricValueStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "24px",
 };
 
 const archivePanelStyle: CSSProperties = {
   padding: "22px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #1B2C37",
   borderRadius: "20px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const sectionHeaderStyle: CSSProperties = {
@@ -1372,7 +1372,7 @@ const sectionHeaderStyle: CSSProperties = {
 };
 
 const sectionEyebrowStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#82909C",
   fontSize: "11px",
   fontWeight: 800,
   letterSpacing: "0.08em",
@@ -1380,7 +1380,7 @@ const sectionEyebrowStyle: CSSProperties = {
 
 const sectionTitleStyle: CSSProperties = {
   margin: "5px 0 0",
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "22px",
 };
 
@@ -1388,8 +1388,8 @@ const countBadgeStyle: CSSProperties = {
   minWidth: "36px",
   padding: "7px 11px",
   borderRadius: "999px",
-  background: "#f1f5f9",
-  color: "#334155",
+  background: "#101E29",
+  color: "#A4AFB8",
   textAlign: "center",
   fontWeight: 800,
 };
@@ -1407,8 +1407,8 @@ const tableStyle: CSSProperties = {
 
 const tableHeaderStyle: CSSProperties = {
   padding: "12px",
-  borderBottom: "1px solid #cbd5e1",
-  color: "#64748b",
+  borderBottom: "1px solid #243B49",
+  color: "#82909C",
   fontSize: "12px",
   fontWeight: 800,
   textAlign: "left",
@@ -1427,8 +1427,8 @@ const tableHeaderActionStyle: CSSProperties = {
 
 const tableCellStyle: CSSProperties = {
   padding: "15px 12px",
-  borderBottom: "1px solid #e2e8f0",
-  color: "#334155",
+  borderBottom: "1px solid #1B2C37",
+  color: "#A4AFB8",
   fontSize: "14px",
   verticalAlign: "middle",
 };
@@ -1445,19 +1445,19 @@ const tableActionCellStyle: CSSProperties = {
 };
 
 const monthStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#FFF8EA",
   whiteSpace: "nowrap",
 };
 
 const propertyLinkStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontWeight: 800,
   textDecoration: "none",
 };
 
 const secondaryTextStyle: CSSProperties = {
   marginTop: "4px",
-  color: "#94a3b8",
+  color: "#6F7E8A",
   fontSize: "12px",
 };
 
@@ -1465,8 +1465,8 @@ const formulaBadgeStyle: CSSProperties = {
   display: "inline-flex",
   padding: "6px 9px",
   borderRadius: "999px",
-  background: "#eff6ff",
-  color: "#1d4ed8",
+  background: "#D8B36712",
+  color: "#D8B367",
   fontSize: "12px",
   fontWeight: 700,
   whiteSpace: "nowrap",
@@ -1478,19 +1478,19 @@ const rulesBadgeStyle: CSSProperties = {
   justifyContent: "center",
   padding: "6px 9px",
   borderRadius: "999px",
-  background: "#f1f5f9",
-  color: "#475569",
+  background: "#101E29",
+  color: "#A4AFB8",
   fontSize: "12px",
   fontWeight: 800,
 };
 
 const finalAmountStyle: CSSProperties = {
-  color: "#166534",
+  color: "#6EE7A8",
 };
 
 const differenceStyle: CSSProperties = {
   marginTop: "4px",
-  color: "#be123c",
+  color: "#FDA4AF",
   fontSize: "12px",
 };
 
@@ -1499,10 +1499,10 @@ const openLinkStyle: CSSProperties = {
   alignItems: "center",
   minHeight: "36px",
   padding: "0 13px",
-  border: "1px solid #cbd5e1",
+  border: "1px solid #243B49",
   borderRadius: "9px",
-  background: "#ffffff",
-  color: "#334155",
+  background: "#09131C",
+  color: "#A4AFB8",
   fontSize: "13px",
   fontWeight: 700,
   textDecoration: "none",
@@ -1514,30 +1514,30 @@ const emptyStateStyle: CSSProperties = {
   gap: "12px",
   padding: "44px 24px",
   borderRadius: "16px",
-  background: "#f8fafc",
+  background: "#0C1822",
   textAlign: "center",
 };
 
 const emptyTitleStyle: CSSProperties = {
   margin: 0,
-  color: "#0f172a",
+  color: "#FFF8EA",
 };
 
 const emptyDescriptionStyle: CSSProperties = {
   maxWidth: "480px",
   margin: 0,
-  color: "#64748b",
+  color: "#82909C",
 };
 
 
 
 const actionSeparatorStyle: CSSProperties = {
   margin: "0 7px",
-  color: "#94a3b8",
+  color: "#6F7E8A",
 };
 
 const pdfLinkStyle: CSSProperties = {
-  color: "#475569",
+  color: "#A4AFB8",
   fontSize: "13px",
   fontWeight: 700,
   textDecoration: "none",
@@ -1546,14 +1546,14 @@ const pdfLinkStyle: CSSProperties = {
 const historyPanelStyle: CSSProperties = {
   padding: "22px",
   marginBottom: "20px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #1B2C37",
   borderRadius: "20px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const historyDescriptionStyle: CSSProperties = {
   margin: "6px 0 0",
-  color: "#64748b",
+  color: "#82909C",
   fontSize: "13px",
   lineHeight: 1.5,
 };
@@ -1562,9 +1562,9 @@ const historyListStyle: CSSProperties = {
   display: "grid",
   gap: "2px",
   overflow: "hidden",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #1B2C37",
   borderRadius: "16px",
-  background: "#e2e8f0",
+  background: "#1B2C37",
 };
 
 const historyRowStyle: CSSProperties = {
@@ -1573,13 +1573,13 @@ const historyRowStyle: CSSProperties = {
   alignItems: "center",
   gap: "24px",
   padding: "18px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const historyMonthStyle: CSSProperties = {
   display: "grid",
   gap: "4px",
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "14px",
 };
 
@@ -1594,7 +1594,7 @@ const historyBarHeaderStyle: CSSProperties = {
   justifyContent: "space-between",
   gap: "12px",
   marginBottom: "5px",
-  color: "#475569",
+  color: "#A4AFB8",
   fontSize: "11px",
 };
 
@@ -1603,13 +1603,13 @@ const historyTrackStyle: CSSProperties = {
   height: "8px",
   overflow: "hidden",
   borderRadius: "999px",
-  background: "#e2e8f0",
+  background: "#1B2C37",
 };
 
 const grossBarStyle: CSSProperties = {
   height: "100%",
   borderRadius: "999px",
-  background: "#2563eb",
+  background: "#D8B367",
 };
 
 const netBarStyle: CSSProperties = {
@@ -1622,7 +1622,7 @@ const historyAdjustmentStyle: CSSProperties = {
   display: "grid",
   justifyItems: "end",
   gap: "5px",
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "13px",
 };
 
@@ -1631,18 +1631,18 @@ const historyAdjustmentStyle: CSSProperties = {
 const performancePanelStyle: CSSProperties = {
   padding: "22px",
   marginBottom: "20px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #1B2C37",
   borderRadius: "20px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const performanceListStyle: CSSProperties = {
   display: "grid",
   gap: "2px",
   overflow: "hidden",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #1B2C37",
   borderRadius: "16px",
-  background: "#e2e8f0",
+  background: "#1B2C37",
 };
 
 const performanceRowStyle: CSSProperties = {
@@ -1652,7 +1652,7 @@ const performanceRowStyle: CSSProperties = {
   alignItems: "center",
   gap: "24px",
   padding: "18px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const performancePropertyStyle: CSSProperties = {
@@ -1668,8 +1668,8 @@ const performanceRankStyle: CSSProperties = {
   height: "28px",
   flex: "0 0 28px",
   borderRadius: "9px",
-  background: "#eff6ff",
-  color: "#2563eb",
+  background: "#D8B36712",
+  color: "#D8B367",
   fontSize: "12px",
   fontWeight: 800,
 };
@@ -1683,7 +1683,7 @@ const performanceNumbersStyle: CSSProperties = {
   display: "grid",
   justifyItems: "end",
   gap: "5px",
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "13px",
 };
 

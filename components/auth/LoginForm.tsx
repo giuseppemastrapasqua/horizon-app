@@ -4,6 +4,8 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import {
   ArrowRight,
+  Eye,
+  EyeOff,
   LoaderCircle,
   LockKeyhole,
   Mail,
@@ -12,6 +14,7 @@ import {
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,21 +59,17 @@ export function LoginForm() {
   }
 
   return (
-    <form
-      className="space-y-5"
-      onSubmit={handleSubmit}
-      noValidate
-    >
+    <form className="space-y-5" onSubmit={handleSubmit} noValidate>
       <div>
         <label
           htmlFor="email"
-          className="mb-2 block text-sm font-medium text-slate-700"
+          className="mb-2.5 block text-sm font-medium text-white/82"
         >
-          Indirizzo email
+          Email
         </label>
 
-        <div className="relative">
-          <Mail className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+        <div className="group relative">
+          <Mail className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#d8ba76]/70 transition group-focus-within:text-[#e7ca86]" />
 
           <input
             id="email"
@@ -78,44 +77,60 @@ export function LoginForm() {
             type="email"
             autoComplete="email"
             inputMode="email"
-            placeholder="nome@azienda.it"
+            placeholder="La tua email"
             disabled={isSubmitting}
             required
-            className="h-13 w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+            className="h-14 w-full rounded-xl border border-white/[0.12] bg-white/[0.035] py-3 pl-12 pr-4 text-base text-white outline-none transition placeholder:text-white/30 hover:border-white/20 focus:border-[#d8b86f]/70 focus:bg-white/[0.055] focus:ring-4 focus:ring-[#d8b86f]/10 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
       </div>
 
       <div>
-        <div className="mb-2 flex items-center justify-between gap-4">
+        <div className="mb-2.5 flex items-center justify-between gap-4">
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-slate-700"
+            className="block text-sm font-medium text-white/82"
           >
             Password
           </label>
 
           <a
             href="/forgot-password"
-            className="text-sm font-medium text-blue-600 transition hover:text-blue-700"
+            className="text-xs font-medium text-[#dec17f] transition hover:text-[#f0d799]"
           >
             Password dimenticata?
           </a>
         </div>
 
-        <div className="relative">
-          <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+        <div className="group relative">
+          <LockKeyhole className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#d8ba76]/70 transition group-focus-within:text-[#e7ca86]" />
 
           <input
             id="password"
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             autoComplete="current-password"
-            placeholder="Inserisci la password"
+            placeholder="La tua password"
             disabled={isSubmitting}
             required
-            className="h-13 w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+            className="h-14 w-full rounded-xl border border-white/[0.12] bg-white/[0.035] py-3 pl-12 pr-12 text-base text-white outline-none transition placeholder:text-white/30 hover:border-white/20 focus:border-[#d8b86f]/70 focus:bg-white/[0.055] focus:ring-4 focus:ring-[#d8b86f]/10 disabled:cursor-not-allowed disabled:opacity-60"
           />
+
+          <button
+            type="button"
+            onClick={() => setShowPassword((current) => !current)}
+            disabled={isSubmitting}
+            aria-label={
+              showPassword ? "Nascondi password" : "Mostra password"
+            }
+            className="absolute right-4 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-white/45 transition hover:bg-white/[0.06] hover:text-white/80 focus:outline-none focus:ring-2 focus:ring-[#d8b86f]/30 disabled:cursor-not-allowed"
+          >
+            {showPassword ? (
+              <EyeOff className="size-5" />
+            ) : (
+              <Eye className="size-5" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -123,7 +138,7 @@ export function LoginForm() {
         <div
           role="alert"
           aria-live="polite"
-          className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700"
+          className="rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-200"
         >
           {error}
         </div>
@@ -132,7 +147,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="group flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 font-medium text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-blue-400"
+        className="group mt-1 flex h-14 w-full items-center justify-center gap-3 rounded-xl border border-[#ecd28f]/20 bg-[linear-gradient(135deg,#e4c47e_0%,#cfa55a_100%)] px-5 py-3 font-semibold text-[#111820] shadow-[0_14px_36px_rgba(205,164,88,0.20)] transition duration-200 hover:-translate-y-0.5 hover:brightness-105 hover:shadow-[0_18px_42px_rgba(205,164,88,0.28)] focus:outline-none focus:ring-4 focus:ring-[#d8b86f]/20 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60"
       >
         {isSubmitting ? (
           <>
@@ -141,11 +156,15 @@ export function LoginForm() {
           </>
         ) : (
           <>
-            Accedi a Horizon
-            <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
+            Accedi
+            <ArrowRight className="size-5 transition-transform group-hover:translate-x-1" />
           </>
         )}
       </button>
+
+      <p className="pt-1 text-center text-xs leading-5 text-white/32">
+        Non hai un account? Contatta il tuo amministratore.
+      </p>
     </form>
   );
 }

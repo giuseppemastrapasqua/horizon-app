@@ -62,11 +62,11 @@ export function PropertyHouseRulesSection({
   return (
     <section
       id="regole-della-casa"
-      className="scroll-mt-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
+      className="scroll-mt-8 rounded-3xl border border-white/[0.07] bg-[#09131C]/95 p-8 shadow-[0_18px_50px_rgba(0,0,0,0.16)]"
     >
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-semibold text-white">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#D8B367] text-sm font-semibold text-[#07111A]">
             04
           </span>
 
@@ -114,7 +114,7 @@ export function PropertyHouseRulesSection({
               ([category, categoryHouseRules]) => (
                 <fieldset
                   key={category}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 p-5"
+                  className="rounded-2xl border border-white/[0.07] bg-[#07111A]/70 p-5"
                 >
                   <legend className="px-2 text-sm font-semibold uppercase tracking-wide text-slate-700">
                     {getCategoryLabel(category)}
@@ -125,7 +125,7 @@ export function PropertyHouseRulesSection({
                       (houseRule) => (
                         <label
                           key={houseRule.id}
-                          className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:shadow-sm"
+                          className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/[0.07] bg-[#09131C] p-4 transition hover:border-[#D8B367]/25"
                         >
                           <input
                             type="checkbox"

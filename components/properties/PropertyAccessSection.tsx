@@ -45,7 +45,7 @@ export function PropertyAccessSection({
   return (
     <section
       id="accessi-struttura"
-      className="scroll-mt-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
+      className="scroll-mt-8 rounded-3xl border border-white/[0.07] bg-[#09131C]/95 p-8 shadow-[0_18px_50px_rgba(0,0,0,0.16)]"
     >
       <div className="mb-8">
         <h2 className="text-2xl font-semibold text-slate-900">
@@ -53,8 +53,8 @@ export function PropertyAccessSection({
         </h2>
 
         <p className="mt-1 text-sm text-slate-600">
-          Gestisci chi può accedere ai dati della struttura.
-          Le responsabilità operative restano separate.
+          Gestisci chi pu\u00F2 accedere ai dati della struttura.
+          Le responsabilit\u00E0 operative restano separate.
         </p>
       </div>
 
@@ -63,7 +63,7 @@ export function PropertyAccessSection({
           {accesses.map((access) => (
             <div
               key={access.userId}
-              className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-4 rounded-2xl border border-white/[0.07] bg-[#07111A]/70 p-5 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 <p className="font-semibold text-slate-900">
@@ -110,7 +110,7 @@ export function PropertyAccessSection({
 
       <form
         action={updateAction}
-        className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5"
+        className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A]/80 p-5"
       >
         <input
           type="hidden"
@@ -144,7 +144,7 @@ export function PropertyAccessSection({
                   key={user.id}
                   value={user.id}
                 >
-                  {user.fullName} · {user.email}
+                  {user.fullName} \u00B7 {user.email}
                 </option>
               ))}
             </select>
@@ -173,7 +173,7 @@ export function PropertyAccessSection({
           <button
             type="submit"
             disabled={availableUsers.length === 0}
-            className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="rounded-xl bg-[#D8B367] px-5 py-3 text-sm font-semibold text-[#07111A] transition hover:bg-[#E4C47E] disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
           >
             Aggiungi accesso
           </button>
@@ -181,7 +181,7 @@ export function PropertyAccessSection({
 
         {availableUsers.length === 0 && (
           <p className="mt-3 text-xs text-slate-500">
-            Tutti gli utenti disponibili sono già assegnati.
+            Tutti gli utenti disponibili sono gi\u00E0 assegnati.
           </p>
         )}
       </form>

@@ -65,7 +65,7 @@ export default async function PropertyDetailPage({
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-blue-600">
+            <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#D8B367]">
               Struttura
             </p>
 
@@ -76,7 +76,7 @@ export default async function PropertyDetailPage({
 
           <a
             href={`/properties/${property.id}/edit`}
-            className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-[10px] font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#D8B367] bg-[#D8B367] px-3.5 py-2 text-[10px] font-semibold text-[#07111A] transition hover:border-[#E4C47E] hover:bg-[#E4C47E]"
           >
             <Pencil
               size={13}
@@ -134,21 +134,21 @@ export default async function PropertyDetailPage({
           }
         />
 
-        <section className="rounded-2xl border border-blue-100 bg-blue-50/40 px-5 py-4">
+        <section className="rounded-2xl border border-white/[0.07] bg-[#09131C]/90 px-5 py-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-blue-600">
+              <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#D8B367]">
                 Navigazione operativa
               </p>
 
-              <p className="mt-1 text-[10px] leading-4 text-slate-500">
+              <p className="mt-1 text-[10px] leading-4 text-[#82909C]">
                 Prenotazioni, calendario, task, documenti,
                 fatture e rendiconti sono gestiti nelle
                 rispettive sezioni Horizon.
               </p>
             </div>
 
-            <span className="text-[9px] font-semibold text-blue-600">
+            <span className="text-[9px] font-semibold text-[#6F7E8A]">
               ID struttura: {property.id}
             </span>
           </div>

@@ -24,7 +24,7 @@ export function ForgotPasswordForm() {
       setMessage(result.message);
     } catch {
       setError(
-        "Non è stato possibile completare la richiesta. Riprova tra poco.",
+        "Non Ã¨ stato possibile completare la richiesta. Riprova tra poco.",
       );
     } finally {
       setIsSubmitting(false);
@@ -37,13 +37,13 @@ export function ForgotPasswordForm() {
         <div>
           <label
             htmlFor="email"
-            className="mb-2 block text-sm font-medium text-slate-700"
+            className="mb-2 block text-sm font-medium text-[#FFF8EA]"
           >
             Indirizzo email
           </label>
 
           <div className="relative">
-            <Mail className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
+            <Mail className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-[#8EA0AE]" />
 
             <input
               id="email"
@@ -54,7 +54,7 @@ export function ForgotPasswordForm() {
               placeholder="nome@azienda.it"
               disabled={isSubmitting}
               required
-              className="h-13 w-full rounded-2xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-base text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+              className="h-13 w-full rounded-2xl border border-white/10 bg-[#0D1923] py-3 pl-12 pr-4 text-base text-[#FFF8EA] outline-none transition placeholder:text-[#8EA0AE] focus:border-[#D8B367] focus:ring-4 focus:ring-[#D8B367]/10 disabled:cursor-not-allowed disabled:bg-[#07111A] disabled:text-[#8EA0AE]"
             />
           </div>
         </div>
@@ -82,7 +82,7 @@ export function ForgotPasswordForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 font-medium text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-blue-400"
+          className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-[#D8B367] px-5 py-3 font-medium text-[#07111A] shadow-lg shadow-black/20 transition hover:bg-[#E4C47E] focus:outline-none focus:ring-4 focus:ring-[#D8B367]/20 disabled:cursor-not-allowed disabled:bg-[#D8B367]/50"
         >
           {isSubmitting ? (
             <>
@@ -97,10 +97,10 @@ export function ForgotPasswordForm() {
 
       <Link
         href="/login"
-        className="flex items-center justify-center gap-2 text-sm font-medium text-slate-600 transition hover:text-blue-600"
+        className="flex items-center justify-center gap-2 text-sm font-medium text-[#8EA0AE] transition hover:text-[#D8B367]"
       >
         <ArrowLeft className="size-4" />
-        Torna all’accesso
+        Torna allâ€™accesso
       </Link>
     </div>
   );

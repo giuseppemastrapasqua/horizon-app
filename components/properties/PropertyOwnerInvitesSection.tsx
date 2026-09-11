@@ -328,10 +328,10 @@ export function PropertyOwnerInvitesSection({
   }
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+    <section className="rounded-3xl border border-white/[0.07] bg-[#09131C]/95 p-8 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
-          <p className="text-sm font-semibold text-blue-600">
+          <p className="text-sm font-semibold text-[#D8B367]">
             Proprietari
           </p>
 
@@ -346,7 +346,7 @@ export function PropertyOwnerInvitesSection({
           </p>
         </div>
 
-        <div className="w-full rounded-2xl border border-blue-100 bg-blue-50/60 p-4 lg:w-80">
+        <div className="w-full rounded-2xl border border-[#D8B367]/15 bg-[#07111A]/80 p-4 lg:w-80">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-slate-900">
@@ -373,7 +373,7 @@ export function PropertyOwnerInvitesSection({
             onClick={() =>
               setBillingOpen((current) => !current)
             }
-            className="mt-4 w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            className="mt-4 w-full rounded-xl bg-[#D8B367] px-4 py-2.5 text-sm font-semibold text-[#07111A] transition hover:bg-[#E4C47E]"
           >
             {billingOpen ? "Chiudi" : "Gestisci dati"}
           </button>
@@ -383,7 +383,7 @@ export function PropertyOwnerInvitesSection({
       {billingOpen ? (
         <form
           onSubmit={handleBillingSave}
-          className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/40 p-5"
+          className="mt-6 rounded-2xl border border-white/[0.08] bg-[#07111A]/80 p-5"
         >
           <input
             type="hidden"
@@ -600,7 +600,7 @@ export function PropertyOwnerInvitesSection({
                 htmlFor="ownerBillingCity"
                 className="text-sm font-medium text-slate-700"
               >
-                CittÃƒÆ’Ã‚Â 
+                    Citt\u00E0
               </label>
               <input
                 id="ownerBillingCity"
@@ -704,7 +704,7 @@ export function PropertyOwnerInvitesSection({
 
       <form
         onSubmit={handleCreate}
-        className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 md:grid-cols-2"
+        className="mt-6 grid gap-4 rounded-2xl border border-white/[0.08] bg-[#07111A]/70 p-5 md:grid-cols-2"
       >
         <input
           type="hidden"
@@ -830,7 +830,7 @@ export function PropertyOwnerInvitesSection({
 
                   <p className="mt-2 text-xs text-slate-500">
                     Creato {formatDate(invite.createdAt)}
-                    {" Ãƒâ€šÃ‚Â· "}
+                    {" \u00B7 "}
                     Scade {formatDate(invite.expiresAt)}
                   </p>
                 </div>

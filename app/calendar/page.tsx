@@ -575,7 +575,7 @@ export default async function CalendarPage({
 
   /*
    * selectedStandardPrice resta disponibile
-   * per i form e le preview giÃ  esistenti,
+   * per i form e le preview gi\u00E0 esistenti,
    * ma ora deriva dal resolver centrale.
    */
   const selectedStandardPrice =
@@ -619,37 +619,15 @@ export default async function CalendarPage({
     buildCalendarDays(
       monthStart,
     );
-
-  const monthLabel =
-    formatMonthLabel(
-      monthStart,
-    );
-
-  return (
+return (
     <>
       <Navigation />
 
       <AppShell
-        title=""
-        subtitle=""
+        title="Calendario"
+        subtitle={selectedProperty?.name ?? "Disponibilit\u00E0, prenotazioni e pricing."}
       >
-                <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <h1 className="text-[22px] font-black tracking-tight text-slate-950">
-            Calendario
-          </h1>
-
-          <span className="text-[16px] font-bold text-blue-600">
-            {monthLabel}
-          </span>
-
-          {selectedProperty ? (
-            <span className="text-[9px] font-medium text-slate-400">
-              {selectedProperty.name}
-            </span>
-          ) : null}
-        </div>
-
-        <section className="mb-3 flex flex-wrap items-end justify-end gap-3">
+<section className="mb-3 flex flex-wrap items-end justify-end gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href={buildCalendarUrl({
@@ -662,7 +640,7 @@ export default async function CalendarPage({
                   selectedProperty?.id ??
                   "",
               })}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-[#09131C] text-[#A4AFB8] transition hover:border-[#D8B367]/40 hover:bg-[#D8B367]/[0.06] hover:text-[#D8B367]"
               aria-label="Mese precedente"
             >
               <ChevronLeft
@@ -675,7 +653,7 @@ export default async function CalendarPage({
               className="flex flex-wrap items-end gap-2"
             >
               <label className="block">
-                <span className="mb-1 block text-[8px] font-bold uppercase tracking-[0.1em] text-slate-400">
+                <span className="mb-1 block text-[8px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
                   Mese
                 </span>
 
@@ -687,12 +665,12 @@ export default async function CalendarPage({
                       monthStart,
                     )
                   }
-                  className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                  className="h-10 rounded-xl border border-white/[0.08] bg-[#050B11]/70 px-3 text-[10px] font-semibold text-[#E8E1D5] outline-none [color-scheme:dark] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
                 />
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-[8px] font-bold uppercase tracking-[0.1em] text-slate-400">
+                <span className="mb-1 block text-[8px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
                   Struttura
                 </span>
 
@@ -702,7 +680,7 @@ export default async function CalendarPage({
                     selectedProperty?.id ??
                     ""
                   }
-                  className="h-10 min-w-[240px] rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-semibold text-slate-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                  className="h-10 min-w-[240px] rounded-xl border border-white/[0.08] bg-[#050B11]/70 px-3 text-[10px] font-semibold text-[#E8E1D5] outline-none focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
                 >
                   {properties.map(
                     (property) => (
@@ -725,7 +703,7 @@ export default async function CalendarPage({
 
               <button
                 type="submit"
-                className="h-10 rounded-xl bg-blue-600 px-4 text-[10px] font-semibold text-white transition hover:bg-blue-700"
+                className="h-10 rounded-xl bg-[#D8B367] px-4 text-[10px] font-bold text-[#07111A] transition hover:bg-[#E5C47F]"
               >
                 Apri
               </button>
@@ -742,7 +720,7 @@ export default async function CalendarPage({
                   selectedProperty?.id ??
                   "",
               })}
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-[#09131C] text-[#A4AFB8] transition hover:border-[#D8B367]/40 hover:bg-[#D8B367]/[0.06] hover:text-[#D8B367]"
               aria-label="Mese successivo"
             >
               <ChevronRight
@@ -753,86 +731,86 @@ export default async function CalendarPage({
         </section>
 
         {!propertyData ? (
-          <section className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center shadow-sm">
+          <section className="rounded-2xl border border-white/[0.07] bg-[#09131C]/95 px-6 py-16 text-center shadow-[0_16px_38px_rgba(0,0,0,0.20)]">
             <Building2
               size={24}
-              className="mx-auto text-blue-500"
+              className="mx-auto text-[#D8B367]"
             />
 
-            <h2 className="mt-3 text-sm font-bold text-slate-900">
+            <h2 className="mt-3 text-sm font-bold text-[#FFF8EA]">
               Nessuna struttura disponibile
             </h2>
           </section>
         ) : (
           <div className="space-y-4">
             <div className="min-w-0 space-y-4">
-              <div className="rounded-[22px] border border-slate-200/70 bg-white px-5 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.045)]">
+              <div className="rounded-[22px] border border-white/[0.07] bg-[#09131C]/95 px-5 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.20)]">
                 <div className="flex items-start justify-between gap-8">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                      <span className="text-[7px] font-black uppercase tracking-[0.14em] text-slate-400">
+                      <span className="text-[7px] font-black uppercase tracking-[0.14em] text-[#82909C]">
                         Legenda
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-700">
+                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-300">
                         <span className="h-2 w-2 rounded-full bg-emerald-500" />
                         Aperto
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-700">
+                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-300">
                         <span className="h-2 w-2 rounded-full bg-emerald-500" />
                         Chiusura manuale
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-rose-700">
+                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-rose-300">
                         <span className="h-2 w-2 rounded-full bg-rose-500" />
                         Chiuso senza prenotazione
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-600">
-                        <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 font-black">
+                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-300">
+                        <span className="rounded-md border border-emerald-400/20 bg-emerald-400/[0.08] px-1.5 py-0.5 font-black">
                           IN
                         </span>
                         Check-in
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-rose-600">
-                        <span className="rounded-md bg-rose-50 px-1.5 py-0.5 font-black">
+                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-rose-300">
+                        <span className="rounded-md border border-rose-400/20 bg-rose-400/[0.08] px-1.5 py-0.5 font-black">
                           OUT
                         </span>
                         Check-out
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-slate-600">
+                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-[#A4AFB8]">
                         <span className="h-2 w-2 rounded-full bg-slate-400" />
                         Prenotato
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-violet-700">
+                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-violet-300">
                         <span className="flex h-4 w-4 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-indigo-600 text-[6px] font-black text-white">
-                          âœ¦
+                          {"\u2726"}
                         </span>
                         Revenue AI
                       </span>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-5 border-t border-slate-100 pt-3">
-                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-slate-600">
+                    <div className="mt-4 flex flex-wrap items-center gap-5 border-t border-white/[0.06] pt-3">
+                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-[#A4AFB8]">
                         <ChannelLogo channel="BOOKING" size={15} />
                         Booking
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-slate-600">
+                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-[#A4AFB8]">
                         <ChannelLogo channel="AIRBNB" size={15} />
                         Airbnb
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-slate-600">
+                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-[#A4AFB8]">
                         <ChannelLogo channel="VRBO" size={15} />
                         Vrbo
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-slate-600">
+                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-[#A4AFB8]">
                         <ChannelLogo channel="HORIZON" size={15} />
                         Horizon
                       </span>
@@ -865,7 +843,7 @@ export default async function CalendarPage({
 
                         <Link
                           href={`/bookings/new?propertyId=${encodeURIComponent(selectedProperty?.id ?? "")}`}
-                          className="inline-flex h-10 w-[225px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-blue-700"
+                          className="inline-flex h-10 w-[225px] items-center justify-center gap-2 rounded-xl bg-[#D8B367] px-5 text-[14px] font-semibold text-[#07111A] shadow-[0_10px_24px_rgba(216,179,103,0.14)] transition hover:bg-[#E5C47F]"
                         >
                           <CalendarPlus size={14} />
                           Crea prenotazione
@@ -875,8 +853,8 @@ export default async function CalendarPage({
                   ) : null}
                 </div>
               </div>
-              <section className="min-w-0 overflow-hidden rounded-[24px] border border-slate-200/70 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.055)]">
-              <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/60">
+              <section className="min-w-0 overflow-hidden rounded-[24px] border border-white/[0.07] bg-[#09131C]/95 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
+              <div className="grid grid-cols-7 border-b border-white/[0.07] bg-[#09131C]/[0.025]">
                 {[
                   "Lun",
                   "Mar",
@@ -891,7 +869,7 @@ export default async function CalendarPage({
                       key={
                         weekday
                       }
-                      className="px-2 py-3 text-center text-[9px] font-black uppercase tracking-[0.14em] text-slate-400"
+                      className="px-2 py-3 text-center text-[9px] font-black uppercase tracking-[0.14em] text-[#82909C]"
                     >
                       {weekday}
                     </div>
@@ -1035,14 +1013,14 @@ export default async function CalendarPage({
                           )
                         }
                         className={[
-                          "group relative min-h-[132px] border-b border-r border-slate-100 px-3 py-3 transition-all duration-200 hover:z-10 hover:bg-blue-50/40",
+                          "group relative min-h-[132px] border-b border-r border-white/[0.055] px-3 py-3 transition-all duration-200 hover:z-10 hover:bg-[#09131C]/[0.035]",
                           inMonth
                             ? isWeekend
-                              ? "bg-slate-50/35"
-                              : "bg-white"
-                            : "bg-slate-50/40",
+                              ? "bg-[#09131C]"
+                              : "bg-[#09131C]"
+                            : "bg-[#071019]",
                           isToday
-                            ? "bg-blue-50/60"
+                            ? "bg-[#D8B367]/[0.07]"
                             : "",
                         ].join(
                           " ",
@@ -1053,10 +1031,10 @@ export default async function CalendarPage({
                             className={[
                               "flex h-7 min-w-7 items-center justify-center rounded-lg px-1 text-[15px] font-semibold tracking-[-0.02em] transition-all",
                               isToday
-                                ? "bg-blue-600 text-white shadow-[0_4px_12px_rgba(37,99,235,0.22)]"
+                                ? "bg-[#D8B367] text-[#07111A] shadow-[0_4px_14px_rgba(216,179,103,0.20)]"
                                 : inMonth
-                                  ? "text-[#0F172A]"
-                                  : "text-slate-300",
+                                  ? "text-[#E9C46A]"
+                                  : "text-[#46535E]",
                             ].join(
                               " ",
                             )}
@@ -1072,7 +1050,7 @@ export default async function CalendarPage({
                             displayBooking ? (
                               <Link
                                 href={`/bookings/${displayBooking.id}`}
-                                title={`${displayBooking.channel} Ã‚Â· ${displayBooking.guestName}`}
+                                title={`${displayBooking.channel} \u00B7 ${displayBooking.guestName}`}
                                 className={`relative z-[2] mt-4 -mx-3.5 flex h-7 w-[calc(100%+1.75rem)] items-center px-4 text-left text-[10px] font-semibold text-white shadow-sm transition hover:z-[3] hover:brightness-95 ${getBookingChannelBarClass(displayBooking.channel)}`}
                                 style={{
                                   clipPath:
@@ -1099,7 +1077,7 @@ export default async function CalendarPage({
                               </Link>
                             ) : block ? (
                               isOperator ? (
-                                <div className="mt-4 rounded-lg bg-slate-100 px-2 py-1.5 text-[9px] font-bold text-slate-500">
+                                <div className="mt-4 rounded-lg border border-white/[0.06] bg-white/[0.035] px-2 py-1.5 text-[9px] font-bold text-[#82909C]">
                                   Bloccato
                                 </div>
                               ) : (
@@ -1151,18 +1129,18 @@ export default async function CalendarPage({
 
             <div className="space-y-4">
               {!isOperator ? (
-              <section className="rounded-[24px] border border-slate-200/70 bg-white p-5 shadow-[0_16px_42px_rgba(15,23,42,0.06)]">
+              <section className="rounded-[24px] border border-white/[0.07] bg-[#09131C] p-5 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[7px] font-black uppercase tracking-[0.16em] text-blue-600">
+                    <p className="text-[7px] font-black uppercase tracking-[0.16em] text-[#D8B367]">
                       Pricing
                     </p>
 
-                    <h3 className="mt-1 text-sm font-black text-slate-950">
+                    <h3 className="mt-1 font-serif text-sm font-semibold text-[#FFF8EA]">
                       Tariffe attive
                     </h3>
 
-                    <p className="mt-1 text-[7px] text-slate-400">
+                    <p className="mt-1 text-[7px] text-[#82909C]">
                       Prezzi calcolati sulla Standard effettiva del periodo
                     </p>
                   </div>
@@ -1172,7 +1150,7 @@ export default async function CalendarPage({
                       selectedProperty?.id ??
                         "",
                     )}`}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[7px] font-bold text-slate-600 transition hover:border-blue-200 hover:text-blue-700 hover:shadow-sm"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-[7px] font-bold text-[#A4AFB8] transition hover:border-[#D8B367]/40 hover:text-[#D8B367] hover:shadow-sm"
                   >
                     Configura
 
@@ -1217,8 +1195,8 @@ export default async function CalendarPage({
                             className={[
                               "relative min-h-[150px] overflow-hidden rounded-[20px] border p-4 transition-all duration-300 hover:-translate-y-1",
                               isStandard
-                                ? "border-violet-300/70 bg-gradient-to-br from-violet-50 via-white to-indigo-50 shadow-[0_14px_32px_rgba(109,40,217,0.11)]"
-                                : "border-slate-200/70 bg-gradient-to-br from-white via-white to-blue-50/40 shadow-[0_8px_24px_rgba(15,23,42,0.04)] hover:border-blue-200 hover:shadow-[0_16px_34px_rgba(37,99,235,0.09)]",
+                                ? "border-violet-400/20 bg-gradient-to-br from-violet-500/[0.10] via-[#0B1721] to-indigo-500/[0.06] shadow-[0_14px_32px_rgba(0,0,0,0.18)]"
+                                : "border-white/[0.07] bg-gradient-to-br from-[#0B1721] via-[#09131C] to-[#07111A] shadow-[0_10px_26px_rgba(0,0,0,0.16)] hover:border-[#D8B367]/20 hover:shadow-[0_16px_34px_rgba(0,0,0,0.24)]",
                             ].join(
                               " ",
                             )}
@@ -1234,21 +1212,21 @@ export default async function CalendarPage({
                                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-indigo-600 text-[7px] font-black text-white shadow-sm">
                                       {effectiveStandardSource ===
                                       "Revenue AI"
-                                        ? "âœ¦"
-                                        : "â‚¬"}
+                                        ? "\u2726"
+                                        : "\u20AC"}
                                     </span>
                                   ) : null}
 
-                                  <strong className="truncate text-[9px] font-black text-slate-800">
+                                  <strong className="truncate text-[9px] font-black text-[#F4EEDF]">
                                     {
                                       ratePlan.name
                                     }
                                   </strong>
                                 </div>
 
-                                <p className="mt-1.5 text-[6px] font-bold uppercase tracking-[0.1em] text-slate-400">
+                                <p className="mt-1.5 text-[6px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
                                   {isStandard
-                                    ? `Standard Â· ${effectiveStandardSource}`
+                                    ? `Standard \u00B7 ${effectiveStandardSource}`
                                     : `${adjustment >= 0 ? "+" : ""}${adjustment}% da Standard`}
                                 </p>
                               </div>
@@ -1257,8 +1235,8 @@ export default async function CalendarPage({
                                 className={[
                                   "shrink-0 rounded-full px-2 py-0.5 text-[6px] font-black uppercase tracking-[0.08em]",
                                   isStandard
-                                    ? "bg-indigo-100 text-indigo-700"
-                                    : "bg-slate-100 text-slate-500",
+                                    ? "border border-indigo-400/20 bg-indigo-400/[0.08] text-indigo-300"
+                                    : "border border-white/[0.06] bg-white/[0.035] text-[#82909C]",
                                 ].join(
                                   " ",
                                 )}
@@ -1275,12 +1253,12 @@ export default async function CalendarPage({
                                   className={[
                                     "block text-[26px] font-black tracking-[-0.055em] tabular-nums",
                                     ratePlan.code === "STANDARD"
-                                      ? "text-violet-700"
+                                      ? "text-violet-300"
                                       : ratePlan.code === "NON_REFUNDABLE"
-                                        ? "text-emerald-700"
+                                        ? "text-emerald-300"
                                         : ratePlan.code === "WEEKLY"
-                                          ? "text-blue-700"
-                                          : "text-amber-700",
+                                          ? "text-sky-300"
+                                          : "text-amber-300",
                                   ].join(
                                     " ",
                                   )}
@@ -1290,21 +1268,21 @@ export default async function CalendarPage({
                                   )}
                                 </strong>
 
-                                <p className="mt-1 text-[6px] font-semibold text-slate-400">
+                                <p className="mt-1 text-[6px] font-semibold text-[#82909C]">
                                   Min{" "}
                                   {
                                     ratePlan.minimumStay
                                   }
-                                  {" notti Â· Max "}
+                                  {" notti \u00B7 Max "}
                                   {ratePlan.maximumStay ??
-                                    "âˆž"}
+                                    "\u221E"}
                                 </p>
                               </div>
 
                               {isStandard &&
                               effectiveStandardSource ===
                                 "Revenue AI" ? (
-                                <span className="rounded-lg bg-violet-50 px-2 py-1 text-[6px] font-black uppercase tracking-[0.08em] text-violet-600">
+                                <span className="rounded-lg border border-violet-400/20 bg-violet-400/[0.08] px-2 py-1 text-[6px] font-black uppercase tracking-[0.08em] text-violet-300">
                                   AI
                                 </span>
                               ) : null}
@@ -1381,13 +1359,13 @@ function getBookingChannelBarClass(channel?: string) {
 function getBookingChannelClasses(channel: string) {
   switch (channel) {
     case "BOOKING":
-      return "bg-blue-50 text-blue-700 hover:bg-blue-100";
+      return "bg-blue-50 text-sky-300 hover:bg-blue-100";
     case "AIRBNB":
       return "bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100";
     case "HORIZON":
       return "bg-sky-50 text-sky-700 hover:bg-sky-100";
     case "VRBO":
-      return "bg-violet-50 text-violet-700 hover:bg-violet-100";
+      return "bg-violet-50 text-violet-300 hover:bg-violet-100";
     default:
       return "bg-slate-100 text-slate-700 hover:bg-slate-200";
   }
@@ -1596,7 +1574,15 @@ function buildCalendarDays(
   return Array.from(
     {
       length:
-        42,
+        mondayOffset +
+          new Date(
+            monthStart.getFullYear(),
+            monthStart.getMonth() + 1,
+            0,
+          ).getDate() <=
+        35
+          ? 35
+          : 42,
     },
     (
       _,
@@ -1776,21 +1762,3 @@ function formatCurrency(
     value,
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

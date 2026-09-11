@@ -265,21 +265,21 @@ export default async function InvoicesPage({
           />
         </div>
 
-        <section className="mb-6 rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.045)]">
+        <section className="mb-6 rounded-[20px] border border-white/[0.07] bg-[#09131C]/90 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[8px] font-black uppercase tracking-[0.14em] text-blue-600">
+              <p className="text-[8px] font-bold uppercase tracking-[0.14em] text-[#D8B367]">
                 Fatturazione
               </p>
 
-              <h2 className="mt-1 text-[16px] font-black tracking-[-0.03em] text-slate-950">
+              <h2 className="mt-1 font-serif text-[16px] font-semibold tracking-[-0.02em] text-[#FFF8EA]">
                 Fatture commissioni
               </h2>
             </div>
 
             <Link
               href="/documents?type=COMMISSION_INVOICE"
-              className="inline-flex h-9 items-center rounded-xl border border-blue-200 bg-blue-50 px-4 text-[9px] font-bold text-blue-700 transition hover:bg-blue-100"
+              className="inline-flex h-9 items-center rounded-xl border border-[#D8B367]/30 bg-[#D8B367]/[0.06] px-4 text-[9px] font-bold text-[#D8B367] transition hover:border-[#D8B367]/50 hover:bg-[#D8B367]/[0.10]"
             >
               Vedi in Documenti
             </Link>
@@ -362,7 +362,7 @@ export default async function InvoicesPage({
               />
             ) : null}
 
-            <label className="grid min-w-[280px] flex-1 gap-1.5 text-[9px] font-bold text-slate-500">
+            <label className="grid min-w-[280px] flex-1 gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
               Ricerca
 
               <input
@@ -371,11 +371,11 @@ export default async function InvoicesPage({
                   searchQuery
                 }
                 placeholder="Titolo, numero, proprietario o immobile"
-                className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-medium text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+                className="h-10 w-full rounded-xl border border-white/[0.08] bg-[#07111A] px-3 text-[10px] font-medium text-[#E8E1D5] outline-none [color-scheme:dark] transition placeholder:text-[#526472] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
               />
             </label>
 
-            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-slate-500">
+            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
               Proprietario
 
               <select
@@ -383,7 +383,7 @@ export default async function InvoicesPage({
                 defaultValue={
                   ownerFilter
                 }
-                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-medium text-slate-700 outline-none"
+                className="h-10 rounded-xl border border-white/[0.08] bg-[#07111A] px-3 text-[10px] font-medium text-[#E8E1D5] outline-none [color-scheme:dark] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
               >
                 <option value="all">
                   Tutti
@@ -406,7 +406,7 @@ export default async function InvoicesPage({
               </select>
             </label>
 
-            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-slate-500">
+            <label className="grid min-w-[210px] gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
               Immobile
 
               <select
@@ -414,7 +414,7 @@ export default async function InvoicesPage({
                 defaultValue={
                   propertyFilter
                 }
-                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-[10px] font-medium text-slate-700 outline-none"
+                className="h-10 rounded-xl border border-white/[0.08] bg-[#07111A] px-3 text-[10px] font-medium text-[#E8E1D5] outline-none [color-scheme:dark] focus:border-[#D8B367]/60 focus:ring-2 focus:ring-[#D8B367]/10"
               >
                 <option value="all">
                   Tutti
@@ -441,14 +441,14 @@ export default async function InvoicesPage({
 
             <button
               type="submit"
-              className="h-10 rounded-xl bg-[#2563EB] px-5 text-[10px] font-bold text-white shadow-[0_6px_16px_rgba(37,99,235,0.16)] transition hover:bg-[#1D4ED8]"
+              className="h-10 rounded-xl bg-[#D8B367] px-5 text-[10px] font-bold text-[#07111A] transition hover:bg-[#E3C37E]"
             >
               Applica
             </button>
 
             <Link
               href="/invoices"
-              className="inline-flex h-10 items-center rounded-xl border border-slate-200 bg-white px-4 text-[10px] font-bold text-slate-500 transition hover:bg-slate-50"
+              className="inline-flex h-10 items-center rounded-xl border border-white/[0.08] bg-[#07111A] px-4 text-[10px] font-bold text-[#A4AFB8] transition hover:border-[#D8B367]/40 hover:text-[#D8B367]"
             >
               Azzera
             </Link>
@@ -457,12 +457,12 @@ export default async function InvoicesPage({
 
         {invoices.length ===
         0 ? (
-          <section className="rounded-[20px] border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
-            <strong className="text-sm text-slate-800">
+          <section className="rounded-[20px] border border-dashed border-white/[0.10] bg-[#09131C]/90 px-6 py-10 text-center">
+            <strong className="font-serif text-sm font-semibold text-[#FFF8EA]">
               Nessuna fattura trovata
             </strong>
 
-            <p className="mt-2 text-[9px] text-slate-400">
+            <p className="mt-2 text-[9px] text-[#82909C]">
               Le fatture commissioni generate da Horizon compariranno qui.
             </p>
           </section>
@@ -481,14 +481,14 @@ export default async function InvoicesPage({
                     key={
                       invoice.id
                     }
-                    className="rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.045)] transition hover:border-blue-200"
+                    className="rounded-[20px] border border-white/[0.07] bg-[#09131C]/90 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)] transition hover:border-[#D8B367]/25"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <Link
                             href={`/invoices/${invoice.id}/pdf`}
-                            className="text-[15px] font-black tracking-[-0.025em] text-slate-950 transition hover:text-blue-600"
+                            className="font-serif text-[15px] font-semibold tracking-[-0.02em] text-[#FFF8EA] transition hover:text-[#D8B367]"
                           >
                             {
                               invoice.title
@@ -508,13 +508,13 @@ export default async function InvoicesPage({
                         </p>
                       </div>
 
-                      <div className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-[8px] font-bold text-slate-400">
+                      <div className="rounded-lg border border-white/[0.06] bg-[#07111A] px-2.5 py-1.5 text-[8px] font-bold text-[#82909C]">
                         {invoice.documentNumber ??
                           "Numero non assegnato"}
                       </div>
                     </div>
 
-                    <div className="mt-5 grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 lg:grid-cols-5">
+                    <div className="mt-5 grid gap-4 border-t border-white/[0.06] pt-4 sm:grid-cols-2 lg:grid-cols-5">
                       <Metric
                         label="Proprietario"
                         value={
@@ -565,18 +565,18 @@ export default async function InvoicesPage({
                       />
                     </div>
 
-                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                    <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
                       <div className="flex gap-2">
                         <Link
                           href={`/invoices/${invoice.id}/pdf`}
-                          className="inline-flex h-8 items-center rounded-lg bg-[#2563EB] px-3 text-[8px] font-bold text-white transition hover:bg-[#1D4ED8]"
+                          className="inline-flex h-8 items-center rounded-lg bg-[#D8B367] px-3 text-[8px] font-bold text-[#07111A] transition hover:bg-[#E3C37E]"
                         >
                           Apri PDF
                         </Link>
 
                       </div>
 
-                      <span className="text-[8px] text-slate-400">
+                      <span className="text-[8px] text-[#6F7E8A]">
                         Creato il{" "}
                         {invoice.createdAt.toLocaleDateString(
                           "it-IT",
@@ -699,8 +699,8 @@ function FilterLink({
       className={[
         "inline-flex h-8 items-center rounded-full border px-3 text-[8px] font-bold transition",
         active
-          ? "border-blue-600 bg-blue-600 text-white"
-          : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600",
+          ? "border-[#D8B367]/45 bg-[#D8B367]/[0.10] text-[#D8B367]"
+          : "border-white/[0.08] bg-[#07111A] text-[#A4AFB8] hover:border-[#D8B367]/35 hover:text-[#D8B367]",
       ].join(" ")}
     >
       {label}
@@ -723,19 +723,19 @@ function SummaryCard({
 }) {
   const toneClass = {
     slate:
-      "border-slate-200 bg-white text-slate-950",
+      "border-white/[0.07] bg-[#09131C] text-[#F4EEDF]",
     amber:
-      "border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 text-amber-700",
+      "border-[#D8B367]/25 bg-[#D8B367]/[0.07] text-[#D8B367]",
     emerald:
-      "border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-700",
+      "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-300",
     blue:
-      "border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 text-blue-700",
+      "border-sky-400/20 bg-sky-400/[0.07] text-sky-300",
   }[tone];
 
   return (
     <div
       className={[
-        "min-h-[72px] rounded-[18px] border px-4 py-3 shadow-[0_8px_22px_rgba(15,23,42,0.04)]",
+        "min-h-[72px] rounded-[18px] border px-4 py-3 shadow-[0_14px_36px_rgba(0,0,0,0.16)]",
         toneClass,
       ].join(" ")}
     >
@@ -760,11 +760,11 @@ function StatusBadge({
       DocumentStatus.ISSUED ||
     status ===
       DocumentStatus.FINAL
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+      ? "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300"
       : status ===
           DocumentStatus.ARCHIVED
-        ? "border-slate-200 bg-slate-100 text-slate-500"
-        : "border-amber-200 bg-amber-50 text-amber-700";
+        ? "border-white/[0.08] bg-white/[0.04] text-[#82909C]"
+        : "border-amber-400/20 bg-amber-400/[0.08] text-amber-300";
 
   return (
     <span
@@ -792,11 +792,11 @@ function Metric({
 }) {
   return (
     <div className="min-w-0">
-      <div className="text-[7px] font-bold uppercase tracking-[0.1em] text-slate-400">
+      <div className="text-[7px] font-bold uppercase tracking-[0.1em] text-[#6F7E8A]">
         {label}
       </div>
 
-      <strong className="mt-1 block truncate text-[9px] font-bold text-slate-700">
+      <strong className="mt-1 block truncate text-[9px] font-semibold text-[#E8E1D5]">
         {value}
       </strong>
     </div>

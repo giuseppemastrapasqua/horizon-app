@@ -29,7 +29,7 @@ export function PropertyPerformanceStrip({
   operationalAlertsCount,
 }: PropertyPerformanceStripProps) {
   return (
-    <section className="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section className="mb-5 overflow-hidden rounded-2xl border border-white/[0.07] bg-[#09131C]/90 shadow-[0_18px_50px_rgba(0,0,0,0.16)]">
       <div className="grid sm:grid-cols-2 lg:grid-cols-5">
         <Metric
           icon={
@@ -127,19 +127,19 @@ function Metric({
     string
   > = {
     blue:
-      "bg-blue-50 text-blue-600 ring-blue-100",
+      "bg-[#D8B367]/[0.08] text-[#D8B367] ring-[#D8B367]/20",
     sky:
-      "bg-sky-50 text-sky-600 ring-sky-100",
+      "bg-sky-400/[0.08] text-sky-300 ring-sky-400/20",
     emerald:
-      "bg-emerald-50 text-emerald-600 ring-emerald-100",
+      "bg-emerald-400/[0.08] text-emerald-300 ring-emerald-400/20",
     indigo:
-      "bg-indigo-50 text-indigo-600 ring-indigo-100",
+      "bg-indigo-400/[0.08] text-indigo-300 ring-indigo-400/20",
     amber:
-      "bg-amber-50 text-amber-600 ring-amber-100",
+      "bg-amber-400/[0.08] text-amber-300 ring-amber-400/20",
   };
 
   return (
-    <div className="group relative min-w-0 border-b border-slate-100 px-4 py-4 transition-colors hover:bg-slate-50/60 last:border-b-0 sm:[&:nth-child(odd)]:border-r lg:border-b-0 lg:border-r lg:last:border-r-0">
+    <div className="group relative min-w-0 border-b border-white/[0.06] px-4 py-4 transition-colors hover:bg-white/[0.025] last:border-b-0 sm:[&:nth-child(odd)]:border-r lg:border-b-0 lg:border-r lg:last:border-r-0">
       <div className="flex items-center justify-between gap-2">
         <span
           className={[
@@ -155,12 +155,12 @@ function Metric({
             "h-1.5 w-1.5 rounded-full",
             alert
               ? "bg-amber-400"
-              : "bg-slate-200",
+              : "bg-white/[0.12]",
           ].join(" ")}
         />
       </div>
 
-      <p className="mt-3 truncate text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
+      <p className="mt-3 truncate text-[9px] font-bold uppercase tracking-[0.12em] text-[#82909C]">
         {label}
       </p>
 
@@ -168,8 +168,8 @@ function Metric({
         className={[
           "mt-1 text-[22px] font-bold tracking-[-0.035em]",
           alert
-            ? "text-amber-700"
-            : "text-slate-900",
+            ? "text-amber-300"
+            : "text-[#FFF8EA]",
         ].join(" ")}
       >
         {value}
@@ -179,8 +179,8 @@ function Metric({
         className={[
           "mt-1 truncate text-[10px]",
           alert
-            ? "font-medium text-amber-600"
-            : "text-slate-400",
+            ? "font-medium text-amber-300"
+            : "text-[#6F7E8A]",
         ].join(" ")}
       >
         {detail}

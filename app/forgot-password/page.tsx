@@ -11,20 +11,20 @@ export default async function ForgotPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
+    <main className="flex min-h-screen items-center justify-center bg-[#050B11] px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/40">
+        <div className="rounded-3xl border border-[#D8B367]/20 bg-[#09131C] p-8 shadow-xl shadow-black/30">
           <div className="mb-8">
-            <div className="text-2xl font-extrabold text-blue-600">
+            <div className="text-2xl font-extrabold text-[#D8B367]">
               Horizon
             </div>
 
-            <h1 className="mt-5 text-2xl font-bold text-slate-950">
+            <h1 className="mt-5 font-serif text-3xl font-normal text-[#FFF8EA]">
               Password dimenticata?
             </h1>
 
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Inserisci l’email del tuo account. Se esiste un account attivo
+            <p className="mt-2 text-sm leading-6 text-[#8EA0AE]">
+              Inserisci lÃ¢â‚¬â„¢email del tuo account. Se esiste un account attivo
               associato a questo indirizzo, riceverai un link valido per 30
               minuti.
             </p>
