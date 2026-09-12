@@ -646,7 +646,7 @@ export default async function BookingsPage({
             <div className="overflow-x-auto">
               <div className="min-w-[1160px]">
 
-                <div className="grid grid-cols-[minmax(190px,1.3fr)_minmax(175px,1.1fr)_175px_80px_90px_115px_125px_60px] items-center border-b border-white/[0.07] bg-white/[0.025] px-4 py-3 text-[8px] font-bold uppercase tracking-[0.12em] text-[#687784]">
+                <div className="grid grid-cols-[minmax(190px,1.3fr)_minmax(175px,1.1fr)_175px_80px_90px_115px_125px_60px] items-center border-b border-white/[0.07] bg-white/[0.025] px-4 py-3 text-[9px] font-bold uppercase tracking-[0.12em] text-[#687784]">
                   <span>Ospite</span>
                   <span>Struttura</span>
                   <span>Soggiorno</span>
@@ -682,7 +682,7 @@ export default async function BookingsPage({
                       <div className="min-w-0">
                         <Link
                           href={`/bookings/${booking.id}`}
-                          className="block truncate text-[11px] font-bold text-[#F4EEDF] transition hover:text-[#D8B367]"
+                          className="block truncate text-[12px] font-bold text-[#F4EEDF] transition hover:text-[#D8B367]"
                         >
                           {
                             booking.guestName
@@ -697,7 +697,7 @@ export default async function BookingsPage({
                           />
 
                           {booking.externalBookingId ? (
-                            <span className="max-w-[110px] truncate text-[8px] font-medium text-[#82909C]">
+                            <span className="max-w-[110px] truncate text-[9px] font-medium text-[#82909C]">
                               {
                                 booking.externalBookingId
                               }
@@ -707,26 +707,26 @@ export default async function BookingsPage({
                       </div>
 
                       {isOperator ? (
-                        <span className="truncate text-[10px] font-semibold text-[#A4AFB8]">
+                        <span className="truncate text-[11px] font-semibold text-[#A4AFB8]">
                           {booking.property.name}
                         </span>
                       ) : (
                         <Link
                           href={`/properties/${booking.property.id}`}
-                          className="truncate text-[10px] font-semibold text-[#A4AFB8] transition hover:text-[#D8B367]"
+                          className="truncate text-[11px] font-semibold text-[#A4AFB8] transition hover:text-[#D8B367]"
                         >
                           {booking.property.name}
                         </Link>
                       )}
 
                       <div>
-                        <p className="text-[9px] font-bold text-[#D7DDE1]">
+                        <p className="text-[10px] font-bold text-[#D7DDE1]">
                           {formatDate(
                             booking.checkIn,
                           )}
                         </p>
 
-                        <p className="mt-1 flex items-center gap-1 text-[8px] text-slate-400">
+                        <p className="mt-1 flex items-center gap-1 text-[9px] text-slate-400">
                           <ArrowRight
                             size={9}
                           />
@@ -737,7 +737,7 @@ export default async function BookingsPage({
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#D7DDE1]">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#D7DDE1]">
                         <Moon
                           size={12}
                           className="text-slate-400"
@@ -748,7 +748,7 @@ export default async function BookingsPage({
                         }
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#D7DDE1]">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#D7DDE1]">
                         <Users
                           size={12}
                           className="text-slate-400"
@@ -760,7 +760,7 @@ export default async function BookingsPage({
                       </div>
 
                       {!isOperator ? (
-                      <p className="flex items-center gap-1 text-[10px] font-bold text-[#F4EEDF]">
+                      <p className="flex items-center gap-1 text-[11px] font-bold text-[#F4EEDF]">
                         <CircleDollarSign
                           size={12}
                           className="text-[#D8B367]"
@@ -1100,7 +1100,7 @@ function ChannelBadge({
   channel: string;
 }) {
   return (
-    <span className="inline-flex rounded-full border border-[#D8B367]/20 bg-[#D8B367]/[0.07] px-2 py-0.5 text-[7px] font-bold uppercase tracking-wide text-[#D8B367]">
+    <span className="inline-flex rounded-full border border-[#D8B367]/20 bg-[#D8B367]/[0.07] px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#D8B367]">
       {formatLabel(
         channel,
       )}
@@ -1120,7 +1120,7 @@ function BookingStatusBadge({
   return (
     <span
       className={[
-        "inline-flex rounded-full border px-2 py-0.5 text-[7px] font-bold",
+        "inline-flex rounded-full border px-2 py-0.5 text-[8px] font-bold",
         cancelled
           ? "border-rose-400/20 bg-rose-400/[0.08] text-rose-300"
           : "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300",
@@ -1143,7 +1143,7 @@ function OperationalStatus({
   return (
     <span
       className={[
-        "text-[7px] font-semibold",
+        "text-[8px] font-semibold",
         status === "OK"
           ? "text-slate-400"
           : "text-amber-300",
