@@ -388,7 +388,7 @@ export default async function BookingsPage({
         title="Prenotazioni"
         subtitle="Soggiorni, ospiti e movimenti operativi."
       >
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#D8B367]">
               Gestione soggiorni
@@ -410,7 +410,7 @@ export default async function BookingsPage({
                   )}`
                 : "/bookings/new"
             }
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#D8B367]/70 bg-[#D8B367] px-4 text-[10px] font-bold text-[#07111A] shadow-[0_10px_24px_rgba(216,179,103,0.16)] transition hover:-translate-y-0.5 hover:bg-[#E5C47F] hover:shadow-[0_14px_30px_rgba(216,179,103,0.20)]"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#D8B367]/70 bg-[#D8B367] px-4 text-[10px] font-bold !text-[#07111A] shadow-[0_10px_24px_rgba(216,179,103,0.16)] transition hover:-translate-y-0.5 hover:bg-[#E5C47F] hover:shadow-[0_14px_30px_rgba(216,179,103,0.20)]"
           >
             <Plus
               size={14}
@@ -634,7 +634,7 @@ export default async function BookingsPage({
                 className="mx-auto text-[#D8B367]"
               />
 
-              <h2 className="mt-3 text-sm font-bold text-[#FFF8EA]">
+              <h2 className="mt-3 !font-sans text-sm font-bold text-[#FFF8EA]">
                 Nessuna prenotazione nel periodo
               </h2>
 
@@ -697,7 +697,7 @@ export default async function BookingsPage({
                           />
 
                           {booking.externalBookingId ? (
-                            <span className="max-w-[90px] truncate text-[7px] font-medium text-slate-400">
+                            <span className="max-w-[110px] truncate text-[8px] font-medium text-[#82909C]">
                               {
                                 booking.externalBookingId
                               }
