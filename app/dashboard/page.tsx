@@ -126,7 +126,7 @@ export default async function Home() {
   return (
     <AppShell
       title="Le tue strutture"
-      subtitle="Stato operativo, movimenti di giornata e priorità del portfolio Horizon."
+      subtitle={"Stato operativo, movimenti di giornata e priorit\u00E0 del portfolio Horizon."}
     >
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -135,7 +135,7 @@ export default async function Home() {
           </p>
 
           <p className="mt-1 text-[13px] text-[#A4AFB8]">
-            Una vista unica sulle attività che richiedono attenzione oggi.
+            {"Una vista unica sulle attivit\u00E0 che richiedono attenzione oggi."}
           </p>
         </div>
 
@@ -202,15 +202,15 @@ export default async function Home() {
               </div>
 
               <h2 className="mt-1.5 font-serif text-[20px] font-medium tracking-[-0.025em] text-[#FFF8EA]">
-                Priorità del portfolio
+                {"Priorit\u00E0 del portfolio"}
               </h2>
 
               <p className="mt-1 max-w-2xl text-[11px] leading-5 text-[#7F8D99]">
-                Segnali ordinati per severità, impatto economico e rilevanza temporale.
+                {"Segnali ordinati per severit\u00E0, impatto economico e rilevanza temporale."}
                 {intelligence.portfolio.totalInsights > intelligence.insights.length ? (
                   <>
                     {" "}
-                    Mostrate {intelligence.insights.length} priorità su{" "}
+                    Mostrate {intelligence.insights.length} {"priorit\u00E0"} su{" "}
                     {intelligence.portfolio.totalInsights} segnalazioni.
                   </>
                 ) : null}
@@ -229,7 +229,7 @@ export default async function Home() {
               />
 
               <PortfolioBadge
-                label={`${intelligence.portfolio.opportunities} opportunità`}
+                label={`${intelligence.portfolio.opportunities} opportunit\u00E0`}
                 tone="opportunity"
               />
             </div>
@@ -261,7 +261,7 @@ export default async function Home() {
                           : insight.severity === "WARNING"
                             ? "Attenzione"
                             : insight.severity === "OPPORTUNITY"
-                              ? "Opportunità"
+                              ? "Opportunit\u00E0"
                               : "Informazione"}
                       </span>
 
@@ -535,7 +535,7 @@ function PropertyIdentity({
     city,
   ]
     .filter(Boolean)
-    .join(" · ");
+    .join(" \u00B7 ");
 
   return (
     <div className="min-w-0">
