@@ -748,46 +748,46 @@ return (
                 <div className="flex items-start justify-between gap-8">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                      <span className="text-[7px] font-black uppercase tracking-[0.14em] text-[#82909C]">
+                      <span className="text-[9px] font-black uppercase tracking-[0.14em] text-[#82909C]">
                         Legenda
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-300">
+                      <span className="flex items-center gap-1.5 text-[9px] font-semibold text-emerald-300">
                         <span className="h-2 w-2 rounded-full bg-emerald-500" />
                         Aperto
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-300">
+                      <span className="flex items-center gap-1.5 text-[9px] font-semibold text-emerald-300">
                         <span className="h-2 w-2 rounded-full bg-emerald-500" />
                         Chiusura manuale
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-rose-300">
+                      <span className="flex items-center gap-1.5 text-[9px] font-semibold text-rose-300">
                         <span className="h-2 w-2 rounded-full bg-rose-500" />
                         Chiuso senza prenotazione
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-emerald-300">
+                      <span className="flex items-center gap-1.5 text-[9px] font-semibold text-emerald-300">
                         <span className="rounded-md border border-emerald-400/20 bg-emerald-400/[0.08] px-1.5 py-0.5 font-black">
                           IN
                         </span>
                         Check-in
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-rose-300">
+                      <span className="flex items-center gap-1.5 text-[9px] font-semibold text-rose-300">
                         <span className="rounded-md border border-rose-400/20 bg-rose-400/[0.08] px-1.5 py-0.5 font-black">
                           OUT
                         </span>
                         Check-out
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-[#A4AFB8]">
+                      <span className="flex items-center gap-1.5 text-[9px] font-semibold text-[#A4AFB8]">
                         <span className="h-2 w-2 rounded-full bg-slate-400" />
                         Prenotato
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[8px] font-semibold text-violet-300">
-                        <span className="flex h-4 w-4 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-indigo-600 text-[6px] font-black text-white">
+                      <span className="flex items-center gap-1.5 text-[9px] font-semibold text-violet-300">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-md bg-gradient-to-br from-violet-600 to-indigo-600 text-[8px] font-black text-white">
                           {"\u2726"}
                         </span>
                         Revenue AI
@@ -795,22 +795,22 @@ return (
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center gap-5 border-t border-white/[0.06] pt-3">
-                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-[#A4AFB8]">
+                      <span className="flex items-center gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
                         <ChannelLogo channel="BOOKING" size={15} />
                         Booking
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-[#A4AFB8]">
+                      <span className="flex items-center gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
                         <ChannelLogo channel="AIRBNB" size={15} />
                         Airbnb
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-[#A4AFB8]">
+                      <span className="flex items-center gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
                         <ChannelLogo channel="VRBO" size={15} />
                         Vrbo
                       </span>
 
-                      <span className="flex items-center gap-1.5 text-[7px] font-bold text-[#A4AFB8]">
+                      <span className="flex items-center gap-1.5 text-[9px] font-bold text-[#A4AFB8]">
                         <ChannelLogo channel="HORIZON" size={15} />
                         Horizon
                       </span>
@@ -1051,7 +1051,7 @@ return (
                               <Link
                                 href={`/bookings/${displayBooking.id}`}
                                 title={`${displayBooking.channel} \u00B7 ${displayBooking.guestName}`}
-                                className={`relative z-[2] mt-4 -mx-3.5 flex h-7 w-[calc(100%+1.75rem)] items-center px-4 text-left text-[10px] font-semibold text-white shadow-sm transition hover:z-[3] hover:brightness-95 ${getBookingChannelBarClass(displayBooking.channel)}`}
+                                className={`relative z-[2] mt-4 -mx-3.5 flex h-7 w-[calc(100%+1.75rem)] items-center px-4 text-left text-[12px] font-semibold text-[#07111A] shadow-sm transition hover:z-[3] hover:brightness-95 ${getBookingChannelBarClass(displayBooking.channel)}`}
                                 style={{
                                   clipPath:
                                     isSameDay(day, displayBooking.checkIn)
@@ -1062,14 +1062,14 @@ return (
                                 }}
                               >
                                 {isSameDay(day, displayBooking.checkIn) ? (
-                                  <span className="flex min-w-0 items-center gap-2 text-white">
+                                  <span className="flex min-w-0 items-center gap-2 text-[#07111A]">
                                     <ChannelLogo
                                       channel={displayBooking.channel}
-                                      size={15}
-                                      variant="white"
+                                      size={18}
+                                      variant="brand"
                                     />
 
-                                    <span className="truncate text-white">
+                                    <span className="truncate text-[#07111A]">
                                       {displayBooking.guestName}
                                     </span>
                                   </span>
@@ -1132,15 +1132,15 @@ return (
               <section className="rounded-[24px] border border-white/[0.07] bg-[#09131C] p-5 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[7px] font-black uppercase tracking-[0.16em] text-[#D8B367]">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#D8B367]">
                       Pricing
                     </p>
 
-                    <h3 className="mt-1 font-serif text-sm font-semibold text-[#FFF8EA]">
+                    <h3 className="mt-1 !font-sans text-sm font-semibold text-[#FFF8EA]">
                       Tariffe attive
                     </h3>
 
-                    <p className="mt-1 text-[7px] text-[#82909C]">
+                    <p className="mt-1 text-[10px] text-[#82909C]">
                       Prezzi calcolati sulla Standard effettiva del periodo
                     </p>
                   </div>
@@ -1150,7 +1150,7 @@ return (
                       selectedProperty?.id ??
                         "",
                     )}`}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-[7px] font-bold text-[#A4AFB8] transition hover:border-[#D8B367]/40 hover:text-[#D8B367] hover:shadow-sm"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-[9px] font-bold text-[#A4AFB8] transition hover:border-[#D8B367]/40 hover:text-[#D8B367] hover:shadow-sm"
                   >
                     Configura
 
@@ -1217,14 +1217,14 @@ return (
                                     </span>
                                   ) : null}
 
-                                  <strong className="truncate text-[9px] font-black text-[#F4EEDF]">
+                                  <strong className="truncate text-[11px] font-black text-[#F4EEDF]">
                                     {
                                       ratePlan.name
                                     }
                                   </strong>
                                 </div>
 
-                                <p className="mt-1.5 text-[6px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
+                                <p className="mt-1.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
                                   {isStandard
                                     ? `Standard \u00B7 ${effectiveStandardSource}`
                                     : `${adjustment >= 0 ? "+" : ""}${adjustment}% da Standard`}
@@ -1233,7 +1233,7 @@ return (
 
                               <span
                                 className={[
-                                  "shrink-0 rounded-full px-2 py-0.5 text-[6px] font-black uppercase tracking-[0.08em]",
+                                  "shrink-0 rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.08em]",
                                   isStandard
                                     ? "border border-indigo-400/20 bg-indigo-400/[0.08] text-indigo-300"
                                     : "border border-white/[0.06] bg-white/[0.035] text-[#82909C]",
@@ -1268,7 +1268,7 @@ return (
                                   )}
                                 </strong>
 
-                                <p className="mt-1 text-[6px] font-semibold text-[#82909C]">
+                                <p className="mt-1 text-[9px] font-semibold text-[#82909C]">
                                   Min{" "}
                                   {
                                     ratePlan.minimumStay
@@ -1282,7 +1282,7 @@ return (
                               {isStandard &&
                               effectiveStandardSource ===
                                 "Revenue AI" ? (
-                                <span className="rounded-lg border border-violet-400/20 bg-violet-400/[0.08] px-2 py-1 text-[6px] font-black uppercase tracking-[0.08em] text-violet-300">
+                                <span className="rounded-lg border border-violet-400/20 bg-violet-400/[0.08] px-2 py-1 text-[8px] font-black uppercase tracking-[0.08em] text-violet-300">
                                   AI
                                 </span>
                               ) : null}

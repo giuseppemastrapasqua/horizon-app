@@ -426,7 +426,7 @@ export default async function RevenueAiPage({
               </div>
 
               <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.18em] text-indigo-500">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-500">
                   Horizon Revenue Intelligence
                 </p>
 
@@ -462,7 +462,7 @@ export default async function RevenueAiPage({
           <>
             <section className="grid gap-3 md:grid-cols-4">
               <div className="relative overflow-hidden rounded-3xl border border-indigo-400/20 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 p-5 text-white shadow-[0_18px_45px_rgba(79,70,229,0.22)]">
-                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-indigo-100">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-100">
                   Prezzo Revenue AI
                 </p>
 
@@ -532,11 +532,11 @@ export default async function RevenueAiPage({
                   </span>
 
                   <div>
-                    <p className="text-[7px] font-black uppercase tracking-[0.16em] text-indigo-500">
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-indigo-500">
                       Decision Engine
                     </p>
 
-                    <h2 className="mt-0.5 text-sm font-black text-slate-950">
+                    <h2 className="mt-0.5 !font-sans text-sm font-black text-slate-950">
                       Strategia Horizon
                     </h2>
                   </div>
@@ -545,7 +545,7 @@ export default async function RevenueAiPage({
 
               <div className="grid lg:grid-cols-[1.55fr_1fr]">
                 <div className="p-5 lg:border-r lg:border-slate-100">
-                  <p className="text-[8px] font-black uppercase tracking-[0.13em] text-slate-400">
+                  <p className="text-[10px] font-black uppercase tracking-[0.13em] text-slate-400">
                     {"Perch\u00E9 Horizon propone questo prezzo"}
                   </p>
 
@@ -555,7 +555,7 @@ export default async function RevenueAiPage({
 
                   {revenueResult?.message ? (
                     <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5">
-                      <p className="text-[7px] font-black uppercase tracking-[0.12em] text-slate-400">
+                      <p className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">
                         Nota del motore
                       </p>
 
@@ -569,11 +569,11 @@ export default async function RevenueAiPage({
                 <div className="bg-slate-50/35 p-5">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-[7px] font-black uppercase tracking-[0.14em] text-slate-400">
+                      <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">
                         Vincoli e segnali
                       </p>
 
-                      <p className="mt-1 text-[9px] text-slate-500">
+                      <p className="mt-1 text-[10px] text-slate-500">
                         Parametri utilizzati nella decisione
                       </p>
                     </div>
@@ -585,7 +585,7 @@ export default async function RevenueAiPage({
 
                   <div className="grid grid-cols-2 gap-2">
                     <div className="rounded-2xl border border-slate-100 bg-white p-3">
-                      <p className="text-[7px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
                         Minimum stay
                       </p>
 
@@ -593,13 +593,13 @@ export default async function RevenueAiPage({
                         {recommendation.minimumStay}
                       </strong>
 
-                      <span className="text-[7px] font-semibold text-slate-400">
+                      <span className="text-[9px] font-semibold text-slate-400">
                         notti
                       </span>
                     </div>
 
                     <div className="rounded-2xl border border-slate-100 bg-white p-3">
-                      <p className="text-[7px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
                         Selezionate
                       </p>
 
@@ -607,13 +607,13 @@ export default async function RevenueAiPage({
                         {recommendation.selectedNights}
                       </strong>
 
-                      <span className="text-[7px] font-semibold text-slate-400">
+                      <span className="text-[9px] font-semibold text-slate-400">
                         notti
                       </span>
                     </div>
 
                     <div className="rounded-2xl border border-slate-100 bg-white p-3">
-                      <p className="text-[7px] font-bold uppercase tracking-[0.08em] text-slate-400">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-400">
                         Analizzate
                       </p>
 
@@ -621,13 +621,13 @@ export default async function RevenueAiPage({
                         {recommendation.analyzedNights}
                       </strong>
 
-                      <span className="text-[7px] font-semibold text-slate-400">
+                      <span className="text-[9px] font-semibold text-slate-400">
                         notti
                       </span>
                     </div>
 
                     <div className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/80 to-violet-50/60 p-3">
-                      <p className="text-[7px] font-bold uppercase tracking-[0.08em] text-indigo-400">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-indigo-400">
                         Copertura
                       </p>
 
@@ -637,7 +637,7 @@ export default async function RevenueAiPage({
                         )}%
                       </strong>
 
-                      <span className="text-[7px] font-semibold text-indigo-400">
+                      <span className="text-[9px] font-semibold text-indigo-400">
                         dati mercato
                       </span>
                     </div>
@@ -654,15 +654,15 @@ export default async function RevenueAiPage({
             <section className="mt-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_10px_32px_rgba(15,23,42,0.05)]">
               <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-100 px-5 py-4">
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-[0.16em] text-indigo-500">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-indigo-500">
                     Revenue Intelligence
                   </p>
 
-                  <h2 className="mt-1 text-sm font-black text-slate-950">
+                  <h2 className="mt-1 !font-sans text-sm font-black text-slate-950">
                     Pricing giornaliero
                   </h2>
 
-                  <p className="mt-1 text-[9px] text-slate-500">
+                  <p className="mt-1 text-[10px] text-slate-500">
                     Prezzo Revenue AI e distribuzione pubblica consigliata per canale.
                   </p>
                 </div>
@@ -672,7 +672,7 @@ export default async function RevenueAiPage({
                     {"\u2726"}
                   </span>
 
-                  <span className="text-[7px] font-black uppercase tracking-[0.1em] text-violet-600">
+                  <span className="text-[9px] font-black uppercase tracking-[0.1em] text-violet-600">
                     Revenue AI
                   </span>
                 </div>
@@ -682,7 +682,7 @@ export default async function RevenueAiPage({
                 <table className="w-full min-w-[760px] text-left">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-50/70">
-                      <th className="px-5 py-3 text-[7px] font-black uppercase tracking-[0.12em] text-slate-400">
+                      <th className="px-5 py-3 text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">
                         Data
                       </th>
 
@@ -692,7 +692,7 @@ export default async function RevenueAiPage({
                             {"\u2726"}
                           </span>
 
-                          <span className="text-[7px] font-black uppercase tracking-[0.1em] text-violet-600">
+                          <span className="text-[9px] font-black uppercase tracking-[0.1em] text-violet-600">
                             Revenue AI
                           </span>
                         </div>
@@ -705,7 +705,7 @@ export default async function RevenueAiPage({
                             size={18}
                           />
 
-                          <span className="text-[7px] font-black uppercase tracking-[0.08em] text-slate-500">
+                          <span className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-500">
                             Booking
                           </span>
                         </div>
@@ -718,7 +718,7 @@ export default async function RevenueAiPage({
                             size={18}
                           />
 
-                          <span className="text-[7px] font-black uppercase tracking-[0.08em] text-slate-500">
+                          <span className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-500">
                             Airbnb
                           </span>
                         </div>
@@ -731,7 +731,7 @@ export default async function RevenueAiPage({
                             size={18}
                           />
 
-                          <span className="text-[7px] font-black uppercase tracking-[0.08em] text-slate-500">
+                          <span className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-500">
                             Vrbo
                           </span>
                         </div>
@@ -744,7 +744,7 @@ export default async function RevenueAiPage({
                             size={18}
                           />
 
-                          <span className="text-[7px] font-black uppercase tracking-[0.08em] text-slate-500">
+                          <span className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-500">
                             Horizon
                           </span>
                         </div>
@@ -861,7 +861,7 @@ export default async function RevenueAiPage({
           </>
         ) : (
           <section className="rounded-3xl border border-amber-200 bg-amber-50 p-6">
-            <h2 className="font-bold text-amber-900">
+            <h2 className="!font-sans font-bold text-amber-900">
               Dati di mercato insufficienti
             </h2>
 
