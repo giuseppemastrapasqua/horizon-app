@@ -19,6 +19,17 @@ vi.mock(
   }),
 );
 
+const enqueueBookingIcalSyncJobsMock = vi.hoisted(() =>
+  vi.fn(),
+);
+
+vi.mock(
+  "@/lib/job/enqueue-booking-ical-sync-jobs",
+  () => ({
+    enqueueBookingIcalSyncJobs: enqueueBookingIcalSyncJobsMock,
+  }),
+);
+
 import { GET, POST } from "./route";
 
 describe("POST /api/internal/background-jobs/process", () => {
@@ -30,6 +41,8 @@ describe("POST /api/internal/background-jobs/process", () => {
 
   beforeEach(() => {
     processNextBackgroundJobMock.mockReset();
+    enqueueBookingIcalSyncJobsMock.mockReset();
+    enqueueBookingIcalSyncJobsMock.mockResolvedValue(0);
 
     delete process.env.BACKGROUND_JOB_SECRET;
     delete process.env.CRON_SECRET;

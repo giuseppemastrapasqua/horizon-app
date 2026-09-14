@@ -19,7 +19,7 @@ export function createAlloggiatiSubmissionFingerprint(
     submission.apartmentId?.trim();
 
   if (
-    !apartmentId ||
+    apartmentId &&
     !/^\d+$/.test(apartmentId)
   ) {
     throw new Error(
@@ -33,8 +33,12 @@ export function createAlloggiatiSubmissionFingerprint(
     );
   }
 
+  const destination = apartmentId
+    ? `APARTMENT:${apartmentId}`
+    : "STANDARD";
+
   const canonicalPayload = [
-    encodePart(apartmentId),
+    encodePart(destination),
     ...submission.records.map(encodePart),
   ].join("|");
 

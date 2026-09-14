@@ -28,7 +28,7 @@ export function BookingDocuments({
   documents,
 }: BookingDocumentsProps) {
   return (
-    <Panel>
+    <Panel dark>
       <SectionTitle
         title="Documenti"
         subtitle="Documentazione collegata all’immobile e al proprietario."
@@ -158,7 +158,7 @@ const listStyle = {
 const cardStyle = {
   padding: uiTokens.spacing.md,
   borderRadius: uiTokens.radius.lg,
-  background: uiTokens.colors.surfaceSoft,
+  background: uiTokens.colors.primary,
   border: `1px solid ${uiTokens.colors.border}`,
 };
 
@@ -171,14 +171,14 @@ const headerStyle = {
 };
 
 const titleStyle = {
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: "16px",
   fontWeight: uiTokens.fontWeight.strong,
 };
 
 const subtitleStyle = {
   margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.sm,
 };
 
@@ -200,12 +200,12 @@ const detailsGridStyle = {
 
 const detailLabelStyle = {
   marginBottom: "4px",
-  color: uiTokens.colors.textSubtle,
+  color: "#64748b",
   fontSize: uiTokens.fontSize.xs,
 };
 
 const detailValueStyle = {
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: uiTokens.fontSize.sm,
 };
 

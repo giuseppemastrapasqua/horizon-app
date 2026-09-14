@@ -22,6 +22,7 @@ type WorkspaceTimelineProps = {
   emptyTitle?: string;
   emptyDescription?: string;
   items: WorkspaceTimelineItem[];
+  dark?: boolean;
 };
 
 export function WorkspaceTimeline({
@@ -30,12 +31,14 @@ export function WorkspaceTimeline({
   emptyTitle = "Nessuna attività recente",
   emptyDescription = "Gli eventi compariranno qui.",
   items,
+  dark = false,
 }: WorkspaceTimelineProps) {
   return (
-    <Panel>
+    <Panel dark={dark}>
       <SectionTitle
         title={title}
         subtitle={subtitle}
+        dark={dark}
         action={
           <StatusBadge
             label={`${items.length} eventi`}
@@ -73,17 +76,17 @@ export function WorkspaceTimeline({
                     {item.href ? (
                       <Link
                         href={item.href}
-                        style={eventTitleLinkStyle}
+                        style={{ ...eventTitleLinkStyle, color: dark ? "#ffffff" : uiTokens.colors.textPrimary }}
                       >
                         {item.title}
                       </Link>
                     ) : (
-                      <strong style={eventTitleStyle}>
+                      <strong style={{ ...eventTitleStyle, color: dark ? "#ffffff" : uiTokens.colors.textPrimary }}>
                         {item.title}
                       </strong>
                     )}
 
-                    <p style={descriptionStyle}>
+                    <p style={{ ...descriptionStyle, color: dark ? "#94a3b8" : uiTokens.colors.textMuted }}>
                       {item.description}
                     </p>
                   </div>
@@ -95,7 +98,7 @@ export function WorkspaceTimeline({
                   />
                 </div>
 
-                <div style={dateStyle}>
+                <div style={{ ...dateStyle, color: dark ? "#64748b" : uiTokens.colors.textSubtle }}>
                   {formatDateTime(item.occurredAt)}
                 </div>
               </div>

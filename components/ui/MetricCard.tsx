@@ -8,6 +8,7 @@ type MetricCardProps = {
   trendLabel?: string;
   tone?: UiTone;
   compact?: boolean;
+  dark?: boolean;
 };
 
 export function MetricCard({
@@ -18,6 +19,7 @@ export function MetricCard({
   trendLabel,
   tone = "default",
   compact = false,
+  dark = false,
 }: MetricCardProps) {
   const toneStyle = getToneStyle(tone);
 
@@ -29,14 +31,14 @@ export function MetricCard({
           ? uiTokens.spacing.md
           : uiTokens.spacing.lg,
         borderRadius: uiTokens.radius.lg,
-        background: toneStyle.background,
-        border: `1px solid ${toneStyle.border}`,
+        background: dark ? uiTokens.colors.primary : uiTokens.colors.surface,
+        border: dark ? "1px solid rgba(148,163,184,0.28)" : `1px solid ${uiTokens.colors.border}`,
         boxShadow: uiTokens.shadow.soft,
       }}
     >
       <div
         style={{
-          color: uiTokens.colors.textMuted,
+          color: dark ? "#94a3b8" : uiTokens.colors.textMuted,
           fontSize: uiTokens.fontSize.sm,
           fontWeight: uiTokens.fontWeight.bold,
         }}
@@ -47,7 +49,7 @@ export function MetricCard({
       <div
         style={{
           marginTop: uiTokens.spacing.sm,
-          color: toneStyle.valueColor,
+          color: dark ? uiTokens.colors.primaryText : toneStyle.valueColor,
           fontSize: compact
             ? "25px"
             : uiTokens.fontSize.display,
@@ -74,7 +76,7 @@ export function MetricCard({
           {trendLabel ? (
             <span
               style={{
-                color: uiTokens.colors.textSubtle,
+                color: dark ? "#94a3b8" : uiTokens.colors.textSubtle,
                 fontSize: uiTokens.fontSize.xs,
               }}
             >
@@ -86,7 +88,7 @@ export function MetricCard({
         <p
           style={{
             margin: `${uiTokens.spacing.sm} 0 0`,
-            color: uiTokens.colors.textSubtle,
+            color: dark ? "#94a3b8" : uiTokens.colors.textSubtle,
             fontSize: uiTokens.fontSize.xs,
             lineHeight: 1.45,
           }}

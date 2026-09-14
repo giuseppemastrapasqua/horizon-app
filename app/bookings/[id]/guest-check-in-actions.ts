@@ -1,18 +1,37 @@
 "use server";
 
 import { AuditAction } from "@prisma/client";
+import { assertAlloggiatiSubmissionWindowOpen } from "@/lib/integrations/alloggiati-web/submission-window";
 import { revalidatePath } from "next/cache";
 
-import { requirePropertyAccess, requireUser } from "@/lib/auth/guards";
+import { requirePropertyAccess, requirePropertyRole, requireUser } from "@/lib/auth/guards";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 import {
   calculateGuestCheckInLinkExpiry,
   generateGuestCheckInToken,
   hashGuestCheckInToken,
 } from "@/lib/bookings/guest-check-in-token";
+import {
+  prepareBookingSubmission,
+} from "@/lib/integrations/alloggiati-web/prepare-booking-submission";
+import {
+  preflightAlloggiatiSubmission,
+} from "@/lib/integrations/alloggiati-web/preflight-submission";
+import {
+  PublicAlloggiatiReferenceProvider,
+} from "@/lib/integrations/alloggiati-web/public-reference-provider";
+import {
+  createRuntimeAlloggiatiWebCredentialProvider,
+} from "@/lib/integrations/alloggiati-web/runtime-credential-provider";
+import {
+  createRuntimeAlloggiatiWebValidator,
+} from "@/lib/integrations/alloggiati-web/runtime-validator";
+import { enqueueBackgroundJob } from "@/lib/job/enqueue-background-job";
 import { sendEmail } from "@/lib/notifications/email/send-email";
 import { prisma } from "@/lib/prisma";
 import { AuditService } from "@/services/audit/AuditService";
+
+const publicReferenceProvider = new PublicAlloggiatiReferenceProvider();
 
 function getBaseUrl() {
   const configuredUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -181,6 +200,200 @@ export async function sendGuestCheckInEmailAction(bookingId: string) {
   return {
     success: true as const,
     expiresAt: prepared.expiresAt.toISOString(),
+  };
+}
+
+export async function verifyGuestCheckInWithAlloggiatiAction(
+  bookingId: string,
+) {
+  const user = await requireUser();
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: {
+      id: true,
+      propertyId: true,
+      checkIn: true,
+      nights: true,
+      guests: true,
+      bookingGuests: {
+        select: {
+          role: true,
+          firstName: true,
+          lastName: true,
+          gender: true,
+          birthDate: true,
+          birthCity: true,
+          birthProvince: true,
+          birthCountry: true,
+          citizenship: true,
+          documentType: true,
+          documentNumber: true,
+          documentIssueCountry: true,
+          documentIssueCity: true,
+        },
+      },
+    },
+  });
+
+  if (!booking) {
+    throw new Error("Prenotazione non trovata.");
+  }
+
+  await requirePropertyRole(booking.propertyId, ["OWNER", "MANAGER"]);
+
+  const connection = await prisma.alloggiatiWebProperty.findUnique({
+    where: { propertyId: booking.propertyId },
+    select: { apartmentId: true },
+  });
+
+  if (!connection) {
+    throw new Error("Alloggiati Web non configurato per la struttura.");
+  }
+
+  const apartmentId = connection.apartmentId?.trim() || undefined;
+
+  if (apartmentId && !/^\d+$/.test(apartmentId)) {
+    throw new Error("IdAppartamento Alloggiati Web non valido.");
+  }
+
+  if (booking.nights < 1 || booking.nights > 30) {
+    throw new Error("Permanenza Alloggiati non valida: deve essere tra 1 e 30 giorni.");
+  }
+
+  if (booking.guests !== booking.bookingGuests.length) {
+    throw new Error("Dati ospiti Alloggiati incompleti rispetto alla prenotazione.");
+  }
+
+  const resolver = await publicReferenceProvider.getResolver();
+
+  const submission = await prepareBookingSubmission(
+    {
+      checkIn: booking.checkIn,
+      nights: booking.nights,
+      expectedGuests: booking.guests,
+      guests: booking.bookingGuests,
+      apartmentId,
+    },
+    resolver,
+  );
+
+  const credentialProvider = createRuntimeAlloggiatiWebCredentialProvider();
+  const credentials = await credentialProvider.getCredentials({
+    propertyId: booking.propertyId,
+  });
+  const validator = createRuntimeAlloggiatiWebValidator(credentials);
+  const result = await preflightAlloggiatiSubmission(submission, validator);
+
+  await AuditService.log({
+    actorId: user.id,
+    action: AuditAction.UPDATE,
+    propertyId: booking.propertyId,
+    entityType: AUDIT_ENTITY_TYPES.BOOKING,
+    entityId: booking.id,
+    description: "Verifica schedina Alloggiati Web superata senza invio.",
+    metadata: {
+      alloggiatiWebPreflightPassed: true,
+      recordsCount: submission.records.length,
+    },
+  });
+
+  return {
+    success: true as const,
+    message: result.message?.trim() || "Verifica Alloggiati Web superata.",
+  };
+}
+
+export async function enqueueGuestCheckInAlloggiatiSubmissionAction(
+  bookingId: string,
+) {
+  const user = await requireUser();
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: {
+      id: true,
+      propertyId: true,
+      checkIn: true,
+      guests: true,
+      bookingGuests: {
+        select: { id: true },
+      },
+    },
+  });
+
+  if (!booking) {
+    throw new Error("Prenotazione non trovata.");
+  }
+
+  await requirePropertyRole(booking.propertyId, ["OWNER", "MANAGER"]);
+
+  assertAlloggiatiSubmissionWindowOpen(booking.checkIn);
+
+  if (
+    booking.guests < 1 ||
+    booking.guests !== booking.bookingGuests.length
+  ) {
+    throw new Error(
+      "Dati ospiti Alloggiati incompleti rispetto alla prenotazione.",
+    );
+  }
+
+  const connection =
+    await prisma.alloggiatiWebProperty.findUnique({
+      where: { propertyId: booking.propertyId },
+      select: { id: true },
+    });
+
+  if (!connection) {
+    throw new Error(
+      "Alloggiati Web non configurato per la struttura.",
+    );
+  }
+
+  const confirmedTransmission =
+    await prisma.alloggiatiWebTransmission.findFirst({
+      where: {
+        bookingId: booking.id,
+        status: "CONFIRMED",
+      },
+      select: { id: true },
+    });
+
+  if (confirmedTransmission) {
+    throw new Error(
+      "La schedina è già stata trasmessa e confermata da Alloggiati Web.",
+    );
+  }
+
+  const job = await enqueueBackgroundJob({
+    type: "ALLOGGIATI_WEB_SUBMISSION",
+    payload: {
+      bookingId: booking.id,
+      propertyId: booking.propertyId,
+    },
+    deduplicationKey: `alloggiati-web-submission:${booking.id}`,
+    maxAttempts: 1,
+  });
+
+  await AuditService.log({
+    actorId: user.id,
+    action: AuditAction.UPDATE,
+    propertyId: booking.propertyId,
+    entityType: AUDIT_ENTITY_TYPES.BOOKING,
+    entityId: booking.id,
+    description: "Invio schedina Alloggiati Web accodato.",
+    metadata: {
+      alloggiatiWebSubmissionQueued: true,
+      backgroundJobId: job.id,
+    },
+  });
+
+  revalidatePath(`/bookings/${booking.id}`);
+
+  return {
+    success: true as const,
+    jobId: job.id,
   };
 }
 

@@ -149,6 +149,12 @@ export async function createProperty(
     formData.get("cleaningCost") || 0,
   );
 
+  const baseGuests = 2;
+
+  const extraGuestFee = Number(
+    formData.get("extraGuestFee") || 0,
+  );
+
   const propertyManagementCommissionPercent = Number(
     formData.get("propertyManagementCommissionPercent") || 0,
   );
@@ -201,6 +207,15 @@ export async function createProperty(
     );
   }
 
+  if (
+    !Number.isFinite(extraGuestFee) ||
+    extraGuestFee < 0
+  ) {
+    throw new Error(
+      "Il supplemento ospite aggiuntivo deve essere un numero valido.",
+    );
+  }
+
   if (!Number.isFinite(propertyManagementCommissionPercent) || propertyManagementCommissionPercent < 0 || propertyManagementCommissionPercent >= 100) {
     throw new Error("La commissione di gestione deve essere compresa tra 0 e 99,99.");
   }
@@ -236,6 +251,8 @@ export async function createProperty(
               bedrooms,
               bathrooms,
               cleaningCost,
+              baseGuests,
+          extraGuestFee,
               propertyManagementCommissionPercent,
               propertyManagementCommissionVatPercent,
               propertyManagementCommissionVatMode: propertyManagementCommissionVatMode as "NONE" | "EXCLUDED" | "INCLUDED",

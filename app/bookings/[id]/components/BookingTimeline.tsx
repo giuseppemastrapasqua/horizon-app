@@ -17,6 +17,7 @@ export function BookingTimeline({
       emptyTitle="Timeline vuota"
       emptyDescription="Gli eventi della prenotazione compariranno qui."
       items={items}
+      dark
     />
   );
 }

@@ -195,10 +195,13 @@ export async function processAlloggiatiWebSubmissionJob(
     );
   }
 
+  const apartmentId =
+    connection.apartmentId?.trim() ||
+    undefined;
+
   if (
-    !/^\d+$/.test(
-      connection.apartmentId.trim(),
-    )
+    apartmentId &&
+    !/^\d+$/.test(apartmentId)
   ) {
     throw new Error(
       "IdAppartamento Alloggiati Web non valido.",
@@ -238,8 +241,7 @@ export async function processAlloggiatiWebSubmissionJob(
         nights: booking.nights,
         expectedGuests: booking.guests,
         guests: booking.bookingGuests,
-        apartmentId:
-          connection.apartmentId.trim(),
+        apartmentId,
       },
       resolver,
     );
@@ -280,8 +282,7 @@ export async function processAlloggiatiWebSubmissionJob(
     await transmissionStore.prepare({
       bookingId: booking.id,
       propertyId: payload.propertyId,
-      apartmentId:
-        connection.apartmentId.trim(),
+      apartmentId: apartmentId ?? null,
       payloadHash,
       recordsCount:
         submission.records.length,

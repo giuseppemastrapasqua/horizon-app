@@ -1,4 +1,11 @@
-import Link from "next/link";
+﻿import Link from "next/link";
+
+import {
+RevenuePricingChart } from "./RevenuePricingChart";
+
+import {
+  RevenueAiWorkspaceControls,
+} from "../../revenue-ai/RevenueAiWorkspaceControls";
 
 import {
   ArrowLeft,
@@ -8,6 +15,8 @@ import {
   Sparkles,
   TrendingDown,
   TrendingUp,
+  Tag,
+  Database
 } from "lucide-react";
 
 import {
@@ -61,6 +70,7 @@ type RevenueAiPageProps = {
     propertyId?: string | string[];
     from?: string | string[];
     to?: string | string[];
+    workspace?: string | string[];
   }>;
 };
 
@@ -394,6 +404,11 @@ export default async function RevenueAiPage({
     revenueAnalysis?.insights ??
     [];
 
+  const workspaceMode =
+    getParam(
+      params.workspace,
+    ) === "1";
+
   const calendarHref =
     `/calendar?propertyId=${propertyId}` +
     `&from=${getParam(params.from)}` +
@@ -410,13 +425,15 @@ export default async function RevenueAiPage({
       <main className="mx-auto max-w-7xl px-5 py-7">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-5">
           <div>
-            <Link
-              href={calendarHref}
-              className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-slate-900"
-            >
-              <ArrowLeft size={14} />
-              Torna al calendario
-            </Link>
+            {!workspaceMode ? (
+              <Link
+                href={calendarHref}
+                className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 transition hover:text-slate-900"
+              >
+                <ArrowLeft size={14} />
+                Torna al calendario
+              </Link>
+            ) : null}
 
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 via-indigo-600 to-fuchsia-600 text-white shadow-[0_10px_28px_rgba(79,70,229,0.24)]">
@@ -458,27 +475,50 @@ export default async function RevenueAiPage({
           </div>
         </div>
 
+        {workspaceMode ? (
+          <RevenueAiWorkspaceControls
+            propertyId={propertyId}
+            from={getParam(
+              params.from,
+            )}
+            to={getParam(
+              params.to,
+            )}
+          />
+        ) : null}
+
         {recommendation ? (
           <>
             <section className="grid gap-3 md:grid-cols-4">
-              <div className="relative overflow-hidden rounded-3xl border border-indigo-400/20 bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 p-5 text-white shadow-[0_18px_45px_rgba(79,70,229,0.22)]">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-100">
-                  Prezzo Revenue AI
-                </p>
+              <div className="relative min-h-[180px] overflow-hidden rounded-3xl border border-violet-400/45 bg-gradient-to-br from-[#241B54] via-[#342273] to-[#512A9C] p-6 text-white shadow-[0_18px_45px_rgba(63,35,140,0.20)]">
+  <div className="pointer-events-none absolute -bottom-16 right-[-30px] h-44 w-72 rounded-full bg-violet-300/[0.08] blur-2xl" />
+  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-r from-white/[0.01] via-violet-200/[0.04] to-white/[0.08]" />
 
-                <p className="mt-3 text-[34px] font-black tracking-[-0.055em] tabular-nums">
-                  {formatCurrency(
-                    averageAiPrice ??
-                      recommendation.nightlyPrice,
-                  )}
-                </p>
+  <div className="relative flex h-full flex-col">
+    <div className="flex items-start justify-between gap-4">
+      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-100/90">
+        Prezzo Revenue AI
+      </p>
 
-                <p className="mt-2 text-[10px] text-indigo-100">
-                  media consigliata per notte
-                </p>
-              </div>
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.09] text-violet-100 shadow-inner">
+        <Sparkles size={18} />
+      </span>
+    </div>
 
-              <MetricCard
+    <p className="mt-4 text-[38px] font-black tracking-[-0.055em] tabular-nums">
+      {formatCurrency(
+        averageAiPrice ??
+          recommendation.nightlyPrice,
+      )}
+    </p>
+
+    <p className="mt-auto pt-3 text-[11px] font-medium text-violet-100/80">
+      media consigliata per notte
+    </p>
+  </div>
+</div>
+
+<MetricCard
                 label="Standard Rate"
                 value={
                   standardPrice !== null
@@ -521,6 +561,12 @@ export default async function RevenueAiPage({
                 detail={`${recommendation.analyzedNights}/${recommendation.selectedNights} notti analizzate`}
               />
             </section>
+
+            <RevenuePricingChart
+              dailyPrices={recommendation.dailyPrices ?? []}
+              standardPrice={standardPrice}
+            />
+
 
             <section className="mt-4 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_10px_32px_rgba(15,23,42,0.05)]">
               <div className="border-b border-slate-100 bg-gradient-to-r from-white via-indigo-50/30 to-violet-50/40 px-5 py-4">
@@ -882,42 +928,133 @@ function MetricCard({
   value,
   detail,
   positive,
+  variant = "blue",
 }: {
   label: string;
   value: string;
   detail: string;
   positive?: boolean;
+  variant?:
+    | "blue"
+    | "emerald"
+    | "amber";
 }) {
+  const config = {
+    blue: {
+      card:
+        "border-sky-400/40 bg-gradient-to-br from-[#10273A] via-[#123653] to-[#164D72] shadow-[0_18px_44px_rgba(14,116,144,0.12)]",
+      glow:
+        "bg-sky-300/[0.09]",
+      label:
+        "text-sky-100/90",
+      detail:
+        "text-sky-100/70",
+      iconBox:
+        "border-sky-200/10 bg-sky-200/[0.10] text-sky-100",
+      icon: Tag,
+    },
+
+    emerald: {
+      card:
+        "border-emerald-400/40 bg-gradient-to-br from-[#103631] via-[#105046] to-[#126A59] shadow-[0_18px_44px_rgba(16,185,129,0.10)]",
+      glow:
+        "bg-emerald-300/[0.10]",
+      label:
+        "text-emerald-100/90",
+      detail:
+        "text-emerald-100/70",
+      iconBox:
+        "border-emerald-200/10 bg-emerald-200/[0.10] text-emerald-100",
+      icon: TrendingUp,
+    },
+
+    amber: {
+      card:
+        "border-amber-400/40 bg-gradient-to-br from-[#443316] via-[#58431A] to-[#72591E] shadow-[0_18px_44px_rgba(217,161,61,0.10)]",
+      glow:
+        "bg-amber-300/[0.10]",
+      label:
+        "text-amber-100/90",
+      detail:
+        "text-amber-100/75",
+      iconBox:
+        "border-amber-200/10 bg-amber-200/[0.10] text-amber-100",
+      icon: Database,
+    },
+  } as const;
+
+  const style =
+    config[variant];
+
+  const Icon =
+    style.icon;
+
   return (
-    <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50/60 p-5 shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
-      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-400">
-        {label}
-      </p>
+    <div
+      className={[
+        "relative min-h-[180px] overflow-hidden rounded-3xl border p-6",
+        style.card,
+      ].join(" ")}
+    >
+      <div
+        className={[
+          "pointer-events-none absolute -bottom-16 right-[-30px] h-44 w-72 rounded-full blur-2xl",
+          style.glow,
+        ].join(" ")}
+      />
 
-      <div className="mt-3 flex items-center gap-2">
-        <strong className="text-[22px] font-black tracking-[-0.04em] text-slate-950 tabular-nums">
-          {value}
-        </strong>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-r from-white/[0.01] via-white/[0.025] to-white/[0.07]" />
 
-        {positive !== undefined ? (
-          positive ? (
-            <TrendingUp
-              size={15}
-              className="text-emerald-500"
-            />
-          ) : (
-            <TrendingDown
-              size={15}
-              className="text-rose-500"
-            />
-          )
-        ) : null}
+      <div className="relative flex h-full flex-col">
+        <div className="flex items-start justify-between gap-4">
+          <p
+            className={[
+              "text-[10px] font-black uppercase tracking-[0.16em]",
+              style.label,
+            ].join(" ")}
+          >
+            {label}
+          </p>
+
+          <span
+            className={[
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border shadow-inner",
+              style.iconBox,
+            ].join(" ")}
+          >
+            <Icon size={18} />
+          </span>
+        </div>
+
+        <div className="mt-4 flex items-center gap-2">
+          <strong className="text-[36px] font-black tracking-[-0.05em] text-[#F8FAFC] tabular-nums">
+            {value}
+          </strong>
+
+          {positive !== undefined ? (
+            positive ? (
+              <TrendingUp
+                size={17}
+                className="text-emerald-200"
+              />
+            ) : (
+              <TrendingDown
+                size={17}
+                className="text-rose-200"
+              />
+            )
+          ) : null}
+        </div>
+
+        <p
+          className={[
+            "mt-auto pt-3 text-[11px] font-medium",
+            style.detail,
+          ].join(" ")}
+        >
+          {detail}
+        </p>
       </div>
-
-      <p className="mt-2 text-[10px] text-slate-500">
-        {detail}
-      </p>
     </div>
   );
 }
-

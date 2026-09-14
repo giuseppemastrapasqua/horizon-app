@@ -218,7 +218,7 @@ export default async function DocumentsPage({
             />
           </div>
 
-          <Link href="/documents/new" className="inline-flex h-10 items-center rounded-xl border border-[#D8B367]/50 bg-[#D8B367] px-4 text-[10px] font-bold text-[#07111A] shadow-[0_8px_20px_rgba(216,179,103,0.14)] transition hover:bg-[#E3C37E]">
+          <Link href="/documents/new" className="inline-flex h-10 items-center rounded-xl border border-[#D8B367]/50 bg-[#D8B367] px-4 text-[10px] font-bold !text-[#07111A] shadow-[0_8px_20px_rgba(216,179,103,0.14)] transition hover:bg-[#E3C37E]">
             + Nuovo documento
           </Link>
         </div>
@@ -457,7 +457,7 @@ export default async function DocumentsPage({
               </select>
             </label>
 
-            <button type="submit" className="h-10 rounded-xl bg-[#D8B367] px-5 text-[10px] font-bold text-[#07111A] transition hover:bg-[#E3C37E]">
+            <button type="submit" className="h-10 rounded-xl bg-[#D8B367] px-5 text-[10px] font-bold !text-[#07111A] transition hover:bg-[#E3C37E]">
               Applica
             </button>
 
@@ -564,7 +564,7 @@ export default async function DocumentsPage({
                     <div className="flex flex-wrap gap-2">
                       <Link
                         href={`/documents/${document.id}`}
-                        className="inline-flex h-8 items-center rounded-lg bg-[#D8B367] px-3 text-[8px] font-bold text-[#07111A] transition hover:bg-[#E3C37E]"
+                        className="inline-flex h-8 items-center rounded-lg bg-[#D8B367] px-3 text-[8px] font-bold !text-[#07111A] transition hover:bg-[#E3C37E]"
                       >
                         Apri
                       </Link>

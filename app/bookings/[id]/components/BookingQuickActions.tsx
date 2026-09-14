@@ -55,8 +55,9 @@ export function BookingQuickActions({
   ];
 
   return (
-    <Panel>
+    <Panel dark>
       <SectionTitle
+        dark
         title="Azioni rapide"
         subtitle="Accessi diretti alle attività più frequenti sulla prenotazione."
       />
@@ -68,18 +69,14 @@ export function BookingQuickActions({
             style={{
               ...cardStyle,
               background: action.primary
-                ? uiTokens.colors.primary
-                : uiTokens.colors.surfaceSoft,
-              border: action.primary
-                ? `1px solid ${uiTokens.colors.primary}`
-                : `1px solid ${uiTokens.colors.border}`,
+                ? "rgba(255, 255, 255, 0.07)"
+                : "rgba(255, 255, 255, 0.035)",
+              border: "1px solid rgba(148, 163, 184, 0.28)",
             }}
           >
             <strong
               style={{
-                color: action.primary
-                  ? uiTokens.colors.primaryText
-                  : uiTokens.colors.textPrimary,
+                color: uiTokens.colors.primaryText,
                 fontSize: "15px",
                 fontWeight: uiTokens.fontWeight.strong,
               }}
@@ -90,9 +87,7 @@ export function BookingQuickActions({
             <p
               style={{
                 margin: `${uiTokens.spacing.xs} 0 ${uiTokens.spacing.md}`,
-                color: action.primary
-                  ? "#cbd5e1"
-                  : uiTokens.colors.textMuted,
+                color: "#94a3b8",
                 fontSize: uiTokens.fontSize.sm,
                 lineHeight: 1.45,
               }}

@@ -26,8 +26,8 @@ describe("property configuration permissions", () => {
         "utf8",
       );
 
-      expect(source).toContain(
-        'requirePropertyRole(propertyId, ["OWNER", "MANAGER"])',
+      expect(source).toMatch(
+        /requirePropertyRole\(\s*propertyId\s*,\s*\[\s*["']OWNER["']\s*,\s*["']MANAGER["']\s*,?\s*\]\s*,?\s*\)/,
       );
 
       expect(source).not.toContain(

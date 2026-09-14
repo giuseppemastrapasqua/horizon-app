@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Property" ADD COLUMN     "baseGuests" INTEGER NOT NULL DEFAULT 2,
+ADD COLUMN     "extraGuestFee" DECIMAL(10,2) NOT NULL DEFAULT 0;

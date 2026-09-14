@@ -20,11 +20,36 @@ export async function discoverAlloggiatiApartments(
     credentials,
   );
 
-  const table = await adapter.getTable(
-    "ListaAppartamenti",
-  );
+  try {
+    const table = await adapter.getTable(
+      "ListaAppartamenti",
+    );
 
-  return parseAlloggiatiApartmentList(
-    table.csv,
+    return parseAlloggiatiApartmentList(
+      table.csv,
+    );
+  } catch (error) {
+    if (isEmptyApartmentTableError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+function isEmptyApartmentTableError(
+  error: unknown,
+): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const normalized = error.message
+    .trim()
+    .toLowerCase();
+
+  return (
+    normalized.endsWith("tabella vuota") ||
+    normalized.endsWith("tebella vuota")
   );
 }

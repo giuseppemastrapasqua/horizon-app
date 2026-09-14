@@ -28,7 +28,7 @@ export function BookingTasks({
   tasks,
 }: BookingTasksProps) {
   return (
-    <Panel>
+    <Panel dark>
       <SectionTitle
         title="Task prenotazione"
         subtitle="Attività operative generate e collegate al soggiorno."
@@ -43,6 +43,7 @@ export function BookingTasks({
 
       {tasks.length === 0 ? (
         <EmptyState
+          dark
           title="Nessun task collegato"
           description="Le attività operative create da IMPERIUM compariranno qui."
           actionLabel="Crea task"
@@ -109,7 +110,7 @@ const listStyle = {
 const taskCardStyle = {
   padding: uiTokens.spacing.md,
   borderRadius: uiTokens.radius.lg,
-  background: uiTokens.colors.surfaceSoft,
+  background: uiTokens.colors.primary,
   border: `1px solid ${uiTokens.colors.border}`,
 };
 
@@ -122,14 +123,14 @@ const headerStyle = {
 };
 
 const titleStyle = {
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: "16px",
   fontWeight: uiTokens.fontWeight.strong,
 };
 
 const descriptionStyle = {
   margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.sm,
   lineHeight: 1.45,
 };
@@ -157,12 +158,12 @@ const dateBlockStyle = {
 };
 
 const dateLabelStyle = {
-  color: uiTokens.colors.textSubtle,
+  color: "#64748b",
   fontSize: "9px",
   fontWeight: uiTokens.fontWeight.strong,
 };
 
 const dateValueStyle = {
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: uiTokens.fontSize.sm,
 };

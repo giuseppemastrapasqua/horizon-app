@@ -4,20 +4,38 @@ type SectionTitleProps = {
   title: string;
   subtitle?: string;
   action?: React.ReactNode;
+  dark?: boolean;
 };
 
 export function SectionTitle({
   title,
   subtitle,
   action,
+  dark = false,
 }: SectionTitleProps) {
   return (
     <div style={wrapperStyle}>
       <div>
-        <h2 style={titleStyle}>{title}</h2>
+        <h2
+          style={{
+            ...titleStyle,
+            color: dark
+              ? uiTokens.colors.primaryText
+              : uiTokens.colors.textPrimary,
+          }}
+        >
+          {title}
+        </h2>
 
         {subtitle ? (
-          <p style={subtitleStyle}>{subtitle}</p>
+          <p
+            style={{
+              ...subtitleStyle,
+              color: dark ? "#94a3b8" : uiTokens.colors.textMuted,
+            }}
+          >
+            {subtitle}
+          </p>
         ) : null}
       </div>
 
@@ -37,7 +55,6 @@ const wrapperStyle = {
 
 const titleStyle = {
   margin: 0,
-  color: uiTokens.colors.textPrimary,
   fontSize: uiTokens.fontSize.xl,
   fontWeight: uiTokens.fontWeight.strong,
   letterSpacing: "-0.025em",
@@ -45,7 +62,6 @@ const titleStyle = {
 
 const subtitleStyle = {
   margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textMuted,
   fontSize: uiTokens.fontSize.sm,
   lineHeight: 1.5,
 };

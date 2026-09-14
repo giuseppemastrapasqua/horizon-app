@@ -235,7 +235,7 @@ function getRequiredString(
     !value.trim()
   ) {
     throw new Error(
-      `Il campo "${fieldName}" Ã¨ obbligatorio.`
+      `Il campo "${fieldName}" \u00E8 obbligatorio.`
     );
   }
 
@@ -252,7 +252,7 @@ function parseReferenceMonth(
 
   if (!match) {
     throw new Error(
-      "Il mese di riferimento non Ã¨ valido."
+      "Il mese di riferimento non \u00E8 valido."
     );
   }
 
@@ -273,7 +273,7 @@ function parseReferenceMonth(
     month > 12
   ) {
     throw new Error(
-      "Il mese di riferimento non Ã¨ valido."
+      "Il mese di riferimento non \u00E8 valido."
     );
   }
 

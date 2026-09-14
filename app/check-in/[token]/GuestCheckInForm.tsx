@@ -148,15 +148,15 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         </label>
       </div>
       {guestCount > 1 ? (
-        <fieldset className="rounded-2xl border border-white/10 p-5">
-          <legend className="px-2 text-sm font-bold text-[#FFF8EA]">{t.stayType}</legend>
-          <div className="mt-2 flex gap-6 text-sm">
+        <fieldset className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <legend className="px-2 text-sm font-semibold text-slate-700">{t.stayType}</legend>
+          <div className="mt-2 flex flex-wrap gap-5 text-sm font-medium text-slate-700">
             <label className="flex items-center gap-2">
-              <input type="radio" checked={groupType === "FAMILY"} onChange={() => setGroupType("FAMILY")} />
+              <input type="radio" checked={groupType === "FAMILY"} onChange={() => setGroupType("FAMILY")} className="h-4 w-4 accent-slate-900" />
               {t.family}
             </label>
             <label className="flex items-center gap-2">
-              <input type="radio" checked={groupType === "GROUP"} onChange={() => setGroupType("GROUP")} />
+              <input type="radio" checked={groupType === "GROUP"} onChange={() => setGroupType("GROUP")} className="h-4 w-4 accent-slate-900" />
               {t.group}
             </label>
           </div>
@@ -168,8 +168,8 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         const isLeader = index === 0;
 
         return (
-          <fieldset key={index} className="rounded-2xl border border-white/10 p-5">
-            <legend className="px-2 font-bold text-[#FFF8EA]">{t.guest} {index + 1}{isLeader ? ` - ${t.leader}` : ""}</legend>
+          <fieldset key={index} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <legend className="px-2 font-semibold text-slate-800">{t.guest} {index + 1}{isLeader ? ` - ${t.leader}` : ""}</legend>
             <input type="hidden" name={`guests.${index}.role`} />
 
             <div className="mt-3 grid gap-4 sm:grid-cols-2">

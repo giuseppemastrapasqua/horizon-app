@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,6 +12,7 @@ import {
   Home,
   ReceiptText,
   Settings,
+  Sparkles,
   Tags,
   Users,
 } from "lucide-react";
@@ -20,14 +21,60 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { HorizonLogo } from "@/components/ui/HorizonLogo";
 
 const navigationItems = [
-  { href: "/dashboard", label: "Dashboard", icon: Home, operatorVisible: false },
-  { href: "/bookings", label: "Prenotazioni", icon: CalendarDays, operatorVisible: true },
-  { href: "/calendar", label: "Calendario", icon: CalendarDays, operatorVisible: true },
-  { href: "/tasks", label: "Task", icon: ClipboardCheck, operatorVisible: true },
-  { href: "/documents", label: "Documenti", icon: FileText, operatorVisible: false },
-  { href: "/invoices", label: "Fatture", icon: ReceiptText, operatorVisible: false },
-  { href: "/rate-types", label: "Tipologie tariffe", icon: Tags, operatorVisible: false },
-  { href: "/reports/finance", label: "Rendiconto", icon: BarChart3, operatorVisible: false },
+  {
+    href: "/dashboard",
+    label: "Dashboard",
+    icon: Home,
+    operatorVisible: false,
+  },
+  {
+    href: "/bookings",
+    label: "Prenotazioni",
+    icon: CalendarDays,
+    operatorVisible: true,
+  },
+  {
+    href: "/calendar",
+    label: "Calendario",
+    icon: CalendarDays,
+    operatorVisible: true,
+  },
+  {
+    href: "/revenue-ai",
+    label: "Revenue AI",
+    icon: Sparkles,
+    operatorVisible: false,
+  },
+  {
+    href: "/tasks",
+    label: "Task",
+    icon: ClipboardCheck,
+    operatorVisible: true,
+  },
+  {
+    href: "/documents",
+    label: "Documenti",
+    icon: FileText,
+    operatorVisible: false,
+  },
+  {
+    href: "/invoices",
+    label: "Fatture",
+    icon: ReceiptText,
+    operatorVisible: false,
+  },
+  {
+    href: "/rate-types",
+    label: "Tipologie tariffe",
+    icon: Tags,
+    operatorVisible: false,
+  },
+  {
+    href: "/reports/finance",
+    label: "Rendiconto",
+    icon: BarChart3,
+    operatorVisible: false,
+  },
 ];
 
 export function Navigation() {

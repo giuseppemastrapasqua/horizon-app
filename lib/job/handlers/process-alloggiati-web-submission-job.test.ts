@@ -295,6 +295,73 @@ describe(
       },
     );
     it(
+      "supporta una utenza standard senza apartmentId",
+      async () => {
+        connectionFindUniqueMock.mockResolvedValue({
+          apartmentId: null,
+        });
+
+        let prepared:
+          | AlloggiatiWebSubmission
+          | undefined;
+
+        const validateSubmission = vi.fn(
+          async () => ({
+            success: true,
+          }),
+        );
+
+        await expect(
+          processAlloggiatiWebSubmissionJob(
+            createJob(),
+            {
+              getReferenceResolver:
+                async () => resolver,
+              prepareSubmission:
+                async (input, referenceResolver) => {
+                  prepared =
+                    await prepareBookingSubmission(
+                      input,
+                      referenceResolver,
+                    );
+
+                  return prepared;
+                },
+              credentialProvider: {
+                getCredentials: async () => ({
+                  username: "test-user",
+                  password: "test-password",
+                  wsKey: "test-wskey",
+                }),
+              },
+              createValidator: () => ({
+                validateSubmission,
+              }),
+              ...transmissionDependencies,
+            },
+          ),
+        ).resolves.toBeUndefined();
+
+        expect(prepared).toBeDefined();
+        expect(prepared?.apartmentId).toBeUndefined();
+
+        expect(
+          createFingerprintMock,
+        ).toHaveBeenCalledWith(prepared);
+
+        expect(
+          prepareTransmissionMock,
+        ).toHaveBeenCalledWith({
+          bookingId: "booking-1",
+          propertyId: "property-1",
+          apartmentId: null,
+          payloadHash: "hash-1",
+          recordsCount: 1,
+        });
+      },
+    );
+
+    it(
       "rifiuta dati ospiti incompleti",
       async () => {
         bookingFindUniqueMock.mockResolvedValue({

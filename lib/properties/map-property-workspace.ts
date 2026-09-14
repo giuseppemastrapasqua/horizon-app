@@ -43,6 +43,8 @@ export function mapWorkspaceProperty(
     zone: property.zone,
     description: property.description,
     cleaningCost: property.cleaningCost,
+    baseGuests: property.baseGuests,
+    extraGuestFee: property.extraGuestFee,
     propertyManagementCommissionPercent: property.propertyManagementCommissionPercent,
     propertyManagementCommissionVatPercent: property.propertyManagementCommissionVatPercent,
     propertyManagementCommissionVatMode: property.propertyManagementCommissionVatMode,

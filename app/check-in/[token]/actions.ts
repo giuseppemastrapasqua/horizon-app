@@ -5,6 +5,8 @@ import type { BookingGuestGender, BookingGuestRole } from "@prisma/client";
 import { hashGuestCheckInToken, isGuestCheckInLinkUsable } from "@/lib/bookings/guest-check-in-token";
 import { PublicAlloggiatiReferenceProvider } from "@/lib/integrations/alloggiati-web/public-reference-provider";
 import { validateBookingGuestsForAlloggiati } from "@/lib/integrations/alloggiati-web/validate-booking-guests";
+import { getGuestCheckInLanguage, guestCheckInServerError } from "./server-translations";
+import type { GuestCheckInLanguage } from "./translations";
 import { prisma } from "@/lib/prisma";
 
 const referenceProvider = new PublicAlloggiatiReferenceProvider();
@@ -25,10 +27,10 @@ type GuestInput = {
   documentIssueCity: string | null;
 };
 
-function requiredString(formData: FormData, key: string) {
+function requiredString(formData: FormData, key: string, language: GuestCheckInLanguage) {
   const value = formData.get(key);
   if (typeof value !== "string" || !value.trim()) {
-    throw new Error("Compila tutti i campi obbligatori.");
+    throw new Error(guestCheckInServerError(language, "required"));
   }
   return value.trim();
 }
@@ -38,22 +40,22 @@ function optionalString(formData: FormData, key: string) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
-function parseDate(value: string) {
+function parseDate(value: string, language: GuestCheckInLanguage) {
   const date = new Date(`${value}T00:00:00.000Z`);
   if (Number.isNaN(date.getTime())) {
-    throw new Error("Data di nascita non valida.");
+    throw new Error(guestCheckInServerError(language, "invalidBirthDate"));
   }
   return date;
 }
 
-function parseGender(value: string): BookingGuestGender {
+function parseGender(value: string, language: GuestCheckInLanguage): BookingGuestGender {
   if (value !== "MALE" && value !== "FEMALE") {
-    throw new Error("Sesso non valido.");
+    throw new Error(guestCheckInServerError(language, "invalidGender"));
   }
   return value;
 }
 
-function parseRole(value: string): BookingGuestRole {
+function parseRole(value: string, language: GuestCheckInLanguage): BookingGuestRole {
   if (
     value !== "SINGLE_GUEST" &&
     value !== "FAMILY_HEAD" &&
@@ -61,13 +63,14 @@ function parseRole(value: string): BookingGuestRole {
     value !== "FAMILY_MEMBER" &&
     value !== "GROUP_MEMBER"
   ) {
-    throw new Error("Ruolo ospite non valido.");
+    throw new Error(guestCheckInServerError(language, "invalidRole"));
   }
   return value;
 }
 
 export async function saveGuestCheckInAction(formData: FormData) {
-  const token = requiredString(formData, "token");
+  const language = getGuestCheckInLanguage(formData);
+  const token = requiredString(formData, "token", language);
   const tokenHash = hashGuestCheckInToken(token);
 
   const link = await prisma.guestCheckInLink.findUnique({
@@ -91,7 +94,7 @@ export async function saveGuestCheckInAction(formData: FormData) {
       revokedAt: link.revokedAt,
     })
   ) {
-    throw new Error("Il link non è più valido. Richiedi un nuovo link alla struttura.");
+    throw new Error(guestCheckInServerError(language, "invalidLink"));
   }
 
   const guestCount = link.booking.guests;
@@ -100,15 +103,15 @@ export async function saveGuestCheckInAction(formData: FormData) {
   for (let index = 0; index < guestCount; index += 1) {
     const prefix = `guests.${index}`;
     guests.push({
-      role: parseRole(requiredString(formData, `${prefix}.role`)),
-      firstName: requiredString(formData, `${prefix}.firstName`),
-      lastName: requiredString(formData, `${prefix}.lastName`),
-      gender: parseGender(requiredString(formData, `${prefix}.gender`)),
-      birthDate: parseDate(requiredString(formData, `${prefix}.birthDate`)),
+      role: parseRole(requiredString(formData, `${prefix}.role`, language), language),
+      firstName: requiredString(formData, `${prefix}.firstName`, language),
+      lastName: requiredString(formData, `${prefix}.lastName`, language),
+      gender: parseGender(requiredString(formData, `${prefix}.gender`, language), language),
+      birthDate: parseDate(requiredString(formData, `${prefix}.birthDate`, language), language),
       birthCity: optionalString(formData, `${prefix}.birthCity`),
       birthProvince: optionalString(formData, `${prefix}.birthProvince`),
-      birthCountry: requiredString(formData, `${prefix}.birthCountry`),
-      citizenship: requiredString(formData, `${prefix}.citizenship`),
+      birthCountry: requiredString(formData, `${prefix}.birthCountry`, language),
+      citizenship: requiredString(formData, `${prefix}.citizenship`, language),
       documentType: optionalString(formData, `${prefix}.documentType`),
       documentNumber: optionalString(formData, `${prefix}.documentNumber`),
       documentIssueCountry: optionalString(formData, `${prefix}.documentIssueCountry`),
@@ -122,27 +125,27 @@ export async function saveGuestCheckInAction(formData: FormData) {
   );
 
   if (!compliance.ready) {
-    throw new Error("I dati degli ospiti non sono completi per Alloggiati Web.");
+    throw new Error(guestCheckInServerError(language, "incomplete"));
   }
 
   const resolver = await referenceProvider.getResolver();
 
   for (const guest of guests) {
     if (!(await resolver.resolveCountryCode(guest.birthCountry))) {
-      throw new Error(`Paese di nascita non riconosciuto: ${guest.birthCountry}.`);
+      throw new Error(guestCheckInServerError(language, "birthCountry", guest.birthCountry));
     }
 
     if (!(await resolver.resolveCountryCode(guest.citizenship))) {
-      throw new Error(`Cittadinanza non riconosciuta: ${guest.citizenship}.`);
+      throw new Error(guestCheckInServerError(language, "citizenship", guest.citizenship));
     }
 
     if (await resolver.isItaly(guest.birthCountry)) {
       if (!guest.birthCity || !guest.birthProvince) {
-        throw new Error("Per i nati in Italia sono obbligatori comune e provincia di nascita.");
+        throw new Error(guestCheckInServerError(language, "italyBirthPlace"));
       }
 
       if (!(await resolver.resolveMunicipalityCode(guest.birthCity, guest.birthProvince))) {
-        throw new Error(`Comune di nascita non riconosciuto: ${guest.birthCity}.`);
+        throw new Error(guestCheckInServerError(language, "municipality", guest.birthCity));
       }
     }
 
@@ -153,11 +156,11 @@ export async function saveGuestCheckInAction(formData: FormData) {
 
     if (isLeader) {
       if (!guest.documentType || !(await resolver.resolveDocumentTypeCode(guest.documentType))) {
-        throw new Error("Tipo documento non riconosciuto.");
+        throw new Error(guestCheckInServerError(language, "documentType"));
       }
 
       if (!guest.documentIssueCountry || !(await resolver.resolveCountryCode(guest.documentIssueCountry))) {
-        throw new Error("Paese di rilascio del documento non riconosciuto.");
+        throw new Error(guestCheckInServerError(language, "documentIssueCountry"));
       }
     }
   }
@@ -180,7 +183,22 @@ export async function saveGuestCheckInAction(formData: FormData) {
         revokedAt: currentLink.revokedAt,
       })
     ) {
-      throw new Error("Il link non è più valido. Richiedi un nuovo link alla struttura.");
+      throw new Error(guestCheckInServerError(language, "invalidLink"));
+    }
+
+    const confirmedTransmission =
+      await transaction.alloggiatiWebTransmission.findFirst({
+        where: {
+          bookingId: link.booking.id,
+          status: "CONFIRMED",
+        },
+        select: { id: true },
+      });
+
+    if (confirmedTransmission) {
+      throw new Error(
+        guestCheckInServerError(language, "alreadySent"),
+      );
     }
 
     await transaction.bookingGuest.deleteMany({
@@ -192,6 +210,16 @@ export async function saveGuestCheckInAction(formData: FormData) {
         bookingId: link.booking.id,
         ...guest,
       })),
+    });
+    await transaction.guestCheckInLink.updateMany({
+      where: {
+        bookingId: link.booking.id,
+        tokenHash,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
     });
   });
 

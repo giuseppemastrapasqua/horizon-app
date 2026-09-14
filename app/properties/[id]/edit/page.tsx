@@ -335,7 +335,7 @@ export default async function PropertyEditPage({
 
           <section className="overflow-hidden rounded-3xl border border-white/[0.07] bg-[#09131C]/95 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
             <div className="relative overflow-hidden bg-gradient-to-br from-[#0D1923] via-[#09131C] to-[#07111A] px-8 py-10 text-[#FFF8EA]">
-              <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <div className="mb-4 flex flex-wrap gap-3">
                     <span className="rounded-full bg-[#D8B367]/[0.08] px-3 py-1 text-xs font-medium text-[#D8B367] ring-1 ring-inset ring-[#D8B367]/20">
@@ -366,15 +366,15 @@ export default async function PropertyEditPage({
                   </p>
 
                   <p className="mt-2 text-sm leading-6 text-[#8EA0AE]">
-                Horizon ottimizzer\u00E0 automaticamente la tariffa considerando
-                domanda, eventi, stagionalit\u00E0 e performance
+                {"Horizon ottimizzer\u00E0 automaticamente la tariffa considerando"}
+                {"domanda, eventi, stagionalit\u00E0 e performance"}
                     dell&apos;immobile.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid gap-0 border-t border-white/[0.07] bg-[#07111A]/65 p-0 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid border-t border-white/[0.07] bg-[#07111A]/65 sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-white/[0.07] [&>div]:px-6 [&>div]:py-5">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#6F7E8A]">
                   Stato
@@ -696,6 +696,37 @@ export default async function PropertyEditPage({
 
   <div className="px-6 py-7">
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div>
+        <label className="mb-2 block text-sm font-semibold text-slate-700">
+          Ospiti inclusi nel prezzo base Revenue AI
+        </label>
+        <div className="w-full rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3.5 text-base font-semibold text-blue-900">
+          2 ospiti
+        </div>
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          Il prezzo base Revenue AI viene sempre calcolato per 2 ospiti.
+        </p>
+      </div>
+
+      <div>
+        <label htmlFor="extraGuestFee" className="mb-2 block text-sm font-semibold text-slate-700">
+          Supplemento per ospite aggiuntivo (€ / notte)
+        </label>
+        <input
+          id="extraGuestFee"
+          name="extraGuestFee"
+          type="number"
+          min="0"
+          step="0.01"
+          required
+          defaultValue={Number(property.extraGuestFee)}
+          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10"
+        />
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          Applicato per ogni ospite oltre i 2 inclusi nel prezzo base.
+        </p>
+      </div>
+
       <div>
         <label htmlFor="cleaningCost" className="mb-2 block text-sm font-semibold text-slate-700">{"Costo pulizia per prenotazione (\u20AC)"}</label>
         <input id="cleaningCost" name="cleaningCost" type="number" min="0" step="0.01" required defaultValue={Number(property.cleaningCost)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10" />

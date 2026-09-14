@@ -62,7 +62,7 @@ export function BookingPeriodFields({
   return (
     <>
       <label className="block">
-        <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-slate-400">
+        <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
           Da
         </span>
 
@@ -78,12 +78,12 @@ export function BookingPeriodFields({
                 .value,
             )
           }
-          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-[10px] font-semibold text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+          className="h-10 w-full rounded-xl border border-white/[0.08] bg-[#050B11]/70 px-2.5 text-[10px] font-semibold text-[#E8E1D5] outline-none transition [color-scheme:dark] focus:border-[#D8B367]/60 focus:bg-[#07111A] focus:ring-2 focus:ring-[#D8B367]/10"
         />
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-slate-400">
+        <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-[0.1em] text-[#82909C]">
           A
         </span>
 
@@ -100,7 +100,7 @@ export function BookingPeriodFields({
                 .value,
             )
           }
-          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-2.5 text-[10px] font-semibold text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+          className="h-10 w-full rounded-xl border border-white/[0.08] bg-[#050B11]/70 px-2.5 text-[10px] font-semibold text-[#E8E1D5] outline-none transition [color-scheme:dark] focus:border-[#D8B367]/60 focus:bg-[#07111A] focus:ring-2 focus:ring-[#D8B367]/10"
         />
       </label>
     </>

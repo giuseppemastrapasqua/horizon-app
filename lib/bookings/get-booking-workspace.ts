@@ -1,6 +1,7 @@
 import { TaskStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requirePropertyAccess } from "@/lib/auth/guards";
+import { validateBookingGuestsForAlloggiati } from "@/lib/integrations/alloggiati-web/validate-booking-guests";
 
 export async function getBookingWorkspace(bookingId: string) {
   const now = new Date();
@@ -21,6 +22,10 @@ export async function getBookingWorkspace(bookingId: string) {
         },
       },
       guestCheckInLink: true,
+      bookingGuests: true,
+      alloggiatiWebTransmissions: {
+        orderBy: { updatedAt: "desc" },
+      },
     },
   });
 
@@ -82,6 +87,29 @@ export async function getBookingWorkspace(bookingId: string) {
     documents,
   });
 
+  const guestCompliance = validateBookingGuestsForAlloggiati(
+    booking.guests,
+    booking.bookingGuests,
+  );
+
+  const latestTransmission = booking.alloggiatiWebTransmissions[0] ?? null;
+  const hasConfirmedTransmission = booking.alloggiatiWebTransmissions.some(
+    (transmission) => transmission.status === "CONFIRMED",
+  );
+
+  const guestRegistrationStatus = hasConfirmedTransmission
+    ? ("SENT" as const)
+    : latestTransmission?.status === "PARTIALLY_CONFIRMED"
+      ? ("PARTIAL" as const)
+      : latestTransmission?.status === "OUTCOME_UNKNOWN"
+        ? ("OUTCOME_UNKNOWN" as const)
+        : latestTransmission?.status === "REJECTED"
+          ? ("REJECTED" as const)
+          : latestTransmission?.status === "PREPARED" || latestTransmission?.status === "SENDING"
+            ? ("SENDING" as const)
+            : guestCompliance.ready
+              ? ("READY" as const)
+              : ("TO_COMPLETE" as const);
   return {
     booking: {
       id: booking.id,
@@ -102,6 +130,13 @@ export async function getBookingWorkspace(bookingId: string) {
       internalNotes: booking.internalNotes,
       createdAt: booking.createdAt,
       updatedAt: booking.updatedAt,
+      guestRegistration: {
+        status: guestRegistrationStatus,
+        completedGuests: booking.bookingGuests.length,
+        expectedGuests: booking.guests,
+        latestTransmissionStatus: latestTransmission?.status ?? null,
+        lastError: latestTransmission?.lastError ?? null,
+      },
       guestCheckInLink: booking.guestCheckInLink
         ? {
             status:

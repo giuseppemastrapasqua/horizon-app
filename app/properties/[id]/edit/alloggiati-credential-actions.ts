@@ -278,12 +278,14 @@ export async function linkExistingAlloggiatiAccountAction(
 
 function readApartmentId(
   formData: FormData,
-): string {
-  const apartmentId = readRequired(
-    formData,
-    "apartmentId",
-    "IdAppartamento Alloggiati Web obbligatorio.",
-  );
+): string | null {
+  const apartmentId = String(
+    formData.get("apartmentId") ?? "",
+  ).trim();
+
+  if (!apartmentId) {
+    return null;
+  }
 
   if (!/^\d+$/.test(apartmentId)) {
     throw new Error(

@@ -134,6 +134,61 @@ describe(
     );
 
     it(
+      "formatta gli errori del Test con codice e dettaglio",
+      async () => {
+        const fetchMock = vi
+          .fn<typeof fetch>()
+          .mockResolvedValueOnce(
+            response(`
+              <GenerateTokenResponse>
+                <token>token-123</token>
+              </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <TestResponse>
+                <result>
+                  <SchedineValide>0</SchedineValide>
+                  <Dettaglio>
+                    <EsitoOperazioneServizio>
+                      <esito>false</esito>
+                      <ErroreCod>12</ErroreCod>
+                      <ErroreDes>SCHEDINA_CAMPO_NON_CORRETTO</ErroreDes>
+                      <ErroreDettaglio>Data di Arrivo Errata</ErroreDettaglio>
+                    </EsitoOperazioneServizio>
+                  </Dettaglio>
+                </result>
+              </TestResponse>
+            `),
+          );
+
+        const transport =
+          new SoapPreflightAlloggiatiWebTransport(
+            fetchMock as typeof fetch,
+          );
+
+        const session =
+          await transport.authenticate({
+            username: "user",
+            password: "password",
+            wsKey: "wskey",
+          });
+
+        await expect(
+          transport.validateSubmission(
+            session,
+            { records: ["record-1"] },
+          ),
+        ).resolves.toEqual({
+          success: false,
+          message:
+            "Verifica non superata: Data di Arrivo Errata (codice 12)",
+        });
+      },
+    );
+
+    it(
       "usa GestioneAppartamenti_Test con apartmentId",
       async () => {
         const fetchMock = vi
@@ -536,7 +591,7 @@ describe(
     );
 
     it(
-      "rifiuta Send senza apartmentId",
+      "usa Send senza apartmentId",
       async () => {
         const fetchMock = vi
           .fn<typeof fetch>()
@@ -545,6 +600,16 @@ describe(
               <GenerateTokenResponse>
                 <token>token-123</token>
               </GenerateTokenResponse>
+            `),
+          )
+          .mockResolvedValueOnce(
+            response(`
+              <SendResponse>
+                <result>
+                  <SchedineValide>1</SchedineValide>
+                  <Dettaglio></Dettaglio>
+                </result>
+              </SendResponse>
             `),
           );
 
@@ -567,11 +632,39 @@ describe(
               records: ["record-1"],
             },
           ),
-        ).rejects.toThrow(
-          "IdAppartamento Alloggiati Web non valido.",
-        );
+        ).resolves.toEqual({
+          acceptedRecords: 1,
+          resultCode: undefined,
+          message: undefined,
+        });
 
-        expect(fetchMock).toHaveBeenCalledTimes(1);
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+
+        const [, options] =
+          fetchMock.mock.calls[1];
+
+        expect(
+          options?.headers,
+        ).toMatchObject({
+          SOAPAction:
+            '"AlloggiatiService/Send"',
+        });
+
+        const body =
+          String(options?.body);
+
+        expect(body).toContain(
+          "<Utente>user</Utente>",
+        );
+        expect(body).toContain(
+          "<token>token-123</token>",
+        );
+        expect(body).toContain(
+          "<string>record-1</string>",
+        );
+        expect(body).not.toContain(
+          "<IdAppartamento>",
+        );
       },
     );
 

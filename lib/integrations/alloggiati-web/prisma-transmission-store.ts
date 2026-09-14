@@ -5,7 +5,7 @@ import {
 export type PrepareAlloggiatiTransmissionInput = {
   bookingId: string;
   propertyId: string;
-  apartmentId: string;
+  apartmentId?: string | null;
   payloadHash: string;
   recordsCount: number;
 };
@@ -24,7 +24,7 @@ export class PrismaAlloggiatiTransmissionStore {
       create: {
         bookingId: input.bookingId,
         propertyId: input.propertyId,
-        apartmentId: input.apartmentId,
+        apartmentId: input.apartmentId?.trim() || null,
         payloadHash: input.payloadHash,
         recordsCount: input.recordsCount,
       },

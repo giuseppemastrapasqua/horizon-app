@@ -35,129 +35,115 @@ export function BookingKPIs({
 }: BookingKPIsProps) {
   return (
     <section style={gridStyle}>
-      <MetricCard
+      <MetricCard dark
         title="Valore prenotazione"
         value={formatCurrency(grossAmount, currency)}
         subtitle="Importo lordo registrato"
-        tone="green"
       />
 
-      <MetricCard
+      <MetricCard dark
         title="ADR"
         value={formatCurrency(nightlyRate, currency)}
         subtitle="Ricavo medio per notte"
-        tone="blue"
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Notti"
         value={nights}
         subtitle="Durata complessiva del soggiorno"
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Ospiti"
         value={guests}
         subtitle="Numero di persone previste"
-        tone="violet"
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Task totali"
         value={totalTaskCount}
         subtitle="Attività collegate alla prenotazione"
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Task aperti"
         value={openTasksCount}
         subtitle="Attività ancora da completare"
-        tone={openTasksCount > 0 ? "yellow" : "green"}
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Task completati"
         value={completedTasksCount}
         subtitle="Attività concluse"
-        tone="green"
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Task scaduti"
         value={overdueTasksCount}
         subtitle="Attività che richiedono attenzione"
-        tone={overdueTasksCount > 0 ? "red" : "green"}
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Documenti"
         value={documentsCount}
         subtitle="Documenti collegati a owner o immobile"
-        tone="violet"
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Avanzamento soggiorno"
         value={formatPercentage(stayProgress)}
         subtitle="Percentuale del soggiorno completata"
-        tone={
-          stayProgress >= 100
-            ? "green"
-            : stayProgress > 0
-              ? "blue"
-              : "default"
-        }
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Giorni al check-in"
         value={daysUntilCheckIn}
         subtitle={getCheckInSubtitle(daysUntilCheckIn)}
-        tone={
-          daysUntilCheckIn < 0
-            ? "default"
-            : daysUntilCheckIn <= 1
-              ? "yellow"
-              : "blue"
-        }
       />
 
-      <MetricCard
+      <MetricCard dark
         title="Giorni al check-out"
         value={daysUntilCheckOut}
         subtitle={getCheckOutSubtitle(daysUntilCheckOut)}
-        tone={
-          daysUntilCheckOut < 0
-            ? "default"
-            : daysUntilCheckOut <= 1
-              ? "yellow"
-              : "blue"
-        }
       />
     </section>
   );
 }
 
-function getCheckInSubtitle(days: number) {
-  if (days < 0) return "Check-in già avvenuto";
-  if (days === 0) return "Check-in previsto oggi";
-  if (days === 1) return "Check-in previsto domani";
-
-  return "Tempo residuo prima dell’arrivo";
-}
-
-function getCheckOutSubtitle(days: number) {
-  if (days < 0) return "Check-out già avvenuto";
-  if (days === 0) return "Check-out previsto oggi";
-  if (days === 1) return "Check-out previsto domani";
-
-  return "Tempo residuo prima della partenza";
-}
-
 const gridStyle = {
   display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "16px",
-  marginBottom: "24px",
-};
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: "18px",
+} satisfies React.CSSProperties;
+
+function getCheckInSubtitle(daysUntilCheckIn: number) {
+  if (daysUntilCheckIn < 0) {
+    return "Check-in già effettuato";
+  }
+
+  if (daysUntilCheckIn === 0) {
+    return "Check-in oggi";
+  }
+
+  if (daysUntilCheckIn === 1) {
+    return "Check-in domani";
+  }
+
+  return "Tempo restante prima dell'arrivo";
+}
+
+function getCheckOutSubtitle(daysUntilCheckOut: number) {
+  if (daysUntilCheckOut < 0) {
+    return "Check-out già effettuato";
+  }
+
+  if (daysUntilCheckOut === 0) {
+    return "Check-out oggi";
+  }
+
+  if (daysUntilCheckOut === 1) {
+    return "Check-out domani";
+  }
+
+  return "Tempo restante prima della partenza";
+}

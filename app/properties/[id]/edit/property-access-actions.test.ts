@@ -176,4 +176,60 @@ describe("updatePropertyAccessAction", () => {
       "Utente non valido o non attivo.",
     );
   });
+  it("permette a un collaboratore operativo l'accesso OPERATOR", async () => {
+    userFindFirstMock.mockResolvedValue({
+      id: "operator-1",
+      role: "OPERATOR",
+    });
+
+    const formData = new FormData();
+
+    formData.set("propertyId", "property-1");
+    formData.set("userId", "operator-1");
+    formData.set("enabled", "true");
+    formData.set("role", "OPERATOR");
+
+    await updatePropertyAccessAction(formData);
+
+    expect(accessUpsertMock).toHaveBeenCalledWith({
+      where: {
+        propertyId_userId: {
+          propertyId: "property-1",
+          userId: "operator-1",
+        },
+      },
+      update: {
+        role: "OPERATOR",
+        active: true,
+      },
+      create: {
+        propertyId: "property-1",
+        userId: "operator-1",
+        role: "OPERATOR",
+        active: true,
+      },
+    });
+  });
+
+  it("impedisce a un collaboratore operativo di ricevere ruoli superiori", async () => {
+    userFindFirstMock.mockResolvedValue({
+      id: "operator-1",
+      role: "OPERATOR",
+    });
+
+    const formData = new FormData();
+
+    formData.set("propertyId", "property-1");
+    formData.set("userId", "operator-1");
+    formData.set("enabled", "true");
+    formData.set("role", "MANAGER");
+
+    await expect(
+      updatePropertyAccessAction(formData),
+    ).rejects.toThrow(
+      "Il collaboratore operativo può ricevere solo accesso OPERATOR.",
+    );
+
+    expect(accessUpsertMock).not.toHaveBeenCalled();
+  });
 });

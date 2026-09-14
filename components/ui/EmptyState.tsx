@@ -6,6 +6,7 @@ type EmptyStateProps = {
   description?: string;
   actionLabel?: string;
   actionHref?: string;
+  dark?: boolean;
 };
 
 export function EmptyState({
@@ -13,13 +14,40 @@ export function EmptyState({
   description,
   actionLabel,
   actionHref,
+  dark = false,
 }: EmptyStateProps) {
   return (
-    <div style={wrapperStyle}>
-      <strong style={titleStyle}>{title}</strong>
+    <div
+      style={{
+        ...wrapperStyle,
+        background: dark
+          ? "rgba(255, 255, 255, 0.035)"
+          : uiTokens.colors.surfaceSoft,
+        border: dark
+          ? "1px dashed rgba(148, 163, 184, 0.35)"
+          : `1px dashed ${uiTokens.colors.borderStrong}`,
+      }}
+    >
+      <strong
+        style={{
+          ...titleStyle,
+          color: dark
+            ? uiTokens.colors.primaryText
+            : uiTokens.colors.textPrimary,
+        }}
+      >
+        {title}
+      </strong>
 
       {description ? (
-        <p style={descriptionStyle}>{description}</p>
+        <p
+          style={{
+            ...descriptionStyle,
+            color: dark ? "#94a3b8" : uiTokens.colors.textMuted,
+          }}
+        >
+          {description}
+        </p>
       ) : null}
 
       {actionLabel && actionHref ? (
@@ -39,13 +67,10 @@ export function EmptyState({
 const wrapperStyle = {
   padding: uiTokens.spacing.lg,
   borderRadius: uiTokens.radius.lg,
-  background: uiTokens.colors.surfaceSoft,
-  border: `1px dashed ${uiTokens.colors.borderStrong}`,
   textAlign: "center" as const,
 };
 
 const titleStyle = {
-  color: uiTokens.colors.textPrimary,
   fontSize: uiTokens.fontSize.md,
   fontWeight: uiTokens.fontWeight.strong,
 };
@@ -53,7 +78,6 @@ const titleStyle = {
 const descriptionStyle = {
   maxWidth: "480px",
   margin: `${uiTokens.spacing.sm} auto 0`,
-  color: uiTokens.colors.textMuted,
   fontSize: uiTokens.fontSize.sm,
   lineHeight: 1.5,
 };

@@ -135,8 +135,16 @@ export class SoapPreflightAlloggiatiWebTransport
       `,
     );
 
+    const decodedXml = decodeXml(xml);
+    const resultXml =
+      readTags(decodedXml, "result").find(
+        (value) =>
+          readTag(value, "SchedineValide") !==
+          undefined,
+      ) ?? decodedXml;
+
     const validRecordsText =
-      readTag(xml, "SchedineValide");
+      readTag(resultXml, "SchedineValide");
 
     const validRecords =
       Number.parseInt(
@@ -144,8 +152,13 @@ export class SoapPreflightAlloggiatiWebTransport
         10,
       );
 
-    const errors =
-      readTags(xml, "ErroreDettaglio")
+    const errorDetails =
+      readTags(resultXml, "ErroreDettaglio")
+        .map((value) => value.trim())
+        .filter(Boolean);
+
+    const errorCodes =
+      readTags(resultXml, "ErroreCod")
         .map((value) => value.trim())
         .filter(Boolean);
 
@@ -153,13 +166,24 @@ export class SoapPreflightAlloggiatiWebTransport
       Number.isInteger(validRecords) &&
       validRecords ===
         submission.records.length &&
-      errors.length === 0;
+      errorDetails.length === 0 &&
+      errorCodes.length === 0;
+
+    const errorMessages =
+      errorDetails.map((detail, index) => {
+        const code =
+          errorCodes[index] ?? errorCodes[0];
+
+        return code
+          ? `${detail} (codice ${code})`
+          : detail;
+      });
 
     return {
       success,
       message:
-        errors.length > 0
-          ? errors.join(" | ")
+        errorMessages.length > 0
+          ? `Verifica non superata: ${errorMessages.join(" | ")}`
           : success
             ? undefined
             : "Preflight Alloggiati Web non superato.",
@@ -177,7 +201,7 @@ export class SoapPreflightAlloggiatiWebTransport
       submission.apartmentId?.trim();
 
     if (
-      !apartmentId ||
+      apartmentId &&
       !/^\d+$/.test(apartmentId)
     ) {
       throw new Error(
@@ -199,25 +223,31 @@ export class SoapPreflightAlloggiatiWebTransport
           );
         }
 
-        return (
-          `<string>${escapeXml(record)}</string>`
-        );
+        return `<string>${escapeXml(record)}</string>`;
       })
       .join("");
 
+    const operation = apartmentId
+      ? "GestioneAppartamenti_Send"
+      : "Send";
+
+    const apartmentXml = apartmentId
+      ? `<IdAppartamento>${apartmentId}</IdAppartamento>`
+      : "";
+
     const xml = await this.postSoap(
-      "GestioneAppartamenti_Send",
+      operation,
       `
-        <GestioneAppartamenti_Send xmlns="AlloggiatiService">
+        <${operation} xmlns="AlloggiatiService">
           <Utente>${escapeXml(username)}</Utente>
           <token>${escapeXml(session.token)}</token>
           <ElencoSchedine>${records}</ElencoSchedine>
-          <IdAppartamento>${apartmentId}</IdAppartamento>
+          ${apartmentXml}
           <result>
             <SchedineValide>0</SchedineValide>
             <Dettaglio></Dettaglio>
           </result>
-        </GestioneAppartamenti_Send>
+        </${operation}>
       `,
     );
 

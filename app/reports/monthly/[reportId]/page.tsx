@@ -80,6 +80,8 @@ export default async function FinanceReportDetailPage({
             zone: true,
             cleaningCost: true,
             propertyManagementCommissionPercent: true,
+            propertyManagementCommissionVatPercent: true,
+            propertyManagementCommissionVatMode: true,
           },
         },
 
@@ -199,42 +201,37 @@ export default async function FinanceReportDetailPage({
       bookings.map(
         async (booking) => {
           const breakdown =
-            report.formula?.id
-              ? await buildBookingFinanceBreakdown({
-                  formulaId:
-                    report.formula.id,
+            await buildBookingFinanceBreakdown({
+              formulaId: report.formula?.id ?? null,
 
-                  grossRevenue:
-                    Number(
-                      booking.grossAmount
-                    ),
+              grossRevenue:
+                Number(booking.grossAmount),
 
-                  cleaningCost:
-                    Number(
-                      report.property.cleaningCost
-                    ),
+              cleaningCost:
+                Number(report.property.cleaningCost),
 
-                  propertyManagementCommissionPercent:
-                    Number(
-                      report.property.propertyManagementCommissionPercent
-                    ),
+              propertyManagementCommissionPercent:
+                Number(
+                  report.property.propertyManagementCommissionPercent
+                ),
 
-                  otaCommissionPercent:
-                    resolveOtaCommissionPercent({
-                      channel:
-                        booking.channel,
+              propertyManagementCommissionVatPercent:
+                Number(
+                  report.property.propertyManagementCommissionVatPercent
+                ),
 
-                      commissions:
-                        otaCommissionByChannel,
-                    }),
+              propertyManagementCommissionVatMode:
+                report.property.propertyManagementCommissionVatMode,
 
-                  currency:
-                    booking.currency,
+              otaCommissionPercent:
+                resolveOtaCommissionPercent({
+                  channel: booking.channel,
+                  commissions: otaCommissionByChannel,
+                }),
 
-                  channel:
-                    booking.channel,
-                })
-              : null;
+              currency: booking.currency,
+              channel: booking.channel,
+            });
 
           return {
             id:
@@ -583,8 +580,8 @@ export default async function FinanceReportDetailPage({
               Nessuna prenotazione presente nel mese del rendiconto.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1240px] border-collapse">
+            <div className="overflow-hidden">
+              <table className="w-full table-fixed border-collapse">
   <thead>
     <tr className="bg-[#1F4FBF]">
       <th className="px-3 py-3 text-left text-[7px] font-bold uppercase tracking-[0.08em] text-white">
@@ -635,7 +632,7 @@ export default async function FinanceReportDetailPage({
         Varie
       </th>
 
-      <th className="px-3 py-3 text-right text-[7px] font-black uppercase tracking-[0.08em] text-white">
+      <th className="w-[10%] border-l border-blue-300/20 bg-[#1F4FBF] px-2 py-3 text-right text-[7px] font-black uppercase tracking-[0.08em] text-white">
         Netto proprietà
       </th>
     </tr>
@@ -747,7 +744,7 @@ export default async function FinanceReportDetailPage({
                 )}
           </td>
 
-          <td className="whitespace-nowrap border-l border-blue-100 bg-blue-50/40 px-3 py-3 text-right text-[10px] font-black tabular-nums text-[#1F4FBF]">
+          <td className="whitespace-nowrap border-l border-white/[0.08] bg-[#0D1923] px-2 py-3 text-right text-[9px] font-black tabular-nums text-[#3B82F6]">
             {booking.netProperty === null
               ? "—"
               : formatCurrency(
@@ -1288,8 +1285,8 @@ const secondaryLinkStyle: CSSProperties = {
   padding: "0 14px",
   border: "1px solid #cbd5e1",
   borderRadius: "10px",
-  background: "#ffffff",
-  color: "#334155",
+  background: "#09131C",
+  color: "#FFF8EA",
   fontWeight: 700,
   textDecoration: "none",
 };
@@ -1299,10 +1296,10 @@ const primaryLinkStyle: CSSProperties = {
   alignItems: "center",
   minHeight: "40px",
   padding: "0 14px",
-  border: "1px solid #1d4ed8",
+  border: "1px solid #D8B367",
   borderRadius: "10px",
-  background: "#1d4ed8",
-  color: "#ffffff",
+  background: "#D8B367",
+  color: "#07111A",
   fontWeight: 700,
   textDecoration: "none",
 };
@@ -1312,11 +1309,13 @@ const savedBadgeStyle: CSSProperties = {
   alignItems: "center",
   minHeight: "36px",
   padding: "0 12px",
+  border: "1px solid rgba(52, 211, 153, 0.22)",
   borderRadius: "999px",
-  background: "#dcfce7",
-  color: "#166534",
-  fontSize: "12px",
+  background: "rgba(52, 211, 153, 0.08)",
+  color: "#6EE7B7",
+  fontSize: "11px",
   fontWeight: 800,
+  letterSpacing: "0.01em",
 };
 
 const heroStyle: CSSProperties = {
@@ -1326,9 +1325,9 @@ const heroStyle: CSSProperties = {
   gap: "24px",
   padding: "24px",
   marginBottom: "20px",
-  border: "1px solid #bfdbfe",
+  border: "1px solid #253746",
   borderRadius: "20px",
-  background: "#eff6ff",
+  background: "#0D1923",
   flexWrap: "wrap",
 };
 
@@ -1341,13 +1340,13 @@ const eyebrowStyle: CSSProperties = {
 
 const heroTitleStyle: CSSProperties = {
   margin: "7px 0 0",
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "30px",
 };
 
 const heroSubtitleStyle: CSSProperties = {
   margin: "8px 0 0",
-  color: "#475569",
+  color: "#8EA0AE",
 };
 
 const heroMetaStyle: CSSProperties = {
@@ -1362,13 +1361,13 @@ const heroMetaItemStyle: CSSProperties = {
 };
 
 const metaLabelStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#8EA0AE",
   fontSize: "12px",
   fontWeight: 700,
 };
 
 const metaValueStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "15px",
 };
 
@@ -1384,30 +1383,30 @@ const metricStyle: CSSProperties = {
   display: "grid",
   gap: "8px",
   padding: "20px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #253746",
   borderRadius: "18px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const metricLabelStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#8EA0AE",
   fontSize: "13px",
   fontWeight: 700,
 };
 
 const metricValueStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "24px",
 };
 
 const metricPositiveValueStyle: CSSProperties = {
   ...metricValueStyle,
-  color: "#166534",
+  color: "#34D399",
 };
 
 const metricNegativeValueStyle: CSSProperties = {
   ...metricValueStyle,
-  color: "#be123c",
+  color: "#F87171",
 };
 
 const detailsGridStyle: CSSProperties = {
@@ -1420,13 +1419,13 @@ const detailsGridStyle: CSSProperties = {
 
 const detailCardStyle: CSSProperties = {
   padding: "20px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #253746",
   borderRadius: "18px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const sectionEyebrowStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#8EA0AE",
   fontSize: "11px",
   fontWeight: 800,
   letterSpacing: "0.08em",
@@ -1434,7 +1433,7 @@ const sectionEyebrowStyle: CSSProperties = {
 
 const cardTitleStyle: CSSProperties = {
   margin: "6px 0 16px",
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "19px",
 };
 
@@ -1453,12 +1452,12 @@ const detailRowStyle: CSSProperties = {
 };
 
 const detailLabelStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#8EA0AE",
   fontSize: "13px",
 };
 
 const detailValueStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "13px",
   textAlign: "right",
 };
@@ -1466,9 +1465,9 @@ const detailValueStyle: CSSProperties = {
 const calculationPanelStyle: CSSProperties = {
   padding: "22px",
   marginBottom: "20px",
-  border: "1px solid #d1fae5",
+  border: "1px solid #1F4D3D",
   borderRadius: "20px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const sectionHeaderStyle: CSSProperties = {
@@ -1481,7 +1480,7 @@ const sectionHeaderStyle: CSSProperties = {
 
 const sectionTitleStyle: CSSProperties = {
   margin: "5px 0 0",
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "22px",
 };
 
@@ -1491,8 +1490,8 @@ const countBadgeStyle: CSSProperties = {
   minWidth: "36px",
   padding: "7px 11px",
   borderRadius: "999px",
-  background: "#f1f5f9",
-  color: "#334155",
+  background: "#16232E",
+  color: "#FFF8EA",
   fontWeight: 800,
 };
 
@@ -1504,25 +1503,25 @@ const calculationSummaryStyle: CSSProperties = {
   gap: "20px",
   padding: "20px",
   marginBottom: "18px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #253746",
   borderRadius: "16px",
-  background: "#f8fafc",
+  background: "#0D1923",
 };
 
 const calculationLabelStyle: CSSProperties = {
   marginBottom: "6px",
-  color: "#64748b",
+  color: "#8EA0AE",
   fontSize: "13px",
   fontWeight: 700,
 };
 
 const grossAmountStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "24px",
 };
 
 const calculationArrowStyle: CSSProperties = {
-  color: "#94a3b8",
+  color: "#718391",
   fontSize: "24px",
   fontWeight: 800,
 };
@@ -1532,7 +1531,7 @@ const finalSummaryStyle: CSSProperties = {
 };
 
 const finalSummaryAmountStyle: CSSProperties = {
-  color: "#166534",
+  color: "#34D399",
   fontSize: "28px",
 };
 
@@ -1548,9 +1547,9 @@ const ruleCardStyle: CSSProperties = {
   alignItems: "center",
   gap: "14px",
   padding: "15px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #253746",
   borderRadius: "14px",
-  background: "#f8fafc",
+  background: "#0D1923",
 };
 
 const ruleOrderStyle: CSSProperties = {
@@ -1561,7 +1560,7 @@ const ruleOrderStyle: CSSProperties = {
   height: "36px",
   borderRadius: "12px",
   background: "#e2e8f0",
-  color: "#334155",
+  color: "#FFF8EA",
   fontSize: "13px",
   fontWeight: 800,
 };
@@ -1578,7 +1577,7 @@ const ruleTitleRowStyle: CSSProperties = {
 };
 
 const ruleTitleStyle: CSSProperties = {
-  color: "#0f172a",
+  color: "#FFF8EA",
   fontSize: "15px",
 };
 
@@ -1587,7 +1586,7 @@ const addBadgeStyle: CSSProperties = {
   padding: "4px 7px",
   borderRadius: "999px",
   background: "#dcfce7",
-  color: "#166534",
+  color: "#34D399",
   fontSize: "10px",
   fontWeight: 800,
 };
@@ -1597,14 +1596,14 @@ const subtractBadgeStyle: CSSProperties = {
   padding: "4px 7px",
   borderRadius: "999px",
   background: "#ffe4e6",
-  color: "#be123c",
+  color: "#F87171",
   fontSize: "10px",
   fontWeight: 800,
 };
 
 const ruleMetaStyle: CSSProperties = {
   marginTop: "6px",
-  color: "#64748b",
+  color: "#8EA0AE",
   fontSize: "12px",
 };
 
@@ -1612,7 +1611,7 @@ const ruleTotalsStyle: CSSProperties = {
   display: "flex",
   gap: "12px",
   marginTop: "6px",
-  color: "#94a3b8",
+  color: "#718391",
   fontSize: "11px",
   flexWrap: "wrap",
 };
@@ -1625,26 +1624,26 @@ const ruleAmountColumnStyle: CSSProperties = {
 };
 
 const positiveAmountStyle: CSSProperties = {
-  color: "#166534",
+  color: "#34D399",
   fontSize: "15px",
 };
 
 const negativeAmountStyle: CSSProperties = {
-  color: "#be123c",
+  color: "#F87171",
   fontSize: "15px",
 };
 
 const runningTotalStyle: CSSProperties = {
-  color: "#64748b",
+  color: "#8EA0AE",
   fontSize: "12px",
   whiteSpace: "nowrap",
 };
 
 const snapshotPanelStyle: CSSProperties = {
   padding: "22px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #253746",
   borderRadius: "20px",
-  background: "#ffffff",
+  background: "#09131C",
 };
 
 const snapshotBadgeStyle: CSSProperties = {
@@ -1667,8 +1666,8 @@ const snapshotGridStyle: CSSProperties = {
 const emptyStateStyle: CSSProperties = {
   padding: "28px",
   borderRadius: "14px",
-  background: "#f8fafc",
-  color: "#64748b",
+  background: "#0D1923",
+  color: "#8EA0AE",
   textAlign: "center",
 };
 

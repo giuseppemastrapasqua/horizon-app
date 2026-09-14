@@ -3,6 +3,7 @@ import type {
   Prisma,
 } from "@prisma/client";
 
+import { synchronizeIcalConnectionProperty } from "@/lib/integrations/ical/synchronize-ical-connection-property";
 import { prismaBookingDomainService } from "@/lib/integrations/shared/prisma-booking-domain-service";
 import { getBookingProviderClient } from "@/lib/integrations/shared/provider-registry";
 import { synchronizeExternalBookings } from "@/lib/integrations/shared/synchronize-external-bookings";
@@ -11,9 +12,15 @@ import {
   type BookingSyncJobPayload,
 } from "@/lib/integrations/shared/types";
 
+type ParsedBookingSyncJobPayload =
+  BookingSyncJobPayload & {
+    connectionId?: string;
+    propertyId?: string;
+  };
+
 function getPayload(
   job: BackgroundJob,
-): BookingSyncJobPayload {
+): ParsedBookingSyncJobPayload {
   const payload =
     (job.payload as Prisma.JsonObject | null) ?? {};
 
@@ -42,6 +49,16 @@ function getPayload(
       typeof payload.maxPages === "number"
         ? payload.maxPages
         : undefined,
+
+    connectionId:
+      typeof payload.connectionId === "string"
+        ? payload.connectionId
+        : undefined,
+
+    propertyId:
+      typeof payload.propertyId === "string"
+        ? payload.propertyId
+        : undefined,
   };
 }
 
@@ -49,6 +66,27 @@ export async function processBookingSyncJob(
   job: BackgroundJob,
 ): Promise<void> {
   const payload = getPayload(job);
+
+  const hasIcalIdentity =
+    Boolean(payload.connectionId) ||
+    Boolean(payload.propertyId);
+
+  if (hasIcalIdentity) {
+    if (!payload.connectionId || !payload.propertyId) {
+      throw new Error(
+        "Payload BOOKING_SYNC iCal incompleto: connectionId e propertyId sono obbligatori.",
+      );
+    }
+
+    await synchronizeIcalConnectionProperty({
+      connectionId: payload.connectionId,
+      propertyId: payload.propertyId,
+      pageLimit: payload.pageLimit,
+      maxPages: payload.maxPages,
+    });
+
+    return;
+  }
 
   const client = getBookingProviderClient(
     payload.provider,

@@ -18,7 +18,7 @@ type AlloggiatiApartmentOption = {
 
 type AlloggiatiConnection = {
   accountName: string;
-  apartmentId: string;
+  apartmentId: string | null;
   updatedAt: Date;
 } | null;
 
@@ -59,6 +59,9 @@ export function PropertyAlloggiatiCredentialsSection({
   const [apartments, setApartments] =
     useState<AlloggiatiApartmentOption[]>([]);
 
+  const [accountLoaded, setAccountLoaded] =
+    useState(false);
+
   const [loadError, setLoadError] =
     useState<string | null>(null);
 
@@ -66,6 +69,9 @@ export function PropertyAlloggiatiCredentialsSection({
     discoveredApartments,
     setDiscoveredApartments,
   ] = useState<AlloggiatiApartmentOption[]>([]);
+
+  const [discoveryCompleted, setDiscoveryCompleted] =
+    useState(false);
 
   const [
     discoveryError,
@@ -91,6 +97,7 @@ export function PropertyAlloggiatiCredentialsSection({
 
     setLoadError(null);
     setApartments([]);
+    setAccountLoaded(false);
 
     startTransition(async () => {
       try {
@@ -101,12 +108,7 @@ export function PropertyAlloggiatiCredentialsSection({
           );
 
         setApartments(result);
-
-        if (result.length === 0) {
-          setLoadError(
-            "Nessuna struttura restituita da Alloggiati Web.",
-          );
-        }
+        setAccountLoaded(true);
       } catch (error) {
         setLoadError(
           getErrorMessage(error),
@@ -127,6 +129,7 @@ export function PropertyAlloggiatiCredentialsSection({
 
     setDiscoveryError(null);
     setDiscoveredApartments([]);
+    setDiscoveryCompleted(false);
 
     startDiscoveryTransition(async () => {
       try {
@@ -136,12 +139,7 @@ export function PropertyAlloggiatiCredentialsSection({
           );
 
         setDiscoveredApartments(result);
-
-        if (result.length === 0) {
-          setDiscoveryError(
-            "Nessuna struttura restituita da Alloggiati Web.",
-          );
-        }
+        setDiscoveryCompleted(true);
       } catch (error) {
         setDiscoveryError(
           getErrorMessage(error),
@@ -189,7 +187,7 @@ export function PropertyAlloggiatiCredentialsSection({
               IdAppartamento
             </p>
             <p className="mt-2 font-semibold text-slate-950">
-              {connection.apartmentId}
+              {connection.apartmentId ?? "Utenza standard"}
             </p>
           </div>
 
@@ -260,6 +258,7 @@ export function PropertyAlloggiatiCredentialsSection({
                       event.target.value,
                     );
                     setApartments([]);
+                    setAccountLoaded(false);
                     setLoadError(null);
                   }}
                   className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none focus:border-blue-600"
@@ -296,11 +295,17 @@ export function PropertyAlloggiatiCredentialsSection({
                 </p>
               ) : null}
 
-              {apartments.length > 0 ? (
+              {accountLoaded ? (
                 <>
-                  <ApartmentSelect
-                    apartments={apartments}
-                  />
+                  {apartments.length > 0 ? (
+                    <ApartmentSelect
+                      apartments={apartments}
+                    />
+                  ) : (
+                    <p className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+                      Utenza standard verificata. Non richiede IdAppartamento.
+                    </p>
+                  )}
 
                   <button
                     type="submit"
@@ -361,6 +366,7 @@ export function PropertyAlloggiatiCredentialsSection({
                 required
                 onChange={() => {
                   setDiscoveredApartments([]);
+                  setDiscoveryCompleted(false);
                   setDiscoveryError(null);
                 }}
                 className="rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-blue-600"
@@ -376,6 +382,7 @@ export function PropertyAlloggiatiCredentialsSection({
                 required
                 onChange={() => {
                   setDiscoveredApartments([]);
+                  setDiscoveryCompleted(false);
                   setDiscoveryError(null);
                 }}
                 className="rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-blue-600"
@@ -391,6 +398,7 @@ export function PropertyAlloggiatiCredentialsSection({
                 required
                 onChange={() => {
                   setDiscoveredApartments([]);
+                  setDiscoveryCompleted(false);
                   setDiscoveryError(null);
                 }}
                 className="rounded-xl border border-slate-300 px-4 py-3 text-slate-950 outline-none focus:border-blue-600"
@@ -414,13 +422,19 @@ export function PropertyAlloggiatiCredentialsSection({
               </p>
             ) : null}
 
-            {discoveredApartments.length > 0 ? (
+            {discoveryCompleted ? (
               <>
-                <ApartmentSelect
-                  apartments={
-                    discoveredApartments
-                  }
-                />
+                {discoveredApartments.length > 0 ? (
+                  <ApartmentSelect
+                    apartments={
+                      discoveredApartments
+                    }
+                  />
+                ) : (
+                  <p className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800">
+                    Utenza standard verificata. Non richiede IdAppartamento.
+                  </p>
+                )}
 
                 <button
                   type="submit"

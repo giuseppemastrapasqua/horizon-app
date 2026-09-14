@@ -283,24 +283,24 @@ export default async function BookingPage({
         title={booking.guestName}
         subtitle="Workspace operativo della prenotazione."
       >
-       <WorkspaceTopBar
-  backLabel="Torna alle prenotazioni"
-  backHref="/bookings"
-  actions={
-    <>
-      <ActionButton
-        label="Apri immobile"
-        href={`/properties/${booking.property.id}`}
-      />
+        <WorkspaceTopBar
+          backLabel="Torna alle prenotazioni"
+          backHref="/bookings"
+          actions={
+            <>
+              <ActionButton
+                label="Apri immobile"
+                href={`/properties/${booking.property.id}`}
+              />
 
-      <ActionButton
-        label="Owner workspace"
-        href={`/owners/${booking.owner.id}`}
-        variant="secondary"
-      />
-    </>
-  }
-/>
+              <ActionButton
+                label="Owner workspace"
+                href={`/owners/${booking.owner.id}`}
+                variant="secondary"
+              />
+            </>
+          }
+        />
 
         <BookingHero
           booking={booking}
@@ -329,38 +329,40 @@ export default async function BookingPage({
         />
 
         <WorkspaceGrid
-  left={
-    <>
-      <BookingTasks
-        bookingId={booking.id}
-        propertyId={booking.property.id}
-        tasks={tasks}
-      />
+          left={
+            <>
+              <BookingTasks
+                bookingId={booking.id}
+                propertyId={booking.property.id}
+                tasks={tasks}
+              />
 
-      <BookingDocuments
-        propertyId={booking.property.id}
-        documents={documents}
-      />
-    </>
-  }
-  right={
-    <>
-      <BookingTimeline items={timeline} />
+              <BookingDocuments
+                propertyId={booking.property.id}
+                documents={documents}
+              />
+            </>
+          }
+          right={
+            <>
+              <BookingTimeline items={timeline} />
 
-      <BookingGuestCheckInPanel
-        bookingId={booking.id}
-        guestEmail={booking.guestEmail}
-        initialLink={booking.guestCheckInLink}
-      />
+              <BookingGuestCheckInPanel
+                bookingId={booking.id}
+                guestEmail={booking.guestEmail}
+                guestRegistration={booking.guestRegistration}
+                initialLink={booking.guestCheckInLink}
+                canSubmitToAlloggiati
+              />
 
-      <BookingQuickActions
-        bookingId={booking.id}
-        propertyId={booking.property.id}
-        ownerId={booking.owner.id}
-      />
-    </>
-  }
-/>
+              <BookingQuickActions
+                bookingId={booking.id}
+                propertyId={booking.property.id}
+                ownerId={booking.owner.id}
+              />
+            </>
+          }
+        />
       </AppShell>
     </>
   );

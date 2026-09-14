@@ -569,7 +569,7 @@ export default async function InvoicesPage({
                       <div className="flex gap-2">
                         <Link
                           href={`/invoices/${invoice.id}/pdf`}
-                          className="inline-flex h-8 items-center rounded-lg bg-[#D8B367] px-3 text-[8px] font-bold text-[#07111A] transition hover:bg-[#E3C37E]"
+                          className="inline-flex h-8 items-center rounded-lg bg-[#D8B367] px-3 text-[8px] font-bold !text-[#07111A] transition hover:bg-[#E3C37E]"
                         >
                           Apri PDF
                         </Link>

@@ -89,13 +89,13 @@ model User {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  tokenHash String   @unique
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -155,39 +155,41 @@ model AuditLog {
 }
 
 model Property {
-  horizonCommissionPercent               Decimal                         @default(0) @db.Decimal(5, 2)
-  id                                     String                          @id @default(cuid())
+  horizonCommissionPercent               Decimal                             @default(0) @db.Decimal(5, 2)
+  id                                     String                              @id @default(cuid())
   name                                   String
   address                                String
-  city                                   String                          @default("Milano")
-  latitude                               Decimal?                        @db.Decimal(10, 7)
-  longitude                              Decimal?                        @db.Decimal(10, 7)
+  city                                   String                              @default("Milano")
+  latitude                               Decimal?                            @db.Decimal(10, 7)
+  longitude                              Decimal?                            @db.Decimal(10, 7)
   zone                                   String?
   maxGuests                              Int
+  baseGuests                             Int                                 @default(2)
+  extraGuestFee                          Decimal                             @default(0) @db.Decimal(10, 2)
   bedrooms                               Int?
   bathrooms                              Int?
-  status                                 PropertyStatus                  @default(DRAFT)
-  commercialClass                        PropertyCommercialClass         @default(SOLID_PERFORMER)
-  victoryModel                           PropertyVictoryModel            @default(BALANCED_WINNER)
-  initialScore                           Int                             @default(70)
-  currentScore                           Int                             @default(70)
+  status                                 PropertyStatus                      @default(DRAFT)
+  commercialClass                        PropertyCommercialClass             @default(SOLID_PERFORMER)
+  victoryModel                           PropertyVictoryModel                @default(BALANCED_WINNER)
+  initialScore                           Int                                 @default(70)
+  currentScore                           Int                                 @default(70)
   notes                                  String?
-  createdAt                              DateTime                        @default(now())
-  updatedAt                              DateTime                        @updatedAt
+  createdAt                              DateTime                            @default(now())
+  updatedAt                              DateTime                            @updatedAt
   ownerId                                String
-  cleaningCost                           Decimal                         @default(0) @db.Decimal(10, 2)
-  propertyManagementCommissionPercent    Decimal                         @default(0) @db.Decimal(5, 2)
-  propertyManagementCommissionVatPercent Decimal                         @default(0) @db.Decimal(5, 2)
+  cleaningCost                           Decimal                             @default(0) @db.Decimal(10, 2)
+  propertyManagementCommissionPercent    Decimal                             @default(0) @db.Decimal(5, 2)
+  propertyManagementCommissionVatPercent Decimal                             @default(0) @db.Decimal(5, 2)
   propertyManagementCommissionVatMode    PropertyManagementCommissionVatMode @default(NONE)
   description                            String?
   /// *
   ///    * Codici identificativi dell'alloggio.
-  ///    * La verifica incrociata verrÃ  eseguita successivamente
+  ///    * La verifica incrociata verrÃƒÆ’Ã‚Â  eseguita successivamente
   ///    * dal servizio di verifica AI.
-  cin                                    String?                         @unique
-  cir                                    String?                         @unique
+  cin                                    String?                             @unique
+  cir                                    String?                             @unique
   codeVerificationNotes                  String?
-  codeVerificationStatus                 PropertyCodeVerificationStatus  @default(NOT_VERIFIED)
+  codeVerificationStatus                 PropertyCodeVerificationStatus      @default(NOT_VERIFIED)
   codeVerifiedAt                         DateTime?
   bookings                               Booking[]
   channelCommissions                     PropertyChannelCommission[]
@@ -196,7 +198,7 @@ model Property {
   financeReports                         FinanceReport[]
   integrationConnections                 IntegrationConnectionProperty[]
   integrationMappings                    IntegrationPropertyMapping[]
-  owner                                  User                            @relation(fields: [ownerId], references: [id])
+  owner                                  User                                @relation(fields: [ownerId], references: [id])
   amenities                              PropertyAmenity[]
   checkInConfiguration                   PropertyCheckInConfiguration?
   propertyCodeVerifications              PropertyCodeVerification[]
@@ -209,7 +211,7 @@ model Property {
   tasks                                  Task[]
   taskAssignments                        PropertyTaskAssignment[]
   accesses                               PropertyAccess[]
-  operatorInvites                         PropertyOperatorInvite[]
+  operatorInvites                        PropertyOperatorInvite[]
   ownerInvites                           PropertyOwnerInvite[]
   availabilityBlocks                     PropertyAvailabilityBlock[]
   revenueMarketSnapshots                 RevenueMarketSnapshot[]
@@ -1342,7 +1344,7 @@ model RevenueComparable {
 
   /**
    * 0-100.
-   * PiÃ¹ Ã¨ alto, piÃ¹ l'alloggio Ã¨
+   * PiÃƒÆ’Ã‚Â¹ ÃƒÆ’Ã‚Â¨ alto, piÃƒÆ’Ã‚Â¹ l'alloggio ÃƒÆ’Ã‚Â¨
    * realmente comparabile alla property.
    */
   similarityScore Decimal? @db.Decimal(5, 2)
@@ -1490,7 +1492,7 @@ model AlloggiatiWebTransmission {
   id                   String                          @id @default(cuid())
   bookingId            String
   propertyId           String
-  apartmentId          String
+  apartmentId          String?
   status               AlloggiatiWebTransmissionStatus @default(PREPARED)
   payloadHash          String
   recordsCount         Int
@@ -1528,6 +1530,7 @@ model AlloggiatiWebAccount {
 
   owner      User                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   properties AlloggiatiWebProperty[]
+  receipts   AlloggiatiWebReceipt[]
 
   @@index([ownerId])
 }
@@ -1536,7 +1539,7 @@ model AlloggiatiWebProperty {
   id          String   @id @default(cuid())
   accountId   String
   propertyId  String   @unique
-  apartmentId String
+  apartmentId String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -1548,6 +1551,25 @@ model AlloggiatiWebProperty {
   @@index([propertyId])
 }
 
+model AlloggiatiWebReceipt {
+  id                String   @id @default(cuid())
+  accountId         String
+  receiptDate       DateTime
+  storageKey        String
+  filename          String
+  contentType       String
+  fileSize          Int
+  encryptionVersion String
+  downloadedAt      DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  account AlloggiatiWebAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, receiptDate])
+  @@index([accountId])
+  @@index([receiptDate])
+}
 
 enum PropertyManagementCommissionVatMode {
   NONE

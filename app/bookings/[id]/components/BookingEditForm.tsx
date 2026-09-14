@@ -130,13 +130,13 @@ const panelStyle = {
   padding: uiTokens.spacing.lg,
   border: `1px solid ${uiTokens.colors.border}`,
   borderRadius: uiTokens.radius.xl,
-  background: "#ffffff",
+  background: uiTokens.colors.primary,
   boxShadow: uiTokens.shadow.panel,
 };
 
 const summaryStyle = {
   cursor: "pointer",
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontWeight: uiTokens.fontWeight.strong,
 };
 
@@ -159,7 +159,7 @@ const fieldStyle = {
 };
 
 const labelStyle = {
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.xs,
   fontWeight: uiTokens.fontWeight.strong,
 };
@@ -171,13 +171,13 @@ const inputStyle = {
   border: `1px solid ${uiTokens.colors.border}`,
   borderRadius: uiTokens.radius.md,
   background: "#ffffff",
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   font: "inherit",
 };
 
 const noteStyle = {
   margin: 0,
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.xs,
 };
 

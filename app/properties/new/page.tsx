@@ -112,6 +112,23 @@ export default async function NewPropertyPage() {
                 required
               />
 
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">
+                <p className="text-sm font-semibold text-blue-900">
+                  Prezzo base Revenue AI
+                </p>
+                <p className="mt-1 text-xs leading-5 text-blue-700">
+                  Il prezzo base Revenue AI si riferisce sempre a 2 ospiti.
+                </p>
+              </div>
+
+              <Input
+                name="extraGuestFee"
+                label="Supplemento per ospite aggiuntivo (€ / notte)"
+                type="number"
+                defaultValue="0"
+                required
+              />
+
               <Input
                 name="cleaningCost"
                 label="Costo pulizia per prenotazione (€)"

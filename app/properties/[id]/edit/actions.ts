@@ -35,6 +35,12 @@ export async function updatePropertyAction(
     formData.get("cleaningCost") ?? 0,
   );
 
+  const baseGuests = 2;
+
+  const extraGuestFeeValue = Number(
+    formData.get("extraGuestFee") ?? 0,
+  );
+
   const propertyManagementCommissionPercent =
     Number(
       formData.get(
@@ -86,6 +92,15 @@ export async function updatePropertyAction(
   }
 
   if (
+    !Number.isFinite(extraGuestFeeValue) ||
+    extraGuestFeeValue < 0
+  ) {
+    throw new Error(
+      "Il supplemento ospite aggiuntivo deve essere un numero valido.",
+    );
+  }
+
+  if (
     !Number.isFinite(
       horizonCommissionPercent,
     ) ||
@@ -128,6 +143,9 @@ export async function updatePropertyAction(
             address: true,
             description: true,
             cleaningCost: true,
+            baseGuests: true,
+            extraGuestFee: true,
+            maxGuests: true,
             horizonCommissionPercent: true,
             propertyManagementCommissionPercent: true,
             propertyManagementCommissionVatPercent: true,
@@ -176,6 +194,25 @@ export async function updatePropertyAction(
       ) {
         changedFields.push(
           "cleaningCost",
+        );
+      }
+
+      if (
+        currentProperty.baseGuests !==
+        baseGuests
+      ) {
+        changedFields.push(
+          "baseGuests",
+        );
+      }
+
+      if (
+        Number(
+          currentProperty.extraGuestFee,
+        ) !== extraGuestFeeValue
+      ) {
+        changedFields.push(
+          "extraGuestFee",
         );
       }
 
@@ -268,6 +305,14 @@ export async function updatePropertyAction(
                   currentProperty.cleaningCost,
                 ),
 
+              baseGuests:
+                currentProperty.baseGuests,
+
+              extraGuestFee:
+                Number(
+                  currentProperty.extraGuestFee,
+                ),
+
               horizonCommissionPercent:
                 Number(
                   currentProperty.horizonCommissionPercent,
@@ -286,6 +331,9 @@ export async function updatePropertyAction(
 
               cleaningCost:
                 cleaningCostValue,
+
+              baseGuests,
+              extraGuestFee: extraGuestFeeValue,
 
               horizonCommissionPercent,
           propertyManagementCommissionPercent,

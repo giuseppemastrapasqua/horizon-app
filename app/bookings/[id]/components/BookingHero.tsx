@@ -289,7 +289,7 @@ const heroStyle = {
   padding: uiTokens.spacing.xl,
   borderRadius: uiTokens.radius.xl,
   background:
-    "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
+    uiTokens.colors.primary,
   border: `1px solid ${uiTokens.colors.border}`,
   boxShadow: uiTokens.shadow.panel,
 };
@@ -315,7 +315,7 @@ const statusRowStyle = {
 };
 
 const eyebrowStyle = {
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.xs,
   fontWeight: uiTokens.fontWeight.strong,
   letterSpacing: "0.08em",
@@ -323,7 +323,7 @@ const eyebrowStyle = {
 
 const titleStyle = {
   margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: "34px",
   lineHeight: 1.1,
   letterSpacing: "-0.04em",
@@ -331,7 +331,7 @@ const titleStyle = {
 
 const subtitleStyle = {
   margin: `${uiTokens.spacing.sm} 0 0`,
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.md,
 };
 
@@ -350,12 +350,12 @@ const detailsGridStyle = {
 
 const detailLabelStyle = {
   marginBottom: "4px",
-  color: uiTokens.colors.textSubtle,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.xs,
 };
 
 const detailValueStyle = {
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: uiTokens.fontSize.sm,
 };
 

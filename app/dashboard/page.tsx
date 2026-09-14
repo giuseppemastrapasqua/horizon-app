@@ -1,3 +1,5 @@
+﻿import { getDashboardFinanceCharts } from "@/lib/finance/get-dashboard-finance-charts";
+import { DashboardFinanceCharts } from "@/components/dashboard/DashboardFinanceCharts";
 import Link from "next/link";
 
 import {
@@ -38,14 +40,22 @@ export default async function Home() {
   const [
     properties,
     intelligence,
-  ] =
-    await Promise.all([
-      getPropertiesPageData({
-        sort: "name-asc",
-      }),
+  ] = await Promise.all([
+    getPropertiesPageData({
+      sort: "name-asc",
+    }),
+    getDashboardIntelligence(),
+  ]);
 
-      getDashboardIntelligence(),
-    ]);
+  const financeCharts =
+    await getDashboardFinanceCharts(
+      properties.map((property) => ({
+        id: property.id,
+        name: property.name,
+        city: property.city,
+        zone: property.zone,
+      })),
+    );
 
   const now =
     new Date();
@@ -163,12 +173,14 @@ export default async function Home() {
           label="Strutture"
           value={properties.length}
           helper="nel portfolio"
+          icon="properties"
         />
 
         <MetricCard
           label="Prenotabili"
           value={portfolioToday.available}
           helper="disponibili oggi"
+          icon="available"
         />
 
         <MetricCard
@@ -176,6 +188,7 @@ export default async function Home() {
           value={portfolioToday.arrivals}
           helper="previsti oggi"
           tone="arrival"
+          icon="arrival"
         />
 
         <MetricCard
@@ -183,8 +196,15 @@ export default async function Home() {
           value={portfolioToday.departures}
           helper="previste oggi"
           tone="departure"
+          icon="departure"
         />
       </section>
+
+      <DashboardFinanceCharts
+        trend={financeCharts.trend}
+        channels={financeCharts.channels}
+        performance={financeCharts.performance}
+      />
 
       {intelligence.insights.length > 0 ? (
         <section className="mb-6 overflow-hidden rounded-[22px] border border-white/[0.09] bg-[#0B1721] shadow-[0_20px_55px_rgba(0,0,0,0.24)]">
@@ -460,11 +480,13 @@ function MetricCard({
   value,
   helper,
   tone = "neutral",
+  icon,
 }: {
   label: string;
   value: number;
   helper: string;
   tone?: "neutral" | "arrival" | "departure";
+  icon: "properties" | "available" | "arrival" | "departure";
 }) {
   const valueClass =
     tone === "arrival"
@@ -475,9 +497,34 @@ function MetricCard({
 
   return (
     <article className="rounded-[18px] border border-white/[0.08] bg-[#0B1721] px-5 py-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
-      <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#647480]">
-        {label}
-      </p>
+      <div className="flex items-center gap-3">
+        <span
+          className={[
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border",
+            icon === "properties"
+              ? "border-sky-400/15 bg-sky-400/[0.08] text-sky-300"
+              : icon === "available"
+                ? "border-[#D8B367]/15 bg-[#D8B367]/[0.09] text-[#E3C57E]"
+                : icon === "arrival"
+                  ? "border-emerald-400/15 bg-emerald-400/[0.09] text-emerald-300"
+                  : "border-rose-400/15 bg-rose-400/[0.09] text-rose-300",
+          ].join(" ")}
+        >
+          {icon === "properties" ? (
+            <Building2 size={18} />
+          ) : icon === "available" ? (
+            <CircleCheck size={18} />
+          ) : icon === "arrival" ? (
+            <CalendarArrowDown size={18} />
+          ) : (
+            <CalendarArrowUp size={18} />
+          )}
+        </span>
+
+        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#647480]">
+          {label}
+        </p>
+      </div>
 
       <div className="mt-2 flex items-end justify-between gap-4">
         <p className={`text-[26px] font-semibold tracking-[-0.04em] ${valueClass}`}>
@@ -709,4 +756,3 @@ function formatStatus(
     )
     .join(" ");
 }
-

@@ -14,6 +14,7 @@ const allowedRoles = new Set<PropertyAccessRole>([
   PropertyAccessRole.MANAGER,
   PropertyAccessRole.FINANCE,
   PropertyAccessRole.VIEWER,
+  PropertyAccessRole.OPERATOR,
 ]);
 
 export async function updatePropertyAccessAction(
@@ -71,6 +72,10 @@ export async function updatePropertyAccessAction(
     throw new Error(
       "Il Super Admin dispone già di accesso globale.",
     );
+  }
+
+  if (enabled && user.role === "OPERATOR" && String(formData.get("role") || "") !== PropertyAccessRole.OPERATOR) {
+    throw new Error("Il collaboratore operativo può ricevere solo accesso OPERATOR.");
   }
 
   if (!enabled) {

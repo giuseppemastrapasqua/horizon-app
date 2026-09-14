@@ -71,7 +71,7 @@ function buildFallbackMarketBaseline({
    * 1. Snapshot mercato.
    *
    * Lo utilizziamo soltanto se contiene
-   * un ADR valido e se non Ã¨ troppo vecchio.
+   * un ADR valido e se non e troppo vecchio.
    *
    * Non vogliamo trasformare uno snapshot
    * storico in una previsione futura certa.
@@ -129,7 +129,7 @@ function buildFallbackMarketBaseline({
    * 2. Comparable properties.
    *
    * Se non abbiamo uno snapshot recente,
-   * costruiamo una baseline usando proprietÃ 
+   * costruiamo una baseline usando proprieta
    * comparabili che abbiano un prezzo valido.
    */
   const comparablePrices =
@@ -159,7 +159,7 @@ function buildFallbackMarketBaseline({
   }
 
   /*
-   * Usiamo la mediana anzichÃ© la media
+   * Usiamo la mediana anziche la media
    * per ridurre l'impatto degli outlier.
    */
   const middle =
@@ -327,7 +327,7 @@ export function buildPeriodRevenueRecommendation({
          * dell'alloggio rispetto al mercato.
          *
          * Non confrontiamo i comparables con
-         * il prezzo del singolo giorno, perché
+         * il prezzo del singolo giorno, perch\u00E9
          * eventi e picchi di domanda renderebbero
          * artificialmente economici i comparables.
          *
@@ -565,7 +565,7 @@ export function buildPeriodRevenueRecommendation({
     return {
       recommendation: null,
       message:
-        `Dati insufficienti: ${analyzedNights} notti affidabili su ${selectedNights} (${coveragePercent}%). Non Ã¨ disponibile nemmeno una baseline di mercato affidabile.`,
+        `Dati insufficienti: ${analyzedNights} notti affidabili su ${selectedNights} (${coveragePercent}%). Non \u00E8 disponibile nemmeno una baseline di mercato affidabile.`,
     };
   }
 

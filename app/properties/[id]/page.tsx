@@ -1,3 +1,7 @@
+﻿import {
+  PropertyPerformanceChart,
+} from "./components/PropertyPerformanceChart";
+
 import {
   notFound,
 } from "next/navigation";
@@ -13,6 +17,9 @@ import {
 import {
   Navigation,
 } from "@/components/Navigation";
+import {
+  requireUser,
+} from "@/lib/auth/guards";
 
 import {
   getPropertyWorkspace,
@@ -35,6 +42,11 @@ type PropertyDetailPageProps = {
 export default async function PropertyDetailPage({
   params,
 }: PropertyDetailPageProps) {
+  const user = await requireUser();
+
+  if (user.role === "OPERATOR") {
+    throw new Error("Accesso non autorizzato.");
+  }
   const {
     id,
   } =
@@ -76,7 +88,7 @@ export default async function PropertyDetailPage({
 
           <a
             href={`/properties/${property.id}/edit`}
-            className="inline-flex items-center gap-2 rounded-xl border border-[#D8B367] bg-[#D8B367] px-3.5 py-2 text-[10px] font-semibold text-[#07111A] transition hover:border-[#E4C47E] hover:bg-[#E4C47E]"
+            className="inline-flex items-center gap-2 rounded-xl border border-[#D8B367] bg-[#D8B367] px-3.5 py-2 text-[10px] font-semibold !text-[#07111A] transition hover:border-[#E4C47E] hover:bg-[#E4C47E]"
           >
             <Pencil
               size={13}
@@ -134,6 +146,10 @@ export default async function PropertyDetailPage({
           }
         />
 
+        <PropertyPerformanceChart
+          bookings={workspace.calendarBookings}
+        />
+
         <section className="rounded-2xl border border-white/[0.07] bg-[#09131C]/90 px-5 py-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -157,4 +173,3 @@ export default async function PropertyDetailPage({
     </>
   );
 }
-

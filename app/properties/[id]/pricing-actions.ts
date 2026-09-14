@@ -96,7 +96,7 @@ export async function savePropertyPricingOverrideAction(
     startDate.getTime()
   ) {
     throw new Error(
-      "La data finale non puÃ² precedere quella iniziale.",
+      "La data finale non pu\u00F2 precedere quella iniziale.",
     );
   }
 
@@ -105,7 +105,7 @@ export async function savePropertyPricingOverrideAction(
     nightlyPrice < 0
   ) {
     throw new Error(
-      "Il prezzo notte non puÃ² essere negativo.",
+      "Il prezzo notte non pu\u00F2 essere negativo.",
     );
   }
 
@@ -133,13 +133,13 @@ export async function savePropertyPricingOverrideAction(
     maximumStay < minimumStay
   ) {
     throw new Error(
-      "Il maximum stay non puÃ² essere inferiore al minimum stay.",
+      "Il maximum stay non pu\u00F2 essere inferiore al minimum stay.",
     );
   }
 
   if (cleaningCost < 0) {
     throw new Error(
-      "Il costo pulizia non puÃ² essere negativo.",
+      "Il costo pulizia non pu\u00F2 essere negativo.",
     );
   }
 
@@ -171,7 +171,7 @@ export async function savePropertyPricingOverrideAction(
       }
 
       /*
-       * Il costo pulizia Ã¨ una configurazione
+       * Il costo pulizia e una configurazione
        * della property, quindi viene aggiornato
        * indipendentemente dall'intervallo.
        */
@@ -271,7 +271,7 @@ export async function savePropertyPricingOverrideAction(
        *
        * Gli intervalli parzialmente sovrapposti
        * saranno gestiti successivamente dal
-       * resolver di prioritÃ .
+       * resolver di priorita.
        */
       if (source === PricingOverrideSource.AI) {
         await transaction.propertyPriceOverride.deleteMany({

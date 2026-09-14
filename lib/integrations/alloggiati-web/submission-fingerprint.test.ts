@@ -125,15 +125,23 @@ describe(
     );
 
     it(
-      "rifiuta IdAppartamento assente o non numerico",
+      "supporta utenza standard e distingue la destinazione",
       () => {
-        expect(() =>
+        const standard =
           createAlloggiatiSubmissionFingerprint({
             records: [recordA],
-          }),
-        ).toThrow(
-          "IdAppartamento Alloggiati Web non valido.",
+          });
+
+        const apartment =
+          createAlloggiatiSubmissionFingerprint({
+            apartmentId: "123",
+            records: [recordA],
+          });
+
+        expect(standard).toMatch(
+          /^[a-f0-9]{64}$/u,
         );
+        expect(standard).not.toBe(apartment);
 
         expect(() =>
           createAlloggiatiSubmissionFingerprint({
