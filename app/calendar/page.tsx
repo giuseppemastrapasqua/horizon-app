@@ -1,4 +1,4 @@
-﻿import { CalendarRangeController } from "@/components/calendar/CalendarRangeController";
+import { CalendarRangeController } from "@/components/calendar/CalendarRangeController";
 import { CalendarPeriodEditor } from "./components/CalendarPeriodEditor";
 import Link from "next/link";
 
@@ -627,7 +627,77 @@ return (
         title="Calendario"
         subtitle={selectedProperty?.name ?? "Disponibilit\u00E0, prenotazioni e pricing."}
       >
-<section className="mb-3 flex flex-wrap items-end justify-end gap-3">
+<section className="mb-4 md:hidden">
+  <div className="rounded-[22px] border border-white/[0.07] bg-[#09131C]/95 p-4 shadow-[0_14px_34px_rgba(0,0,0,0.20)]">
+    <div className="flex items-center justify-between gap-3">
+      <Link
+        href={buildCalendarUrl({
+          month: formatMonthParam(previousMonth),
+          propertyId: selectedProperty?.id ?? "",
+        })}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-[#050B11]/70 text-[#D8B367]"
+        aria-label="Mese precedente"
+      >
+        <ChevronLeft size={20} />
+      </Link>
+
+      <div className="min-w-0 text-center">
+        <p className="text-[17px] font-bold capitalize text-[#FFF8EA]">
+          {formatMonthLabel(monthStart)}
+        </p>
+
+        <p className="mt-1 truncate text-[13px] text-[#82909C]">
+          {selectedProperty?.name ?? "Calendario"}
+        </p>
+      </div>
+
+      <Link
+        href={buildCalendarUrl({
+          month: formatMonthParam(followingMonth),
+          propertyId: selectedProperty?.id ?? "",
+        })}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-[#050B11]/70 text-[#D8B367]"
+        aria-label="Mese successivo"
+      >
+        <ChevronRight size={20} />
+      </Link>
+    </div>
+
+    {properties.length > 1 ? (
+      <form method="get" className="mt-4 flex gap-2">
+        <input
+          type="hidden"
+          name="month"
+          value={formatMonthParam(monthStart)}
+        />
+
+        <select
+          name="propertyId"
+          defaultValue={selectedProperty?.id ?? ""}
+          className="h-11 min-w-0 flex-1 rounded-xl border border-white/[0.08] bg-[#050B11]/70 px-3 text-[14px] font-semibold text-[#E8E1D5] outline-none"
+        >
+          {properties.map((property) => (
+            <option key={property.id} value={property.id}>
+              {property.name}
+            </option>
+          ))}
+        </select>
+
+        <button
+          type="submit"
+          className="h-11 shrink-0 rounded-xl bg-[#D8B367] px-4 text-[14px] font-bold text-[#07111A]"
+        >
+          Apri
+        </button>
+      </form>
+    ) : null}
+
+    <p className="mt-3 text-[12px] leading-5 text-[#667685]">
+      Vista mobile in sola lettura. Le modifiche restano disponibili da tablet e desktop.
+    </p>
+  </div>
+</section>
+<section className="mb-3 hidden flex-wrap items-end justify-end gap-3 md:flex">
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href={buildCalendarUrl({
@@ -744,7 +814,7 @@ return (
         ) : (
           <div className="space-y-4">
             <div className="min-w-0 space-y-4">
-              <div className="rounded-[22px] border border-white/[0.07] bg-[#09131C]/95 px-5 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.20)]">
+              <div className="hidden rounded-[22px] border border-white/[0.07] bg-[#09131C]/95 px-5 py-4 shadow-[0_14px_34px_rgba(0,0,0,0.20)] md:block">
                 <div className="flex items-start justify-between gap-8">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -853,7 +923,200 @@ return (
                   ) : null}
                 </div>
               </div>
-              <section className="min-w-0 overflow-hidden rounded-[24px] border border-white/[0.07] bg-[#09131C]/95 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
+              <section className="overflow-hidden rounded-[24px] border border-white/[0.07] bg-[#09131C]/95 shadow-[0_18px_44px_rgba(0,0,0,0.22)] md:hidden">
+  <div className="border-b border-white/[0.07] px-4 py-4">
+    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#D8B367]">
+      Calendario
+    </p>
+
+    <h2 className="mt-1 text-[17px] font-semibold text-[#FFF8EA]">
+      {formatMonthLabel(monthStart)}
+    </h2>
+  </div>
+
+  <div className="divide-y divide-white/[0.06]">
+    {calendarDays.map((day) => {
+      const inMonth =
+        day.getMonth() === monthStart.getMonth();
+
+      if (!inMonth) {
+        return null;
+      }
+
+      const bookings =
+        propertyData.bookings.filter((booking) =>
+          isNightOccupied(
+            day,
+            booking.checkIn,
+            booking.checkOut,
+          ),
+        );
+
+      const checkIns =
+        propertyData.bookings.filter((booking) =>
+          isSameDay(
+            day,
+            booking.checkIn,
+          ),
+        );
+
+      const checkOuts =
+        propertyData.bookings.filter((booking) =>
+          isSameDay(
+            day,
+            booking.checkOut,
+          ),
+        );
+
+      const block =
+        propertyData.availabilityBlocks.find(
+          (availabilityBlock) =>
+            isDateInsideRange(
+              day,
+              availabilityBlock.startDate,
+              availabilityBlock.endDate,
+            ),
+        );
+
+      const dayStandard =
+        resolveStandardRateForDate({
+          date: day,
+          configuredPrice:
+            standardRate?.basePrice ?? 0,
+          priceOverrides:
+            propertyData.priceOverrides,
+        });
+
+      const displayBooking =
+        bookings[0] ??
+        checkIns[0] ??
+        checkOuts[0] ??
+        null;
+
+      const isToday =
+        isSameDay(
+          day,
+          new Date(),
+        );
+
+      const rowContent = (
+        <div className="grid min-h-[86px] grid-cols-[54px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+          <div
+            className={[
+              "flex h-[54px] w-[54px] flex-col items-center justify-center rounded-2xl border",
+              isToday
+                ? "border-[#D8B367]/40 bg-[#D8B367] text-[#07111A]"
+                : "border-white/[0.07] bg-[#07111A] text-[#FFF8EA]",
+            ].join(" ")}
+          >
+            <span className="text-[10px] font-black uppercase tracking-[0.08em] opacity-70">
+              {day
+                .toLocaleDateString("it-IT", {
+                  weekday: "short",
+                })
+                .replace(".", "")}
+            </span>
+
+            <span className="mt-0.5 text-[20px] font-black leading-none">
+              {day.getDate()}
+            </span>
+          </div>
+
+          <div className="min-w-0">
+            {displayBooking ? (
+              <>
+                <div className="flex min-w-0 items-center gap-2">
+                  <ChannelLogo
+                    channel={displayBooking.channel}
+                    size={18}
+                    variant="brand"
+                  />
+
+                  <p className="truncate text-[15px] font-bold text-[#FFF8EA]">
+                    {displayBooking.guestName}
+                  </p>
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {checkIns.length > 0 ? (
+                    <span className="rounded-md border border-emerald-400/20 bg-emerald-400/[0.08] px-2 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-emerald-300">
+                      Check-in
+                    </span>
+                  ) : null}
+
+                  {checkOuts.length > 0 ? (
+                    <span className="rounded-md border border-rose-400/20 bg-rose-400/[0.08] px-2 py-1 text-[10px] font-black uppercase tracking-[0.06em] text-rose-300">
+                      Check-out
+                    </span>
+                  ) : null}
+
+                  {bookings.length > 0 ? (
+                    <span className="text-[12px] font-semibold text-[#A4AFB8]">
+                      Prenotato
+                    </span>
+                  ) : null}
+                </div>
+              </>
+            ) : block ? (
+              <>
+                <p className="text-[15px] font-bold text-rose-300">
+                  Chiuso
+                </p>
+
+                <p className="mt-1 text-[12px] text-[#82909C]">
+                  Disponibilità bloccata
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-[15px] font-bold text-emerald-300">
+                  Disponibile
+                </p>
+
+                <p className="mt-1 text-[12px] text-[#82909C]">
+                  {dayStandard.source === "AI"
+                    ? "Revenue AI"
+                    : dayStandard.source === "MANUAL"
+                      ? "Prezzo manuale"
+                      : "Tariffa standard"}
+                </p>
+              </>
+            )}
+          </div>
+
+          <div className="text-right">
+            {!isOperator ? (
+              <>
+                <p className="text-[18px] font-black tabular-nums text-[#E3C57E]">
+                  {formatCurrency(dayStandard.price)}
+                </p>
+
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.06em] text-[#667685]">
+                  notte
+                </p>
+              </>
+            ) : null}
+          </div>
+        </div>
+      );
+
+      return displayBooking ? (
+        <Link
+          key={day.toISOString()}
+          href={`/bookings/${displayBooking.id}`}
+          className="block transition active:bg-white/[0.035]"
+        >
+          {rowContent}
+        </Link>
+      ) : (
+        <div key={day.toISOString()}>
+          {rowContent}
+        </div>
+      );
+    })}
+  </div>
+</section>
+<section className="hidden min-w-0 overflow-hidden rounded-[24px] border border-white/[0.07] bg-[#09131C]/95 shadow-[0_18px_44px_rgba(0,0,0,0.22)] md:block">
               <div className="grid grid-cols-7 border-b border-white/[0.07] bg-[#09131C]/[0.025]">
                 {[
                   "Lun",
@@ -1129,7 +1392,7 @@ return (
 
             <div className="space-y-4">
               {!isOperator ? (
-              <section className="rounded-[24px] border border-white/[0.07] bg-[#09131C] p-5 shadow-[0_18px_44px_rgba(0,0,0,0.22)]">
+              <section className="hidden rounded-[24px] border border-white/[0.07] bg-[#09131C] p-5 shadow-[0_18px_44px_rgba(0,0,0,0.22)] md:block">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#D8B367]">
