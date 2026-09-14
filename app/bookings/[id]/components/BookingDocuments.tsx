@@ -159,7 +159,7 @@ const cardStyle = {
   padding: uiTokens.spacing.md,
   borderRadius: uiTokens.radius.lg,
   background: uiTokens.colors.primary,
-  border: `1px solid ${uiTokens.colors.border}`,
+  border: "none",
 };
 
 const headerStyle = {
@@ -195,7 +195,7 @@ const detailsGridStyle = {
   gap: uiTokens.spacing.md,
   marginTop: uiTokens.spacing.md,
   paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
+  borderTop: "none",
 };
 
 const detailLabelStyle = {
@@ -214,6 +214,6 @@ const footerStyle = {
   gap: uiTokens.spacing.sm,
   marginTop: uiTokens.spacing.md,
   paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
+  borderTop: "none",
   flexWrap: "wrap" as const,
 };

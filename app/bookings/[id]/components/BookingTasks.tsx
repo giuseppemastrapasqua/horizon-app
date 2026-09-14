@@ -111,7 +111,7 @@ const taskCardStyle = {
   padding: uiTokens.spacing.md,
   borderRadius: uiTokens.radius.lg,
   background: uiTokens.colors.primary,
-  border: `1px solid ${uiTokens.colors.border}`,
+  border: "none",
 };
 
 const headerStyle = {
@@ -148,7 +148,7 @@ const footerStyle = {
   gap: uiTokens.spacing.md,
   marginTop: uiTokens.spacing.md,
   paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
+  borderTop: "none",
   flexWrap: "wrap" as const,
 };
 

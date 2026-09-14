@@ -283,7 +283,29 @@ export default async function BookingPage({
         title={booking.guestName}
         subtitle="Workspace operativo della prenotazione."
       >
-        <WorkspaceTopBar
+        <div className="booking-workspace-clean">
+          <style>{`
+            .booking-workspace-clean [style*="border: 1px solid rgba(255"],
+            .booking-workspace-clean [style*="border:1px solid rgba(255"],
+            .booking-workspace-clean [style*="border: 1px solid rgb(255"],
+            .booking-workspace-clean [style*="border:1px solid rgb(255"],
+            .booking-workspace-clean [style*="border: 1px solid #fff"],
+            .booking-workspace-clean [style*="border:1px solid #fff"],
+            .booking-workspace-clean [style*="border: 1px solid white"],
+            .booking-workspace-clean [style*="border:1px solid white"] {
+              border-color: transparent !important;
+            }
+
+            .booking-workspace-clean fieldset {
+              border-color: transparent !important;
+            }
+
+            .booking-workspace-clean details {
+              border-color: transparent !important;
+            }
+          `}</style>
+
+          <WorkspaceTopBar
           backLabel="Torna alle prenotazioni"
           backHref="/bookings"
           actions={
@@ -363,7 +385,8 @@ export default async function BookingPage({
             </>
           }
         />
-      </AppShell>
+              </div>
+</AppShell>
     </>
   );
 }

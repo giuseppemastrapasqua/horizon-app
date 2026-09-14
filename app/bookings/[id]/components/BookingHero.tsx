@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ActionButton } from "@/components/ui/ActionButton";
+
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { uiTokens } from "@/components/ui/tokens";
 import { formatCurrency } from "@/lib/format/currency";
 import { formatDate } from "@/lib/format/date";
 import { formatEnum } from "@/lib/format/enum";
@@ -52,185 +51,90 @@ export function BookingHero({
   daysUntilCheckIn,
   stayProgress,
 }: BookingHeroProps) {
+  const stayLabel = getStayLabel({ daysUntilCheckIn, stayProgress });
+
   return (
-    <section style={heroStyle}>
-      <div style={contentStyle}>
-        <div style={topRowStyle}>
-          <div>
-            <div style={eyebrowStyle}>BOOKING WORKSPACE</div>
+    <section style={shellStyle}>
+      <div style={headerStyle}>
+        <div style={{ minWidth: 0 }}>
+          <div style={eyebrowStyle}>PRENOTAZIONE</div>
 
-           <h1 style={titleStyle}>
-  {booking.guestId ? (
-    <Link
-      href={`/guests/${booking.guestId}`}
-      style={{
-        color: "inherit",
-        textDecoration: "none",
-      }}
-    >
-      {booking.guestName}
-    </Link>
-  ) : (
-    booking.guestName
-  )}
-</h1>
-
-            <p style={subtitleStyle}>
-              {booking.property.name} ·{" "}
-              {booking.property.zone ?? booking.property.city}
-            </p>
-          </div>
-
-          <div style={statusRowStyle}>
-            <StatusBadge
-              label={booking.bookingStatus}
-            />
-
-            <StatusBadge
-              label={booking.operationalStatus}
-            />
-          </div>
-        </div>
-
-        <div style={badgeRowStyle}>
-          <StatusBadge
-            label={booking.channel}
-            tone="blue"
-            compact
-          />
-
-          <StatusBadge
-            label={`${booking.nights} notti`}
-            tone="default"
-            compact
-          />
-
-          <StatusBadge
-            label={`${booking.guests} ospiti`}
-            tone="violet"
-            compact
-          />
-
-          <StatusBadge
-            label={`${openTasksCount} task aperti`}
-            tone={openTasksCount > 0 ? "yellow" : "green"}
-            compact
-          />
-
-          <StatusBadge
-            label={
-              overdueTasksCount > 0
-                ? `${overdueTasksCount} task scaduti`
-                : "Nessun task scaduto"
-            }
-            tone={overdueTasksCount > 0 ? "red" : "green"}
-            compact
-          />
-        </div>
-
-        <div style={detailsGridStyle}>
-          <Detail
-            label="Check-in"
-            value={formatDate(booking.checkIn)}
-          />
-
-          <Detail
-            label="Check-out"
-            value={formatDate(booking.checkOut)}
-          />
-
-          <Detail
-            label="Importo"
-            value={formatCurrency(
-              booking.grossAmount,
-              booking.currency
+          <h1 style={titleStyle}>
+            {booking.guestId ? (
+              <Link href={`/guests/${booking.guestId}`} style={guestLinkStyle}>
+                {booking.guestName}
+              </Link>
+            ) : (
+              booking.guestName
             )}
-          />
+          </h1>
 
-          <Detail
-            label="Proprietario"
-            value={booking.owner.fullName}
-          />
-
-          <Detail
-            label="Contatto ospite"
-            value={
-              booking.guestPhone ??
-              booking.guestEmail ??
-              "Non indicato"
-            }
-          />
+          <p style={subtitleStyle}>
+            {booking.property.name} · {booking.property.zone ?? booking.property.city}
+          </p>
         </div>
 
-        <div style={actionsStyle}>
-          <ActionButton
-            label="Apri immobile"
-            href={`/properties/${booking.property.id}`}
-          />
-
-          <ActionButton
-            label="Owner workspace"
-            href={`/owners/${booking.owner.id}`}
-            variant="secondary"
-          />
-
-          <ActionButton
-            label="Nuovo task"
-            href={`/tasks/new?propertyId=${booking.property.id}&bookingId=${booking.id}`}
-            variant="secondary"
-          />
-
-          <ActionButton
-            label="Documenti"
-            href={`/documents?propertyId=${booking.property.id}`}
-            variant="secondary"
-          />
+        <div style={statusStyle}>
+          <StatusBadge label={booking.bookingStatus} />
+          <StatusBadge label={booking.operationalStatus} />
+          <StatusBadge label={booking.channel} tone="blue" compact />
         </div>
       </div>
 
-      <aside style={summaryCardStyle}>
-        <span style={summaryEyebrowStyle}>
-          STATO SOGGIORNO
-        </span>
+      <div style={summaryGridStyle}>
+        <Detail label="Check-in" value={formatDate(booking.checkIn)} />
+        <Detail label="Check-out" value={formatDate(booking.checkOut)} />
+        <Detail label="Permanenza" value={`${booking.nights} notti`} />
+        <Detail label="Ospiti" value={`${booking.guests}`} />
+        <Detail
+          label="Valore prenotazione"
+          value={formatCurrency(booking.grossAmount, booking.currency)}
+          accent
+        />
+        <Detail label="Proprietario" value={booking.owner.fullName} />
+      </div>
 
-        <strong style={summaryValueStyle}>
-          {getStayLabel({
-            daysUntilCheckIn,
-            stayProgress,
-          })}
-        </strong>
+      <div style={footerStyle}>
+        <div style={stayBlockStyle}>
+          <div style={stayTopStyle}>
+            <span style={metaLabelStyle}>STATO SOGGIORNO</span>
+            <strong style={stayValueStyle}>{stayLabel}</strong>
+          </div>
 
-        <div style={progressTrackStyle}>
-          <div
-            style={{
-              ...progressValueStyle,
-              width: `${Math.min(
-                100,
-                Math.max(0, stayProgress)
-              )}%`,
-            }}
-          />
+          <div style={progressTrackStyle}>
+            <div
+              style={{
+                ...progressValueStyle,
+                width: `${Math.min(100, Math.max(0, stayProgress))}%`,
+              }}
+            />
+          </div>
         </div>
 
-        <span style={progressTextStyle}>
-          {stayProgress.toFixed(0)}% completato
-        </span>
+        <div style={referenceStyle}>
+          <span style={metaLabelStyle}>RIFERIMENTO</span>
+          <strong style={referenceValueStyle}>
+            {booking.externalBookingId ?? booking.id.slice(-8).toUpperCase()}
+          </strong>
+          <span style={referenceMetaStyle}>{formatEnum(booking.channel)}</span>
+        </div>
 
-        <div style={summaryDividerStyle} />
+        <div style={taskStyle}>
+          <span>
+            {openTasksCount === 0
+              ? "Nessun task aperto"
+              : `${openTasksCount} task aperti`}
+          </span>
 
-        <span style={summaryLabelStyle}>
-          CODICE PRENOTAZIONE
-        </span>
-
-        <strong style={summaryCodeStyle}>
-          {booking.externalBookingId ??
-            booking.id.slice(-8).toUpperCase()}
-        </strong>
-
-        <span style={summaryMetaStyle}>
-          {formatEnum(booking.channel)}
-        </span>
-      </aside>
+          {overdueTasksCount > 0 ? (
+            <strong style={{ color: "#F0B7A8" }}>
+              {overdueTasksCount} scaduti
+            </strong>
+          ) : (
+            <span style={{ color: "#76D6A1" }}>Operatività regolare</span>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
@@ -238,14 +142,23 @@ export function BookingHero({
 function Detail({
   label,
   value,
+  accent = false,
 }: {
   label: string;
   value: string | number;
+  accent?: boolean;
 }) {
   return (
-    <div>
-      <div style={detailLabelStyle}>{label}</div>
-      <strong style={detailValueStyle}>{value}</strong>
+    <div style={detailStyle}>
+      <span style={detailLabelStyle}>{label}</span>
+      <strong
+        style={{
+          ...detailValueStyle,
+          color: accent ? "#E3C57E" : "#FFF8EA",
+        }}
+      >
+        {value}
+      </strong>
     </div>
   );
 }
@@ -257,186 +170,162 @@ function getStayLabel({
   daysUntilCheckIn: number;
   stayProgress: number;
 }) {
-  if (stayProgress >= 100) {
-    return "Soggiorno concluso";
-  }
-
-  if (stayProgress > 0) {
-    return "Ospite in soggiorno";
-  }
-
-  if (daysUntilCheckIn === 0) {
-    return "Check-in oggi";
-  }
-
-  if (daysUntilCheckIn === 1) {
-    return "Check-in domani";
-  }
-
-  if (daysUntilCheckIn > 1) {
-    return `Check-in tra ${daysUntilCheckIn} giorni`;
-  }
-
+  if (stayProgress >= 100) return "Soggiorno concluso";
+  if (stayProgress > 0) return "Ospite in soggiorno";
+  if (daysUntilCheckIn === 0) return "Check-in oggi";
+  if (daysUntilCheckIn === 1) return "Check-in domani";
+  if (daysUntilCheckIn > 1) return `Check-in tra ${daysUntilCheckIn} giorni`;
   return "In attesa";
 }
 
-const heroStyle = {
+const shellStyle: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(220px, 250px)",
-  gap: uiTokens.spacing.lg,
-  alignItems: "stretch",
-  marginBottom: uiTokens.spacing.lg,
-  padding: uiTokens.spacing.xl,
-  borderRadius: uiTokens.radius.xl,
-  background:
-    uiTokens.colors.primary,
-  border: `1px solid ${uiTokens.colors.border}`,
-  boxShadow: uiTokens.shadow.panel,
+  gap: 18,
+  marginBottom: 18,
+  padding: "22px 24px",
+  borderRadius: 22,
+  background: "#09131C",
+  border: "none",
+  boxShadow: "0 20px 55px rgba(0,0,0,0.18)",
 };
 
-const contentStyle = {
-  display: "grid",
-  minWidth: 0,
-  gap: uiTokens.spacing.lg,
-};
-
-const topRowStyle = {
+const headerStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "flex-start",
-  gap: uiTokens.spacing.md,
-  flexWrap: "wrap" as const,
+  gap: 18,
+  flexWrap: "wrap",
 };
 
-const statusRowStyle = {
-  display: "flex",
-  gap: uiTokens.spacing.sm,
-  flexWrap: "wrap" as const,
+const eyebrowStyle: React.CSSProperties = {
+  color: "#D8B367",
+  fontSize: 10,
+  fontWeight: 800,
+  letterSpacing: "0.14em",
 };
 
-const eyebrowStyle = {
-  color: "#94a3b8",
-  fontSize: uiTokens.fontSize.xs,
-  fontWeight: uiTokens.fontWeight.strong,
-  letterSpacing: "0.08em",
-};
-
-const titleStyle = {
-  margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.primaryText,
-  fontSize: "34px",
+const titleStyle: React.CSSProperties = {
+  margin: "5px 0 0",
+  color: "#FFF8EA",
+  fontSize: 25,
   lineHeight: 1.1,
-  letterSpacing: "-0.04em",
+  letterSpacing: "-0.025em",
+  fontFamily: "Georgia, 'Times New Roman', serif",
 };
 
-const subtitleStyle = {
-  margin: `${uiTokens.spacing.sm} 0 0`,
-  color: "#94a3b8",
-  fontSize: uiTokens.fontSize.md,
+const guestLinkStyle: React.CSSProperties = {
+  color: "inherit",
+  textDecoration: "none",
 };
 
-const badgeRowStyle = {
+const subtitleStyle: React.CSSProperties = {
+  margin: "6px 0 0",
+  color: "#70808D",
+  fontSize: 13,
+};
+
+const statusStyle: React.CSSProperties = {
   display: "flex",
-  gap: uiTokens.spacing.sm,
-  flexWrap: "wrap" as const,
+  alignItems: "center",
+  justifyContent: "flex-end",
+  gap: 7,
+  flexWrap: "wrap",
 };
 
-const detailsGridStyle = {
+const summaryGridStyle: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns:
-    "repeat(auto-fit, minmax(130px, 1fr))",
-  gap: uiTokens.spacing.md,
+  gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))",
+  gap: 0,
+  borderTop: "1px solid rgba(255,255,255,0.07)",
+  borderBottom: "1px solid rgba(255,255,255,0.07)",
 };
 
-const detailLabelStyle = {
-  marginBottom: "4px",
-  color: "#94a3b8",
-  fontSize: uiTokens.fontSize.xs,
-};
-
-const detailValueStyle = {
-  color: uiTokens.colors.primaryText,
-  fontSize: uiTokens.fontSize.sm,
-};
-
-const actionsStyle = {
-  display: "flex",
-  gap: uiTokens.spacing.sm,
-  flexWrap: "wrap" as const,
-};
-
-const summaryCardStyle = {
+const detailStyle: React.CSSProperties = {
   display: "grid",
-  alignContent: "center",
-  justifyItems: "center",
-  gap: uiTokens.spacing.sm,
-  padding: uiTokens.spacing.lg,
-  borderRadius: uiTokens.radius.xl,
-  background: uiTokens.colors.primary,
-  color: uiTokens.colors.primaryText,
-  boxShadow: uiTokens.shadow.elevated,
-  textAlign: "center" as const,
+  gap: 4,
+  padding: "14px 16px 14px 0",
   minWidth: 0,
-  maxWidth: "100%",
-  overflow: "hidden",
 };
 
-const summaryEyebrowStyle = {
-  color: "#94a3b8",
-  fontSize: uiTokens.fontSize.xs,
-  fontWeight: uiTokens.fontWeight.strong,
-  letterSpacing: "0.08em",
+const detailLabelStyle: React.CSSProperties = {
+  color: "#70808D",
+  fontSize: 10,
+  fontWeight: 700,
 };
 
-const summaryValueStyle = {
-  color: "#ffffff",
-  fontSize: "22px",
-  lineHeight: 1.2,
+const detailValueStyle: React.CSSProperties = {
+  fontSize: 13,
+  lineHeight: 1.35,
+  overflowWrap: "anywhere",
 };
 
-const progressTrackStyle = {
+const footerStyle: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(220px, 1.4fr) minmax(150px, 0.7fr) minmax(160px, 0.8fr)",
+  gap: 18,
+  alignItems: "center",
+};
+
+const stayBlockStyle: React.CSSProperties = {
+  display: "grid",
+  gap: 8,
+};
+
+const stayTopStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  alignItems: "center",
+};
+
+const metaLabelStyle: React.CSSProperties = {
+  color: "#70808D",
+  fontSize: 9,
+  fontWeight: 800,
+  letterSpacing: "0.09em",
+};
+
+const stayValueStyle: React.CSSProperties = {
+  color: "#FFF8EA",
+  fontSize: 12,
+};
+
+const progressTrackStyle: React.CSSProperties = {
   width: "100%",
-  height: "8px",
-  marginTop: uiTokens.spacing.sm,
+  height: 4,
   overflow: "hidden",
-  borderRadius: uiTokens.radius.pill,
-  background: "rgba(255,255,255,0.12)",
+  borderRadius: 999,
+  background: "rgba(255,255,255,0.08)",
 };
 
-const progressValueStyle = {
+const progressValueStyle: React.CSSProperties = {
   height: "100%",
-  borderRadius: uiTokens.radius.pill,
-  background: "#4ade80",
+  borderRadius: 999,
+  background: "#D8B367",
 };
 
-const progressTextStyle = {
-  color: "#cbd5e1",
-  fontSize: uiTokens.fontSize.xs,
+const referenceStyle: React.CSSProperties = {
+  display: "grid",
+  gap: 3,
+  minWidth: 0,
 };
 
-const summaryDividerStyle = {
-  width: "100%",
-  height: "1px",
-  margin: uiTokens.spacing.sm,
-  background: "rgba(255,255,255,0.12)",
+const referenceValueStyle: React.CSSProperties = {
+  color: "#FFF8EA",
+  fontSize: 11,
+  overflowWrap: "anywhere",
 };
 
-const summaryLabelStyle = {
-  color: "#94a3b8",
-  fontSize: "9px",
-  fontWeight: uiTokens.fontWeight.strong,
+const referenceMetaStyle: React.CSSProperties = {
+  color: "#70808D",
+  fontSize: 10,
 };
 
-const summaryCodeStyle = {
-  color: "#ffffff",
-  fontSize: "15px",
-  letterSpacing: "0.06em",
-  maxWidth: "100%",
-  overflowWrap: "anywhere" as const,
-  wordBreak: "break-word" as const,
-};
-
-const summaryMetaStyle = {
-  color: "#cbd5e1",
-  fontSize: uiTokens.fontSize.xs,
+const taskStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: 10,
+  flexWrap: "wrap",
+  color: "#A4AFB8",
+  fontSize: 11,
 };

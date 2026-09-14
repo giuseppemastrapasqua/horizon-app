@@ -71,7 +71,7 @@ export function BookingQuickActions({
               background: action.primary
                 ? "rgba(255, 255, 255, 0.07)"
                 : "rgba(255, 255, 255, 0.035)",
-              border: "1px solid rgba(148, 163, 184, 0.28)",
+              border: "none",
             }}
           >
             <strong

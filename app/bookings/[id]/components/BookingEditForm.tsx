@@ -128,7 +128,7 @@ function Field({
 const panelStyle = {
   marginBottom: uiTokens.spacing.lg,
   padding: uiTokens.spacing.lg,
-  border: `1px solid ${uiTokens.colors.border}`,
+  border: "none",
   borderRadius: uiTokens.radius.xl,
   background: uiTokens.colors.primary,
   boxShadow: uiTokens.shadow.panel,
@@ -168,7 +168,7 @@ const inputStyle = {
   width: "100%",
   boxSizing: "border-box" as const,
   padding: "10px 12px",
-  border: `1px solid ${uiTokens.colors.border}`,
+  border: "none",
   borderRadius: uiTokens.radius.md,
   background: "#ffffff",
   color: uiTokens.colors.primaryText,

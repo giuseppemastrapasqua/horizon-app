@@ -244,7 +244,7 @@ export function BookingGuestCheckInPanel({
         <div
           style={{
             padding: uiTokens.spacing.md,
-            border: `1px solid ${uiTokens.colors.border}`,
+            border: "none",
             borderRadius: uiTokens.radius.lg,
             background: uiTokens.colors.primary,
           }}
@@ -360,7 +360,7 @@ export function BookingGuestCheckInPanel({
               display: "grid",
               gap: uiTokens.spacing.sm,
               padding: uiTokens.spacing.md,
-              border: `1px solid ${uiTokens.colors.border}`,
+              border: "none",
               borderRadius: uiTokens.radius.lg,
               background: uiTokens.colors.primary,
             }}
