@@ -23,6 +23,7 @@ type WorkspaceTimelineProps = {
   emptyDescription?: string;
   items: WorkspaceTimelineItem[];
   dark?: boolean;
+  compact?: boolean;
 };
 
 export function WorkspaceTimeline({
@@ -32,13 +33,15 @@ export function WorkspaceTimeline({
   emptyDescription = "Gli eventi compariranno qui.",
   items,
   dark = false,
+  compact = false,
 }: WorkspaceTimelineProps) {
   return (
-    <Panel dark={dark}>
+    <Panel dark={dark} padding={compact ? "sm" : "lg"}>
       <SectionTitle
         title={title}
         subtitle={subtitle}
         dark={dark}
+        compact={compact}
         action={
           <StatusBadge
             label={`${items.length} eventi`}
@@ -56,7 +59,15 @@ export function WorkspaceTimeline({
       ) : (
         <div style={timelineStyle}>
           {items.map((item, index) => (
-            <div key={item.id} style={timelineItemStyle}>
+            <div
+              key={item.id}
+              style={{
+                ...timelineItemStyle,
+                gap: compact
+                  ? uiTokens.spacing.sm
+                  : uiTokens.spacing.md,
+              }}
+            >
               <div style={timelineRailStyle}>
                 <div
                   style={{
@@ -66,27 +77,66 @@ export function WorkspaceTimeline({
                 />
 
                 {index < items.length - 1 ? (
-                  <div style={timelineLineStyle} />
+                  <div
+                    style={{
+                      ...timelineLineStyle,
+                      minHeight: compact ? "32px" : "58px",
+                    }}
+                  />
                 ) : null}
               </div>
 
-              <div style={contentStyle}>
-                <div style={contentHeaderStyle}>
+              <div
+                style={{
+                  ...contentStyle,
+                  paddingBottom: compact
+                    ? uiTokens.spacing.sm
+                    : uiTokens.spacing.lg,
+                }}
+              >
+                <div
+                  style={{
+                    ...contentHeaderStyle,
+                    gap: compact
+                      ? uiTokens.spacing.sm
+                      : uiTokens.spacing.md,
+                  }}
+                >
                   <div>
                     {item.href ? (
                       <Link
                         href={item.href}
-                        style={{ ...eventTitleLinkStyle, color: dark ? "#ffffff" : uiTokens.colors.textPrimary }}
+                        style={{
+                          ...eventTitleLinkStyle,
+                          color: dark
+                            ? "#ffffff"
+                            : uiTokens.colors.textPrimary,
+                        }}
                       >
                         {item.title}
                       </Link>
                     ) : (
-                      <strong style={{ ...eventTitleStyle, color: dark ? "#ffffff" : uiTokens.colors.textPrimary }}>
+                      <strong
+                        style={{
+                          ...eventTitleStyle,
+                          color: dark
+                            ? "#ffffff"
+                            : uiTokens.colors.textPrimary,
+                        }}
+                      >
                         {item.title}
                       </strong>
                     )}
 
-                    <p style={{ ...descriptionStyle, color: dark ? "#94a3b8" : uiTokens.colors.textMuted }}>
+                    <p
+                      style={{
+                        ...descriptionStyle,
+                        margin: compact ? "2px 0 0" : descriptionStyle.margin,
+                        color: dark
+                          ? "#94a3b8"
+                          : uiTokens.colors.textMuted,
+                      }}
+                    >
                       {item.description}
                     </p>
                   </div>
@@ -98,7 +148,17 @@ export function WorkspaceTimeline({
                   />
                 </div>
 
-                <div style={{ ...dateStyle, color: dark ? "#64748b" : uiTokens.colors.textSubtle }}>
+                <div
+                  style={{
+                    ...dateStyle,
+                    marginTop: compact
+                      ? "3px"
+                      : uiTokens.spacing.sm,
+                    color: dark
+                      ? "#64748b"
+                      : uiTokens.colors.textSubtle,
+                  }}
+                >
                   {formatDateTime(item.occurredAt)}
                 </div>
               </div>
@@ -120,7 +180,7 @@ function getCategoryTone(category: string): UiTone {
 }
 
 function getStatusStyle(
-  status: NonNullable<WorkspaceTimelineItem["status"]>
+  status: NonNullable<WorkspaceTimelineItem["status"]>,
 ) {
   if (status === "SUCCESS") {
     return {
@@ -156,7 +216,6 @@ const timelineStyle = {
 const timelineItemStyle = {
   display: "grid",
   gridTemplateColumns: "22px minmax(0, 1fr)",
-  gap: uiTokens.spacing.md,
 };
 
 const timelineRailStyle = {
@@ -174,20 +233,17 @@ const timelineDotStyle = {
 
 const timelineLineStyle = {
   width: "2px",
-  minHeight: "58px",
   background: uiTokens.colors.border,
 };
 
 const contentStyle = {
   minWidth: 0,
-  paddingBottom: uiTokens.spacing.lg,
 };
 
 const contentHeaderStyle = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "flex-start",
-  gap: uiTokens.spacing.md,
   flexWrap: "wrap" as const,
 };
 
@@ -210,7 +266,6 @@ const descriptionStyle = {
 };
 
 const dateStyle = {
-  marginTop: uiTokens.spacing.sm,
   color: uiTokens.colors.textSubtle,
   fontSize: uiTokens.fontSize.xs,
 };
