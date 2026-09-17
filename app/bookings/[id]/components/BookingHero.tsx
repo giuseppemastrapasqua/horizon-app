@@ -54,88 +54,158 @@ export function BookingHero({
   const stayLabel = getStayLabel({ daysUntilCheckIn, stayProgress });
 
   return (
-    <section style={shellStyle}>
-      <div style={headerStyle}>
-        <div style={{ minWidth: 0 }}>
-          <div style={eyebrowStyle}>PRENOTAZIONE</div>
+    <>
+      <section className="bookingHero" style={shellStyle}>
+        <div className="bookingHeroHeader" style={headerStyle}>
+          <div style={{ minWidth: 0 }}>
+            <div style={eyebrowStyle}>PRENOTAZIONE</div>
 
-          <h1 style={titleStyle}>
-            {booking.guestId ? (
-              <Link href={`/guests/${booking.guestId}`} style={guestLinkStyle}>
-                {booking.guestName}
-              </Link>
-            ) : (
-              booking.guestName
-            )}
-          </h1>
+            <h1 style={titleStyle}>
+              {booking.guestId ? (
+                <Link
+                  href={`/guests/${booking.guestId}`}
+                  style={guestLinkStyle}
+                >
+                  {booking.guestName}
+                </Link>
+              ) : (
+                booking.guestName
+              )}
+            </h1>
 
-          <p style={subtitleStyle}>
-            {booking.property.name} · {booking.property.zone ?? booking.property.city}
-          </p>
-        </div>
-
-        <div style={statusStyle}>
-          <StatusBadge label={booking.bookingStatus} />
-          <StatusBadge label={booking.operationalStatus} />
-          <StatusBadge label={booking.channel} tone="blue" compact />
-        </div>
-      </div>
-
-      <div style={summaryGridStyle}>
-        <Detail label="Check-in" value={formatDate(booking.checkIn)} />
-        <Detail label="Check-out" value={formatDate(booking.checkOut)} />
-        <Detail label="Permanenza" value={`${booking.nights} notti`} />
-        <Detail label="Ospiti" value={`${booking.guests}`} />
-        <Detail
-          label="Valore prenotazione"
-          value={formatCurrency(booking.grossAmount, booking.currency)}
-          accent
-        />
-        <Detail label="Proprietario" value={booking.owner.fullName} />
-      </div>
-
-      <div style={footerStyle}>
-        <div style={stayBlockStyle}>
-          <div style={stayTopStyle}>
-            <span style={metaLabelStyle}>STATO SOGGIORNO</span>
-            <strong style={stayValueStyle}>{stayLabel}</strong>
+            <p style={subtitleStyle}>
+              {booking.property.name} ·{" "}
+              {booking.property.zone ?? booking.property.city}
+            </p>
           </div>
 
-          <div style={progressTrackStyle}>
-            <div
-              style={{
-                ...progressValueStyle,
-                width: `${Math.min(100, Math.max(0, stayProgress))}%`,
-              }}
-            />
+          <div className="bookingHeroStatus" style={statusStyle}>
+            <StatusBadge label={booking.bookingStatus} />
+            <StatusBadge label={booking.operationalStatus} />
+            <StatusBadge label={booking.channel} tone="blue" compact />
           </div>
         </div>
 
-        <div style={referenceStyle}>
-          <span style={metaLabelStyle}>RIFERIMENTO</span>
-          <strong style={referenceValueStyle}>
-            {booking.externalBookingId ?? booking.id.slice(-8).toUpperCase()}
-          </strong>
-          <span style={referenceMetaStyle}>{formatEnum(booking.channel)}</span>
+        <div className="bookingHeroSummary" style={summaryGridStyle}>
+          <Detail label="Check-in" value={formatDate(booking.checkIn)} />
+          <Detail label="Check-out" value={formatDate(booking.checkOut)} />
+          <Detail label="Permanenza" value={`${booking.nights} notti`} />
+          <Detail label="Ospiti" value={`${booking.guests}`} />
+          <Detail
+            label="Valore prenotazione"
+            value={formatCurrency(booking.grossAmount, booking.currency)}
+            accent
+          />
+          <Detail label="Proprietario" value={booking.owner.fullName} />
         </div>
 
-        <div style={taskStyle}>
-          <span>
-            {openTasksCount === 0
-              ? "Nessun task aperto"
-              : `${openTasksCount} task aperti`}
-          </span>
+        <div className="bookingHeroFooter" style={footerStyle}>
+          <div style={stayBlockStyle}>
+            <div style={stayTopStyle}>
+              <span style={metaLabelStyle}>STATO SOGGIORNO</span>
+              <strong style={stayValueStyle}>{stayLabel}</strong>
+            </div>
 
-          {overdueTasksCount > 0 ? (
-            <strong style={{ color: "#F0B7A8" }}>
-              {overdueTasksCount} scaduti
+            <div style={progressTrackStyle}>
+              <div
+                style={{
+                  ...progressValueStyle,
+                  width: `${Math.min(
+                    100,
+                    Math.max(0, stayProgress)
+                  )}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="bookingHeroReference" style={referenceStyle}>
+            <span style={metaLabelStyle}>RIFERIMENTO</span>
+
+            <strong style={referenceValueStyle}>
+              {booking.externalBookingId ??
+                booking.id.slice(-8).toUpperCase()}
             </strong>
-          ) : (
-            <span style={{ color: "#76D6A1" }}>Operatività regolare</span>
-          )}
+
+            <span style={referenceMetaStyle}>
+              {formatEnum(booking.channel)}
+            </span>
+          </div>
+
+          <div className="bookingHeroTasks" style={taskStyle}>
+            <span>
+              {openTasksCount === 0
+                ? "Nessun task aperto"
+                : `${openTasksCount} task aperti`}
+            </span>
+
+            {overdueTasksCount > 0 ? (
+              <strong style={{ color: "#F0B7A8" }}>
+                {overdueTasksCount} scaduti
+              </strong>
+            ) : (
+              <span style={{ color: "#76D6A1" }}>
+                Operatività regolare
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .bookingHero {
+            padding: 20px !important;
+            gap: 20px !important;
+            margin-bottom: 24px !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+          }
+
+          .bookingHeroHeader {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 14px !important;
+          }
+
+          .bookingHeroStatus {
+            justify-content: flex-start !important;
+          }
+
+          .bookingHeroSummary {
+            grid-template-columns:
+              repeat(2, minmax(0, 1fr)) !important;
+            column-gap: 18px !important;
+            row-gap: 2px !important;
+          }
+
+          .bookingHeroFooter {
+            grid-template-columns:
+              minmax(0, 1fr) !important;
+            gap: 18px !important;
+          }
+
+          .bookingHeroReference {
+            min-width: 0 !important;
+            padding-top: 16px !important;
+            border-top:
+              1px solid rgba(255,255,255,0.07) !important;
+          }
+
+          .bookingHeroReference strong {
+            display: block !important;
+            max-width: 100% !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+          }
+
+          .bookingHeroTasks {
+            justify-content: flex-start !important;
+          }
+        }
+      `}</style>
+    </>
   );
 }
 
@@ -151,6 +221,7 @@ function Detail({
   return (
     <div style={detailStyle}>
       <span style={detailLabelStyle}>{label}</span>
+
       <strong
         style={{
           ...detailValueStyle,
@@ -174,7 +245,10 @@ function getStayLabel({
   if (stayProgress > 0) return "Ospite in soggiorno";
   if (daysUntilCheckIn === 0) return "Check-in oggi";
   if (daysUntilCheckIn === 1) return "Check-in domani";
-  if (daysUntilCheckIn > 1) return `Check-in tra ${daysUntilCheckIn} giorni`;
+  if (daysUntilCheckIn > 1) {
+    return `Check-in tra ${daysUntilCheckIn} giorni`;
+  }
+
   return "In attesa";
 }
 
@@ -261,7 +335,8 @@ const detailValueStyle: React.CSSProperties = {
 
 const footerStyle: React.CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(220px, 1.4fr) minmax(150px, 0.7fr) minmax(160px, 0.8fr)",
+  gridTemplateColumns:
+    "minmax(220px, 1.4fr) minmax(150px, 0.7fr) minmax(160px, 0.8fr)",
   gap: 18,
   alignItems: "center",
 };

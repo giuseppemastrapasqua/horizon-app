@@ -82,6 +82,7 @@ model User {
   propertyAccesses          PropertyAccess[]
   createdAvailabilityBlocks PropertyAvailabilityBlock[] @relation("PropertyAvailabilityBlockCreatedBy")
   alloggiatiWebAccounts     AlloggiatiWebAccount[]
+  soggiorniamoAccounts      SoggiorniamoAccount[]
   ownerBillingProfile       OwnerBillingProfile?
 
   @@index([role])
@@ -220,6 +221,7 @@ model Property {
   revenueRecommendations                 RevenueRecommendation[]
   financeReportTemplate                  FinanceReportTemplate?
   alloggiatiWebProperty                  AlloggiatiWebProperty?
+  soggiorniamoProperty                   SoggiorniamoProperty?
   alloggiatiWebTransmissions             AlloggiatiWebTransmission[]
 
   @@index([ownerId])
@@ -595,6 +597,7 @@ model Booking {
   bookingGuests              BookingGuest[]
   alloggiatiWebTransmissions AlloggiatiWebTransmission[]
   guestCheckInLink           GuestCheckInLink?
+  touristTaxPayments         TouristTaxPayment[]
 
   @@unique([integrationConnectionId, externalBookingId])
   @@index([channel, externalBookingId])
@@ -650,6 +653,9 @@ model BookingGuest {
   birthProvince        String?
   birthCountry         String
   citizenship          String
+  residenceCountry     String?
+  residenceCity        String?
+  residenceProvince    String?
   documentType         String?
   documentNumber       String?
   documentIssueCountry String?
@@ -657,10 +663,40 @@ model BookingGuest {
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
 
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking                          Booking                           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  soggiorniamoFiscalClassification SoggiorniamoFiscalClassification?
 
   @@index([bookingId])
   @@index([lastName, firstName])
+}
+
+enum SoggiorniamoFiscalClassificationSource {
+  AUTO
+  MANUAL
+}
+
+enum SoggiorniamoFiscalClassificationStatus {
+  CLASSIFIED
+  REVIEW_REQUIRED
+}
+
+model SoggiorniamoFiscalClassification {
+  id             String                                 @id @default(cuid())
+  bookingGuestId String                                 @unique
+  guestTypeCode  Int?
+  tariff         Decimal?                               @db.Decimal(10, 2)
+  taxAmount      Decimal?                               @db.Decimal(10, 2)
+  intermediary   String?
+  source         SoggiorniamoFiscalClassificationSource
+  status         SoggiorniamoFiscalClassificationStatus
+  reason         String
+  createdAt      DateTime                               @default(now())
+  updatedAt      DateTime                               @updatedAt
+
+  bookingGuest BookingGuest @relation(fields: [bookingGuestId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([guestTypeCode])
 }
 
 enum PropertyTaskAssignmentRole {
@@ -1593,4 +1629,81 @@ model BillingIssuerProfile {
   logoPath     String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model SoggiorniamoAccount {
+  id                String   @id @default(cuid())
+  ownerId           String
+  name              String
+  municipalityCode  String   @default("F205")
+  userCode          String
+  authCodeEncrypted String
+  managerTaxCode    String
+  managerFirstName  String
+  managerLastName   String
+  keyVersion        Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  owner      User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  properties SoggiorniamoProperty[]
+
+  @@index([ownerId])
+  @@index([userCode])
+}
+
+model SoggiorniamoProperty {
+  id            String   @id @default(cuid())
+  accountId     String
+  propertyId    String   @unique
+  structureId   String
+  structureName String
+  unitId        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  account  SoggiorniamoAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  property Property            @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, structureId])
+  @@index([accountId])
+  @@index([propertyId])
+  @@index([structureId])
+}
+
+enum TouristTaxPaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+  FAILED
+}
+
+enum TouristTaxPaymentProvider {
+  STRIPE
+}
+
+model TouristTaxPayment {
+  id                String                    @id @default(cuid())
+  bookingId         String
+  amount            Decimal                   @db.Decimal(10, 2)
+  currency          String                    @default("EUR")
+  status            TouristTaxPaymentStatus   @default(PENDING)
+  provider          TouristTaxPaymentProvider
+  providerPaymentId String?
+  paymentUrl        String?
+  expiresAt         DateTime?
+  paidAt            DateTime?
+  failedAt          DateTime?
+  cancelledAt       DateTime?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerPaymentId])
+  @@index([bookingId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([paidAt])
 }

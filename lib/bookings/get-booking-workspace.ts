@@ -22,7 +22,11 @@ export async function getBookingWorkspace(bookingId: string) {
         },
       },
       guestCheckInLink: true,
-      bookingGuests: true,
+      bookingGuests: {
+        include: {
+          soggiorniamoFiscalClassification: true,
+        },
+      },
       alloggiatiWebTransmissions: {
         orderBy: { updatedAt: "desc" },
       },
@@ -137,6 +141,44 @@ export async function getBookingWorkspace(bookingId: string) {
         latestTransmissionStatus: latestTransmission?.status ?? null,
         lastError: latestTransmission?.lastError ?? null,
       },
+      soggiorniamoGuests: booking.bookingGuests.map(
+        (guest) => ({
+          id: guest.id,
+          firstName: guest.firstName,
+          lastName: guest.lastName,
+          birthDate: guest.birthDate,
+          residenceCountry: guest.residenceCountry,
+          residenceCity: guest.residenceCity,
+          residenceProvince: guest.residenceProvince,
+          fiscalClassification:
+            guest.soggiorniamoFiscalClassification
+              ? {
+                  guestTypeCode:
+                    guest.soggiorniamoFiscalClassification.guestTypeCode,
+                  tariff:
+                    guest.soggiorniamoFiscalClassification.tariff === null
+                      ? null
+                      : Number(
+                          guest.soggiorniamoFiscalClassification.tariff,
+                        ),
+                  taxAmount:
+                    guest.soggiorniamoFiscalClassification.taxAmount === null
+                      ? null
+                      : Number(
+                          guest.soggiorniamoFiscalClassification.taxAmount,
+                        ),
+                  intermediary:
+                    guest.soggiorniamoFiscalClassification.intermediary,
+                  source:
+                    guest.soggiorniamoFiscalClassification.source,
+                  status:
+                    guest.soggiorniamoFiscalClassification.status,
+                  reason:
+                    guest.soggiorniamoFiscalClassification.reason,
+                }
+              : null,
+        }),
+      ),
       guestCheckInLink: booking.guestCheckInLink
         ? {
             status:

@@ -19,6 +19,7 @@ import { BookingGuestCheckInPanel } from "./components/BookingGuestCheckInPanel"
 import { BookingHero } from "./components/BookingHero";
 import { BookingKPIs } from "./components/BookingKPIs";
 import { BookingQuickActions } from "./components/BookingQuickActions";
+import { BookingSoggiorniamoPanel } from "./components/BookingSoggiorniamoPanel";
 import { BookingTasks } from "./components/BookingTasks";
 import { BookingTimeline } from "./components/BookingTimeline";
 
@@ -88,7 +89,7 @@ export default async function BookingPage({
                   </h1>
 
                   <div style={{ opacity: 0.7 }}>
-                    {booking.property.name} ·{" "}
+                    {booking.property.name} Ã‚Â·{" "}
                     {booking.property.zone ?? booking.property.city}
                   </div>
                 </div>
@@ -182,7 +183,7 @@ export default async function BookingPage({
               <Panel>
                 <SectionTitle
                   title="Task prenotazione"
-                  subtitle="Attività operative collegate al soggiorno."
+                  subtitle="AttivitÃƒÂ  operative collegate al soggiorno."
                 />
 
                 {tasks.length === 0 ? (
@@ -303,6 +304,34 @@ export default async function BookingPage({
             .booking-workspace-clean details {
               border-color: transparent !important;
             }
+            /* MOBILE_WRITE_TEST */
+
+            /* HORIZON_MOBILE_SECTION_SPACING_FINAL */
+            @media (max-width: 768px) {
+              .booking-layout {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 24px !important;
+                width: 100% !important;
+                min-width: 0 !important;
+              }
+
+              .booking-layout__tasks,
+              .booking-layout__timeline,
+              .booking-layout__checkin,
+              .booking-layout__soggiorniamo,
+              .booking-layout__documents,
+              .booking-layout__actions {
+                position: static !important;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                grid-column: auto !important;
+                grid-row: auto !important;
+              }
+            }
           `}</style>
 
           <WorkspaceTopBar
@@ -349,42 +378,50 @@ export default async function BookingPage({
           daysUntilCheckIn={metrics.daysUntilCheckIn}
           daysUntilCheckOut={metrics.daysUntilCheckOut}
         />
+        <div className="booking-layout">
+          <div className="booking-layout__tasks">
+            <BookingTasks
+              bookingId={booking.id}
+              propertyId={booking.property.id}
+              tasks={tasks}
+            />
+          </div>
 
-        <WorkspaceGrid
-          left={
-            <>
-              <BookingTasks
-                bookingId={booking.id}
-                propertyId={booking.property.id}
-                tasks={tasks}
-              />
+          <div className="booking-layout__timeline">
+            <BookingTimeline items={timeline} />
+          </div>
 
-              <BookingDocuments
-                propertyId={booking.property.id}
-                documents={documents}
-              />
-            </>
-          }
-          right={
-            <>
-              <BookingTimeline items={timeline} />
+          <div className="booking-layout__checkin" style={{ marginTop: 24 }}>
+            <BookingGuestCheckInPanel
+              bookingId={booking.id}
+              guestEmail={booking.guestEmail}
+              guestRegistration={booking.guestRegistration}
+              initialLink={booking.guestCheckInLink}
+              canSubmitToAlloggiati
+            />
+          </div>
 
-              <BookingGuestCheckInPanel
-                bookingId={booking.id}
-                guestEmail={booking.guestEmail}
-                guestRegistration={booking.guestRegistration}
-                initialLink={booking.guestCheckInLink}
-                canSubmitToAlloggiati
-              />
+          <div className="booking-layout__soggiorniamo" style={{ marginTop: 24 }}>
+            <BookingSoggiorniamoPanel
+              guests={booking.soggiorniamoGuests}
+            />
+          </div>
 
-              <BookingQuickActions
-                bookingId={booking.id}
-                propertyId={booking.property.id}
-                ownerId={booking.owner.id}
-              />
-            </>
-          }
-        />
+          <div className="booking-layout__documents" style={{ marginTop: 24 }}>
+            <BookingDocuments
+              propertyId={booking.property.id}
+              documents={documents}
+            />
+          </div>
+
+          <div className="booking-layout__actions" style={{ marginTop: 24 }}>
+            <BookingQuickActions
+              bookingId={booking.id}
+              propertyId={booking.property.id}
+              ownerId={booking.owner.id}
+            />
+          </div>
+        </div>
               </div>
 </AppShell>
     </>

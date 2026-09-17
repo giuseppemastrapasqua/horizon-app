@@ -6,6 +6,7 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { Panel } from "@/components/ui/Panel";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { uiTokens } from "@/components/ui/tokens";
+import { copyToClipboard } from "@/lib/browser/copy-to-clipboard";
 
 import {
   enqueueGuestCheckInAlloggiatiSubmissionAction,
@@ -49,26 +50,38 @@ export function BookingGuestCheckInPanel({
   initialLink,
   canSubmitToAlloggiati = true,
 }: BookingGuestCheckInPanelProps) {
-  const [status, setStatus] = useState<GuestCheckInLinkStatus | "NONE">(
-    initialLink?.status ?? "NONE",
-  );
-  const [expiresAt, setExpiresAt] = useState<string | null>(
-    initialLink?.expiresAt.toISOString() ?? null,
-  );
-  const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
+  const [status, setStatus] =
+    useState<GuestCheckInLinkStatus | "NONE">(
+      initialLink?.status ?? "NONE",
+    );
+
+  const [expiresAt, setExpiresAt] =
+    useState<string | null>(
+      initialLink?.expiresAt.toISOString() ?? null,
+    );
+
+  const [generatedUrl, setGeneratedUrl] =
+    useState<string | null>(null);
+
   const [working, setWorking] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] =
+    useState<string | null>(null);
 
   async function handleGenerate() {
     setWorking(true);
     setMessage(null);
 
     try {
-      const result = await generateGuestCheckInLinkAction(bookingId);
+      const result =
+        await generateGuestCheckInLinkAction(bookingId);
+
       setGeneratedUrl(result.url);
       setExpiresAt(result.expiresAt);
       setStatus("ACTIVE");
-      setMessage("Link schedina generato. Ora puoi copiarlo e condividerlo.");
+
+      setMessage(
+        "Link schedina generato. Ora puoi copiarlo e condividerlo.",
+      );
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -85,10 +98,13 @@ export function BookingGuestCheckInPanel({
     setMessage(null);
 
     try {
-      const result = await sendGuestCheckInEmailAction(bookingId);
+      const result =
+        await sendGuestCheckInEmailAction(bookingId);
+
       setGeneratedUrl(null);
       setExpiresAt(result.expiresAt);
       setStatus("ACTIVE");
+
       setMessage(
         `Email schedina inviata a ${guestEmail}. Il precedente link, se presente, è stato invalidato.`,
       );
@@ -108,7 +124,11 @@ export function BookingGuestCheckInPanel({
     setMessage(null);
 
     try {
-      const result = await verifyGuestCheckInWithAlloggiatiAction(bookingId);
+      const result =
+        await verifyGuestCheckInWithAlloggiatiAction(
+          bookingId,
+        );
+
       setMessage(
         `Verifica Alloggiati Web superata. Nessun dato è stato inviato. ${result.message}`,
       );
@@ -128,15 +148,16 @@ export function BookingGuestCheckInPanel({
       "Stai per trasmettere realmente le schedine ad Alloggiati Web della Polizia di Stato. Confermi l'invio?",
     );
 
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     setWorking(true);
     setMessage(null);
 
     try {
-      await enqueueGuestCheckInAlloggiatiSubmissionAction(bookingId);
+      await enqueueGuestCheckInAlloggiatiSubmissionAction(
+        bookingId,
+      );
+
       setMessage(
         "Invio Alloggiati Web accodato. Horizon eseguirà una nuova verifica prima della trasmissione.",
       );
@@ -154,14 +175,13 @@ export function BookingGuestCheckInPanel({
   async function handleCopy() {
     if (!generatedUrl) return;
 
-    try {
-      await navigator.clipboard.writeText(generatedUrl);
-      setMessage("Link copiato negli appunti.");
-    } catch {
-      setMessage(
-        "Copia automatica non riuscita. Seleziona il link manualmente.",
-      );
-    }
+    const copied = await copyToClipboard(generatedUrl);
+
+    setMessage(
+      copied
+        ? "Link copiato negli appunti."
+        : "Copia automatica non riuscita. Seleziona il link manualmente.",
+    );
   }
 
   async function handleRevoke() {
@@ -170,6 +190,7 @@ export function BookingGuestCheckInPanel({
 
     try {
       await revokeGuestCheckInLinkAction(bookingId);
+
       setGeneratedUrl(null);
       setStatus("REVOKED");
       setMessage("Link schedina revocato.");
@@ -193,7 +214,8 @@ export function BookingGuestCheckInPanel({
           ? "Invio in corso"
           : guestRegistration.status === "PARTIAL"
             ? "Invio parziale"
-            : guestRegistration.status === "OUTCOME_UNKNOWN"
+            : guestRegistration.status ===
+                "OUTCOME_UNKNOWN"
               ? "Esito da verificare"
               : guestRegistration.status === "REJECTED"
                 ? "Errore invio"
@@ -201,270 +223,320 @@ export function BookingGuestCheckInPanel({
 
   const registrationDescription =
     guestRegistration.status === "SENT"
-      ? "I dati ospiti risultano confermati da Alloggiati Web."
+      ? "Dati ospiti confermati da Alloggiati Web."
       : guestRegistration.status === "READY"
-        ? "I dati ospiti sono completi e pronti per l'invio ad Alloggiati Web."
+        ? "Dati completi e pronti per Alloggiati Web."
         : guestRegistration.status === "SENDING"
-          ? "La trasmissione ad Alloggiati Web è in preparazione o in corso."
+          ? "Trasmissione ad Alloggiati Web in corso."
           : guestRegistration.status === "PARTIAL"
-            ? "Alloggiati Web ha confermato solo una parte dei dati trasmessi."
-            : guestRegistration.status === "OUTCOME_UNKNOWN"
-              ? "L'esito della trasmissione non è certo e richiede verifica."
+            ? "Alloggiati Web ha confermato solo parte dei dati."
+            : guestRegistration.status ===
+                "OUTCOME_UNKNOWN"
+              ? "Esito della trasmissione da verificare."
               : guestRegistration.status === "REJECTED"
-                ? "La trasmissione è stata rifiutata e richiede un nuovo controllo."
-                : "I dati ospiti devono ancora essere compilati completamente.";
+                ? "Trasmissione rifiutata da Alloggiati Web."
+                : "In attesa della compilazione degli ospiti.";
+
+  const statusLabel =
+    status === "ACTIVE"
+      ? "Attivo"
+      : status === "REVOKED"
+        ? "Revocato"
+        : status === "EXPIRED"
+          ? "Scaduto"
+          : "Non generato";
 
   const isGuestRegistrationComplete =
     guestRegistration.status === "READY" &&
-    guestRegistration.completedGuests === guestRegistration.expectedGuests;
-
-  const statusLabel =
-    isGuestRegistrationComplete
-      ? "Link chiuso automaticamente"
-      : status === "ACTIVE"
-        ? "Link attivo"
-        : status === "REVOKED"
-          ? "Link revocato"
-          : status === "EXPIRED"
-            ? "Link scaduto"
-            : "Link non generato";
+    guestRegistration.completedGuests ===
+      guestRegistration.expectedGuests;
 
   return (
-    <Panel dark tone={status === "ACTIVE" && !isGuestRegistrationComplete ? "success" : "default"}>
+    <Panel
+      dark
+      padding="sm"
+      tone={
+        status === "ACTIVE" &&
+        !isGuestRegistrationComplete
+          ? "success"
+          : "default"
+      }
+    >
       <SectionTitle
-        title="Schedina ospiti"
+        compact
+        title="Check-in & Alloggiati"
         subtitle={
           isGuestRegistrationComplete
-            ? "Compilazione ospiti completata. La schedina è pronta per Alloggiati Web."
-            : "Invia il modulo via email oppure genera il link sicuro da condividere manualmente."
+            ? "Ospiti completati. La prenotazione è pronta per la gestione Alloggiati Web."
+            : "Raccogli i dati ospiti e gestisci la trasmissione da un unico punto."
         }
       />
 
-      <div style={{ display: "grid", gap: uiTokens.spacing.md }}>
-        <div
-          style={{
-            padding: uiTokens.spacing.md,
-            border: "none",
-            borderRadius: uiTokens.radius.lg,
-            background: uiTokens.colors.primary,
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              color: "#94a3b8",
-              fontSize: uiTokens.fontSize.sm,
-            }}
-          >
-            Stato schedina
-          </p>
+      <div style={contentStyle}>
+        <div style={commandBarStyle}>
+          <div style={metricsStyle}>
+            <Metric
+              label="Schedina"
+              value={registrationLabel}
+            />
 
-          <strong
-            style={{
-              display: "block",
-              marginTop: uiTokens.spacing.xs,
-              color: uiTokens.colors.primaryText,
-            }}
-          >
-            {registrationLabel}
-          </strong>
+            <Metric
+              label="Ospiti"
+              value={`${guestRegistration.completedGuests} / ${guestRegistration.expectedGuests}`}
+            />
 
-          <p
-            style={{
-              margin: `${uiTokens.spacing.xs} 0 0`,
-              color: "#94a3b8",
-              fontSize: uiTokens.fontSize.sm,
-            }}
-          >
-            {registrationDescription}
-          </p>
+            <Metric
+              label="Link"
+              value={
+                isGuestRegistrationComplete
+                  ? "Chiuso"
+                  : statusLabel
+              }
+            />
+          </div>
 
-          <p
-            style={{
-              margin: `${uiTokens.spacing.xs} 0 0`,
-              color: "#94a3b8",
-              fontSize: uiTokens.fontSize.sm,
-            }}
-          >
-            Ospiti compilati: {guestRegistration.completedGuests} /{" "}
-            {guestRegistration.expectedGuests}
-          </p>
-
-          {guestRegistration.lastError &&
-          (guestRegistration.status === "REJECTED" ||
-            guestRegistration.status === "OUTCOME_UNKNOWN" ||
-            guestRegistration.status === "PARTIAL") ? (
-            <p
-              style={{
-                margin: `${uiTokens.spacing.xs} 0 0`,
-                color: "#94a3b8",
-                fontSize: uiTokens.fontSize.sm,
-              }}
-            >
-              Dettaglio: {guestRegistration.lastError}
-            </p>
-          ) : null}
-        </div>
-
-        <div>
-          <p
-            style={{
-              margin: 0,
-              color: "#94a3b8",
-              fontSize: uiTokens.fontSize.sm,
-            }}
-          >
-            Stato link
-          </p>
-
-          <strong
-            style={{
-              display: "block",
-              marginTop: uiTokens.spacing.xs,
-              color: uiTokens.colors.primaryText,
-            }}
-          >
-            {statusLabel}
-          </strong>
-
-          {!isGuestRegistrationComplete && expiresAt ? (
-            <p
-              style={{
-                margin: `${uiTokens.spacing.xs} 0 0`,
-                color: "#94a3b8",
-                fontSize: uiTokens.fontSize.sm,
-              }}
-            >
-              Scadenza: {new Date(expiresAt).toLocaleString("it-IT")}
-            </p>
-          ) : null}
-        </div>
-
-        <p
-          style={{
-            margin: 0,
-            color: "#94a3b8",
-            fontSize: uiTokens.fontSize.sm,
-          }}
-        >
-          {isGuestRegistrationComplete
-            ? "La compilazione ospiti è completa. Il link pubblico è stato chiuso automaticamente."
-            : guestEmail
-              ? `Email ospite: ${guestEmail}`
-              : "Email ospite non disponibile. Genera il link e condividilo manualmente via WhatsApp, SMS o altro canale."}
-        </p>
-
-        {!isGuestRegistrationComplete && generatedUrl ? (
-          <div
-            style={{
-              display: "grid",
-              gap: uiTokens.spacing.sm,
-              padding: uiTokens.spacing.md,
-              border: "none",
-              borderRadius: uiTokens.radius.lg,
-              background: uiTokens.colors.primary,
-            }}
-          >
-            <span
-              style={{
-                overflowWrap: "anywhere",
-                color: "#94a3b8",
-                fontSize: uiTokens.fontSize.sm,
-              }}
-            >
-              {generatedUrl}
-            </span>
-
-            <div>
+          <div style={actionsStyle}>
+            {canSubmitToAlloggiati &&
+            guestRegistration.status === "READY" ? (
               <ActionButton
-                label="Copia link"
+                label="Verifica"
                 variant="secondary"
                 compact
-                onClick={() => void handleCopy()}
+                disabled={working}
+                onClick={() =>
+                  void handleVerifyAlloggiati()
+                }
               />
-            </div>
+            ) : null}
+
+            {canSubmitToAlloggiati &&
+            guestRegistration.status === "READY" ? (
+              <ActionButton
+                label="Invia ad Alloggiati Web"
+                compact
+                disabled={working}
+                onClick={() =>
+                  void handleSubmitAlloggiati()
+                }
+              />
+            ) : null}
+
+            {!isGuestRegistrationComplete &&
+            guestEmail ? (
+              <ActionButton
+                label="Invia email"
+                variant="secondary"
+                compact
+                disabled={working}
+                onClick={() =>
+                  void handleSendEmail()
+                }
+              />
+            ) : null}
+
+            {!isGuestRegistrationComplete ? (
+              <ActionButton
+                label={
+                  status === "ACTIVE"
+                    ? "Rigenera link"
+                    : "Genera link"
+                }
+                variant={
+                  guestEmail ? "secondary" : "primary"
+                }
+                compact
+                disabled={working}
+                onClick={() => void handleGenerate()}
+              />
+            ) : null}
+
+            {!isGuestRegistrationComplete &&
+            status === "ACTIVE" ? (
+              <ActionButton
+                label="Revoca"
+                variant="danger"
+                compact
+                disabled={working}
+                onClick={() => void handleRevoke()}
+              />
+            ) : null}
           </div>
-        ) : null}
+        </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: uiTokens.spacing.sm,
-          }}
-        >
-          {canSubmitToAlloggiati && guestRegistration.status === "READY" ? (
-            <ActionButton
-              label="Verifica con Alloggiati Web"
-              variant="secondary"
-              disabled={working}
-              onClick={() => void handleVerifyAlloggiati()}
-            />
+        <div style={contextRowStyle}>
+          <span>{registrationDescription}</span>
+
+          {!isGuestRegistrationComplete &&
+          expiresAt ? (
+            <span>
+              Link fino al{" "}
+              {new Date(expiresAt).toLocaleString(
+                "it-IT",
+              )}
+            </span>
           ) : null}
 
-          {canSubmitToAlloggiati && guestRegistration.status === "READY" ? (
-            <ActionButton
-              label="Invia ad Alloggiati Web"
-              disabled={working}
-              onClick={() => void handleSubmitAlloggiati()}
-            />
-          ) : null}
-
-          {!isGuestRegistrationComplete && guestEmail ? (
-            <ActionButton
-              label="Invia email"
-              disabled={working}
-              onClick={() => void handleSendEmail()}
-            />
-          ) : null}
-
-          {!isGuestRegistrationComplete ? (
-            <ActionButton
-              label={status === "ACTIVE" ? "Rigenera link" : "Genera link"}
-              variant={guestEmail ? "secondary" : "primary"}
-              disabled={working}
-              onClick={() => void handleGenerate()}
-            />
-          ) : null}
-
-          {!isGuestRegistrationComplete && status === "ACTIVE" ? (
-            <ActionButton
-              label="Revoca link"
-              variant="danger"
-              disabled={working}
-              onClick={() => void handleRevoke()}
-            />
+          {!isGuestRegistrationComplete &&
+          guestEmail ? (
+            <span>{guestEmail}</span>
           ) : null}
         </div>
 
         {!isGuestRegistrationComplete &&
+        generatedUrl ? (
+          <div style={linkRowStyle}>
+            <span style={urlStyle}>
+              {generatedUrl}
+            </span>
+
+            <ActionButton
+              label="Copia link"
+              variant="secondary"
+              compact
+              onClick={() => void handleCopy()}
+            />
+          </div>
+        ) : null}
+
+        {guestRegistration.lastError &&
+        (guestRegistration.status === "REJECTED" ||
+          guestRegistration.status ===
+            "OUTCOME_UNKNOWN" ||
+          guestRegistration.status === "PARTIAL") ? (
+          <p style={warningStyle}>
+            {guestRegistration.lastError}
+          </p>
+        ) : null}
+
+        {!isGuestRegistrationComplete &&
         status === "ACTIVE" &&
         !generatedUrl ? (
-          <p
-            style={{
-              margin: 0,
-              color: "#94a3b8",
-              fontSize: uiTokens.fontSize.sm,
-            }}
-          >
-            Per sicurezza Horizon non conserva il token in chiaro. Per
-            condividere manualmente il link, rigeneralo: il precedente verrà
+          <p style={noteStyle}>
+            Per sicurezza Horizon non conserva il token in
+            chiaro. Per condividerlo manualmente,
+            rigenera il link: il precedente verrà
             invalidato.
           </p>
         ) : null}
 
         {message ? (
-          <p
-            style={{
-              margin: 0,
-              color: "#94a3b8",
-              fontSize: uiTokens.fontSize.sm,
-            }}
-          >
-            {message}
-          </p>
+          <p style={messageStyle}>{message}</p>
         ) : null}
       </div>
     </Panel>
   );
 }
+
+function Metric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div style={metricStyle}>
+      <span style={metricLabelStyle}>{label}</span>
+      <strong style={metricValueStyle}>
+        {value}
+      </strong>
+    </div>
+  );
+}
+
+const contentStyle = {
+  display: "grid",
+  gap: uiTokens.spacing.xs,
+};
+
+const commandBarStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  flexWrap: "wrap" as const,
+  gap: uiTokens.spacing.sm,
+  padding: "9px 11px",
+  borderRadius: uiTokens.radius.md,
+  background: uiTokens.colors.primary,
+};
+
+const metricsStyle = {
+  display: "flex",
+  alignItems: "center",
+  flexWrap: "wrap" as const,
+  gap: "10px 34px",
+  flex: "1 1 360px",
+};
+
+const metricStyle = {
+  display: "grid",
+  gap: "2px",
+  minWidth: "100px",
+};
+
+const metricLabelStyle = {
+  color: "#64748b",
+  fontSize: uiTokens.fontSize.xs,
+  lineHeight: 1.1,
+};
+
+const metricValueStyle = {
+  color: uiTokens.colors.primaryText,
+  fontSize: uiTokens.fontSize.sm,
+  lineHeight: 1.2,
+};
+
+const actionsStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  flexWrap: "wrap" as const,
+  gap: uiTokens.spacing.xs,
+};
+
+const contextRowStyle = {
+  display: "flex",
+  flexWrap: "wrap" as const,
+  gap: "4px 18px",
+  color: "#94a3b8",
+  fontSize: uiTokens.fontSize.xs,
+  lineHeight: 1.35,
+};
+
+const linkRowStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: uiTokens.spacing.sm,
+  padding: "7px 10px",
+  borderRadius: uiTokens.radius.md,
+  background: uiTokens.colors.primary,
+};
+
+const urlStyle = {
+  minWidth: 0,
+  overflowWrap: "anywhere" as const,
+  color: "#94a3b8",
+  fontSize: uiTokens.fontSize.xs,
+};
+
+const noteStyle = {
+  margin: 0,
+  color: "#64748b",
+  fontSize: uiTokens.fontSize.xs,
+  lineHeight: 1.35,
+};
+
+const warningStyle = {
+  margin: 0,
+  color: "#fca5a5",
+  fontSize: uiTokens.fontSize.xs,
+  lineHeight: 1.35,
+};
+
+const messageStyle = {
+  margin: 0,
+  color: "#94a3b8",
+  fontSize: uiTokens.fontSize.xs,
+  lineHeight: 1.35,
+};

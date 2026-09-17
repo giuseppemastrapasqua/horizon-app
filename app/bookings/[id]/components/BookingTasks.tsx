@@ -28,77 +28,131 @@ export function BookingTasks({
   tasks,
 }: BookingTasksProps) {
   return (
-    <Panel dark>
-      <SectionTitle
-        title="Task prenotazione"
-        subtitle="Attività operative generate e collegate al soggiorno."
-        action={
-          <ActionButton
-            label="Nuovo task"
-            href={`/tasks/new?propertyId=${propertyId}&bookingId=${bookingId}`}
-            compact
-          />
-        }
-      />
-
-      {tasks.length === 0 ? (
-        <EmptyState
-          dark
-          title="Nessun task collegato"
-          description="Le attività operative create da IMPERIUM compariranno qui."
-          actionLabel="Crea task"
-          actionHref={`/tasks/new?propertyId=${propertyId}&bookingId=${bookingId}`}
+    <div className="bookingTasks">
+      <Panel dark>
+        <SectionTitle
+          title="Task prenotazione"
+          subtitle="Attività operative generate e collegate al soggiorno."
+          action={
+            <ActionButton
+              label="Nuovo task"
+              href={`/tasks/new?propertyId=${propertyId}&bookingId=${bookingId}`}
+              compact
+            />
+          }
         />
-      ) : (
-        <div style={listStyle}>
-          {tasks.map((task) => (
-            <article key={task.id} style={taskCardStyle}>
-              <div style={headerStyle}>
-                <div>
-                  <strong style={titleStyle}>{task.title}</strong>
 
-                  <p style={descriptionStyle}>
-                    {task.description ?? "Nessuna descrizione"}
-                  </p>
+        {tasks.length === 0 ? (
+          <EmptyState
+            dark
+            title="Nessun task collegato"
+            description="Le attività operative create da IMPERIUM compariranno qui."
+            actionLabel="Crea task"
+            actionHref={`/tasks/new?propertyId=${propertyId}&bookingId=${bookingId}`}
+          />
+        ) : (
+          <div className="bookingTaskList" style={listStyle}>
+            {tasks.map((task) => (
+              <article
+                className="bookingTaskCard"
+                key={task.id}
+                style={taskCardStyle}
+              >
+                <div
+                  className="bookingTaskHeader"
+                  style={headerStyle}
+                >
+                  <div className="bookingTaskCopy">
+                    <strong style={titleStyle}>{task.title}</strong>
+
+                    <p style={descriptionStyle}>
+                      {task.description ?? "Nessuna descrizione"}
+                    </p>
+                  </div>
+
+                  <div style={badgesStyle}>
+                    <StatusBadge
+                      label={task.type}
+                      tone="blue"
+                      compact
+                    />
+
+                    <StatusBadge
+                      label={task.status}
+                      compact
+                    />
+                  </div>
                 </div>
 
-                <div style={badgesStyle}>
-                  <StatusBadge
-                    label={task.type}
-                    tone="blue"
+                <div
+                  className="bookingTaskFooter"
+                  style={footerStyle}
+                >
+                  <div style={dateBlockStyle}>
+                    <span style={dateLabelStyle}>SCADENZA</span>
+
+                    <strong style={dateValueStyle}>
+                      {task.dueDate
+                        ? formatDateTime(task.dueDate)
+                        : "Non definita"}
+                    </strong>
+                  </div>
+
+                  <ActionButton
+                    label="Apri task"
+                    href={`/tasks/${task.id}`}
+                    variant="secondary"
                     compact
                   />
-
-                  <StatusBadge
-                    label={task.status}
-                    compact
-                  />
                 </div>
-              </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </Panel>
 
-              <div style={footerStyle}>
-                <div style={dateBlockStyle}>
-                  <span style={dateLabelStyle}>SCADENZA</span>
+      <style>{`
+        @media (max-width: 768px) {
+          .bookingTasks {
+            width: 100% !important;
+            min-width: 0 !important;
+          }
 
-                  <strong style={dateValueStyle}>
-                    {task.dueDate
-                      ? formatDateTime(task.dueDate)
-                      : "Non definita"}
-                  </strong>
-                </div>
+          .bookingTaskList {
+            gap: 16px !important;
+          }
 
-                <ActionButton
-                  label="Apri task"
-                  href={`/tasks/${task.id}`}
-                  variant="secondary"
-                  compact
-                />
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-    </Panel>
+          .bookingTaskCard {
+            width: 100% !important;
+            min-width: 0 !important;
+            padding: 18px !important;
+          }
+
+          .bookingTaskHeader {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 14px !important;
+          }
+
+          .bookingTaskCopy {
+            width: 100% !important;
+            min-width: 0 !important;
+          }
+
+          .bookingTaskCopy strong,
+          .bookingTaskCopy p {
+            overflow-wrap: anywhere !important;
+          }
+
+          .bookingTaskFooter {
+            margin-top: 16px !important;
+            padding-top: 16px !important;
+            align-items: flex-end !important;
+            gap: 14px !important;
+          }
+        }
+      `}</style>
+    </div>
   );
 }
 

@@ -18,6 +18,7 @@ export function BookingTimeline({
       emptyDescription="Gli eventi della prenotazione compariranno qui."
       items={items}
       dark
+      compact
     />
   );
 }

@@ -19,6 +19,9 @@ type InitialGuest = {
   birthProvince: string | null;
   birthCountry: string;
   citizenship: string;
+  residenceCountry?: string | null;
+  residenceCity?: string | null;
+  residenceProvince?: string | null;
   documentType: string | null;
   documentNumber: string | null;
   documentIssueCountry: string | null;
@@ -148,9 +151,9 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         </label>
       </div>
       {guestCount > 1 ? (
-        <fieldset className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <legend className="px-2 text-sm font-semibold text-slate-700">{t.stayType}</legend>
-          <div className="mt-2 flex flex-wrap gap-5 text-sm font-medium text-slate-700">
+        <fieldset className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A] p-5 shadow-sm">
+          <legend className="px-2 text-sm font-semibold text-[#C8D1D8]">{t.stayType}</legend>
+          <div className="mt-2 flex flex-wrap gap-5 text-sm font-medium text-[#C8D1D8]">
             <label className="flex items-center gap-2">
               <input type="radio" checked={groupType === "FAMILY"} onChange={() => setGroupType("FAMILY")} className="h-4 w-4 accent-slate-900" />
               {t.family}
@@ -168,8 +171,8 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         const isLeader = index === 0;
 
         return (
-          <fieldset key={index} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <legend className="px-2 font-semibold text-slate-800">{t.guest} {index + 1}{isLeader ? ` - ${t.leader}` : ""}</legend>
+          <fieldset key={index} className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A] p-5 shadow-sm">
+            <legend className="px-2 font-semibold text-[#FFF8EA]">{t.guest} {index + 1}{isLeader ? ` - ${t.leader}` : ""}</legend>
             <input type="hidden" name={`guests.${index}.role`} />
 
             <div className="mt-3 grid gap-4 sm:grid-cols-2">
@@ -179,6 +182,9 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
               <Field label={t.birthDate}><input required type="date" name={`guests.${index}.birthDate`} defaultValue={guest?.birthDate ?? ""} className={inputClass} /></Field>
               <Field label={t.birthCountry}><CountrySelect required name={`guests.${index}.birthCountry`} value={guest?.birthCountry ?? ""} countries={countries} selectLabel={t.select} /></Field>
               <Field label={t.citizenship}><CountrySelect required name={`guests.${index}.citizenship`} value={guest?.citizenship ?? ""} countries={countries} selectLabel={t.select} /></Field>
+              <Field label="Paese di residenza"><CountrySelect required name={`guests.${index}.residenceCountry`} value={guest?.residenceCountry ?? ""} countries={countries} selectLabel={t.select} /></Field>
+              <Field label="Comune / città di residenza"><input name={`guests.${index}.residenceCity`} defaultValue={guest?.residenceCity ?? ""} className={inputClass} /></Field>
+              <Field label="Provincia di residenza (se Italia)"><input name={`guests.${index}.residenceProvince`} defaultValue={guest?.residenceProvince ?? ""} className={inputClass} maxLength={2} /></Field>
               <Field label={t.birthCity}><input name={`guests.${index}.birthCity`} defaultValue={guest?.birthCity ?? ""} className={inputClass} /></Field>
               <Field label={t.birthProvince}><input name={`guests.${index}.birthProvince`} defaultValue={guest?.birthProvince ?? ""} className={inputClass} maxLength={2} /></Field>
             </div>

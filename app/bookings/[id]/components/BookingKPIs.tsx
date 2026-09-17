@@ -42,7 +42,10 @@ export function BookingKPIs({
     },
     {
       label: "Operatività",
-      value: openTasksCount === 0 ? "In ordine" : `${openTasksCount} aperti`,
+      value:
+        openTasksCount === 0
+          ? "In ordine"
+          : `${openTasksCount} aperti`,
       meta:
         overdueTasksCount > 0
           ? `${overdueTasksCount} task scaduti`
@@ -56,24 +59,59 @@ export function BookingKPIs({
   ];
 
   return (
-    <section style={gridStyle}>
-      {items.map((item) => (
-        <article key={item.label} style={cardStyle}>
-          <span style={labelStyle}>{item.label}</span>
-
-          <strong
-            style={{
-              ...valueStyle,
-              color: item.accent ? "#E3C57E" : "#FFF8EA",
-            }}
+    <>
+      <section className="bookingKpis" style={gridStyle}>
+        {items.map((item) => (
+          <article
+            className="bookingKpiCard"
+            key={item.label}
+            style={cardStyle}
           >
-            {item.value}
-          </strong>
+            <span style={labelStyle}>{item.label}</span>
 
-          <span style={metaStyle}>{item.meta}</span>
-        </article>
-      ))}
-    </section>
+            <strong
+              className="bookingKpiValue"
+              style={{
+                ...valueStyle,
+                color: item.accent ? "#E3C57E" : "#FFF8EA",
+              }}
+            >
+              {item.value}
+            </strong>
+
+            <span style={metaStyle}>{item.meta}</span>
+          </article>
+        ))}
+      </section>
+
+      <style>{`
+        @media (max-width: 768px) {
+          .bookingKpis {
+            grid-template-columns:
+              repeat(2, minmax(0, 1fr)) !important;
+            gap: 14px !important;
+            margin-bottom: 24px !important;
+          }
+
+          .bookingKpiCard {
+            min-width: 0 !important;
+            padding: 16px 14px !important;
+          }
+
+          .bookingKpiValue {
+            font-size: clamp(16px, 5vw, 21px) !important;
+            line-height: 1.15 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+          }
+
+          .bookingKpiCard span {
+            min-width: 0 !important;
+            overflow-wrap: anywhere !important;
+          }
+        }
+      `}</style>
+    </>
   );
 }
 
