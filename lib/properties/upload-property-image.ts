@@ -1,11 +1,15 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 
+import {
+  detectSupportedUploadType,
+  type SupportedUploadType,
+} from "@/lib/security/upload-file-signature";
 import { defaultStorageProvider } from "@/lib/storage/default-storage-provider";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
-const ALLOWED_TYPES = new Set([
+const ALLOWED_TYPES = new Set<SupportedUploadType>([
   "image/jpeg",
   "image/png",
   "image/webp",
@@ -30,11 +34,36 @@ export async function uploadPropertyImage({
     );
   }
 
-  if (!ALLOWED_TYPES.has(file.type)) {
+  const declaredType =
+    file.type.trim().toLowerCase() as SupportedUploadType;
+
+  if (!ALLOWED_TYPES.has(declaredType)) {
     throw new Error("Formato immagine non supportato.");
   }
 
-  const extension = getExtension(file);
+  const bytes = new Uint8Array(
+    await file.arrayBuffer(),
+  );
+
+  const detectedType =
+    detectSupportedUploadType(bytes);
+
+  if (
+    detectedType === null ||
+    !ALLOWED_TYPES.has(detectedType)
+  ) {
+    throw new Error(
+      "Il contenuto del file non corrisponde a un'immagine supportata.",
+    );
+  }
+
+  if (detectedType !== declaredType) {
+    throw new Error(
+      "Il contenuto del file non corrisponde al formato dichiarato.",
+    );
+  }
+
+  const extension = getExtension(detectedType);
 
   const key = path.posix.join(
     "properties",
@@ -42,26 +71,23 @@ export async function uploadPropertyImage({
     `${randomUUID()}.${extension}`,
   );
 
-  const bytes = new Uint8Array(await file.arrayBuffer());
-
   return defaultStorageProvider.upload({
     key,
     data: bytes,
-    contentType: file.type,
+    contentType: detectedType,
   });
 }
 
-function getExtension(file: File): string {
-  switch (file.type) {
+function getExtension(
+  contentType: SupportedUploadType,
+): string {
+  switch (contentType) {
     case "image/jpeg":
       return "jpg";
-
     case "image/png":
       return "png";
-
     case "image/webp":
       return "webp";
-
     default:
       throw new Error("Formato immagine non supportato.");
   }

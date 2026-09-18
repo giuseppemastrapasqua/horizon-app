@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
 
+import {
+  detectSupportedUploadType,
+  type SupportedUploadType,
+} from "@/lib/security/upload-file-signature";
 import { encryptDocument } from "@/lib/security/document-crypto";
 import { defaultPrivateStorageProvider } from "@/lib/storage/default-private-storage-provider";
 
@@ -11,7 +15,7 @@ const ENCRYPTION_VERSION = "v1";
 const ENCRYPTED_CONTENT_TYPE =
   "application/octet-stream";
 
-const ALLOWED_CONTENT_TYPES = new Set([
+const ALLOWED_CONTENT_TYPES = new Set<SupportedUploadType>([
   "application/pdf",
   "image/jpeg",
   "image/png",
@@ -40,9 +44,10 @@ export async function uploadPropertyDocument(
     );
   }
 
-  const contentType = file.type.trim().toLowerCase();
+  const declaredType =
+    file.type.trim().toLowerCase() as SupportedUploadType;
 
-  if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
+  if (!ALLOWED_CONTENT_TYPES.has(declaredType)) {
     throw new Error(
       "Formato documento non supportato. Usa PDF, JPG, PNG o WEBP.",
     );
@@ -60,6 +65,24 @@ export async function uploadPropertyDocument(
   const plaintext = new Uint8Array(
     await file.arrayBuffer(),
   );
+
+  const detectedType =
+    detectSupportedUploadType(plaintext);
+
+  if (
+    detectedType === null ||
+    !ALLOWED_CONTENT_TYPES.has(detectedType)
+  ) {
+    throw new Error(
+      "Il contenuto del file non corrisponde a un documento supportato.",
+    );
+  }
+
+  if (detectedType !== declaredType) {
+    throw new Error(
+      "Il contenuto del file non corrisponde al formato dichiarato.",
+    );
+  }
 
   const encrypted = encryptDocument(
     plaintext,
@@ -83,9 +106,8 @@ export async function uploadPropertyDocument(
   return {
     storageKey: uploaded.key,
     filename: file.name.trim(),
-    contentType,
+    contentType: detectedType,
     fileSize: file.size,
     encryptionVersion: ENCRYPTION_VERSION,
   };
 }
-

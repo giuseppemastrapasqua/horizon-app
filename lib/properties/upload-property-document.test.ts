@@ -25,7 +25,10 @@ describe("uploadPropertyDocument", () => {
   });
 
   it("cifra il contenuto prima di salvarlo nello storage privato", async () => {
-    const plaintext = Buffer.from("documento riservato Horizon");
+    const plaintext = Buffer.from(
+      "%PDF-1.7 documento riservato Horizon",
+    );
+
     const file = new File([plaintext], "suap.pdf", {
       type: "application/pdf",
     });
@@ -105,5 +108,41 @@ describe("uploadPropertyDocument", () => {
 
     expect(uploadMock).not.toHaveBeenCalled();
   });
-});
 
+  it("rifiuta un documento con MIME consentito ma contenuto non valido", async () => {
+    const file = new File(
+      [new TextEncoder().encode("<script>alert('x')</script>")],
+      "fake.pdf",
+      { type: "application/pdf" },
+    );
+
+    await expect(
+      uploadPropertyDocument("property-123", file),
+    ).rejects.toThrow(
+      "Il contenuto del file non corrisponde a un documento supportato.",
+    );
+
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+
+  it("rifiuta un documento valido quando il MIME dichiarato non corrisponde alla firma", async () => {
+    const pngBytes = new Uint8Array([
+      0x89, 0x50, 0x4e, 0x47,
+      0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
+
+    const file = new File(
+      [pngBytes],
+      "fake.pdf",
+      { type: "application/pdf" },
+    );
+
+    await expect(
+      uploadPropertyDocument("property-123", file),
+    ).rejects.toThrow(
+      "Il contenuto del file non corrisponde al formato dichiarato.",
+    );
+
+    expect(uploadMock).not.toHaveBeenCalled();
+  });
+});
