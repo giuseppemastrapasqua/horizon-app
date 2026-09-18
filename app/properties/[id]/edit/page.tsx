@@ -16,6 +16,7 @@ import { PropertyPhotosSection } from "@/components/properties/PropertyPhotosSec
 import { ActionButton } from "@/components/ui/ActionButton";
 import { WorkspaceTopBar } from "@/components/ui/WorkspaceTopBar";
 import { PropertyIntegrationsSection } from "@/components/properties/PropertyIntegrationsSection";
+import { PropertyIcalExportSection } from "@/components/properties/PropertyIcalExportSection";
 import { PropertyAlloggiatiCredentialsSection } from "@/components/properties/PropertyAlloggiatiCredentialsSection";
 import { PropertyChannelPricingSettings } from "@/components/properties/PropertyChannelPricingSettings";
 import { getPropertyChannelPricingSettings } from "@/lib/pricing/get-property-channel-pricing-settings";
@@ -983,6 +984,9 @@ export default async function PropertyEditPage({
   }
 />
 
+<PropertyIcalExportSection
+  propertyId={property.id}
+/>
 <PropertyIntegrationsSection
   propertyId={property.id}
   mappings={workspace.integrationMappings}

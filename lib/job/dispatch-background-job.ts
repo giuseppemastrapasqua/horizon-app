@@ -5,6 +5,7 @@ import type {
 } from "@prisma/client";
 
 import { processBookingSyncJob } from "@/lib/job/handlers/process-booking-sync-job";
+import { processBookingT48OperatorAlertJob } from "@/lib/job/handlers/process-booking-t48-operator-alert-job";
 import { processAlloggiatiWebSubmissionJob } from "@/lib/job/handlers/process-alloggiati-web-submission-job";
 import { processPropertyCodeVerificationJob } from "@/lib/job/handlers/process-property-code-verification-job";
 import { processPropertyDocumentOcrJob } from "@/lib/job/handlers/process-property-document-ocr-job";
@@ -66,6 +67,8 @@ const backgroundJobHandlers = {
 
   STORAGE_OBJECT_DELETE:
     processStorageObjectDeleteJob,
+  BOOKING_T48_OPERATOR_ALERT:
+    processBookingT48OperatorAlertJob,
 } satisfies Record<
   BackgroundJobType,
   BackgroundJobHandler

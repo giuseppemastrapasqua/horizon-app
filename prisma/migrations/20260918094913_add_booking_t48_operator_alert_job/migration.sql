@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "BackgroundJobType" ADD VALUE 'BOOKING_T48_OPERATOR_ALERT';
