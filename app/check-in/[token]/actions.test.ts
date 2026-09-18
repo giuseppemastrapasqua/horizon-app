@@ -180,6 +180,11 @@ describe(
       mocks.confirmedTransmissionFindFirst
         .mockResolvedValue(null);
 
+      mocks.guestCheckInLinkUpdateMany
+        .mockResolvedValue({
+          count: 1,
+        });
+
       mocks.bookingGuestFindMany
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
@@ -288,6 +293,41 @@ describe(
             bookingId: "booking-1",
             tokenHash: expect.any(String),
             revokedAt: null,
+            expiresAt: {
+              gt: expect.any(Date),
+            },
+          },
+          data: {
+            revokedAt: expect.any(Date),
+          },
+        });
+      },
+    );
+
+    it(
+      "rifiuta il salvataggio se il link sicuro non può essere consumato",
+      async () => {
+        mocks.guestCheckInLinkUpdateMany
+          .mockResolvedValue({
+            count: 0,
+          });
+
+        await expect(
+          saveGuestCheckInAction(
+            validFormData(),
+          ),
+        ).rejects.toThrow();
+
+        expect(
+          mocks.guestCheckInLinkUpdateMany,
+        ).toHaveBeenCalledWith({
+          where: {
+            bookingId: "booking-1",
+            tokenHash: expect.any(String),
+            revokedAt: null,
+            expiresAt: {
+              gt: expect.any(Date),
+            },
           },
           data: {
             revokedAt: expect.any(Date),

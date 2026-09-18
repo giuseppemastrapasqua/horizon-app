@@ -165,11 +165,11 @@ describe("accept property owner invite", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("reuses an active existing account without changing its password or role", async () => {
+  it("reuses an active existing OWNER without changing its password or role", async () => {
     tx.user.findUnique.mockResolvedValue({
       id: "user-existing",
       email: "owner@example.com",
-      role: "MANAGER",
+      role: "OWNER",
       status: "ACTIVE",
       passwordHash: "existing-hash",
     });
@@ -190,6 +190,27 @@ describe("accept property owner invite", () => {
       }),
     );
   });
+
+  it.each(["MANAGER", "OPERATOR", "FINANCE_ADMIN"])(
+    "blocks an existing non-OWNER account with role %s",
+    async (role) => {
+      tx.user.findUnique.mockResolvedValue({
+        id: "user-existing",
+        email: "owner@example.com",
+        role,
+        status: "ACTIVE",
+        passwordHash: "existing-hash",
+      });
+
+      await expect(
+        acceptPropertyOwnerInviteAction(form()),
+      ).rejects.toThrow(
+        "non è un account proprietario",
+      );
+
+      expect(tx.propertyAccess.upsert).not.toHaveBeenCalled();
+    },
+  );
 
   it("activates an existing account without a password", async () => {
     tx.user.findUnique.mockResolvedValue({

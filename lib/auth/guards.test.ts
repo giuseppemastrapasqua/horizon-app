@@ -121,6 +121,39 @@ describe("property access guards", () => {
     ).resolves.toEqual(user);
   });
 
+  it("does not grant MANAGER permission from direct ownership alone", async () => {
+    const user = { id: "owner-1", role: "OWNER" };
+
+    mocks.auth.mockResolvedValue({ user });
+    mocks.findFirst.mockResolvedValue(null);
+
+    await expect(
+      requirePropertyRole("property-1", ["MANAGER"]),
+    ).rejects.toThrow(
+      "Permessi insufficienti per modificare la struttura.",
+    );
+
+    expect(mocks.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "property-1",
+        OR: [
+          {
+            accesses: {
+              some: {
+                userId: "owner-1",
+                active: true,
+                role: {
+                  in: ["MANAGER"],
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+  });
+
   it("requires an active PropertyAccess role for modification", async () => {
     const user = { id: "manager-1", role: "MANAGER" };
 

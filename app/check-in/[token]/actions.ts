@@ -642,16 +642,29 @@ export async function saveGuestCheckInAction(
         repository: fiscalRepository,
       });
 
-      await transaction.guestCheckInLink.updateMany({
-        where: {
-          bookingId: link.booking.id,
-          tokenHash,
-          revokedAt: null,
-        },
-        data: {
-          revokedAt: new Date(),
-        },
-      });
+      const consumedLink =
+        await transaction.guestCheckInLink.updateMany({
+          where: {
+            bookingId: link.booking.id,
+            tokenHash,
+            revokedAt: null,
+            expiresAt: {
+              gt: new Date(),
+            },
+          },
+          data: {
+            revokedAt: new Date(),
+          },
+        });
+
+      if (consumedLink.count !== 1) {
+        throw new Error(
+          guestCheckInServerError(
+            language,
+            "invalidLink",
+          ),
+        );
+      }
     },
   );
 

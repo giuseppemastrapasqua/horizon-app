@@ -131,9 +131,19 @@ export async function acceptPropertyOwnerInviteAction(
           },
         });
 
-      if (existingUser?.role === UserRole.SUPER_ADMIN) {
+
+if (existingUser?.role === UserRole.SUPER_ADMIN) {
         throw new Error(
           "Il Super Admin dispone già di accesso globale e non può accettare un invito proprietario.",
+        );
+      }
+
+      if (
+        existingUser &&
+        existingUser.role !== UserRole.OWNER
+      ) {
+        throw new Error(
+          "L'account associato a questa email non è un account proprietario e richiede una verifica amministrativa.",
         );
       }
 

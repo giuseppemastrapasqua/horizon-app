@@ -90,7 +90,9 @@ export async function hasPropertyRole(
     where: {
       id: propertyId,
       OR: [
-        { ownerId: user.id },
+        ...(roles.includes("OWNER")
+          ? [{ ownerId: user.id }]
+          : []),
         {
           accesses: {
             some: {
