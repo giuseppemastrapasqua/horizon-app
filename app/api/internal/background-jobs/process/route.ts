@@ -7,45 +7,29 @@ export const dynamic = "force-dynamic";
 
 const MAX_JOBS_PER_REQUEST = 10;
 
-function getConfiguredSecrets(): string[] {
-  return [
-    process.env.BACKGROUND_JOB_SECRET,
-    process.env.CRON_SECRET,
-  ].filter(
-    (secret): secret is string =>
-      typeof secret === "string" &&
-      secret.length > 0,
-  );
-}
-
 function isAuthorized(
   request: Request,
-  configuredSecrets: string[],
+  secret: string | undefined,
 ): boolean {
-  const authorization =
-    request.headers.get("authorization");
-
-  if (!authorization) {
+  if (!secret) {
     return false;
   }
 
-  return configuredSecrets.some(
-    (secret) =>
-      authorization === `Bearer ${secret}`,
-  );
+  const authorization =
+    request.headers.get("authorization");
+
+  return authorization === `Bearer ${secret}`;
 }
 
 async function handleRequest(
   request: Request,
+  secret: string | undefined,
+  secretName: "BACKGROUND_JOB_SECRET" | "CRON_SECRET",
 ): Promise<NextResponse> {
-  const configuredSecrets =
-    getConfiguredSecrets();
-
-  if (configuredSecrets.length === 0) {
+  if (!secret) {
     return NextResponse.json(
       {
-        error:
-          "BACKGROUND_JOB_SECRET o CRON_SECRET non è configurato.",
+        error: `${secretName} non è configurato.`,
       },
       {
         status: 503,
@@ -53,7 +37,7 @@ async function handleRequest(
     );
   }
 
-  if (!isAuthorized(request, configuredSecrets)) {
+  if (!isAuthorized(request, secret)) {
     return NextResponse.json(
       {
         error: "Accesso non autorizzato.",
@@ -105,14 +89,23 @@ async function handleRequest(
     );
   }
 }
+
 export async function GET(
   request: Request,
 ): Promise<NextResponse> {
-  return handleRequest(request);
+  return handleRequest(
+    request,
+    process.env.CRON_SECRET,
+    "CRON_SECRET",
+  );
 }
 
 export async function POST(
   request: Request,
 ): Promise<NextResponse> {
-  return handleRequest(request);
+  return handleRequest(
+    request,
+    process.env.BACKGROUND_JOB_SECRET,
+    "BACKGROUND_JOB_SECRET",
+  );
 }

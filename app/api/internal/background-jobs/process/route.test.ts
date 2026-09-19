@@ -71,7 +71,7 @@ describe("POST /api/internal/background-jobs/process", () => {
 
     await expect(response.json()).resolves.toEqual({
       error:
-        "BACKGROUND_JOB_SECRET o CRON_SECRET non è configurato.",
+        "BACKGROUND_JOB_SECRET non è configurato.",
     });
 
     expect(
@@ -139,22 +139,20 @@ describe("POST /api/internal/background-jobs/process", () => {
     });
   });
 
-  it("accetta CRON_SECRET", async () => {
+  it("rifiuta CRON_SECRET su POST", async () => {
+    process.env.BACKGROUND_JOB_SECRET =
+      "background-secret";
     process.env.CRON_SECRET = "cron-secret";
-
-    processNextBackgroundJobMock.mockResolvedValueOnce(
-      false,
-    );
 
     const response = await POST(
       createRequest("cron-secret"),
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(401);
 
     expect(
       processNextBackgroundJobMock,
-    ).toHaveBeenCalledOnce();
+    ).not.toHaveBeenCalled();
   });
 
   it("elabora i job finché la coda non è vuota", async () => {
@@ -240,6 +238,28 @@ describe("POST /api/internal/background-jobs/process", () => {
       "Errore durante l'esecuzione del background worker:",
       processorError,
     );
+  });
+
+  it("rifiuta GET con BACKGROUND_JOB_SECRET", async () => {
+    process.env.BACKGROUND_JOB_SECRET =
+      "background-secret";
+    process.env.CRON_SECRET = "cron-secret";
+
+    const request = createRequest(
+      "background-secret",
+    );
+
+    const response = await GET(
+      new Request(request.url, {
+        method: "GET",
+        headers: request.headers,
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(
+      processNextBackgroundJobMock,
+    ).not.toHaveBeenCalled();
   });
   it("accetta GET con CRON_SECRET", async () => {
     process.env.CRON_SECRET = "cron-secret";
