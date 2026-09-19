@@ -1,5 +1,18 @@
 import type { NextConfig } from "next";
 
+const contentSecurityPolicyReportOnly = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "script-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
+  "font-src 'self' data:",
+  "connect-src 'self'",
+  "frame-src 'none'",
+].join("; ");
 const securityHeaders = [
   {
     key: "X-Content-Type-Options",
@@ -17,6 +30,10 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value:
       "camera=(), microphone=(), geolocation=(), browsing-topics=()",
+  },
+  {
+    key: "Content-Security-Policy-Report-Only",
+    value: contentSecurityPolicyReportOnly,
   },
 ];
 
