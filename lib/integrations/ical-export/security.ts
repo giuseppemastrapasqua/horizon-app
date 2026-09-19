@@ -91,9 +91,7 @@ export function buildIcalExportUrl(input: {
 
 function getIcalExportSecret(): string {
   const secret =
-    process.env.ICAL_EXPORT_SECRET?.trim() ||
-    process.env.CRON_SECRET?.trim() ||
-    process.env.BACKGROUND_JOB_SECRET?.trim();
+    process.env.ICAL_EXPORT_SECRET?.trim();
 
   if (!secret) {
     throw new Error(
