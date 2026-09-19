@@ -165,22 +165,37 @@ export async function sendGuestCheckInEmailAction(bookingId: string) {
   const guestName = escapeHtml(prepared.booking.guestName);
   const checkInUrl = escapeHtml(prepared.url);
 
-  await sendEmail({
-    to: guestEmail,
-    subject: `Dati ospiti per il soggiorno - ${prepared.booking.property.name}`,
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-        <p>Ciao ${guestName},</p>
-        <p>per completare la registrazione del soggiorno presso <strong>${propertyName}</strong>, inserisci i dati degli ospiti tramite il link sicuro seguente.</p>
-        <p><a href="${checkInUrl}" style="display:inline-block;padding:12px 18px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:8px">Compila i dati ospiti</a></p>
-        <p>Se il pulsante non funziona, copia questo indirizzo nel browser:</p>
-        <p style="overflow-wrap:anywhere">${checkInUrl}</p>
-        <p>Il link scade il ${prepared.expiresAt.toLocaleString("it-IT")}.</p>
-      </div>
-    `,
-  });
-
   await persistGuestCheckInLink(prepared);
+
+  try {
+    await sendEmail({
+      to: guestEmail,
+      subject: `Dati ospiti per il soggiorno - ${prepared.booking.property.name}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+          <p>Ciao ${guestName},</p>
+          <p>per completare la registrazione del soggiorno presso <strong>${propertyName}</strong>, inserisci i dati degli ospiti tramite il link sicuro seguente.</p>
+          <p><a href="${checkInUrl}" style="display:inline-block;padding:12px 18px;background:#2563eb;color:#ffffff;text-decoration:none;border-radius:8px">Compila i dati ospiti</a></p>
+          <p>Se il pulsante non funziona, copia questo indirizzo nel browser:</p>
+          <p style="overflow-wrap:anywhere">${checkInUrl}</p>
+          <p>Il link scade il ${prepared.expiresAt.toLocaleString("it-IT")}.</p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    await prisma.guestCheckInLink.updateMany({
+      where: {
+        bookingId: prepared.booking.id,
+        tokenHash: prepared.tokenHash,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+      },
+    });
+
+    throw error;
+  }
 
   await AuditService.log({
     actorId: prepared.user.id,
@@ -202,7 +217,6 @@ export async function sendGuestCheckInEmailAction(bookingId: string) {
     expiresAt: prepared.expiresAt.toISOString(),
   };
 }
-
 export async function verifyGuestCheckInWithAlloggiatiAction(
   bookingId: string,
 ) {
