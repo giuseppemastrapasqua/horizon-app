@@ -156,12 +156,59 @@ describe("fetchIcalCalendar", () => {
     ).not.toHaveBeenCalled();
   });
 
+  it("rifiuta l'endpoint metadata link-local", async () => {
+    await expect(
+      fetchIcalCalendar(
+        "http://169.254.169.254/latest/meta-data/",
+      ),
+    ).rejects.toThrow(
+      "L'URL del feed iCal risolve verso un indirizzo IP non pubblico.",
+    );
+
+    expect(
+      httpRequestMock,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("rifiuta IPv4 privati rappresentati come IPv6 mapped", async () => {
+    await expect(
+      fetchIcalCalendar(
+        "http://[::ffff:7f00:1]/calendar.ics",
+      ),
+    ).rejects.toThrow(
+      "L'URL del feed iCal risolve verso un indirizzo IP non pubblico.",
+    );
+
+    expect(
+      httpRequestMock,
+    ).not.toHaveBeenCalled();
+  });
+
   it("rifiuta hostname DNS che risolvono verso reti private", async () => {
     dnsLookupMock.mockResolvedValueOnce([
       {
         address: "192.168.1.25",
         family: 4,
       },
+    ]);
+
+    await expect(
+      fetchIcalCalendar(
+        "https://calendar.example.com/feed.ics",
+      ),
+    ).rejects.toThrow(
+      "L'URL del feed iCal risolve verso un indirizzo IP non pubblico.",
+    );
+
+    expect(
+      httpsRequestMock,
+    ).not.toHaveBeenCalled();
+  });
+
+  it("rifiuta hostname DNS con indirizzi pubblici e privati insieme", async () => {
+    dnsLookupMock.mockResolvedValueOnce([
+      { address: "93.184.216.34", family: 4 },
+      { address: "192.168.1.25", family: 4 },
     ]);
 
     await expect(
