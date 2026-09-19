@@ -14,6 +14,10 @@ import { validateBookingGuestsForAlloggiati } from "@/lib/integrations/alloggiat
 import { classifyAndPersistBookingGuests } from "@/lib/integrations/soggiorniamo/fiscal-classification-service";
 import { PrismaSoggiorniamoFiscalClassificationRepository } from "@/lib/integrations/soggiorniamo/prisma-fiscal-classification-repository";
 import { prisma } from "@/lib/prisma";
+import {
+  consumeRateLimit,
+  createRateLimitKey,
+} from "@/lib/security/rate-limiter";
 
 import {
   getGuestCheckInLanguage,
@@ -204,6 +208,23 @@ export async function saveGuestCheckInAction(
 
   const tokenHash =
     hashGuestCheckInToken(token);
+  const guestCheckInRateLimit = await consumeRateLimit({
+    key: createRateLimitKey(
+      "guest-check-in-submit",
+      tokenHash,
+    ),
+    limit: 10,
+    windowSeconds: 15 * 60,
+  });
+
+  if (!guestCheckInRateLimit.allowed) {
+    throw new Error(
+      guestCheckInServerError(
+        language,
+        "invalidLink",
+      ),
+    );
+  }
 
   const link =
     await prisma.guestCheckInLink.findUnique({

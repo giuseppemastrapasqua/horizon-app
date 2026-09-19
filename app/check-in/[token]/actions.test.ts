@@ -28,6 +28,13 @@ const mocks = vi.hoisted(() => ({
   isItaly: vi.fn(),
 }));
 
+const consumeRateLimitMock = vi.hoisted(() => vi.fn());
+const createRateLimitKeyMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/security/rate-limiter", () => ({
+  consumeRateLimit: consumeRateLimitMock,
+  createRateLimitKey: createRateLimitKeyMock,
+}));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     guestCheckInLink: {
@@ -137,6 +144,14 @@ describe(
   () => {
     beforeEach(() => {
       vi.clearAllMocks();
+      createRateLimitKeyMock.mockReturnValue(
+        "guest-check-in:hashed-token",
+      );
+      consumeRateLimitMock.mockResolvedValue({
+        allowed: true,
+        remaining: 9,
+        retryAfterSeconds: 0,
+      });
 
       const expiresAt = new Date(
         Date.now() + 60 * 60 * 1000,
@@ -244,6 +259,34 @@ describe(
       );
     });
 
+    it(
+      "blocca tentativi ripetuti prima del lookup del link",
+      async () => {
+        consumeRateLimitMock.mockResolvedValueOnce({
+          allowed: false,
+          remaining: 0,
+          retryAfterSeconds: 300,
+        });
+
+        await expect(
+          saveGuestCheckInAction(validFormData()),
+        ).rejects.toThrow();
+
+        expect(createRateLimitKeyMock).toHaveBeenCalledWith(
+          "guest-check-in-submit",
+          expect.any(String),
+        );
+
+        expect(consumeRateLimitMock).toHaveBeenCalledWith({
+          key: "guest-check-in:hashed-token",
+          limit: 10,
+          windowSeconds: 15 * 60,
+        });
+
+        expect(mocks.linkFindUnique).not.toHaveBeenCalled();
+        expect(mocks.transaction).not.toHaveBeenCalled();
+      },
+    );
     it(
       "salva gli ospiti, classifica Soggiorniamo e chiude il link",
       async () => {

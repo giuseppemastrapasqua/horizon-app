@@ -9,6 +9,10 @@ import {
 } from "@/lib/auth/password-reset-token";
 import { sendEmail } from "@/lib/notifications/email/send-email";
 import { prisma } from "@/lib/prisma";
+import {
+  consumeRateLimit,
+  createRateLimitKey,
+} from "@/lib/security/rate-limiter";
 
 const PASSWORD_MIN_LENGTH = 10;
 const PASSWORD_MAX_LENGTH = 128;
@@ -49,6 +53,21 @@ export async function requestPasswordResetAction(formData: FormData) {
     };
   }
 
+  const requestRateLimit = await consumeRateLimit({
+    key: createRateLimitKey(
+      "password-reset-request",
+      email,
+    ),
+    limit: 3,
+    windowSeconds: 15 * 60,
+  });
+
+  if (!requestRateLimit.allowed) {
+    return {
+      success: true as const,
+      message: REQUEST_SUCCESS_MESSAGE,
+    };
+  }
   const user = await prisma.user.findUnique({
     where: {
       email,
@@ -203,6 +222,20 @@ export async function resetPasswordAction(formData: FormData) {
 
   const tokenHash = hashPasswordResetToken(token);
 
+  const resetRateLimit = await consumeRateLimit({
+    key: createRateLimitKey(
+      "password-reset-submit",
+      tokenHash,
+    ),
+    limit: 5,
+    windowSeconds: 15 * 60,
+  });
+
+  if (!resetRateLimit.allowed) {
+    throw new Error(
+      "Link di reimpostazione non valido o scaduto.",
+    );
+  }
   const resetToken =
     await prisma.passwordResetToken.findUnique({
       where: {

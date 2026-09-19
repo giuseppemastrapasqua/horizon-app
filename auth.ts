@@ -4,6 +4,10 @@ import { compare } from "bcryptjs";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import {
+  consumeRateLimit,
+  createRateLimitKey,
+} from "@/lib/security/rate-limiter";
 import type { UserRole } from "@prisma/client";
 
 const credentialsSchema = z.object({
@@ -42,6 +46,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const email = parsedCredentials.data.email.trim().toLowerCase();
         const password = parsedCredentials.data.password;
+
+        const loginRateLimit = await consumeRateLimit({
+          key: createRateLimitKey("login", email),
+          limit: 5,
+          windowSeconds: 10 * 60,
+        });
+
+        if (!loginRateLimit.allowed) {
+          return null;
+        }
 
         const user = await prisma.user.findUnique({
           where: {
@@ -97,7 +111,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-       session.user.role = token.role as UserRole;
+        session.user.role = token.role as UserRole;
       }
 
       return session;

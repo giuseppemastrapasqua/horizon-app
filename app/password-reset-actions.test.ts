@@ -31,6 +31,14 @@ const tx = {
   },
 };
 
+const consumeRateLimitMock = vi.hoisted(() => vi.fn());
+const createRateLimitKeyMock = vi.hoisted(() => vi.fn());
+
+vi.mock("@/lib/security/rate-limiter", () => ({
+  consumeRateLimit: consumeRateLimitMock,
+  createRateLimitKey: createRateLimitKeyMock,
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     user: {
@@ -89,6 +97,15 @@ describe("password reset actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
+    createRateLimitKeyMock.mockReturnValue(
+      "password-reset:hashed-email",
+    );
+    consumeRateLimitMock.mockResolvedValue({
+      allowed: true,
+      remaining: 2,
+      retryAfterSeconds: 0,
+    });
+
     process.env.NEXT_PUBLIC_APP_URL =
       "http://localhost:3000";
 
@@ -109,6 +126,38 @@ describe("password reset actions", () => {
     tx.user.update.mockResolvedValue({});
   });
 
+  it("returns the neutral response without querying the account when the request rate limit is exceeded", async () => {
+    consumeRateLimitMock.mockResolvedValueOnce({
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds: 300,
+    });
+
+    const result =
+      await requestPasswordResetAction(
+        requestForm("OWNER@Example.com"),
+      );
+
+    expect(createRateLimitKeyMock).toHaveBeenCalledWith(
+      "password-reset-request",
+      "owner@example.com",
+    );
+
+    expect(consumeRateLimitMock).toHaveBeenCalledWith({
+      key: "password-reset:hashed-email",
+      limit: 3,
+      windowSeconds: 15 * 60,
+    });
+
+    expect(userFindUnique).not.toHaveBeenCalled();
+    expect(tokenCreate).not.toHaveBeenCalled();
+    expect(mockedSendEmail).not.toHaveBeenCalled();
+
+    expect(result.success).toBe(true);
+    expect(result.message).toContain(
+      "Se esiste un account",
+    );
+  });
   it("returns the same neutral response when the account does not exist", async () => {
     userFindUnique.mockResolvedValue(null);
 
@@ -203,6 +252,33 @@ describe("password reset actions", () => {
     consoleError.mockRestore();
   });
 
+  it("blocks repeated reset attempts before token lookup and bcrypt", async () => {
+    consumeRateLimitMock.mockResolvedValueOnce({
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds: 300,
+    });
+
+    await expect(
+      resetPasswordAction(resetForm()),
+    ).rejects.toThrow(
+      "Link di reimpostazione non valido o scaduto.",
+    );
+
+    expect(createRateLimitKeyMock).toHaveBeenCalledWith(
+      "password-reset-submit",
+      "reset-token-hash",
+    );
+
+    expect(consumeRateLimitMock).toHaveBeenCalledWith({
+      key: "password-reset:hashed-email",
+      limit: 5,
+      windowSeconds: 15 * 60,
+    });
+
+    expect(tokenFindUnique).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
   it("updates the password and consumes all remaining reset tokens", async () => {
     tokenFindUnique.mockResolvedValue({
       id: "reset-1",

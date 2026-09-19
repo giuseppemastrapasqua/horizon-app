@@ -1708,3 +1708,14 @@ model TouristTaxPayment {
   @@index([expiresAt])
   @@index([paidAt])
 }
+
+model RateLimitBucket {
+  key         String   @id
+  count       Int      @default(0)
+  windowStart DateTime
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([expiresAt])
+}
