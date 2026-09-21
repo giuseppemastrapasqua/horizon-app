@@ -26,7 +26,8 @@ const enqueueBookingIcalSyncJobsMock = vi.hoisted(() =>
 vi.mock(
   "@/lib/job/enqueue-booking-ical-sync-jobs",
   () => ({
-    enqueueBookingIcalSyncJobs: enqueueBookingIcalSyncJobsMock,
+    enqueueBookingIcalSyncJobs:
+      enqueueBookingIcalSyncJobsMock,
   }),
 );
 
@@ -75,6 +76,10 @@ describe("POST /api/internal/background-jobs/process", () => {
     });
 
     expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).not.toHaveBeenCalled();
+
+    expect(
       processNextBackgroundJobMock,
     ).not.toHaveBeenCalled();
   });
@@ -92,6 +97,10 @@ describe("POST /api/internal/background-jobs/process", () => {
     await expect(response.json()).resolves.toEqual({
       error: "Accesso non autorizzato.",
     });
+
+    expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).not.toHaveBeenCalled();
 
     expect(
       processNextBackgroundJobMock,
@@ -113,11 +122,15 @@ describe("POST /api/internal/background-jobs/process", () => {
     });
 
     expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).not.toHaveBeenCalled();
+
+    expect(
       processNextBackgroundJobMock,
     ).not.toHaveBeenCalled();
   });
 
-  it("accetta BACKGROUND_JOB_SECRET", async () => {
+  it("accetta BACKGROUND_JOB_SECRET senza accodare sync Booking", async () => {
     process.env.BACKGROUND_JOB_SECRET =
       "background-secret";
 
@@ -132,11 +145,16 @@ describe("POST /api/internal/background-jobs/process", () => {
     expect(response.status).toBe(200);
 
     await expect(response.json()).resolves.toEqual({
+      enqueuedBookingIcalSyncJobs: 0,
       processedJobs: 0,
       limit: 10,
       message:
         "Non ci sono background job disponibili.",
     });
+
+    expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).not.toHaveBeenCalled();
   });
 
   it("rifiuta CRON_SECRET su POST", async () => {
@@ -149,6 +167,10 @@ describe("POST /api/internal/background-jobs/process", () => {
     );
 
     expect(response.status).toBe(401);
+
+    expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).not.toHaveBeenCalled();
 
     expect(
       processNextBackgroundJobMock,
@@ -172,10 +194,15 @@ describe("POST /api/internal/background-jobs/process", () => {
     expect(response.status).toBe(200);
 
     await expect(response.json()).resolves.toEqual({
+      enqueuedBookingIcalSyncJobs: 0,
       processedJobs: 3,
       limit: 10,
       message: "3 background job elaborati.",
     });
+
+    expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).not.toHaveBeenCalled();
 
     expect(
       processNextBackgroundJobMock,
@@ -197,10 +224,15 @@ describe("POST /api/internal/background-jobs/process", () => {
     expect(response.status).toBe(200);
 
     await expect(response.json()).resolves.toEqual({
+      enqueuedBookingIcalSyncJobs: 0,
       processedJobs: 10,
       limit: 10,
       message: "10 background job elaborati.",
     });
+
+    expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).not.toHaveBeenCalled();
 
     expect(
       processNextBackgroundJobMock,
@@ -234,13 +266,17 @@ describe("POST /api/internal/background-jobs/process", () => {
         "Errore durante l'elaborazione dei background job.",
     });
 
+    expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).not.toHaveBeenCalled();
+
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       "Errore durante l'esecuzione del background worker:",
       processorError,
     );
   });
 
-  it("rifiuta GET con BACKGROUND_JOB_SECRET", async () => {
+  it("rifiuta GET con BACKGROUND_JOB_SECRET senza accodare sync Booking", async () => {
     process.env.BACKGROUND_JOB_SECRET =
       "background-secret";
     process.env.CRON_SECRET = "cron-secret";
@@ -257,12 +293,22 @@ describe("POST /api/internal/background-jobs/process", () => {
     );
 
     expect(response.status).toBe(401);
+
+    expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).not.toHaveBeenCalled();
+
     expect(
       processNextBackgroundJobMock,
     ).not.toHaveBeenCalled();
   });
-  it("accetta GET con CRON_SECRET", async () => {
+
+  it("accetta GET con CRON_SECRET, accoda Booking iCal e processa la coda", async () => {
     process.env.CRON_SECRET = "cron-secret";
+
+    enqueueBookingIcalSyncJobsMock.mockResolvedValueOnce(
+      2,
+    );
 
     processNextBackgroundJobMock.mockResolvedValueOnce(
       false,
@@ -280,6 +326,7 @@ describe("POST /api/internal/background-jobs/process", () => {
     expect(response.status).toBe(200);
 
     await expect(response.json()).resolves.toEqual({
+      enqueuedBookingIcalSyncJobs: 2,
       processedJobs: 0,
       limit: 10,
       message:
@@ -287,8 +334,18 @@ describe("POST /api/internal/background-jobs/process", () => {
     });
 
     expect(
+      enqueueBookingIcalSyncJobsMock,
+    ).toHaveBeenCalledOnce();
+
+    expect(
       processNextBackgroundJobMock,
     ).toHaveBeenCalledOnce();
+
+    expect(
+      enqueueBookingIcalSyncJobsMock.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      processNextBackgroundJobMock.mock.invocationCallOrder[0],
+    );
   });
 });
 

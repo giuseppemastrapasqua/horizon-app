@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { enqueueBookingIcalSyncJobs } from "@/lib/job/enqueue-booking-ical-sync-jobs";
 import { processNextBackgroundJob } from "@/lib/job/process-next-background-job";
 
 export const runtime = "nodejs";
@@ -25,6 +26,9 @@ async function handleRequest(
   request: Request,
   secret: string | undefined,
   secretName: "BACKGROUND_JOB_SECRET" | "CRON_SECRET",
+  options: {
+    enqueueBookingIcalSync: boolean;
+  },
 ): Promise<NextResponse> {
   if (!secret) {
     return NextResponse.json(
@@ -49,6 +53,11 @@ async function handleRequest(
   }
 
   try {
+    const enqueuedBookingIcalSyncJobs =
+      options.enqueueBookingIcalSync
+        ? await enqueueBookingIcalSyncJobs()
+        : 0;
+
     let processedJobs = 0;
 
     while (
@@ -65,6 +74,7 @@ async function handleRequest(
     }
 
     return NextResponse.json({
+      enqueuedBookingIcalSyncJobs,
       processedJobs,
       limit: MAX_JOBS_PER_REQUEST,
       message:
@@ -97,6 +107,9 @@ export async function GET(
     request,
     process.env.CRON_SECRET,
     "CRON_SECRET",
+    {
+      enqueueBookingIcalSync: true,
+    },
   );
 }
 
@@ -107,5 +120,8 @@ export async function POST(
     request,
     process.env.BACKGROUND_JOB_SECRET,
     "BACKGROUND_JOB_SECRET",
+    {
+      enqueueBookingIcalSync: false,
+    },
   );
 }
