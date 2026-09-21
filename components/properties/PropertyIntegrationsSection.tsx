@@ -1,4 +1,5 @@
 import {
+  BackgroundJobStatus,
   BookingChannel,
   IntegrationTransport,
   type IntegrationProvider,
@@ -247,6 +248,16 @@ export async function PropertyIntegrationsSection({
                 ) : null}
 
                 {isBooking &&
+                bookingIcal?.activeSyncStatus ? (
+                  <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
+                    {bookingIcal.activeSyncStatus ===
+                    BackgroundJobStatus.RUNNING
+                      ? "Sincronizzazione in corso"
+                      : "Sincronizzazione in coda"}
+                  </div>
+                ) : null}
+
+                {isBooking &&
                 bookingIcal?.lastSyncAt ? (
                   <div className="mt-3 text-xs leading-5 text-slate-500">
                     <p>
@@ -323,6 +334,7 @@ async function loadBookingIcal(
   lastSyncAt: Date | null;
   lastSyncStatus: string | null;
   lastSyncError: string | null;
+  activeSyncStatus: BackgroundJobStatus | null;
 } | null> {
   const connections =
     await prisma.integrationConnectionProperty.findMany({
@@ -335,6 +347,7 @@ async function loadBookingIcal(
         },
       },
       select: {
+        connectionId: true,
         config: true,
         connection: {
           select: {
@@ -369,6 +382,39 @@ async function loadBookingIcal(
     return null;
   }
 
+  const activeSyncJob =
+    await prisma.backgroundJob.findFirst({
+      where: {
+        type: "BOOKING_SYNC",
+        status: {
+          in: [
+            BackgroundJobStatus.QUEUED,
+            BackgroundJobStatus.RUNNING,
+          ],
+        },
+        AND: [
+          {
+            payload: {
+              path: ["propertyId"],
+              equals: propertyId,
+            },
+          },
+          {
+            payload: {
+              path: ["connectionId"],
+              equals: booking.connectionId,
+            },
+          },
+        ],
+      },
+      select: {
+        status: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
   return {
     feedUrl,
     lastSyncAt:
@@ -377,6 +423,8 @@ async function loadBookingIcal(
       booking.connection.lastSyncStatus,
     lastSyncError:
       booking.connection.lastSyncError,
+    activeSyncStatus:
+      activeSyncJob?.status ?? null,
   };
 }
 
