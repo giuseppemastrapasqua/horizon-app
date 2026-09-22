@@ -56,40 +56,40 @@ export function PropertyCheckInSection({
 
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="lg:col-span-2">
-            <label
-              htmlFor="checkInType"
-              className="mb-2 block text-sm font-medium text-slate-800"
-            >
+            <div className="mb-2 text-sm font-medium text-slate-800">
               Modalità di check-in
-            </label>
+            </div>
 
-            <select
-              id="checkInType"
-              name="checkInType"
-              defaultValue={
-                checkInConfiguration?.checkInType ?? ""
-              }
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10"
-            >
-              <option value="">
-                Seleziona una modalità
-              </option>
-
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {PROPERTY_CHECK_IN_TYPES.map(
                 (checkInType) => (
-                  <option
+                  <label
                     key={checkInType}
-                    value={checkInType}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 transition hover:border-blue-400"
                   >
-                    {
-                      PROPERTY_CHECK_IN_TYPE_LABELS[
-                        checkInType
-                      ]
-                    }
-                  </option>
+                    <input
+                      type="checkbox"
+                      name="checkInTypes"
+                      value={checkInType}
+                      defaultChecked={
+                        checkInConfiguration?.checkInTypes.includes(
+                          checkInType,
+                        ) ?? false
+                      }
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    />
+
+                    <span>
+                      {
+                        PROPERTY_CHECK_IN_TYPE_LABELS[
+                          checkInType
+                        ]
+                      }
+                    </span>
+                  </label>
                 ),
               )}
-            </select>
+            </div>
           </div>
 
           <div className="lg:col-span-2">

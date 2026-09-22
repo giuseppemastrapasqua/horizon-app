@@ -155,9 +155,9 @@ export function mapWorkspaceProperty(
             propertyId:
               property.checkInConfiguration
                 .propertyId,
-            checkInType:
+            checkInTypes:
               property.checkInConfiguration
-                .checkInType,
+                .checkInTypes,
             arrivalInstructions:
               property.checkInConfiguration
                 .arrivalInstructions,

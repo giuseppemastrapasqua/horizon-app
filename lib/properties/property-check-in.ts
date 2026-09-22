@@ -25,7 +25,7 @@ export const PROPERTY_CHECK_IN_TYPE_LABELS: Record<
 export type PropertyCheckInConfigurationData = {
   id: string;
   propertyId: string;
-  checkInType: string | null;
+  checkInTypes: string[];
   arrivalInstructions: string | null;
   accessInstructions: string | null;
   buildingAccessCode: string | null;

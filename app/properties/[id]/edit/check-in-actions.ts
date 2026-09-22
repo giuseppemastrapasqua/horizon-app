@@ -40,17 +40,27 @@ export async function updatePropertyCheckInAction(
 
   await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
 
-  const rawCheckInType = getOptionalString(
-    formData,
-    "checkInType",
-  );
+  const checkInTypes = [
+    ...new Set(
+      formData
+        .getAll("checkInTypes")
+        .filter(
+          (value): value is string =>
+            typeof value === "string" &&
+            value.trim().length > 0,
+        )
+        .map((value) => value.trim()),
+    ),
+  ];
 
   if (
-    rawCheckInType &&
-    !isPropertyCheckInType(rawCheckInType)
+    checkInTypes.some(
+      (checkInType) =>
+        !isPropertyCheckInType(checkInType),
+    )
   ) {
     throw new Error(
-      "La modalità di check-in selezionata non è valida.",
+      "Una delle modalità di check-in selezionate non è valida.",
     );
   }
 
@@ -68,7 +78,7 @@ export async function updatePropertyCheckInAction(
   }
 
   const configuration = {
-    checkInType: rawCheckInType,
+    checkInTypes,
     arrivalInstructions: getOptionalString(
       formData,
       "arrivalInstructions",

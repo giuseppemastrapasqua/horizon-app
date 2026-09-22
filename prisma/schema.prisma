@@ -511,7 +511,7 @@ model PropertyHouseRule {
 model PropertyCheckInConfiguration {
   id                    String   @id @default(cuid())
   propertyId            String   @unique
-  checkInType           String?
+  checkInTypes          String[] @default([])
   arrivalInstructions   String?
   accessInstructions    String?
   buildingAccessCode    String?
