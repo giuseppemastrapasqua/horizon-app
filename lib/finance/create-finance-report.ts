@@ -10,6 +10,7 @@ import {
 import {
   buildFinancePreview,
 } from "@/lib/finance/preview";
+import { isCommissionInvoicePrerequisiteError } from "@/lib/invoices/commission-invoice-errors";
 import { upsertCommissionInvoiceDraft } from "@/lib/invoices/upsert-commission-invoice-draft";
 import { prisma } from "@/lib/prisma";
 import { AuditService } from "@/services/audit/AuditService";
@@ -521,12 +522,18 @@ export async function createFinanceReport({
     },
   );
 
-  await upsertCommissionInvoiceDraft({
-    reportId: report.id,
-    managementCommissionTaxableBaseTotal,
-    managementCommissionVatTotal,
-    managementCommissionTotal,
-  });
+  try {
+    await upsertCommissionInvoiceDraft({
+      reportId: report.id,
+      managementCommissionTaxableBaseTotal,
+      managementCommissionVatTotal,
+      managementCommissionTotal,
+    });
+  } catch (error) {
+    if (!isCommissionInvoicePrerequisiteError(error)) {
+      throw error;
+    }
+  }
 
   return report;
 }

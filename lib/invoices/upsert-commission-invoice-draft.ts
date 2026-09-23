@@ -4,6 +4,7 @@ import {
   Prisma,
 } from "@prisma/client";
 
+import { CommissionInvoicePrerequisiteError } from "@/lib/invoices/commission-invoice-errors";
 import { prisma } from "@/lib/prisma";
 
 type UpsertCommissionInvoiceDraftParams = {
@@ -65,15 +66,17 @@ export async function upsertCommissionInvoiceDraft({
     ]);
 
   if (!issuer) {
-    throw new Error(
-      "Profilo fiscale dell'emittente non configurato.",
-    );
+    throw new CommissionInvoicePrerequisiteError({
+      code: "ISSUER_BILLING_PROFILE_MISSING",
+      message: "Profilo fiscale dell'emittente non configurato.",
+    });
   }
 
   if (!recipient) {
-    throw new Error(
-      "Profilo fiscale del proprietario non configurato.",
-    );
+    throw new CommissionInvoicePrerequisiteError({
+      code: "OWNER_BILLING_PROFILE_MISSING",
+      message: "Profilo fiscale del proprietario non configurato.",
+    });
   }
 
   const referenceMonth =
