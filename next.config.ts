@@ -38,6 +38,15 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "anyzciwyxkfrheavqjpf.supabase.co",
+        pathname: "/storage/v1/object/public/property-images/**",
+      },
+    ],
+  },
   poweredByHeader: false,
 
   experimental: {
@@ -57,3 +66,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
