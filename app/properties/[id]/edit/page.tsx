@@ -58,7 +58,8 @@ import {
   deletePropertyImageAction,
   reorderPropertyImagesAction,
   setPropertyCoverImageAction,
-  uploadPropertyImageAction,
+  finalizePropertyImageUploadAction,
+  preparePropertyImageUploadAction,
 } from "./photo-actions";
 import { updatePropertyCodesAction } from "./property-code-actions";
 import {
@@ -1043,7 +1044,8 @@ export default async function PropertyEditPage({
           <PropertyPhotosSection
             propertyId={property.id}
             images={property.images}
-            uploadAction={uploadPropertyImageAction}
+            prepareUploadAction={preparePropertyImageUploadAction}
+            finalizeUploadAction={finalizePropertyImageUploadAction}
             deleteAction={deletePropertyImageAction}
             coverAction={setPropertyCoverImageAction}
             reorderAction={reorderPropertyImagesAction}

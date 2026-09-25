@@ -1,5 +1,14 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
+import {
+  type FormEvent,
+  useRef,
+  useState,
+} from "react";
+
+
 import { SortablePhotoGrid } from "./SortablePhotoGrid";
 
 type PropertyPhoto = {
@@ -11,10 +20,28 @@ type PropertyPhoto = {
   isCover: boolean;
 };
 
+type PrepareUploadResult = {
+  key: string;
+  signedUrl: string;
+  token: string;
+};
+
 type PropertyPhotosSectionProps = {
   propertyId: string;
   images: PropertyPhoto[];
-  uploadAction: (formData: FormData) => Promise<void>;
+  prepareUploadAction: (input: {
+    propertyId: string;
+    originalFilename: string;
+    mimeType: string;
+    size: number;
+  }) => Promise<PrepareUploadResult>;
+  finalizeUploadAction: (input: {
+    propertyId: string;
+    key: string;
+    originalFilename: string;
+    mimeType: string;
+    size: number;
+  }) => Promise<void>;
   deleteAction: (formData: FormData) => Promise<void>;
   coverAction: (formData: FormData) => Promise<void>;
   reorderAction?: (
@@ -23,14 +50,166 @@ type PropertyPhotosSectionProps = {
   ) => Promise<void>;
 };
 
+const MAX_FILES = 20;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
 export function PropertyPhotosSection({
   propertyId,
   images,
-  uploadAction,
+  prepareUploadAction,
+  finalizeUploadAction,
   deleteAction,
   coverAction,
   reorderAction,
 }: PropertyPhotosSectionProps) {
+  const router = useRouter();
+
+  const fileInputRef =
+    useRef<HTMLInputElement>(null);
+
+  const [isUploading, setIsUploading] =
+    useState(false);
+
+  const [uploadProgress, setUploadProgress] =
+    useState<string | null>(null);
+
+  const [uploadError, setUploadError] =
+    useState<string | null>(null);
+
+  async function handleUpload(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
+    event.preventDefault();
+
+    const files = Array.from(
+      fileInputRef.current?.files ?? [],
+    );
+
+    setUploadError(null);
+
+    if (files.length === 0) {
+      setUploadError(
+        "Seleziona almeno un'immagine da caricare.",
+      );
+      return;
+    }
+
+    if (files.length > MAX_FILES) {
+      setUploadError(
+        "Puoi caricare al massimo 20 immagini alla volta.",
+      );
+      return;
+    }
+
+    for (const file of files) {
+      if (file.size <= 0) {
+        setUploadError(
+          `L'immagine "${file.name}" è vuota.`,
+        );
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        setUploadError(
+          `L'immagine "${file.name}" supera la dimensione massima di 10 MB.`,
+        );
+        return;
+      }
+
+      if (!ALLOWED_TYPES.has(file.type)) {
+        setUploadError(
+          `L'immagine "${file.name}" ha un formato non supportato.`,
+        );
+        return;
+      }
+    }
+
+    setIsUploading(true);
+
+    try {
+      for (
+        let index = 0;
+        index < files.length;
+        index += 1
+      ) {
+        const file = files[index];
+
+        setUploadProgress(
+          `Caricamento foto ${index + 1} di ${files.length}...`,
+        );
+
+        const prepared =
+          await prepareUploadAction({
+            propertyId,
+            originalFilename: file.name,
+            mimeType: file.type,
+            size: file.size,
+          });
+
+        const formData = new FormData();
+        formData.append(
+          "cacheControl",
+          "3600",
+        );
+        formData.append(
+          "",
+          file,
+        );
+
+        const response = await fetch(
+          prepared.signedUrl,
+          {
+            method: "PUT",
+            headers: {
+              "x-upsert": "false",
+            },
+            body: formData,
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Upload diretto non riuscito per "${file.name}" (${response.status}).`,
+          );
+        }
+
+        await finalizeUploadAction({
+          propertyId,
+          key: prepared.key,
+          originalFilename: file.name,
+          mimeType: file.type,
+          size: file.size,
+        });
+      }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
+
+      router.refresh();
+      setUploadProgress(
+        files.length === 1
+          ? "Foto caricata correttamente."
+          : `${files.length} foto caricate correttamente.`,
+      );
+    } catch (error) {
+      setUploadError(
+        error instanceof Error
+          ? error.message
+          : "Impossibile caricare le foto selezionate.",
+      );
+      setUploadProgress(null);
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
   return (
     <section
       id="foto"
@@ -60,15 +239,9 @@ export function PropertyPhotosSection({
       </div>
 
       <form
-        action={uploadAction}
+        onSubmit={handleUpload}
         className="mt-8 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center"
       >
-        <input
-          type="hidden"
-          name="propertyId"
-          value={propertyId}
-        />
-
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm ring-1 ring-slate-200">
           +
         </div>
@@ -91,27 +264,52 @@ export function PropertyPhotosSection({
           </label>
 
           <input
+            ref={fileInputRef}
             id="property-image"
             name="files"
             type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
             required
-            className="block w-full cursor-pointer rounded-xl border border-slate-300 bg-white text-sm text-slate-600 file:mr-4 file:border-0 file:border-r file:border-slate-200 file:bg-slate-100 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-slate-800 hover:file:bg-slate-200"
+            disabled={isUploading}
+            className="block w-full cursor-pointer rounded-xl border border-slate-300 bg-white text-sm text-slate-600 file:mr-4 file:border-0 file:border-r file:border-slate-200 file:bg-slate-100 file:px-4 file:py-3 file:text-sm file:font-semibold file:text-slate-800 hover:file:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
           />
         </div>
 
         <button
           type="submit"
-          className="mt-6 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          disabled={isUploading}
+          className="mt-6 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Carica foto selezionate
+          {isUploading
+            ? "Caricamento in corso..."
+            : "Carica foto selezionate"}
         </button>
 
-        <p className="mt-3 text-xs text-slate-500">
-          La prima immagine caricata sarà impostata automaticamente come
-          copertina.
-        </p>
+        {uploadProgress ? (
+          <p
+            className="mt-3 text-sm font-medium text-emerald-700"
+            aria-live="polite"
+          >
+            {uploadProgress}
+          </p>
+        ) : null}
+
+        {uploadError ? (
+          <p
+            className="mt-3 text-sm font-medium text-red-700"
+            role="alert"
+          >
+            {uploadError}
+          </p>
+        ) : null}
+
+        {!uploadProgress && !uploadError ? (
+          <p className="mt-3 text-xs text-slate-500">
+            La prima immagine caricata sarà impostata automaticamente come
+            copertina.
+          </p>
+        ) : null}
       </form>
 
       <div className="mt-10">

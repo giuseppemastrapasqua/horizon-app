@@ -14,6 +14,26 @@ const createPropertyImageMock = vi.hoisted(() =>
   vi.fn(),
 );
 
+const createPropertyImageFromUploadedObjectMock = vi.hoisted(
+  () => vi.fn(),
+);
+
+const createPublicStorageSignedUploadMock = vi.hoisted(
+  () => vi.fn(),
+);
+
+const readPublicStorageObjectMock = vi.hoisted(() =>
+  vi.fn(),
+);
+
+const deletePublicStorageObjectMock = vi.hoisted(() =>
+  vi.fn(),
+);
+
+const getPublicStorageUrlMock = vi.hoisted(() =>
+  vi.fn(),
+);
+
 const revalidatePathMock = vi.hoisted(() =>
   vi.fn(),
 );
@@ -26,6 +46,20 @@ vi.mock(
   "@/lib/application/properties/create-property-image",
   () => ({
     createPropertyImage: createPropertyImageMock,
+    createPropertyImageFromUploadedObject:
+      createPropertyImageFromUploadedObjectMock,
+  }),
+);
+
+vi.mock(
+  "@/lib/storage/supabase-public-storage-direct-upload",
+  () => ({
+    createPublicStorageSignedUpload:
+      createPublicStorageSignedUploadMock,
+    readPublicStorageObject: readPublicStorageObjectMock,
+    deletePublicStorageObject:
+      deletePublicStorageObjectMock,
+    getPublicStorageUrl: getPublicStorageUrlMock,
   }),
 );
 
@@ -33,7 +67,11 @@ vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
 }));
 
-import { uploadPropertyImageAction } from "./photo-actions";
+import {
+  finalizePropertyImageUploadAction,
+  preparePropertyImageUploadAction,
+  uploadPropertyImageAction,
+} from "./photo-actions";
 
 function createFormData(files: File[]): FormData {
   const formData = new FormData();
@@ -64,6 +102,7 @@ describe("property photo actions", () => {
     vi.clearAllMocks();
 
     requirePropertyRoleMock.mockResolvedValue(undefined);
+
     createPropertyImageMock.mockResolvedValue({
       imageId: "image-1",
       url: "/uploads/image.jpg",
@@ -71,11 +110,38 @@ describe("property photo actions", () => {
       sortOrder: 0,
       isCover: true,
     });
+
+    createPropertyImageFromUploadedObjectMock.mockResolvedValue({
+      imageId: "image-2",
+      url: "https://storage.example/photo.jpg",
+      filename: "properties/property-1/photo.jpg",
+      sortOrder: 0,
+      isCover: true,
+    });
+
+    createPublicStorageSignedUploadMock.mockImplementation(
+      async (key: string) => ({
+        key,
+        signedUrl:
+          "https://storage.example/upload?token=test",
+        token: "test",
+      }),
+    );
+
+    deletePublicStorageObjectMock.mockResolvedValue(undefined);
+
+    getPublicStorageUrlMock.mockImplementation(
+      (key: string) =>
+        `https://storage.example/${key}`,
+    );
   });
 
   it("carica più immagini nell'ordine selezionato", async () => {
     const first = createImageFile("first.jpg");
-    const second = createImageFile("second.png", "image/png");
+    const second = createImageFile(
+      "second.png",
+      "image/png",
+    );
 
     await uploadPropertyImageAction(
       createFormData([first, second]),
@@ -116,7 +182,7 @@ describe("property photo actions", () => {
     expect(createPropertyImageMock).not.toHaveBeenCalled();
   });
 
-  it("rifiuta più di 20 immaginiprima dell'upload", async () => {
+  it("rifiuta più di 20 immagini prima dell'upload", async () => {
     const files = Array.from(
       { length: 21 },
       (_, index) =>
@@ -170,5 +236,120 @@ describe("property photo actions", () => {
 
     expect(requirePropertyRoleMock).not.toHaveBeenCalled();
     expect(createPropertyImageMock).not.toHaveBeenCalled();
+  });
+
+  it("prepara un upload diretto con una chiave isolata per struttura", async () => {
+    const result =
+      await preparePropertyImageUploadAction({
+        propertyId: "property-1",
+        originalFilename: "photo.jpg",
+        mimeType: "image/jpeg",
+        size: 1024,
+      });
+
+    expect(requirePropertyRoleMock).toHaveBeenCalledWith(
+      "property-1",
+      ["OWNER", "MANAGER"],
+    );
+
+    expect(
+      createPublicStorageSignedUploadMock,
+    ).toHaveBeenCalledTimes(1);
+
+    const key =
+      createPublicStorageSignedUploadMock.mock.calls[0][0];
+
+    expect(key).toMatch(
+      /^properties\/property-1\/[0-9a-f-]{36}\.jpg$/,
+    );
+
+    expect(result).toEqual({
+      key,
+      signedUrl:
+        "https://storage.example/upload?token=test",
+      token: "test",
+    });
+  });
+
+  it("finalizza una JPEG verificata nello storage", async () => {
+    const key =
+      "properties/property-1/123e4567-e89b-42d3-a456-426614174000.jpg";
+
+    const bytes = new Uint8Array([
+      0xff,
+      0xd8,
+      0xff,
+      0x00,
+      0x00,
+    ]);
+
+    readPublicStorageObjectMock.mockResolvedValue(bytes);
+
+    await finalizePropertyImageUploadAction({
+      propertyId: "property-1",
+      key,
+      originalFilename: "photo.jpg",
+      mimeType: "image/jpeg",
+      size: bytes.byteLength,
+    });
+
+    expect(requirePropertyRoleMock).toHaveBeenCalledWith(
+      "property-1",
+      ["OWNER", "MANAGER"],
+    );
+
+    expect(readPublicStorageObjectMock).toHaveBeenCalledWith(
+      key,
+    );
+
+    expect(
+      createPropertyImageFromUploadedObjectMock,
+    ).toHaveBeenCalledWith({
+      propertyId: "property-1",
+      key,
+      url: `https://storage.example/${key}`,
+      originalFilename: "photo.jpg",
+      mimeType: "image/jpeg",
+      size: bytes.byteLength,
+    });
+
+    expect(
+      deletePublicStorageObjectMock,
+    ).not.toHaveBeenCalled();
+
+    expect(revalidatePathMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("rifiuta un file con MIME JPEG ma firma non valida e lo elimina", async () => {
+    const key =
+      "properties/property-1/123e4567-e89b-42d3-a456-426614174000.jpg";
+
+    const bytes = new Uint8Array([
+      0x47,
+      0x49,
+      0x46,
+      0x38,
+      0x39,
+    ]);
+
+    readPublicStorageObjectMock.mockResolvedValue(bytes);
+
+    await expect(
+      finalizePropertyImageUploadAction({
+        propertyId: "property-1",
+        key,
+        originalFilename: "fake.jpg",
+        mimeType: "image/jpeg",
+        size: bytes.byteLength,
+      }),
+    ).rejects.toThrow();
+
+    expect(
+      createPropertyImageFromUploadedObjectMock,
+    ).not.toHaveBeenCalled();
+
+    expect(
+      deletePublicStorageObjectMock,
+    ).toHaveBeenCalledWith(key);
   });
 });

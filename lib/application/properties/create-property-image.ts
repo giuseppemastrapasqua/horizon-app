@@ -12,6 +12,15 @@ type CreatePropertyImageInput = {
   file: File;
 };
 
+type CreatePropertyImageFromUploadedObjectInput = {
+  propertyId: string;
+  key: string;
+  url: string;
+  originalFilename: string | null;
+  mimeType: string;
+  size: number;
+};
+
 type CreatePropertyImageResult = {
   imageId: string;
   url: string;
@@ -20,10 +29,64 @@ type CreatePropertyImageResult = {
   isCover: boolean;
 };
 
+type RegisterPropertyImageInput = {
+  propertyId: string;
+  key: string;
+  url: string;
+  originalFilename: string | null;
+  mimeType: string | null;
+  size: number;
+  deleteUploadedObject: () => Promise<void>;
+};
+
 export async function createPropertyImage({
   propertyId,
   file,
 }: CreatePropertyImageInput): Promise<CreatePropertyImageResult> {
+  const property = await ensurePropertyExists(propertyId);
+
+  const uploaded = await uploadPropertyImage({
+    propertyId: property.id,
+    file,
+  });
+
+  return registerPropertyImage({
+    propertyId: property.id,
+    key: uploaded.key,
+    url: uploaded.url,
+    originalFilename: file.name || null,
+    mimeType: file.type || null,
+    size: file.size,
+    deleteUploadedObject: () =>
+      defaultStorageProvider.delete(uploaded.key),
+  });
+}
+
+export async function createPropertyImageFromUploadedObject({
+  propertyId,
+  key,
+  url,
+  originalFilename,
+  mimeType,
+  size,
+}: CreatePropertyImageFromUploadedObjectInput): Promise<CreatePropertyImageResult> {
+  const property = await ensurePropertyExists(propertyId);
+
+  return registerPropertyImage({
+    propertyId: property.id,
+    key,
+    url,
+    originalFilename,
+    mimeType,
+    size,
+    deleteUploadedObject: () =>
+      defaultStorageProvider.delete(key),
+  });
+}
+
+async function ensurePropertyExists(
+  propertyId: string,
+): Promise<{ id: string }> {
   const property = await prisma.property.findUnique({
     where: {
       id: propertyId,
@@ -37,11 +100,18 @@ export async function createPropertyImage({
     throw new Error("Immobile non trovato.");
   }
 
-  const uploaded = await uploadPropertyImage({
-    propertyId,
-    file,
-  });
+  return property;
+}
 
+async function registerPropertyImage({
+  propertyId,
+  key,
+  url,
+  originalFilename,
+  mimeType,
+  size,
+  deleteUploadedObject,
+}: RegisterPropertyImageInput): Promise<CreatePropertyImageResult> {
   try {
     return await prisma.$transaction(async (transaction) => {
       const [imageCount, highestSortOrder] =
@@ -71,8 +141,8 @@ export async function createPropertyImage({
         await transaction.propertyImage.create({
           data: {
             propertyId,
-            url: uploaded.url,
-            filename: uploaded.key,
+            url,
+            filename: key,
             sortOrder,
             isCover,
           },
@@ -95,13 +165,13 @@ export async function createPropertyImage({
           description:
             "Nuova foto dell’immobile caricata.",
           metadata: {
-            filename: uploaded.key,
-            url: uploaded.url,
+            filename: key,
+            url,
             sortOrder,
             isCover,
-            originalFilename: file.name || null,
-            mimeType: file.type || null,
-            size: file.size,
+            originalFilename,
+            mimeType,
+            size,
           },
         },
         transaction,
@@ -116,11 +186,9 @@ export async function createPropertyImage({
       };
     });
   } catch (error) {
-    await defaultStorageProvider
-      .delete(uploaded.key)
-      .catch(() => {
-        // Manteniamo l'errore originale del database.
-      });
+    await deleteUploadedObject().catch(() => {
+      // Manteniamo l'errore originale del database.
+    });
 
     throw error;
   }

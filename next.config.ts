@@ -8,9 +8,9 @@ const contentSecurityPolicyReportOnly = [
   "form-action 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
+  "img-src 'self' data: blob: https://anyzciwyxkfrheavqjpf.supabase.co https://a.tile.openstreetmap.org https://b.tile.openstreetmap.org https://c.tile.openstreetmap.org",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  "connect-src 'self' https://anyzciwyxkfrheavqjpf.supabase.co",
   "frame-src 'none'",
 ].join("; ");
 const securityHeaders = [
