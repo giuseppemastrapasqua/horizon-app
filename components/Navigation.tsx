@@ -177,11 +177,11 @@ export function Navigation() {
           </div>
         </nav>
 
-        <div className="relative shrink-0 border-t border-white/[0.07] px-3 pb-4 pt-3">
+        <div className="relative shrink-0 border-t border-white/[0.07] px-3 pb-2 pt-2">
           {session?.user?.role !== "OPERATOR" ? (
             <Link
               href="/settings"
-              className="mb-2 flex h-[40px] items-center gap-3 rounded-xl border border-transparent px-3.5 text-[12px] font-medium text-[#8493A1] transition hover:border-white/[0.05] hover:bg-white/[0.04] hover:text-white"
+              className="mb-1 flex h-[36px] items-center gap-3 rounded-xl border border-transparent px-3.5 text-[12px] font-medium text-[#8493A1] transition hover:border-white/[0.05] hover:bg-white/[0.04] hover:text-white"
             >
               <Settings
                 size={16}
