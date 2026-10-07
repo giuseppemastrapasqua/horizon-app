@@ -11,7 +11,12 @@ const createIcalBookingClientMock =
     vi.fn(),
   );
 
-const synchronizeExternalBookingsMock =
+const synchronizeIcalAvailabilityMock =
+  vi.hoisted(() =>
+    vi.fn(),
+  );
+
+const integrationConnectionPropertyFindUniqueMock =
   vi.hoisted(() =>
     vi.fn(),
   );
@@ -30,33 +35,26 @@ vi.mock(
 );
 
 vi.mock(
-  "../shared/synchronize-external-bookings",
+  "./synchronize-ical-availability",
   () => ({
-    synchronizeExternalBookings:
-      synchronizeExternalBookingsMock,
-  }),
-);
-
-vi.mock(
-  "../shared/prisma-booking-domain-service",
-  () => ({
-    prismaBookingDomainService: {
-      upsertBooking:
-        vi.fn(),
-    },
+    synchronizeIcalAvailability:
+      synchronizeIcalAvailabilityMock,
   }),
 );
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    integrationConnectionProperty: {
+      findUnique:
+        integrationConnectionPropertyFindUniqueMock,
+    },
+
     integrationConnection: {
       update:
         integrationConnectionUpdateMock,
     },
   },
 }));
-
-import { prismaBookingDomainService } from "../shared/prisma-booking-domain-service";
 
 import { synchronizeIcalConnectionProperty } from "./synchronize-ical-connection-property";
 
@@ -66,51 +64,51 @@ describe(
     beforeEach(() => {
       createIcalBookingClientMock.mockReset();
 
-      synchronizeExternalBookingsMock.mockReset();
+      synchronizeIcalAvailabilityMock.mockReset();
+
+      integrationConnectionPropertyFindUniqueMock.mockReset();
 
       integrationConnectionUpdateMock.mockReset();
 
-      createIcalBookingClientMock.mockResolvedValue(
-        {
-          provider:
-            "ICAL",
-        },
-      );
+      createIcalBookingClientMock.mockResolvedValue({
+        provider:
+          "ICAL",
+      });
 
-      integrationConnectionUpdateMock.mockResolvedValue(
-        {
-          id:
-            "connection-1",
-        },
-      );
+      integrationConnectionPropertyFindUniqueMock.mockResolvedValue({
+        id:
+          "connection-property-1",
+
+        propertyId:
+          "property-1",
+      });
+
+      integrationConnectionUpdateMock.mockResolvedValue({
+        id:
+          "connection-1",
+      });
     });
 
-    it("sincronizza la property iCal e registra SUCCESS", async () => {
+    it("sincronizza la disponibilità iCal e registra SUCCESS", async () => {
       const completedAt =
         new Date(
           "2026-08-11T10:30:00.000Z",
         );
 
       const synchronizationResult = {
-        provider:
-          "ICAL",
-
-        bookings:
-          [],
-
-        fetchedBookings:
+        fetchedEvents:
           2,
 
-        processedPages:
-          1,
-
-        insertedBookings:
+        insertedBlocks:
           2,
 
-        updatedBookings:
+        updatedBlocks:
           0,
 
-        skippedBookings:
+        deletedBlocks:
+          0,
+
+        skippedEvents:
           0,
 
         startedAt:
@@ -124,7 +122,7 @@ describe(
           1000,
       };
 
-      synchronizeExternalBookingsMock.mockResolvedValueOnce(
+      synchronizeIcalAvailabilityMock.mockResolvedValueOnce(
         synchronizationResult,
       );
 
@@ -152,24 +150,41 @@ describe(
       });
 
       expect(
-        synchronizeExternalBookingsMock,
-      ).toHaveBeenCalledWith(
-        {
+        integrationConnectionPropertyFindUniqueMock,
+      ).toHaveBeenCalledWith({
+        where: {
+          connectionId_propertyId: {
+            connectionId:
+              "connection-1",
+
+            propertyId:
+              "property-1",
+          },
+        },
+
+        select: {
+          id:
+            true,
+
+          propertyId:
+            true,
+        },
+      });
+
+      expect(
+        synchronizeIcalAvailabilityMock,
+      ).toHaveBeenCalledWith({
+        client: {
           provider:
             "ICAL",
         },
-        prismaBookingDomainService,
-        {
-          updatedAfter:
-            undefined,
 
-          pageLimit:
-            undefined,
+        integrationConnectionPropertyId:
+          "connection-property-1",
 
-          maxPages:
-            undefined,
-        },
-      );
+        propertyId:
+          "property-1",
+      });
 
       expect(
         integrationConnectionUpdateMock,
@@ -192,33 +207,22 @@ describe(
       });
     });
 
-    it("propaga le opzioni di sincronizzazione", async () => {
-      const updatedAfter =
-        new Date(
-          "2026-08-01T00:00:00.000Z",
-        );
-
-      synchronizeExternalBookingsMock.mockResolvedValueOnce(
+    it("ignora le opzioni legacy perché iCal viene riconciliato come snapshot completo", async () => {
+      synchronizeIcalAvailabilityMock.mockResolvedValueOnce(
         {
-          provider:
-            "ICAL",
-
-          bookings:
-            [],
-
-          fetchedBookings:
+          fetchedEvents:
             0,
 
-          processedPages:
-            1,
-
-          insertedBookings:
+          insertedBlocks:
             0,
 
-          updatedBookings:
+          updatedBlocks:
             0,
 
-          skippedBookings:
+          deletedBlocks:
+            0,
+
+          skippedEvents:
             0,
 
           startedAt:
@@ -243,7 +247,10 @@ describe(
         propertyId:
           "property-1",
 
-        updatedAfter,
+        updatedAfter:
+          new Date(
+            "2026-08-01T00:00:00.000Z",
+          ),
 
         pageLimit:
           25,
@@ -253,20 +260,25 @@ describe(
       });
 
       expect(
-        synchronizeExternalBookingsMock,
-      ).toHaveBeenCalledWith(
-        expect.anything(),
-        prismaBookingDomainService,
-        {
-          updatedAfter,
-
-          pageLimit:
-            25,
-
-          maxPages:
-            4,
-        },
+        synchronizeIcalAvailabilityMock,
+      ).toHaveBeenCalledTimes(
+        1,
       );
+
+      expect(
+        synchronizeIcalAvailabilityMock,
+      ).toHaveBeenCalledWith({
+        client: {
+          provider:
+            "ICAL",
+        },
+
+        integrationConnectionPropertyId:
+          "connection-property-1",
+
+        propertyId:
+          "property-1",
+      });
     });
 
     it("registra ERROR e rilancia quando la sincronizzazione fallisce", async () => {
@@ -275,7 +287,7 @@ describe(
           "Feed iCal non raggiungibile.",
         );
 
-      synchronizeExternalBookingsMock.mockRejectedValueOnce(
+      synchronizeIcalAvailabilityMock.mockRejectedValueOnce(
         synchronizationError,
       );
 
@@ -335,7 +347,11 @@ describe(
       );
 
       expect(
-        synchronizeExternalBookingsMock,
+        integrationConnectionPropertyFindUniqueMock,
+      ).not.toHaveBeenCalled();
+
+      expect(
+        synchronizeIcalAvailabilityMock,
       ).not.toHaveBeenCalled();
 
       expect(
@@ -359,13 +375,47 @@ describe(
       });
     });
 
+    it("registra ERROR quando il mapping non è disponibile", async () => {
+      integrationConnectionPropertyFindUniqueMock.mockResolvedValueOnce(
+        null,
+      );
+
+      await expect(
+        synchronizeIcalConnectionProperty({
+          connectionId:
+            "connection-1",
+
+          propertyId:
+            "property-1",
+        }),
+      ).rejects.toThrow(
+        'Nessuna proprietà "property-1" associata alla connessione "connection-1".',
+      );
+
+      expect(
+        synchronizeIcalAvailabilityMock,
+      ).not.toHaveBeenCalled();
+
+      expect(
+        integrationConnectionUpdateMock,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data:
+            expect.objectContaining({
+              lastSyncStatus:
+                "ERROR",
+            }),
+        }),
+      );
+    });
+
     it("non sostituisce l'errore originale se fallisce anche il salvataggio dello stato ERROR", async () => {
       const synchronizationError =
         new Error(
           "Errore originale.",
         );
 
-      synchronizeExternalBookingsMock.mockRejectedValueOnce(
+      synchronizeIcalAvailabilityMock.mockRejectedValueOnce(
         synchronizationError,
       );
 
@@ -406,6 +456,10 @@ describe(
       ).not.toHaveBeenCalled();
 
       expect(
+        integrationConnectionPropertyFindUniqueMock,
+      ).not.toHaveBeenCalled();
+
+      expect(
         integrationConnectionUpdateMock,
       ).not.toHaveBeenCalled();
     });
@@ -428,32 +482,30 @@ describe(
       ).not.toHaveBeenCalled();
 
       expect(
+        integrationConnectionPropertyFindUniqueMock,
+      ).not.toHaveBeenCalled();
+
+      expect(
         integrationConnectionUpdateMock,
       ).not.toHaveBeenCalled();
     });
 
     it("normalizza connectionId e propertyId", async () => {
-      synchronizeExternalBookingsMock.mockResolvedValueOnce(
+      synchronizeIcalAvailabilityMock.mockResolvedValueOnce(
         {
-          provider:
-            "ICAL",
-
-          bookings:
-            [],
-
-          fetchedBookings:
+          fetchedEvents:
             0,
 
-          processedPages:
-            1,
-
-          insertedBookings:
+          insertedBlocks:
             0,
 
-          updatedBookings:
+          updatedBlocks:
             0,
 
-          skippedBookings:
+          deletedBlocks:
+            0,
+
+          skippedEvents:
             0,
 
           startedAt:
@@ -488,6 +540,22 @@ describe(
         propertyId:
           "property-1",
       });
+
+      expect(
+        integrationConnectionPropertyFindUniqueMock,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            connectionId_propertyId: {
+              connectionId:
+                "connection-1",
+
+              propertyId:
+                "property-1",
+            },
+          },
+        }),
+      );
     });
   },
 );

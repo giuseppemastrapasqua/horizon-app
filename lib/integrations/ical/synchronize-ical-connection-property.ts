@@ -1,12 +1,10 @@
 import { prisma } from "@/lib/prisma";
 
-import { prismaBookingDomainService } from "../shared/prisma-booking-domain-service";
-import {
-  synchronizeExternalBookings,
-  type SynchronizeExternalBookingsResult,
-} from "../shared/synchronize-external-bookings";
-
 import { createIcalBookingClientFromConnection } from "./create-ical-booking-client-from-connection";
+import {
+  synchronizeIcalAvailability,
+  type SynchronizeIcalAvailabilityResult,
+} from "./synchronize-ical-availability";
 
 const SYNC_STATUS_SUCCESS =
   "SUCCESS";
@@ -18,6 +16,14 @@ export type SynchronizeIcalConnectionPropertyInput = {
   connectionId: string;
   propertyId: string;
 
+  /*
+   * Mantenuti per compatibilità con i
+   * chiamanti esistenti.
+   *
+   * Un feed iCal è uno snapshot completo:
+   * non deve essere riconciliato tramite
+   * paginazione o updatedAfter.
+   */
   updatedAfter?: Date;
   pageLimit?: number;
   maxPages?: number;
@@ -26,10 +32,7 @@ export type SynchronizeIcalConnectionPropertyInput = {
 export async function synchronizeIcalConnectionProperty({
   connectionId,
   propertyId,
-  updatedAfter,
-  pageLimit,
-  maxPages,
-}: SynchronizeIcalConnectionPropertyInput): Promise<SynchronizeExternalBookingsResult> {
+}: SynchronizeIcalConnectionPropertyInput): Promise<SynchronizeIcalAvailabilityResult> {
   const normalizedConnectionId =
     connectionId.trim();
 
@@ -58,16 +61,55 @@ export async function synchronizeIcalConnectionProperty({
           normalizedPropertyId,
       });
 
-    const result =
-      await synchronizeExternalBookings(
-        client,
-        prismaBookingDomainService,
-        {
-          updatedAfter,
-          pageLimit,
-          maxPages,
+    /*
+     * La factory valida già il mapping.
+     * Recuperiamo qui soltanto il suo ID
+     * senza cambiare il contratto della
+     * factory e i relativi test.
+     */
+    const connectionProperty =
+      await prisma.integrationConnectionProperty.findUnique({
+        where: {
+          connectionId_propertyId: {
+            connectionId:
+              normalizedConnectionId,
+
+            propertyId:
+              normalizedPropertyId,
+          },
         },
+
+        select: {
+          id: true,
+          propertyId: true,
+        },
+      });
+
+    if (!connectionProperty) {
+      throw new Error(
+        `Nessuna proprietà "${normalizedPropertyId}" associata alla connessione "${normalizedConnectionId}".`,
       );
+    }
+
+    if (
+      connectionProperty.propertyId !==
+      normalizedPropertyId
+    ) {
+      throw new Error(
+        "Il mapping iCal appartiene a una struttura diversa da quella richiesta.",
+      );
+    }
+
+    const result =
+      await synchronizeIcalAvailability({
+        client,
+
+        integrationConnectionPropertyId:
+          connectionProperty.id,
+
+        propertyId:
+          normalizedPropertyId,
+      });
 
     await prisma.integrationConnection.update({
       where: {
@@ -96,9 +138,8 @@ export async function synchronizeIcalConnectionProperty({
       getErrorMessage(error);
 
     /*
-     * Proviamo a registrare il fallimento
-     * senza sostituire l'errore originale
-     * della sincronizzazione.
+     * Lo stato diagnostico non deve mai
+     * sostituire l'errore originale.
      */
     try {
       await prisma.integrationConnection.update({
@@ -120,12 +161,8 @@ export async function synchronizeIcalConnectionProperty({
       });
     } catch {
       /*
-       * Lo stato di sync è diagnostico.
-       *
-       * Se il suo aggiornamento fallisce,
-       * il chiamante deve comunque ricevere
-       * l'errore originale che ha causato
-       * il fallimento della sincronizzazione.
+       * Manteniamo l'errore originale
+       * della sincronizzazione.
        */
     }
 

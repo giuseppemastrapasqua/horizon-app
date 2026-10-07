@@ -996,15 +996,16 @@ model IntegrationConnection {
 }
 
 model IntegrationConnectionProperty {
-  id                 String                @id @default(cuid())
+  id                 String                      @id @default(cuid())
   connectionId       String
   propertyId         String
   externalPropertyId String?
   config             Json?
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
-  connection         IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  property           Property              @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+  connection         IntegrationConnection       @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  property           Property                    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  availabilityBlocks PropertyAvailabilityBlock[]
 
   @@unique([connectionId, propertyId])
   @@index([propertyId])
@@ -1285,6 +1286,13 @@ model PropertyAvailabilityBlock {
 
   createdBy User? @relation("PropertyAvailabilityBlockCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
+  integrationConnectionPropertyId String?
+  externalEventId                 String?
+  externalSummary                 String?
+
+  integrationConnectionProperty IntegrationConnectionProperty? @relation(fields: [integrationConnectionPropertyId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationConnectionPropertyId, externalEventId], map: "availability_block_integration_event_key")
   @@index([propertyId])
   @@index([propertyId, startDate, endDate])
   @@index([source])

@@ -15,6 +15,7 @@ import {
 import { fetchIcalCalendar } from "./fetch-ical-calendar";
 import { mapIcalEventToBooking } from "./map-ical-event-to-booking";
 import { parseIcalCalendar } from "./parse-ical-calendar";
+import type { IcalBookingEvent } from "./types";
 
 type IcalBookingClientConfig = {
   integrationConnectionId: string;
@@ -133,6 +134,19 @@ export class IcalBookingClient
     };
   }
 
+  async fetchEvents(): Promise<
+    IcalBookingEvent[]
+  > {
+    const body =
+      await fetchIcalCalendar(
+        this.config.feedUrl,
+      );
+
+    return parseIcalCalendar(
+      body,
+    );
+  }
+
   async verifyWebhook(
     _input: VerifyWebhookInput,
   ): Promise<VerifiedWebhook> {
@@ -146,12 +160,7 @@ export class IcalBookingClient
       new Date();
 
     try {
-      const body =
-        await fetchIcalCalendar(
-          this.config.feedUrl,
-        );
-
-      parseIcalCalendar(body);
+      await this.fetchEvents();
 
       return {
         provider:
@@ -186,13 +195,8 @@ export class IcalBookingClient
   private async loadBookings(): Promise<
     NormalizedExternalBooking[]
   > {
-    const body =
-      await fetchIcalCalendar(
-        this.config.feedUrl,
-      );
-
     const events =
-      parseIcalCalendar(body);
+      await this.fetchEvents();
 
     return events.map(
       (event) => {
