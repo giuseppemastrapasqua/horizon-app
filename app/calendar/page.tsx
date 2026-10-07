@@ -194,6 +194,7 @@ export default async function CalendarPage({
           },
 
           select: {
+            connectionId: true,
             config: true,
 
             connection: {
@@ -278,6 +279,8 @@ export default async function CalendarPage({
                 guests: true,
                 channel: true,
                 bookingStatus: true,
+                externalBookingId: true,
+                integrationConnectionId: true,
               },
             },
 
@@ -377,6 +380,13 @@ export default async function CalendarPage({
                 endDate: true,
                 source: true,
                 note: true,
+                externalEventId: true,
+                integrationConnectionProperty: {
+                  select: {
+                    connectionId: true,
+                    config: true,
+                  },
+                },
               },
             },
           },
@@ -426,6 +436,8 @@ export default async function CalendarPage({
                 guests: true,
                 channel: true,
                 bookingStatus: true,
+                externalBookingId: true,
+                integrationConnectionId: true,
               },
             },
 
@@ -453,6 +465,13 @@ export default async function CalendarPage({
                 endDate: true,
                 source: true,
                 note: true,
+                externalEventId: true,
+                integrationConnectionProperty: {
+                  select: {
+                    connectionId: true,
+                    config: true,
+                  },
+                },
               },
             },
           },
@@ -619,6 +638,66 @@ export default async function CalendarPage({
     buildCalendarDays(
       monthStart,
     );
+  const bookingIcalConnectionIds = new Set(
+    channelConnections
+      .filter(
+        (item) =>
+          item.connection.connectorKey === "ical" &&
+          getPricingChannelFromConfig(item.config) === "BOOKING",
+      )
+      .map((item) => item.connectionId),
+  );
+
+  const currentBookingIcalEventKeys = new Set(
+    (propertyData?.availabilityBlocks ?? [])
+      .filter((availabilityBlock) => {
+        const integrationConfig =
+          availabilityBlock.integrationConnectionProperty?.config;
+
+        return (
+          availabilityBlock.source === "INTEGRATION" &&
+          availabilityBlock.externalEventId &&
+          availabilityBlock.integrationConnectionProperty &&
+          integrationConfig !== undefined &&
+          getPricingChannelFromConfig(integrationConfig) === "BOOKING"
+        );
+      })
+      .map(
+        (availabilityBlock) =>
+          `${availabilityBlock.integrationConnectionProperty!.connectionId}:${availabilityBlock.externalEventId}`,
+      ),
+  );
+
+  const isBookingVisibleInCalendar = (booking: {
+    channel: string;
+    externalBookingId: string | null;
+    integrationConnectionId: string | null;
+    checkOut: Date;
+  }) => {
+    if (
+      booking.channel !== "BOOKING" ||
+      !booking.integrationConnectionId ||
+      !bookingIcalConnectionIds.has(booking.integrationConnectionId)
+    ) {
+      return true;
+    }
+
+    const today = startOfDay(new Date());
+    const checkOut = startOfDay(booking.checkOut);
+
+    if (checkOut <= today) {
+      return true;
+    }
+
+    if (!booking.externalBookingId) {
+      return false;
+    }
+
+    return currentBookingIcalEventKeys.has(
+      `${booking.integrationConnectionId}:${booking.externalBookingId}`,
+    );
+  };
+
 return (
     <>
       <Navigation />
@@ -944,7 +1023,7 @@ return (
       }
 
       const bookings =
-        propertyData.bookings.filter((booking) =>
+        propertyData.bookings.filter(isBookingVisibleInCalendar).filter((booking) =>
           isNightOccupied(
             day,
             booking.checkIn,
@@ -953,7 +1032,7 @@ return (
         );
 
       const checkIns =
-        propertyData.bookings.filter((booking) =>
+        propertyData.bookings.filter(isBookingVisibleInCalendar).filter((booking) =>
           isSameDay(
             day,
             booking.checkIn,
@@ -961,7 +1040,7 @@ return (
         );
 
       const checkOuts =
-        propertyData.bookings.filter((booking) =>
+        propertyData.bookings.filter(isBookingVisibleInCalendar).filter((booking) =>
           isSameDay(
             day,
             booking.checkOut,
@@ -1064,7 +1143,7 @@ return (
                 </p>
 
                 <p className="mt-1 text-[12px] text-[#82909C]">
-                  Disponibilità bloccata
+                  Disponibilit├á bloccata
                 </p>
               </>
             ) : (
@@ -1148,7 +1227,7 @@ return (
                       monthStart.getMonth();
 
                     const bookings =
-                      propertyData.bookings.filter(
+                      propertyData.bookings.filter(isBookingVisibleInCalendar).filter(
                         (booking) =>
                           isNightOccupied(
                             day,
@@ -1158,7 +1237,7 @@ return (
                       );
 
                     const checkIns =
-                      propertyData.bookings.filter(
+                      propertyData.bookings.filter(isBookingVisibleInCalendar).filter(
                         (booking) =>
                           isSameDay(
                             day,
@@ -1167,7 +1246,7 @@ return (
                       );
 
                     const checkOuts =
-                      propertyData.bookings.filter(
+                      propertyData.bookings.filter(isBookingVisibleInCalendar).filter(
                         (booking) =>
                           isSameDay(
                             day,
