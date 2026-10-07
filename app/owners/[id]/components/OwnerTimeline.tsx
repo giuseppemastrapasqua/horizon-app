@@ -23,8 +23,9 @@ export function OwnerTimeline({
   items,
 }: OwnerTimelineProps) {
   return (
-    <Panel>
+    <Panel dark>
       <SectionTitle
+        dark
         title="Attività recenti"
         subtitle="Ultimi aggiornamenti relativi al proprietario e al portfolio."
         action={
@@ -164,7 +165,7 @@ const timelineDotStyle = {
 const timelineLineStyle = {
   width: "2px",
   minHeight: "58px",
-  background: uiTokens.colors.border,
+  background: "rgba(148,163,184,0.24)",
 };
 
 const contentStyle = {
@@ -179,13 +180,13 @@ const contentHeaderStyle = {
 };
 
 const eventTitleStyle = {
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: uiTokens.fontSize.md,
   fontWeight: uiTokens.fontWeight.bold,
 };
 
 const eventTitleLinkStyle = {
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: uiTokens.fontSize.md,
   fontWeight: uiTokens.fontWeight.bold,
   textDecoration: "none",
@@ -193,7 +194,7 @@ const eventTitleLinkStyle = {
 
 const descriptionStyle = {
   margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.sm,
   lineHeight: 1.45,
 };

@@ -24,12 +24,14 @@ export function OwnerKPIs({
   return (
     <section style={gridStyle}>
       <MetricCard
+        dark
         title="Ricavi complessivi"
         value={formatCurrency(totalRevenue)}
         subtitle="Storico delle prenotazioni registrate"
       />
 
       <MetricCard
+        dark
         title="Ricavi mese"
         value={formatCurrency(currentMonthRevenue)}
         subtitle="Check-in nel mese corrente"
@@ -37,12 +39,14 @@ export function OwnerKPIs({
       />
 
       <MetricCard
+        dark
         title="Immobili"
         value={propertiesCount}
         subtitle="Unità collegate al proprietario"
       />
 
       <MetricCard
+        dark
         title="Booking futuri"
         value={futureBookingsCount}
         subtitle="Arrivi ancora da gestire"
@@ -50,6 +54,7 @@ export function OwnerKPIs({
       />
 
       <MetricCard
+        dark
         title="Soggiorni in corso"
         value={currentBookingsCount}
         subtitle="Ospiti attualmente presenti"
@@ -57,6 +62,7 @@ export function OwnerKPIs({
       />
 
       <MetricCard
+        dark
         title="Task aperti"
         value={openTasksCount}
         subtitle="Attività da completare"
@@ -64,6 +70,7 @@ export function OwnerKPIs({
       />
 
       <MetricCard
+        dark
         title="Criticità"
         value={operationalAlertsCount}
         subtitle="Prenotazioni che richiedono attenzione"
@@ -71,6 +78,7 @@ export function OwnerKPIs({
       />
 
       <MetricCard
+        dark
         title="Documenti"
         value={documentsCount}
         subtitle="Report, rendiconti e fatture archiviate"

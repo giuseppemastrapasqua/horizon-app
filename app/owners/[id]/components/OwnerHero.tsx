@@ -1,4 +1,4 @@
-import { ActionButton } from "@/components/ui/ActionButton";
+import Link from "next/link";
 import { ScoreCard } from "@/components/ui/ScoreCard";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { uiTokens } from "@/components/ui/tokens";
@@ -92,24 +92,29 @@ export function OwnerHero({
         </div>
 
         <div style={actionsStyle}>
-          <ActionButton
-            label="Report mensile"
+          <Link
             href={`/reports/monthly?ownerId=${owner.id}`}
-          />
+            style={reportButtonStyle}
+          >
+            Report mensile
+          </Link>
 
-          <ActionButton
-            label="Documenti"
+          <Link
             href={`/documents?ownerId=${owner.id}`}
-            variant="secondary"
-          />
+            style={documentsButtonStyle}
+          >
+            Documenti
+          </Link>
         </div>
       </div>
 
-      <ScoreCard
-        title="Victory Score"
-        score={Math.round(averageScore)}
-        label={getScoreLabel(averageScore)}
-      />
+      <div style={scoreWrapperStyle}>
+        <ScoreCard
+          title="Victory Score"
+          score={Math.round(averageScore)}
+          label={getScoreLabel(averageScore)}
+        />
+      </div>
     </section>
   );
 }
@@ -123,21 +128,20 @@ function getScoreLabel(score: number) {
 
 const heroStyle = {
   display: "grid",
-  gridTemplateColumns: "1fr 240px",
-  gap: uiTokens.spacing.lg,
-  alignItems: "stretch",
+  gridTemplateColumns: "minmax(0, 1fr) 220px",
+  gap: uiTokens.spacing.xl,
+  alignItems: "center",
   marginBottom: uiTokens.spacing.lg,
   padding: uiTokens.spacing.xl,
   borderRadius: uiTokens.radius.xl,
   background:
-    "linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)",
-  border: `1px solid ${uiTokens.colors.border}`,
+    "linear-gradient(135deg, #0f172a 0%, #111827 100%)",
+  border: "1px solid rgba(148,163,184,0.28)",
   boxShadow: uiTokens.shadow.panel,
 };
 
 const contentStyle = {
   display: "grid",
-  alignContent: "space-between",
   gap: uiTokens.spacing.lg,
 };
 
@@ -150,7 +154,7 @@ const topRowStyle = {
 };
 
 const eyebrowStyle = {
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.xs,
   fontWeight: uiTokens.fontWeight.strong,
   letterSpacing: "0.08em",
@@ -158,7 +162,7 @@ const eyebrowStyle = {
 
 const titleStyle = {
   margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: "34px",
   lineHeight: 1.1,
   letterSpacing: "-0.04em",
@@ -166,7 +170,7 @@ const titleStyle = {
 
 const subtitleStyle = {
   margin: `${uiTokens.spacing.sm} 0 0`,
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.md,
 };
 
@@ -180,7 +184,7 @@ const metaRowStyle = {
   display: "flex",
   gap: uiTokens.spacing.lg,
   flexWrap: "wrap" as const,
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.sm,
 };
 
@@ -188,4 +192,47 @@ const actionsStyle = {
   display: "flex",
   gap: uiTokens.spacing.sm,
   flexWrap: "wrap" as const,
+};
+
+const reportButtonStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "44px",
+  padding: "10px 18px",
+  borderRadius: "12px",
+  background: "#e3b95f",
+  border: "1px solid #e3b95f",
+  color: "#0f172a",
+  textDecoration: "none",
+  fontSize: uiTokens.fontSize.sm,
+  fontWeight: uiTokens.fontWeight.bold,
+  boxShadow: "0 8px 20px rgba(227,185,95,0.14)",
+};
+
+const documentsButtonStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: "44px",
+  padding: "10px 18px",
+  borderRadius: "12px",
+  background: "#1d4ed8",
+  border: "1px solid #3b82f6",
+  color: "#ffffff",
+  textDecoration: "none",
+  fontSize: uiTokens.fontSize.sm,
+  fontWeight: uiTokens.fontWeight.bold,
+  boxShadow: "0 8px 20px rgba(37,99,235,0.16)",
+};
+
+const scoreWrapperStyle = {
+  width: "100%",
+  maxWidth: "220px",
+  justifySelf: "end",
+  alignSelf: "center",
+  padding: "6px",
+  borderRadius: "24px",
+  background: "rgba(255,255,255,0.035)",
+  border: "1px solid rgba(148,163,184,0.16)",
 };

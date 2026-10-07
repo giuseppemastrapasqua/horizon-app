@@ -43,6 +43,33 @@ export async function requirePropertyAccess(propertyId: string) {
     return user;
   }
 
+  if (user.role === "OWNER") {
+    const property = await prisma.property.findFirst({
+      where: {
+        id: propertyId,
+        OR: [
+          { ownerId: user.id },
+          {
+            accesses: {
+              some: {
+                userId: user.id,
+                active: true,
+                role: "OWNER",
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!property) {
+      throw new Error("Accesso alla struttura non autorizzato.");
+    }
+
+    return user;
+  }
+
   const property = await prisma.property.findFirst({
     where: {
       id: propertyId,
@@ -144,6 +171,28 @@ export async function getAccessiblePropertyIds() {
             role: "OPERATOR",
           },
         },
+      },
+      select: { id: true },
+    });
+
+    return properties.map((property) => property.id);
+  }
+
+  if (user.role === "OWNER") {
+    const properties = await prisma.property.findMany({
+      where: {
+        OR: [
+          { ownerId: user.id },
+          {
+            accesses: {
+              some: {
+                userId: user.id,
+                active: true,
+                role: "OWNER",
+              },
+            },
+          },
+        ],
       },
       select: { id: true },
     });

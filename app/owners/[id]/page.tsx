@@ -2,15 +2,15 @@ import { notFound } from "next/navigation";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
 import { ActionButton } from "@/components/ui/ActionButton";
+import { WorkspaceTopBar } from "@/components/ui/WorkspaceTopBar";
 import { getOwnerWorkspace } from "@/lib/owners/get-owner-workspace";
+import { requireUser } from "@/lib/auth/guards";
 import { OwnerHero } from "./components/OwnerHero";
 import { OwnerKPIs } from "./components/OwnerKPIs";
 import { OwnerProperties } from "./components/OwnerProperties";
 import { OwnerTimeline } from "./components/OwnerTimeline";
 import { OwnerDocuments } from "./components/OwnerDocuments";
 import { OwnerQuickActions } from "./components/OwnerQuickActions";
-import { WorkspaceGrid } from "@/components/ui/WorkspaceGrid";
-import { WorkspaceTopBar } from "@/components/ui/WorkspaceTopBar";
 
 type OwnerDetailPageProps = {
   params: Promise<{
@@ -23,19 +23,25 @@ export default async function OwnerDetailPage({
 }: OwnerDetailPageProps) {
   const { id } = await params;
 
+  const user = await requireUser();
+
+  if (user.role === "OWNER" && user.id !== id) {
+    notFound();
+  }
+
   const workspace = await getOwnerWorkspace(id);
 
   if (!workspace) {
     notFound();
   }
 
- const {
-  owner,
-  metrics,
-  properties,
-  documents,
-  timeline,
-} = workspace;
+  const {
+    owner,
+    metrics,
+    properties,
+    documents,
+    timeline,
+  } = workspace;
 
   return (
     <>
@@ -45,24 +51,24 @@ export default async function OwnerDetailPage({
         title={owner.fullName}
         subtitle="Workspace proprietario e controllo completo del portfolio."
       >
-     <WorkspaceTopBar
-  backLabel="Torna ai proprietari"
-  backHref="/owners"
-  actions={
-    <>
-      <ActionButton
-        label="Report mensile"
-        href={`/reports/monthly?ownerId=${owner.id}`}
-      />
+        <WorkspaceTopBar
+          backLabel="Torna ai proprietari"
+          backHref="/owners"
+          actions={
+            <>
+              <ActionButton
+                label="Report mensile"
+                href={`/reports/monthly?ownerId=${owner.id}`}
+              />
 
-      <ActionButton
-        label="Archivio documenti"
-        href={`/documents?ownerId=${owner.id}`}
-        variant="secondary"
-      />
-    </>
-  }
-/>
+              <ActionButton
+                label="Archivio documenti"
+                href={`/documents?ownerId=${owner.id}`}
+                variant="secondary"
+              />
+            </>
+          }
+        />
 
         <OwnerHero
           owner={owner}
@@ -84,29 +90,29 @@ export default async function OwnerDetailPage({
           documentsCount={metrics.documentsCount}
         />
 
-        <WorkspaceGrid
-  left={
-    <>
-      <OwnerProperties properties={properties} />
+        <div style={workspaceStyle}>
+          <OwnerProperties properties={properties} />
 
-      <OwnerDocuments
-        ownerId={owner.id}
-        documents={documents}
-      />
-    </>
-  }
-  right={
-    <>
-      <OwnerTimeline items={timeline} />
+          <OwnerQuickActions
+            ownerId={owner.id}
+            firstPropertyId={properties[0]?.id ?? null}
+          />
 
-      <OwnerQuickActions
-        ownerId={owner.id}
-        firstPropertyId={properties[0]?.id ?? null}
-      />
-    </>
-  }
-/>
+          <OwnerDocuments
+            ownerId={owner.id}
+            documents={documents}
+          />
+
+          <OwnerTimeline items={timeline.slice(0, 4)} />
+        </div>
       </AppShell>
     </>
   );
 }
+
+const workspaceStyle = {
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 7fr) minmax(280px, 3fr)",
+  gap: "24px",
+  alignItems: "stretch",
+};

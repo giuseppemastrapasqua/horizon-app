@@ -61,7 +61,15 @@ export default async function LoginPage() {
   const session = await auth();
 
   if (session?.user?.id) {
-    redirect(session.user.role === "OPERATOR" ? "/bookings" : "/dashboard");
+    if (session.user.role === "OPERATOR") {
+      redirect("/bookings");
+    }
+
+    if (session.user.role === "OWNER") {
+      redirect(`/owners/${session.user.id}`);
+    }
+
+    redirect("/dashboard");
   }
 
   return (

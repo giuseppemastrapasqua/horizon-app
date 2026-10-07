@@ -55,8 +55,9 @@ export function OwnerQuickActions({
   ];
 
   return (
-    <Panel>
+    <Panel dark>
       <SectionTitle
+        dark
         title="Azioni rapide"
         subtitle="Accessi diretti alle attività più frequenti per questo proprietario."
       />
@@ -68,18 +69,18 @@ export function OwnerQuickActions({
             style={{
               ...cardStyle,
               background: action.primary
-                ? uiTokens.colors.primary
-                : uiTokens.colors.surfaceSoft,
+                ? "#111827"
+                : "#1e293b",
               border: action.primary
-                ? `1px solid ${uiTokens.colors.primary}`
-                : `1px solid ${uiTokens.colors.border}`,
+                ? "1px solid rgba(148,163,184,0.30)"
+                : "1px solid rgba(148,163,184,0.20)",
             }}
           >
             <strong
               style={{
                 color: action.primary
                   ? uiTokens.colors.primaryText
-                  : uiTokens.colors.textPrimary,
+                  : uiTokens.colors.primaryText,
                 fontSize: "15px",
                 fontWeight: uiTokens.fontWeight.strong,
               }}
@@ -92,7 +93,7 @@ export function OwnerQuickActions({
                 margin: `${uiTokens.spacing.xs} 0 ${uiTokens.spacing.md}`,
                 color: action.primary
                   ? "#cbd5e1"
-                  : uiTokens.colors.textMuted,
+                  : "#94a3b8",
                 fontSize: uiTokens.fontSize.sm,
                 lineHeight: 1.45,
               }}
@@ -115,7 +116,7 @@ export function OwnerQuickActions({
 
 const gridStyle = {
   display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(180px, 1fr))",
+  gridTemplateColumns: "1fr",
   gap: uiTokens.spacing.md,
 };
 

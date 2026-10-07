@@ -3,22 +3,41 @@ import { SectionTitle } from "@/components/ui/SectionTitle";
 import { PropertyCard } from "@/components/business/PropertyCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 
+type MonthlyPerformance = {
+  label: string;
+  revenue: number;
+  bookings: number;
+};
+
+type FirstBooking = {
+  id: string;
+  checkIn: Date;
+  nights: number;
+};
+
+type NextMonth = {
+  label: string;
+  bookings: number;
+  nights: number;
+  occupancyRate: number;
+  grossRevenue: number;
+  firstBooking: FirstBooking | null;
+};
+
 type OwnerProperty = {
   id: string;
   name: string;
   city: string;
   zone: string | null;
-
   status: string;
   commercialClass: string;
-
   currentScore: number;
-
   bookingsCount: number;
   futureBookingsCount: number;
   openTasksCount: number;
-
   revenue: number;
+  monthlyPerformance: MonthlyPerformance[];
+  nextMonth: NextMonth;
 };
 
 type Props = {
@@ -29,8 +48,9 @@ export function OwnerProperties({
   properties,
 }: Props) {
   return (
-    <Panel>
+    <Panel dark>
       <SectionTitle
+        dark
         title="Portfolio immobili"
         subtitle="Performance e situazione operativa."
       />
@@ -53,6 +73,7 @@ export function OwnerProperties({
             <PropertyCard
               key={property.id}
               property={property}
+              dark
             />
           ))}
         </div>

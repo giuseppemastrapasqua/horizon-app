@@ -29,8 +29,9 @@ export function OwnerDocuments({
   documents,
 }: OwnerDocumentsProps) {
   return (
-    <Panel>
+    <Panel dark>
       <SectionTitle
+        dark
         title="Documenti e rendiconti"
         subtitle="Report, fatture, rendiconti e documenti collegati al proprietario."
         action={
@@ -170,8 +171,8 @@ const listStyle = {
 const documentCardStyle = {
   padding: uiTokens.spacing.md,
   borderRadius: uiTokens.radius.lg,
-  background: uiTokens.colors.surfaceSoft,
-  border: `1px solid ${uiTokens.colors.border}`,
+  background: "#111827",
+  border: "1px solid rgba(148,163,184,0.22)",
 };
 
 const headerStyle = {
@@ -189,7 +190,7 @@ const titleRowStyle = {
 };
 
 const documentTitleStyle = {
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: "16px",
   fontWeight: uiTokens.fontWeight.strong,
   textDecoration: "none",
@@ -197,7 +198,7 @@ const documentTitleStyle = {
 
 const subtitleStyle = {
   margin: `${uiTokens.spacing.xs} 0 0`,
-  color: uiTokens.colors.textMuted,
+  color: "#94a3b8",
   fontSize: uiTokens.fontSize.sm,
 };
 
@@ -228,7 +229,7 @@ const metricsGridStyle = {
   gap: uiTokens.spacing.md,
   marginTop: uiTokens.spacing.md,
   paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
+  borderTop: "1px solid rgba(148,163,184,0.18)",
 };
 
 const metricLabelStyle = {
@@ -239,7 +240,7 @@ const metricLabelStyle = {
 };
 
 const metricValueStyle = {
-  color: uiTokens.colors.textPrimary,
+  color: uiTokens.colors.primaryText,
   fontSize: uiTokens.fontSize.sm,
 };
 
@@ -250,7 +251,7 @@ const footerStyle = {
   gap: uiTokens.spacing.md,
   marginTop: uiTokens.spacing.md,
   paddingTop: uiTokens.spacing.md,
-  borderTop: `1px solid ${uiTokens.colors.border}`,
+  borderTop: "1px solid rgba(148,163,184,0.18)",
   flexWrap: "wrap" as const,
 };
 
