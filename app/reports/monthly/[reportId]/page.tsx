@@ -10,6 +10,7 @@ import {
   deleteFinanceReportAdjustmentAction,
 } from "./actions";
 import { prisma } from "@/lib/prisma";
+import { buildBookingAccountingPeriodWhere } from "@/lib/finance/preview/booking-accounting-period";
 import { requirePropertyAccess } from "@/lib/auth/guards";
 
 import {
@@ -163,10 +164,14 @@ export default async function FinanceReportDetailPage({
         propertyId:
           report.property.id,
 
-        checkIn: {
-          gte: monthStart,
-          lt: nextMonthStart,
+
+        bookingStatus: {
+          not: "CANCELLED",
         },
+        ...buildBookingAccountingPeriodWhere({
+          monthStart,
+          nextMonthStart,
+        }),
       },
 
       orderBy: [

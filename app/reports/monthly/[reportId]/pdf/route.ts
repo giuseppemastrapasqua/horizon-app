@@ -4,6 +4,7 @@ import {
 } from "@/lib/pdf/finance-report";
 
 import { prisma } from "@/lib/prisma";
+import { buildBookingAccountingPeriodWhere } from "@/lib/finance/preview/booking-accounting-period";
 import { requirePropertyAccess } from "@/lib/auth/guards";
 
 import {
@@ -148,10 +149,10 @@ export async function GET(
         propertyId: report.property.id,
 
         bookingStatus: { not: "CANCELLED" },
-        checkIn: {
-          gte: monthStart,
-          lt: nextMonthStart,
-        },
+        ...buildBookingAccountingPeriodWhere({
+          monthStart,
+          nextMonthStart,
+        }),
       },
 
       orderBy: [

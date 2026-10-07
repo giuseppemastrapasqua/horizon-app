@@ -1,3 +1,4 @@
+import { buildBookingAccountingPeriodWhere } from "@/lib/finance/preview/booking-accounting-period";
 import {
   financePreviewPropertySelect,
   type FinancePreviewProperty,
@@ -30,10 +31,10 @@ export async function loadPreviewProperty({
               not: "CANCELLED",
             },
 
-            checkIn: {
-              gte: monthStart,
-              lt: nextMonthStart,
-            },
+            ...buildBookingAccountingPeriodWhere({
+              monthStart,
+              nextMonthStart,
+            }),
           },
 
           orderBy: {

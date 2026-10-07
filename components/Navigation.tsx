@@ -133,12 +133,12 @@ export function Navigation() {
           </Link>
         </div>
 
-        <nav className="relative min-h-0 flex-1 px-3 py-5">
+        <nav className="relative min-h-0 flex-1 overflow-y-auto px-3 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.22em] text-[#D8B367]/60">
             Workspace
           </p>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {visibleNavigationItems.map((item) => {
               const active = isActive(item.href);
               const Icon = item.icon;
@@ -149,7 +149,7 @@ export function Navigation() {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "group relative flex h-[43px] items-center gap-3 overflow-hidden rounded-xl px-3.5 text-[12px] font-semibold transition-all duration-200",
+                    "group relative flex h-[39px] items-center gap-3 overflow-hidden rounded-xl px-3.5 text-[12px] font-semibold transition-all duration-200",
                     active
                       ? "border border-[#D8B367]/20 bg-[#D8B367]/[0.10] text-[#FFF8EA] shadow-[0_8px_24px_rgba(0,0,0,0.18)]"
                       : "border border-transparent text-[#AAB6C2] hover:border-white/[0.05] hover:bg-white/[0.04] hover:text-white",
