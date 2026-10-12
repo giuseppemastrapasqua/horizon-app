@@ -106,7 +106,9 @@ async function main() {
       ["V1_REPORT_ALPHA"],
       ["V1_DRAFT_ALPHA", ...beta],
     );
-    await expectPage(a, `/calendar?propertyId=${propertyB}`, [], beta);
+    const foreignCalendar = await expectStatus(a, `/calendar?propertyId=${propertyB}`, [404]);
+    const foreignCalendarBody = await foreignCalendar.text();
+    for (const marker of beta) assert.ok(!foreignCalendarBody.includes(marker));
     await expectPage(a, `/bookings?propertyId=${propertyB}`, [], beta);
     await expectPage(a, `/performance?propertyId=${propertyB}`, [], beta);
     checks.push(
@@ -223,6 +225,9 @@ async function main() {
         2,
       ),
     );
+  } catch (error) {
+    console.error(JSON.stringify({ completedChecks: checks }));
+    throw error;
   } finally {
     server?.kill("SIGTERM");
     const forceStop = setTimeout(() => server?.kill("SIGKILL"), 1000);
