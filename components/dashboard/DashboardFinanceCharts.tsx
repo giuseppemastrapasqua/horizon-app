@@ -1,4 +1,4 @@
-﻿type TrendPoint = {
+type TrendPoint = {
   key: string;
   label: string;
   grossRevenue: number;
@@ -59,16 +59,16 @@ function PropertyPerformance({
     <section className="overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#09131C] shadow-[0_20px_55px_rgba(0,0,0,0.18)]">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.07] px-5 py-4">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
+          <p className="text-[11px] sm:text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
             Performance per struttura
           </p>
 
-          <p className="mt-1 text-[10px] leading-5 text-[#70808D]">
+          <p className="mt-2 text-[13px] leading-6 sm:mt-1 sm:text-[10px] sm:leading-5 text-[#70808D]">
             Ricavi e netto proprietario negli ultimi 12 mesi per singola struttura.
           </p>
         </div>
 
-        <span className="rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-[9px] font-semibold text-[#A4AFB8]">
+        <span className="rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-[11px] sm:text-[9px] font-semibold text-[#A4AFB8]">
           Ultimi 12 mesi
         </span>
       </div>
@@ -109,11 +109,11 @@ function PropertyPerformance({
                   </div>
 
                   <div className="min-w-0">
-                    <p className="truncate text-[11px] font-semibold text-[#F7F1E7]">
+                    <p className="truncate text-[15px] sm:text-[11px] font-semibold text-[#F7F1E7]">
                       {property.name}
                     </p>
 
-                    <p className="mt-1 truncate text-[9px] text-[#70808D]">
+                    <p className="mt-1 truncate text-[12px] sm:text-[9px] text-[#70808D]">
                       {location || property.city}
                     </p>
                   </div>
@@ -121,21 +121,21 @@ function PropertyPerformance({
 
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-[8px] font-medium text-[#667582]">
+                    <p className="text-[11px] sm:text-[8px] font-medium text-[#667582]">
                       Ricavi totali
                     </p>
 
-                    <p className="mt-1 text-[12px] font-semibold tabular-nums text-[#FFF8EA]">
+                    <p className="mt-1 text-[17px] sm:text-[12px] font-semibold tabular-nums text-[#FFF8EA]">
                       {formatMoney(property.grossRevenue)}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-[8px] font-medium text-[#667582]">
+                    <p className="text-[11px] sm:text-[8px] font-medium text-[#667582]">
                       Netto proprietario
                     </p>
 
-                    <p className="mt-1 text-[12px] font-semibold tabular-nums text-[#FFF8EA]">
+                    <p className="mt-1 text-[17px] sm:text-[12px] font-semibold tabular-nums text-[#FFF8EA]">
                       {formatMoney(property.netProperty)}
                     </p>
                   </div>
@@ -149,7 +149,7 @@ function PropertyPerformance({
                   ) : (
                     <span
                       className={[
-                        "inline-flex items-center gap-1 text-[10px] font-bold tabular-nums",
+                        "inline-flex items-center gap-1 text-[13px] sm:text-[10px] font-bold tabular-nums",
                         positive
                           ? "text-emerald-300"
                           : "text-rose-300",
@@ -164,7 +164,7 @@ function PropertyPerformance({
                     </span>
                   )}
 
-                  <span className="text-right text-[8px] text-[#596875]">
+                  <span className="text-right text-[10px] sm:text-[8px] text-[#596875]">
                     vs periodo precedente
                   </span>
                 </div>
@@ -227,15 +227,15 @@ function EconomicTrendChart({
     <article className="overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#09131C] shadow-[0_20px_55px_rgba(0,0,0,0.18)]">
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/[0.07] px-5 py-4">
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
+          <p className="text-[11px] sm:text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
             Performance
           </p>
 
-          <h2 className="mt-1 font-serif text-[19px] font-medium text-[#FFF8EA]">
+          <h2 className="mt-1 font-serif text-[23px] sm:text-[19px] font-medium text-[#FFF8EA]">
             Andamento economico
           </h2>
 
-          <p className="mt-1 text-[10px] leading-5 text-[#70808D]">
+          <p className="mt-2 text-[13px] leading-6 sm:mt-1 sm:text-[10px] sm:leading-5 text-[#70808D]">
             Ricavi e netto proprietario dai rendiconti degli ultimi 12 mesi.
           </p>
         </div>
@@ -427,15 +427,15 @@ function ChannelDistribution({
   return (
     <article className="overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#09131C] shadow-[0_20px_55px_rgba(0,0,0,0.18)]">
       <div className="border-b border-white/[0.07] px-5 py-4">
-        <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
+        <p className="text-[11px] sm:text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
           Channel mix
         </p>
 
-        <h2 className="mt-1 font-serif text-[19px] font-medium text-[#FFF8EA]">
+        <h2 className="mt-1 font-serif text-[23px] sm:text-[19px] font-medium text-[#FFF8EA]">
           Ricavi per canale
         </h2>
 
-        <p className="mt-1 text-[10px] leading-5 text-[#70808D]">
+        <p className="mt-2 text-[13px] leading-6 sm:mt-1 sm:text-[10px] sm:leading-5 text-[#70808D]">
           Distribuzione del valore lordo delle prenotazioni.
         </p>
       </div>
@@ -486,7 +486,7 @@ function ChannelDistribution({
                         }}
                       />
 
-                      <span className="truncate text-[9px] font-semibold text-[#93A0AA]">
+                      <span className="truncate text-[12px] sm:text-[9px] font-semibold text-[#93A0AA]">
                         {formatChannel(
                           item.channel,
                         )}
@@ -494,13 +494,13 @@ function ChannelDistribution({
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2">
-                      <span className="text-[9px] font-semibold tabular-nums text-[#F6F0E6]">
+                      <span className="text-[12px] sm:text-[9px] font-semibold tabular-nums text-[#F6F0E6]">
                         {formatMoney(
                           item.revenue,
                         )}
                       </span>
 
-                      <span className="w-9 text-right text-[8px] tabular-nums text-[#667582]">
+                      <span className="w-10 text-right text-[11px] sm:w-9 sm:text-[8px] tabular-nums text-[#667582]">
                         {percentage.toFixed(
                           0,
                         )}
@@ -530,7 +530,7 @@ function ChartLegend({
   color: string;
 }) {
   return (
-    <span className="inline-flex items-center gap-2 text-[8px] font-semibold text-[#7D8B96]">
+    <span className="inline-flex items-center gap-2 text-[11px] sm:text-[8px] font-semibold text-[#7D8B96]">
       <span
         className="h-2 w-2 rounded-full"
         style={{
@@ -549,7 +549,7 @@ function ChartEmptyState({
 }) {
   return (
     <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.015] px-8 text-center">
-      <p className="max-w-sm text-[10px] leading-5 text-[#667582]">
+      <p className="max-w-sm text-[13px] leading-6 sm:text-[10px] sm:leading-5 text-[#667582]">
         {text}
       </p>
     </div>

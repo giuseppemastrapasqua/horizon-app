@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 
@@ -49,6 +50,8 @@ export function UserMenu({
               </p>
             </div>
           ) : null}
+
+          <Link href="/profile" className="block px-3.5 py-3 text-sm text-blue-50/80 hover:bg-white/[0.07]">Il tuo profilo</Link>
 
           <button
             type="button"

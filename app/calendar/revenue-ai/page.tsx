@@ -1,3 +1,4 @@
+import { requireRoles } from "@/lib/auth/guards";
 ﻿import Link from "next/link";
 
 import {
@@ -137,6 +138,7 @@ function formatCurrency(
 export default async function RevenueAiPage({
   searchParams,
 }: RevenueAiPageProps) {
+  await requireRoles(["SUPER_ADMIN", "MANAGER"]);
   const params =
     await searchParams;
 

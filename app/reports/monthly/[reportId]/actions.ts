@@ -8,11 +8,12 @@ import {
   prisma,
 } from "@/lib/prisma";
 
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requireFinanceManager, requireFinanceProperty } from "@/lib/auth/management";
 
 export async function addFinanceReportAdjustmentAction(
   formData: FormData,
 ): Promise<void> {
+  await requireFinanceManager();
   const reportId =
     String(
       formData.get("reportId") ?? "",
@@ -86,7 +87,7 @@ export async function addFinanceReportAdjustmentAction(
     );
   }
 
-  await requirePropertyAccess(report.propertyId);
+  await requireFinanceProperty(report.propertyId);
 
   const signedAmount =
     type === "EXPENSE"
@@ -120,6 +121,7 @@ export async function addFinanceReportAdjustmentAction(
 export async function deleteFinanceReportAdjustmentAction(
   formData: FormData,
 ): Promise<void> {
+  await requireFinanceManager();
   const reportId =
     String(
       formData.get("reportId") ?? "",
@@ -149,7 +151,7 @@ export async function deleteFinanceReportAdjustmentAction(
     throw new Error("Rendiconto non trovato.");
   }
 
-  await requirePropertyAccess(report.propertyId);
+  await requireFinanceProperty(report.propertyId);
 
   const adjustment =
     await prisma.financeReportAdjustment.findFirst({

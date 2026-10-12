@@ -37,7 +37,7 @@ export async function archivePropertyAction(
     throw new Error("Struttura non specificata.");
   }
 
-  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  const user = await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const property = await prisma.property.findUnique({
     where: { id: propertyId },

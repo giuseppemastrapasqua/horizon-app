@@ -1,3 +1,5 @@
+import { OwnerDocuments } from "@/components/owner/OwnerPortal";
+import { requireRoles } from "@/lib/auth/guards";
 import { notFound } from "next/navigation";
 import { BookingOperationalStatus, TaskStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +20,8 @@ type MonthlyReportPageProps = {
 export default async function MonthlyReportPage({
   searchParams,
 }: MonthlyReportPageProps) {
+  const user = await requireRoles(["SUPER_ADMIN", "MANAGER", "FINANCE_ADMIN", "OWNER"]);
+  if (user.role === "OWNER") return <OwnerDocuments />;
   const params = await searchParams;
 
   const ownerId = params?.ownerId;
@@ -36,12 +40,15 @@ export default async function MonthlyReportPage({
   const previousMonthStart = new Date(year, monthIndex - 1, 1);
   const previousMonthEnd = monthStart;
 
-  const owner = await prisma.user.findUnique({
+  const accessiblePropertyIds = await getAccessiblePropertyIds();
+  const owner = await prisma.user.findFirst({
     where: {
       id: ownerId,
+      ...(accessiblePropertyIds !== null ? { properties: { some: { id: { in: accessiblePropertyIds } } } } : {}),
     },
     include: {
       properties: {
+        ...(accessiblePropertyIds !== null ? { where: { id: { in: accessiblePropertyIds } } } : {}),
         orderBy: {
           name: "asc",
         },
@@ -69,6 +76,7 @@ export default async function MonthlyReportPage({
       },
       bookings: {
         where: {
+          ...(accessiblePropertyIds !== null ? { propertyId: { in: accessiblePropertyIds } } : {}),
           checkIn: {
             gte: monthStart,
             lt: monthEnd,
@@ -83,6 +91,7 @@ export default async function MonthlyReportPage({
       },
       tasks: {
         where: {
+          ...(accessiblePropertyIds !== null ? { propertyId: { in: accessiblePropertyIds } } : {}),
           createdAt: {
             gte: monthStart,
             lt: monthEnd,
@@ -102,6 +111,7 @@ export default async function MonthlyReportPage({
   const previousMonthBookings = await prisma.booking.findMany({
     where: {
       ownerId: owner.id,
+      ...(accessiblePropertyIds !== null ? { propertyId: { in: accessiblePropertyIds } } : {}),
       checkIn: {
         gte: previousMonthStart,
         lt: previousMonthEnd,

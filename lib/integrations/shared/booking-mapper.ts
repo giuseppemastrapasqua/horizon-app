@@ -27,10 +27,13 @@ export function mapExternalBookingToUpsertInput(
     guestPhone:
       booking.guest.phone,
 
+    bookedAt: booking.bookedAt,
+
     checkIn: booking.checkIn,
     checkOut: booking.checkOut,
 
     guests: booking.guests,
+    roomsBooked: booking.roomsBooked,
 
     grossAmount:
       booking.grossAmount,

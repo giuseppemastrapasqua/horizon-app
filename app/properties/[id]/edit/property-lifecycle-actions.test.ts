@@ -122,7 +122,7 @@ describe("property lifecycle actions", () => {
       requirePropertyRoleMock,
     ).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
 
     expect(propertyUpdateMock).toHaveBeenCalledWith({

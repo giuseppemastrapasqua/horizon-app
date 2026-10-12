@@ -1,3 +1,5 @@
+import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
+import { ownerBookingLabel } from "@/lib/owners/portal-policy";
 import {
   buildFinanceReportPdf,
   type FinanceReportPdfInput,
@@ -5,7 +7,7 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { buildBookingAccountingPeriodWhere } from "@/lib/finance/preview/booking-accounting-period";
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyAccess, requireUser } from "@/lib/auth/guards";
 
 import {
   getPropertyOtaCommissionByChannel,
@@ -28,6 +30,8 @@ export async function GET(
   _request: Request,
   context: RouteContext
 ) {
+  const user = await requireUser();
+  if (!["SUPER_ADMIN", "MANAGER", "FINANCE_ADMIN", "OWNER"].includes(user.role)) return new Response("Accesso non autorizzato.", { status: 403 });
   const { reportId } = await context.params;
 
   const normalizedReportId =
@@ -57,6 +61,7 @@ export async function GET(
         finalAmount: true,
         formulaId: true,
         formulaName: true,
+        formulaSnapshot: true,
         createdAt: true,
 
         adjustments: {
@@ -143,7 +148,8 @@ export async function GET(
     )
   );
 
-  const bookings =
+  const savedBookings = readReportBookingSnapshot(report.formulaSnapshot);
+  const bookings = savedBookings ?? (user.role === "OWNER" ? [] :
     await prisma.booking.findMany({
       where: {
         propertyId: report.property.id,
@@ -175,9 +181,9 @@ export async function GET(
         grossAmount: true,
         currency: true,
       },
-    });
+    }));
 
-  const otaCommissionByChannel =
+  const otaCommissionByChannel = savedBookings ? new Map() :
     await getPropertyOtaCommissionByChannel(
       report.property.id,
     );
@@ -186,7 +192,7 @@ export async function GET(
     await Promise.all(
       bookings.map(
         async (booking) => {
-          const breakdown =
+          const breakdown = savedBookings?.find((item) => item.id === booking.id)?.breakdown ??
             await buildBookingFinanceBreakdown({
               formulaId:
                 report.formulaId ?? null,
@@ -338,7 +344,9 @@ export async function GET(
       true,
   };
   const pdfInput: FinanceReportPdfInput = {
-    template: resolvedPdfTemplate,
+    template: { ...resolvedPdfTemplate,
+      ...(user.role === "OWNER" && !savedBookings ? { showBookingDetails: false, showCategorySummary: false, footerText: "Rendiconto storico: totali salvati; dettaglio per prenotazione non disponibile." } : {}),
+    },
 
     title: report.title,
     referenceMonth:
@@ -392,7 +400,7 @@ export async function GET(
         }
       : null,
 
-    bookings: bookings.map(
+    bookings: (user.role === "OWNER" && !savedBookings ? [] : bookings).map(
       (booking) => {
         const breakdown =
           bookingBreakdownById.get(
@@ -404,7 +412,7 @@ export async function GET(
             booking.id,
 
           guestName:
-            booking.guestName,
+            user.role === "OWNER" ? ownerBookingLabel(booking.id) : booking.guestName,
 
           checkIn:
             booking.checkIn,

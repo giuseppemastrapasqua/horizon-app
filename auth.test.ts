@@ -5,9 +5,15 @@ const userFindUniqueMock = vi.hoisted(() => vi.fn());
 const consumeRateLimitMock = vi.hoisted(() => vi.fn());
 const createRateLimitKeyMock = vi.hoisted(() => vi.fn());
 
-const captured = vi.hoisted(() => ({
-  config: null as any,
-}));
+type TestAuthConfig = {
+  providers: Array<{ authorize?: (credentials: Record<string, unknown>, request: Request) => Promise<unknown> }>;
+  callbacks: { jwt: (input: { token: Record<string, unknown> }) => Promise<unknown> };
+};
+const captured = vi.hoisted(() => ({ config: null as TestAuthConfig | null }));
+function getConfig() {
+  if (!captured.config) throw new Error("Configurazione auth non disponibile.");
+  return captured.config;
+}
 
 vi.mock("bcryptjs", () => ({
   compare: compareMock,
@@ -27,7 +33,7 @@ vi.mock("@/lib/security/rate-limiter", () => ({
 }));
 
 vi.mock("next-auth/providers/credentials", () => ({
-  default: (config: any) => ({
+  default: (config: Record<string, unknown>) => ({
     id: "credentials",
     type: "credentials",
     ...config,
@@ -35,7 +41,7 @@ vi.mock("next-auth/providers/credentials", () => ({
 }));
 
 vi.mock("next-auth", () => ({
-  default: (config: any) => {
+  default: (config: TestAuthConfig) => {
     captured.config = config;
 
     return {
@@ -50,7 +56,7 @@ vi.mock("next-auth", () => ({
 await import("./auth");
 
 function getAuthorize() {
-  const provider = captured.config.providers[0];
+  const provider = getConfig().providers[0];
 
   if (!provider?.authorize) {
     throw new Error("Credentials authorize non trovato.");
@@ -159,5 +165,21 @@ describe("login rate limit", () => {
       email: "user@example.com",
       role: "SUPER_ADMIN",
     });
+  });
+});
+
+
+describe("session authorization refresh", () => {
+  beforeEach(() => userFindUniqueMock.mockReset());
+  it("invalidates a JWT after the account is disabled or deleted", async () => {
+    const jwt = getConfig().callbacks.jwt;
+    userFindUniqueMock.mockResolvedValueOnce({ id: "user-1", role: "OWNER", status: "DISABLED" });
+    await expect(jwt({ token: { id: "user-1", role: "SUPER_ADMIN" } })).resolves.toBeNull();
+    userFindUniqueMock.mockResolvedValueOnce(null);
+    await expect(jwt({ token: { id: "user-1" } })).resolves.toBeNull();
+  });
+  it("replaces stale privilege and contact claims with current account data", async () => {
+    userFindUniqueMock.mockResolvedValue({ id: "user-1", role: "OWNER", status: "ACTIVE", fullName: "Owner", email: "owner@example.com" });
+    await expect(getConfig().callbacks.jwt({ token: { id: "user-1", role: "SUPER_ADMIN" } })).resolves.toMatchObject({ role: "OWNER", name: "Owner", email: "owner@example.com" });
   });
 });

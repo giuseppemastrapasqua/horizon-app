@@ -36,7 +36,7 @@ async function requireBookingAccess(bookingId: string) {
 
   await requirePropertyRole(
     booking.propertyId,
-    ["OWNER", "MANAGER"],
+    ["MANAGER"],
   );
 
   return booking;

@@ -79,7 +79,7 @@ describe("savePropertyPricingOverrideAction", () => {
 
     expect(requirePropertyRoleMock).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
 
     expect(overrideCreateMock).toHaveBeenCalledWith({

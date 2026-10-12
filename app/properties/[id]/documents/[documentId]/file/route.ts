@@ -1,3 +1,4 @@
+import { ownerPropertyDocumentTypes } from "@/lib/owners/portal-policy";
 import { requirePropertyRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { decryptDocument } from "@/lib/security/document-crypto";
@@ -30,7 +31,7 @@ export async function GET(
     });
   }
 
-  await requirePropertyRole(propertyId, [
+  const user = await requirePropertyRole(propertyId, [
     "OWNER",
     "MANAGER",
   ]);
@@ -40,6 +41,7 @@ export async function GET(
       where: {
         id: normalizedDocumentId,
         propertyId,
+        ...(user.role === "OWNER" ? { type: { in: ownerPropertyDocumentTypes } } : {}),
       },
       select: {
         storageKey: true,

@@ -1,3 +1,4 @@
+import { OwnerBookings } from "@/components/owner/OwnerPortal";
 import Link from "next/link";
 
 import {
@@ -58,6 +59,7 @@ export default async function BookingsPage({
     await searchParams;
 
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerBookings propertyId={typeof params.propertyId === "string" ? params.propertyId : undefined} />;
   const isOperator = user.role === "OPERATOR";
 
   const propertyId =

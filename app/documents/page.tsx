@@ -1,3 +1,4 @@
+import { OwnerDocuments } from "@/components/owner/OwnerPortal";
 import Link from "next/link";
 import {
   DocumentStatus,
@@ -28,6 +29,7 @@ export default async function DocumentsPage({
   searchParams,
 }: DocumentsPageProps) {
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerDocuments />;
 
   if (user.role === "OPERATOR") {
     throw new Error("Accesso non autorizzato.");
@@ -218,8 +220,8 @@ export default async function DocumentsPage({
             />
           </div>
 
-          <Link href="/documents/new" className="inline-flex h-10 items-center rounded-xl border border-[#D8B367]/50 bg-[#D8B367] px-4 text-[10px] font-bold !text-[#07111A] shadow-[0_8px_20px_rgba(216,179,103,0.14)] transition hover:bg-[#E3C37E]">
-            + Nuovo documento
+          <Link href="/reports/finance" className="inline-flex h-10 items-center rounded-xl border border-[#D8B367]/50 bg-[#D8B367] px-4 text-[10px] font-bold !text-[#07111A] shadow-[0_8px_20px_rgba(216,179,103,0.14)] transition hover:bg-[#E3C37E]">
+            Prepara rendiconto
           </Link>
         </div>
 

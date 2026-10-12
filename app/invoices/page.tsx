@@ -1,3 +1,4 @@
+import { OwnerDocuments } from "@/components/owner/OwnerPortal";
 import Link from "next/link";
 
 import {
@@ -34,6 +35,7 @@ export default async function InvoicesPage({
   searchParams,
 }: InvoicesPageProps) {
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerDocuments />;
 
   if (user.role === "OPERATOR") {
     throw new Error("Accesso non autorizzato.");

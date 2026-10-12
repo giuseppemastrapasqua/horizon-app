@@ -38,7 +38,7 @@ export async function updatePropertyCheckInAction(
     throw new Error("Immobile non specificato.");
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const checkInTypes = [
     ...new Set(

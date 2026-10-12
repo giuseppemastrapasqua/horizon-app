@@ -38,7 +38,7 @@ export async function updateFinanceReportTemplateAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER", "FINANCE"]);
+  await requirePropertyRole(propertyId, ["MANAGER", "FINANCE"]);
 
   const data = {
     name:
@@ -149,7 +149,7 @@ export async function resetFinanceReportTemplateAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER", "FINANCE"]);
+  await requirePropertyRole(propertyId, ["MANAGER", "FINANCE"]);
 
   await prisma.financeReportTemplate.deleteMany({
     where: {

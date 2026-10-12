@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "BackgroundJobType" ADD VALUE 'ROSS1000_SUBMISSION';
+

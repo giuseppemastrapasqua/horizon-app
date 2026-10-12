@@ -1,3 +1,4 @@
+import { OwnerDocuments } from "@/components/owner/OwnerPortal";
 import type { CSSProperties } from "react";
 
 import Link from "next/link";
@@ -22,6 +23,7 @@ export default async function FinanceReportsPage({
   searchParams,
 }: FinanceReportsPageProps) {
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerDocuments />;
 
   if (user.role === "OPERATOR") {
     throw new Error("Accesso non autorizzato.");
@@ -75,12 +77,12 @@ export default async function FinanceReportsPage({
 
     prisma.financeReport.findMany({
       where: {
-        ...(accessiblePropertyIds !== null
-          ? { propertyId: { in: accessiblePropertyIds } }
-          : {}),
-        ...(selectedPropertyId
-          ? { propertyId: selectedPropertyId }
-          : {}),
+        AND: [
+          ...(accessiblePropertyIds !== null
+            ? [{ propertyId: { in: accessiblePropertyIds } }]
+            : []),
+          ...(selectedPropertyId ? [{ propertyId: selectedPropertyId }] : []),
+        ],
       },
 
       orderBy: [

@@ -74,7 +74,7 @@ export async function setPropertyCoverImageAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   await setPropertyCoverImage({
     propertyId,
@@ -108,7 +108,7 @@ export async function preparePropertyImageUploadAction({
 
   await requirePropertyRole(
     normalizedPropertyId,
-    ["OWNER", "MANAGER"],
+    ["MANAGER"],
   );
 
   const extension =
@@ -152,7 +152,7 @@ export async function finalizePropertyImageUploadAction({
 
   await requirePropertyRole(
     normalizedPropertyId,
-    ["OWNER", "MANAGER"],
+    ["MANAGER"],
   );
 
   let bytes: Uint8Array;
@@ -263,7 +263,7 @@ export async function uploadPropertyImageAction(
     });
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   for (const file of files) {
     await createPropertyImage({
@@ -298,7 +298,7 @@ export async function deletePropertyImageAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   await deletePropertyImage({
     propertyId,
@@ -322,7 +322,7 @@ export async function reorderPropertyImagesAction(
     return;
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   await updatePropertyImageOrder({
     propertyId,

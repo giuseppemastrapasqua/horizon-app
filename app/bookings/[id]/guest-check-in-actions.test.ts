@@ -116,6 +116,9 @@ describe("guest check-in actions", () => {
             upsert: guestCheckInLinkUpsertMock,
             updateMany: guestCheckInLinkUpdateManyMock,
           },
+          alloggiatiWebTransmission: {
+            findFirst: transmissionFindFirstMock,
+          },
         }),
     );
   });
@@ -247,6 +250,29 @@ describe("guest check-in actions", () => {
     expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
+  it.each([
+    "PREPARED",
+    "SENDING",
+    "CONFIRMED",
+    "PARTIALLY_CONFIRMED",
+    "OUTCOME_UNKNOWN",
+  ])("blocca link ed email quando la trasmissione è %s", async (status) => {
+    transmissionFindFirstMock.mockResolvedValue({
+      id: "transmission-1",
+      status,
+    });
+
+    await expect(
+      sendGuestCheckInEmailAction("booking-1"),
+    ).rejects.toThrow(
+      "Esiste già una trasmissione Alloggiati Web in corso o con esito da verificare. Il link schedina ospiti non può essere generato o rigenerato.",
+    );
+
+    expect(guestCheckInLinkFindUniqueMock).not.toHaveBeenCalled();
+    expect(guestCheckInLinkUpsertMock).not.toHaveBeenCalled();
+    expect(sendEmailMock).not.toHaveBeenCalled();
+  });
+
   it("rigenera il link se ne esiste già uno e revoca quello precedente", async () => {
     guestCheckInLinkFindUniqueMock.mockResolvedValue({
       id: "previous-link",
@@ -322,7 +348,7 @@ describe("enqueueGuestCheckInAlloggiatiSubmissionAction", () => {
 
     expect(requirePropertyRoleMock).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
 
     expect(enqueueBackgroundJobMock).toHaveBeenCalledWith({
@@ -362,6 +388,7 @@ describe("enqueueGuestCheckInAlloggiatiSubmissionAction", () => {
   it("blocca una schedina già confermata", async () => {
     transmissionFindFirstMock.mockResolvedValue({
       id: "transmission-1",
+      status: "CONFIRMED",
     });
 
     await expect(
@@ -371,6 +398,39 @@ describe("enqueueGuestCheckInAlloggiatiSubmissionAction", () => {
     );
 
     expect(enqueueBackgroundJobMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "PREPARED",
+    "SENDING",
+    "PARTIALLY_CONFIRMED",
+    "OUTCOME_UNKNOWN",
+  ])("blocca un nuovo invio quando la trasmissione è %s", async (status) => {
+    transmissionFindFirstMock.mockResolvedValue({
+      id: "transmission-1",
+      status,
+    });
+
+    await expect(
+      enqueueGuestCheckInAlloggiatiSubmissionAction("booking-1"),
+    ).rejects.toThrow(
+      "Esiste già una trasmissione Alloggiati Web in corso o con esito da verificare. Non è consentito un nuovo invio.",
+    );
+
+    expect(enqueueBackgroundJobMock).not.toHaveBeenCalled();
+  });
+
+  it("consente un nuovo tentativo dopo una trasmissione rifiutata", async () => {
+    transmissionFindFirstMock.mockResolvedValue(null);
+
+    await expect(
+      enqueueGuestCheckInAlloggiatiSubmissionAction("booking-1"),
+    ).resolves.toEqual({
+      success: true,
+      jobId: "job-1",
+    });
+
+    expect(enqueueBackgroundJobMock).toHaveBeenCalledTimes(1);
   });
 
   it("blocca l'invio prima del giorno di check-in", async () => {

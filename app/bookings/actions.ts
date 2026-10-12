@@ -10,6 +10,7 @@ import {
 import { redirect } from "next/navigation";
 
 import { requirePropertyAccess, requirePropertyRole, requireUser } from "@/lib/auth/guards";
+import { createBookingUpdateFingerprint } from "@/lib/bookings/booking-update-fingerprint";
 import { emitEvent } from "@/lib/events/emit";
 import { processPendingEvents } from "@/lib/events/process-pending";
 import { prisma } from "@/lib/prisma";
@@ -21,6 +22,7 @@ export async function createBooking(
   formData: FormData,
 ): Promise<void> {
   const user = await requireUser();
+  if (user.role === "OWNER") throw new Error("Operazione non autorizzata.");
 
   const propertyId = String(
     formData.get("propertyId") || "",
@@ -34,7 +36,7 @@ export async function createBooking(
     throw new Error("Seleziona un immobile.");
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   if (!guestName) {
     throw new Error(
@@ -113,6 +115,12 @@ export async function createBooking(
     );
   }
 
+  const roomsBooked = Number(formData.get("roomsBooked"));
+
+  if (!Number.isInteger(roomsBooked) || roomsBooked < 1) {
+    throw new Error("Il numero di camere prenotate non è valido.");
+  }
+
   const grossAmount = Number(
     formData.get("grossAmount") || 0,
   );
@@ -130,6 +138,8 @@ export async function createBooking(
   const internalNotes = optionalText(
     formData.get("internalNotes"),
   );
+
+  const bookedAt = new Date();
 
   let booking;
 
@@ -153,6 +163,12 @@ export async function createBooking(
         );
       }
 
+      const blockedPeriod = await transaction.propertyAvailabilityBlock.findFirst({
+        where: { propertyId: property.id, startDate: { lt: checkOut }, endDate: { gte: checkIn } },
+        select: { id: true },
+      });
+      if (blockedPeriod) throw new Error("Il periodo contiene giorni non disponibili.");
+
       const createdBooking =
         await transaction.booking.create({
           data: {
@@ -162,10 +178,12 @@ export async function createBooking(
             guestName,
             guestEmail,
             guestPhone,
+            bookedAt,
             checkIn,
             checkOut,
             nights,
             guests,
+            roomsBooked,
             grossAmount,
             currency: "EUR",
             bookingStatus:
@@ -197,6 +215,7 @@ export async function createBooking(
               createdBooking.checkOut.toISOString(),
             nights: createdBooking.nights,
             guests: createdBooking.guests,
+            roomsBooked: createdBooking.roomsBooked,
             grossAmount:
               createdBooking.grossAmount,
             currency:
@@ -262,6 +281,7 @@ export async function updateBookingDetails(
   formData: FormData,
 ): Promise<void> {
   const user = await requireUser();
+  if (user.role === "OWNER") throw new Error("Operazione non autorizzata.");
 
   const bookingId = String(
     formData.get("bookingId") || "",
@@ -279,11 +299,19 @@ export async function updateBookingDetails(
       select: {
         id: true,
         propertyId: true,
+        ownerId: true,
+        integrationConnectionId: true,
+        channel: true,
+        checkIn: true,
+        checkOut: true,
+        nights: true,
+        bookingStatus: true,
         guestId: true,
         guestName: true,
         guestEmail: true,
         guestPhone: true,
         guests: true,
+        roomsBooked: true,
         grossAmount: true,
         currency: true,
         property: {
@@ -300,7 +328,7 @@ export async function updateBookingDetails(
 
   await requirePropertyRole(
     existingBooking.propertyId,
-    ["OWNER", "MANAGER"],
+    ["MANAGER"],
   );
 
   const guestName = String(
@@ -318,6 +346,12 @@ export async function updateBookingDetails(
   const guests = Number(
     formData.get("guests") || 0,
   );
+
+  const roomsBooked = Number(formData.get("roomsBooked"));
+
+  if (!Number.isInteger(roomsBooked) || roomsBooked < 1) {
+    throw new Error("Il numero di camere prenotate non è valido.");
+  }
 
   const grossAmount = Number(
     formData.get("grossAmount") || 0,
@@ -380,74 +414,130 @@ export async function updateBookingDetails(
           transaction,
         );
 
-      const updatedBooking =
-        await transaction.booking.update({
-          where: {
-            id: existingBooking.id,
-          },
-          data: {
-            guestId: guest.id,
-            guestName,
-            guestEmail,
-            guestPhone,
-            guests,
-            grossAmount,
-            currency,
-            guestDataManuallyEdited: true,
-            pricingDataManuallyEdited: true,
-          },
-        });
+      const hasChanges =
+        existingBooking.guestId !== guest.id ||
+        existingBooking.guestName !== guestName ||
+        existingBooking.guestEmail !== guestEmail ||
+        existingBooking.guestPhone !== guestPhone ||
+        existingBooking.guests !== guests ||
+        (existingBooking.roomsBooked ?? null) !== roomsBooked ||
+        Number(existingBooking.grossAmount) !== grossAmount ||
+        existingBooking.currency !== currency;
 
-      await AuditService.log(
-        {
-          actorId: user.id,
-          action: AuditAction.UPDATE,
-          propertyId:
-            existingBooking.propertyId,
-          entityType:
-            AUDIT_ENTITY_TYPES.BOOKING,
-          entityId:
-            existingBooking.id,
-          description:
-            "Dati della prenotazione modificati manualmente.",
-          metadata: {
-            source: "MANUAL",
-            previous: {
-              guestId:
-                existingBooking.guestId,
-              guestName:
-                existingBooking.guestName,
-              guestEmail:
-                existingBooking.guestEmail,
-              guestPhone:
-                existingBooking.guestPhone,
-              guests:
-                existingBooking.guests,
-              grossAmount:
-                existingBooking.grossAmount,
-              currency:
-                existingBooking.currency,
+      if (hasChanges) {
+        const updatedBooking =
+          await transaction.booking.update({
+            where: {
+              id: existingBooking.id,
             },
-            current: {
-              guestId:
-                updatedBooking.guestId,
-              guestName:
-                updatedBooking.guestName,
-              guestEmail:
-                updatedBooking.guestEmail,
-              guestPhone:
-                updatedBooking.guestPhone,
-              guests:
-                updatedBooking.guests,
-              grossAmount:
-                updatedBooking.grossAmount,
-              currency:
-                updatedBooking.currency,
+            data: {
+              guestId: guest.id,
+              guestName,
+              guestEmail,
+              guestPhone,
+              guests,
+              roomsBooked,
+              grossAmount,
+              currency,
+              guestDataManuallyEdited: true,
+              pricingDataManuallyEdited: true,
+            },
+          });
+
+        await AuditService.log(
+          {
+            actorId: user.id,
+            action: AuditAction.UPDATE,
+            propertyId:
+              existingBooking.propertyId,
+            entityType:
+              AUDIT_ENTITY_TYPES.BOOKING,
+            entityId:
+              existingBooking.id,
+            description:
+              "Dati della prenotazione modificati manualmente.",
+            metadata: {
+              source: "MANUAL",
+              previous: {
+                guestId:
+                  existingBooking.guestId,
+                guestName:
+                  existingBooking.guestName,
+                guestEmail:
+                  existingBooking.guestEmail,
+                guestPhone:
+                  existingBooking.guestPhone,
+                guests:
+                  existingBooking.guests,
+                roomsBooked:
+                  existingBooking.roomsBooked,
+                grossAmount:
+                  existingBooking.grossAmount,
+                currency:
+                  existingBooking.currency,
+              },
+              current: {
+                guestId:
+                  updatedBooking.guestId,
+                guestName:
+                  updatedBooking.guestName,
+                guestEmail:
+                  updatedBooking.guestEmail,
+                guestPhone:
+                  updatedBooking.guestPhone,
+                guests:
+                  updatedBooking.guests,
+                roomsBooked:
+                  updatedBooking.roomsBooked,
+                grossAmount:
+                  updatedBooking.grossAmount,
+                currency:
+                  updatedBooking.currency,
+              },
             },
           },
-        },
-        transaction,
-      );
+          transaction,
+        );
+
+        const fingerprint =
+          createBookingUpdateFingerprint({
+            integrationConnectionId:
+              existingBooking.integrationConnectionId,
+            propertyId: existingBooking.propertyId,
+            ownerId: existingBooking.ownerId,
+            guestName: updatedBooking.guestName,
+            guestEmail: updatedBooking.guestEmail,
+            guestPhone: updatedBooking.guestPhone,
+            checkIn: existingBooking.checkIn,
+            checkOut: existingBooking.checkOut,
+            nights: existingBooking.nights,
+            guests: updatedBooking.guests,
+            roomsBooked: updatedBooking.roomsBooked,
+            grossAmount: Number(updatedBooking.grossAmount),
+            currency: updatedBooking.currency,
+            bookingStatus: existingBooking.bookingStatus,
+          });
+
+        await emitEvent(
+          {
+            eventType: "BOOKING_UPDATED",
+            aggregateType: "BOOKING",
+            aggregateId: existingBooking.id,
+            payload: {
+              bookingId: existingBooking.id,
+              propertyId: existingBooking.propertyId,
+              ownerId: existingBooking.ownerId,
+              guestName: updatedBooking.guestName,
+              checkIn: existingBooking.checkIn.toISOString(),
+              checkOut: existingBooking.checkOut.toISOString(),
+              channel: existingBooking.channel,
+            },
+            idempotencyKey:
+              `BOOKING_UPDATED:${existingBooking.id}:${fingerprint}`,
+          },
+          transaction,
+        );
+      }
     },
   );
 
@@ -461,6 +551,7 @@ export async function setBookingOperationalStatus(
     | "CLEANING_PENDING",
 ): Promise<void> {
   const user = await requireUser();
+  if (user.role === "OWNER") throw new Error("Operazione non autorizzata.");
 
   const target = await prisma.booking.findUnique({
     where: { id: bookingId },

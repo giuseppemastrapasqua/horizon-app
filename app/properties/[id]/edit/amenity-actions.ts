@@ -15,7 +15,7 @@ export async function updatePropertyAmenitiesAction(
     formData.get("propertyId") ?? "",
   ).trim();
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const amenityIds = Array.from(
     new Set(

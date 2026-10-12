@@ -1,8 +1,10 @@
+import { requireFinanceManager } from "@/lib/auth/management";
 import { AppShell } from "@/components/AppShell";
 import { Navigation } from "@/components/Navigation";
 import { FinanceFormulaBuilderClient } from "./FinanceFormulaBuilderClient";
 
-export default function FinanceFormulaBuilderPage() {
+export default async function FinanceFormulaBuilderPage() {
+  await requireFinanceManager();
   return (
     <>
       <Navigation />

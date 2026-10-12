@@ -1,3 +1,4 @@
+import { requireRoles } from "@/lib/auth/guards";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -26,6 +27,7 @@ type NewTaskPageProps = {
 export default async function NewTaskPage({
   searchParams,
 }: NewTaskPageProps) {
+  await requireRoles(["SUPER_ADMIN", "MANAGER"]);
   const params =
     await searchParams;
 

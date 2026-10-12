@@ -1,0 +1,31 @@
+name: Horizon V1 checks
+on:
+  pull_request:
+  push:
+    branches:
+      - 'codex/horizon-v1-*'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://validation:validation@127.0.0.1:5432/validation
+      AUTH_SECRET: horizon-ci-verification-only-not-for-production
+      AUTH_TRUST_HOST: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      HORIZON_ROSS1000_SEND_ENABLED: 'false'
+      HORIZON_ROSS1000_EVENT_PREPARATION_ENABLED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+      - run: npm test -- --maxWorkers=2
+      - run: npm run lint
+      - run: npm run build

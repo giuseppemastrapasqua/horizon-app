@@ -48,6 +48,10 @@ export function parseIcalCalendar(
       start,
       end,
 
+      created: component.created
+        ? new Date(component.created)
+        : undefined,
+
       status: component.status,
 
       description:

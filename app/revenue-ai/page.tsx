@@ -1,3 +1,4 @@
+import { OwnerDashboard } from "@/components/owner/OwnerPortal";
 ﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -49,7 +50,8 @@ function formatDate(date: Date) {
 export default async function RevenueAiPage({
   searchParams,
 }: RevenueAiPageProps) {
-  await requireUser();
+  const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerDashboard />;
 
   const params =
     await searchParams;

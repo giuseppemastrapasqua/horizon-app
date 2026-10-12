@@ -1,3 +1,4 @@
+import { requireFinanceManager } from "@/lib/auth/management";
 import type { CSSProperties } from "react";
 
 import Link from "next/link";
@@ -29,6 +30,7 @@ type FinancePreviewData = Awaited<
 export default async function PropertyReportPage({
   searchParams,
 }: PropertyReportPageProps) {
+  await requireFinanceManager();
   const resolvedSearchParams =
     await searchParams;
 

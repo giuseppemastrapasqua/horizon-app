@@ -75,6 +75,46 @@ describe("mapIcalEventToBooking", () => {
     );
   });
 
+  it("mappa CREATED come bookedAt senza fallback", () => {
+    const created =
+      new Date(
+        "2026-08-20T09:30:00.000Z",
+      );
+
+    const withCreated =
+      mapIcalEventToBooking({
+        event:
+          createEvent({
+            created,
+          }),
+
+        externalPropertyId:
+          "property-1",
+
+        channel:
+          BookingChannel.AIRBNB,
+      });
+
+    expect(
+      withCreated.bookedAt,
+    ).toEqual(created);
+
+    const withoutCreated =
+      mapIcalEventToBooking({
+        event:
+          createEvent(),
+
+        externalPropertyId:
+          "property-1",
+
+        channel:
+          BookingChannel.AIRBNB,
+      });
+
+    expect(
+      withoutCreated.bookedAt,
+    ).toBeUndefined();
+  });
   it("mantiene separato il provider tecnico dal canale commerciale", () => {
     const booking =
       mapIcalEventToBooking({
@@ -242,6 +282,9 @@ describe("mapIcalEventToBooking", () => {
 
       end:
         "2026-09-13T00:00:00.000Z",
+
+      created:
+        null,
 
       status:
         "CONFIRMED",

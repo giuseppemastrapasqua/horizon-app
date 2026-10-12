@@ -17,10 +17,13 @@ export type BookingUpsertInput = {
   guestEmail?: string;
   guestPhone?: string;
 
+  bookedAt?: Date;
+
   checkIn: Date;
   checkOut: Date;
 
   guests: number;
+  roomsBooked?: number;
 
   grossAmount: number;
   currency: string;

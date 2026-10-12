@@ -14,7 +14,7 @@ describe("property edit privacy", () => {
     );
 
     expect(source).toContain(
-      '["OWNER", "MANAGER"]',
+      '["MANAGER"]',
     );
 
     expect(source).toContain(

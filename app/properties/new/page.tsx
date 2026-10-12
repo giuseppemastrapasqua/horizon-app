@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/AppShell";
 import { Navigation } from "@/components/Navigation";
-import { requireUser } from "@/lib/auth/guards";
+import { requireRoles } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 import { createProperty } from "../actions";
@@ -10,11 +10,7 @@ import { OwnerSelector } from "./OwnerSelector";
 import { PropertyLocationMap } from "./PropertyLocationMap";
 
 export default async function NewPropertyPage() {
-  const user = await requireUser();
-
-  if (user.role === "OPERATOR") {
-    throw new Error("Accesso non autorizzato.");
-  }
+  await requireRoles(["SUPER_ADMIN", "MANAGER"]);
 
   const owners =
     await prisma.user.findMany({

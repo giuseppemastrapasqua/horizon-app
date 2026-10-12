@@ -133,25 +133,7 @@ describe("property access guards", () => {
       "Permessi insufficienti per modificare la struttura.",
     );
 
-    expect(mocks.findFirst).toHaveBeenCalledWith({
-      where: {
-        id: "property-1",
-        OR: [
-          {
-            accesses: {
-              some: {
-                userId: "owner-1",
-                active: true,
-                role: {
-                  in: ["MANAGER"],
-                },
-              },
-            },
-          },
-        ],
-      },
-      select: { id: true },
-    });
+    expect(mocks.findFirst).not.toHaveBeenCalled();
   });
 
   it("requires an active PropertyAccess role for modification", async () => {

@@ -20,14 +20,14 @@ const files = [
 
 describe("property configuration permissions", () => {
   for (const file of files) {
-    it(`${file} richiede OWNER o MANAGER`, () => {
+    it(`${file} richiede MANAGER`, () => {
       const source = fs.readFileSync(
         path.join(__dirname, file),
         "utf8",
       );
 
       expect(source).toMatch(
-        /requirePropertyRole\(\s*propertyId\s*,\s*\[\s*["']OWNER["']\s*,\s*["']MANAGER["']\s*,?\s*\]\s*,?\s*\)/,
+        /requirePropertyRole\(\s*propertyId\s*,\s*\[\s*["']MANAGER["']\s*,?\s*\]\s*,?\s*\)/,
       );
 
       expect(source).not.toContain(

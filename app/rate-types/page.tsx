@@ -1,3 +1,4 @@
+import { OwnerDashboard } from "@/components/owner/OwnerPortal";
 import {
   BadgePercent,
   CalendarRange,
@@ -50,6 +51,7 @@ export default async function RateTypesPage({
   searchParams,
 }: RateTypesPageProps) {
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerDashboard />;
 
   if (user.role === "OPERATOR") {
     throw new Error("Accesso non autorizzato.");

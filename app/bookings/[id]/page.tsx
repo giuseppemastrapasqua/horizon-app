@@ -1,3 +1,4 @@
+import { OwnerBookingDetail } from "@/components/owner/OwnerPortal";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
@@ -34,6 +35,7 @@ export default async function BookingPage({
 }: BookingPageProps) {
   const { id } = await params;
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerBookingDetail id={id} />;
 
   if (user.role === "OPERATOR") {
     const workspace = await getOperatorBookingWorkspace(id);

@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 import {
   AuditAction,
   BookingOperationalStatus,
@@ -7,6 +5,7 @@ import {
 } from "@prisma/client";
 
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
+import { createBookingUpdateFingerprint } from "@/lib/bookings/booking-update-fingerprint";
 import { emitEvent } from "@/lib/events/emit";
 import { findOrCreateGuest } from "@/lib/guests/find-or-create-guest";
 import { prisma } from "@/lib/prisma";
@@ -83,62 +82,6 @@ function optionalConnectionId(
     value?.trim();
 
   return normalizedValue || null;
-}
-
-function createBookingUpdateFingerprint({
-  booking,
-  bookingStatus,
-  guestName,
-  guestEmail,
-  guestPhone,
-  propertyId,
-  ownerId,
-  nights,
-  integrationConnectionId,
-}: {
-  booking: BookingUpsertInput;
-  bookingStatus: BookingStatus;
-  guestName: string;
-  guestEmail: string | null;
-  guestPhone: string | null;
-  propertyId: string;
-  ownerId: string;
-  nights: number;
-  integrationConnectionId: string | null;
-}): string {
-  const serializedState =
-    JSON.stringify({
-      integrationConnectionId,
-
-      propertyId,
-      ownerId,
-
-      guestName,
-      guestEmail,
-      guestPhone,
-
-      checkIn:
-        booking.checkIn.toISOString(),
-
-      checkOut:
-        booking.checkOut.toISOString(),
-
-      nights,
-      guests:
-        booking.guests,
-
-      grossAmount:
-        booking.grossAmount,
-
-      currency:
-        booking.currency,
-
-      bookingStatus,
-    });
-
-  return createHash("sha256")
-    .update(serializedState)
-    .digest("hex");
 }
 
 export class PrismaBookingDomainService
@@ -265,6 +208,9 @@ export class PrismaBookingDomainService
                   guestPhone:
                     true,
 
+                  bookedAt:
+                    true,
+
                   checkIn:
                     true,
 
@@ -275,6 +221,9 @@ export class PrismaBookingDomainService
                     true,
 
                   guests:
+                    true,
+
+                  roomsBooked:
                     true,
 
                   grossAmount:
@@ -333,6 +282,9 @@ export class PrismaBookingDomainService
                   guestPhone:
                     true,
 
+                  bookedAt:
+                    true,
+
                   checkIn:
                     true,
 
@@ -343,6 +295,9 @@ export class PrismaBookingDomainService
                     true,
 
                   guests:
+                    true,
+
+                  roomsBooked:
                     true,
 
                   grossAmount:
@@ -424,6 +379,16 @@ export class PrismaBookingDomainService
                 )
               ).guest;
 
+        const effectiveBookedAt =
+          existingBooking?.bookedAt ??
+          booking.bookedAt ??
+          null;
+
+        const effectiveRoomsBooked =
+          booking.roomsBooked ??
+          existingBooking?.roomsBooked ??
+          null;
+
         if (!existingBooking) {
           const createdBooking =
             await transaction.booking.create({
@@ -449,6 +414,9 @@ export class PrismaBookingDomainService
                 guestEmail,
                 guestPhone,
 
+                bookedAt:
+                  effectiveBookedAt,
+
                 checkIn:
                   booking.checkIn,
 
@@ -459,6 +427,9 @@ export class PrismaBookingDomainService
 
                 guests:
                   booking.guests,
+
+                roomsBooked:
+                  effectiveRoomsBooked,
 
                 grossAmount:
                   booking.grossAmount,
@@ -588,6 +559,9 @@ export class PrismaBookingDomainService
           existingBooking.guestPhone !==
             effectiveGuestPhone ||
 
+          (existingBooking.bookedAt?.getTime() ?? null) !==
+            (effectiveBookedAt?.getTime() ?? null) ||
+
           existingBooking.checkIn.getTime() !==
             booking.checkIn.getTime() ||
 
@@ -599,6 +573,9 @@ export class PrismaBookingDomainService
 
           existingBooking.guests !==
             effectiveBooking.guests ||
+
+          (existingBooking.roomsBooked ?? null) !==
+            effectiveRoomsBooked ||
 
           Number(
             existingBooking.grossAmount,
@@ -641,6 +618,9 @@ export class PrismaBookingDomainService
             guestEmail: effectiveGuestEmail,
             guestPhone: effectiveGuestPhone,
 
+            bookedAt:
+              effectiveBookedAt,
+
             checkIn:
               booking.checkIn,
 
@@ -651,6 +631,9 @@ export class PrismaBookingDomainService
 
             guests:
               effectiveBooking.guests,
+
+            roomsBooked:
+              effectiveRoomsBooked,
 
             grossAmount:
               effectiveBooking.grossAmount,
@@ -765,21 +748,20 @@ export class PrismaBookingDomainService
         ) {
           const fingerprint =
             createBookingUpdateFingerprint({
-              booking: effectiveBooking,
-              bookingStatus,
+              integrationConnectionId,
+              propertyId: resolvedProperty.propertyId,
+              ownerId: resolvedProperty.ownerId,
               guestName: effectiveGuestName,
               guestEmail: effectiveGuestEmail,
               guestPhone: effectiveGuestPhone,
-
-              propertyId:
-                resolvedProperty.propertyId,
-
-              ownerId:
-                resolvedProperty.ownerId,
-
+              checkIn: effectiveBooking.checkIn,
+              checkOut: effectiveBooking.checkOut,
               nights,
-
-              integrationConnectionId,
+              guests: effectiveBooking.guests,
+              roomsBooked: effectiveBooking.roomsBooked ?? null,
+              grossAmount: effectiveBooking.grossAmount,
+              currency: effectiveBooking.currency,
+              bookingStatus,
             });
 
           await emitEvent(

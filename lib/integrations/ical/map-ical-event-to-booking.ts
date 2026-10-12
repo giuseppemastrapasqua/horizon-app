@@ -103,6 +103,9 @@ export function mapIcalEventToBooking({
     checkIn,
     checkOut,
 
+    bookedAt:
+      event.created,
+
     /*
      * iCal normalmente non espone
      * il numero reale degli ospiti.
@@ -136,6 +139,9 @@ export function mapIcalEventToBooking({
 
       end:
         event.end.toISOString(),
+
+      created:
+        event.created?.toISOString() ?? null,
 
       status:
         event.status ?? null,

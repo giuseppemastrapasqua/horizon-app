@@ -70,7 +70,7 @@ export async function closePropertyPeriodAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const startDate =
     parseDate(
@@ -227,7 +227,7 @@ export async function openPropertyPeriodAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const startDate =
     parseDate(

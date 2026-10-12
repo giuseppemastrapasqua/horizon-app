@@ -149,7 +149,7 @@ describe("property photo actions", () => {
 
     expect(requirePropertyRoleMock).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
 
     expect(createPropertyImageMock).toHaveBeenNthCalledWith(
@@ -249,7 +249,7 @@ describe("property photo actions", () => {
 
     expect(requirePropertyRoleMock).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
 
     expect(
@@ -295,7 +295,7 @@ describe("property photo actions", () => {
 
     expect(requirePropertyRoleMock).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
 
     expect(readPublicStorageObjectMock).toHaveBeenCalledWith(

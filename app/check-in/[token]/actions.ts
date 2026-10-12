@@ -13,6 +13,12 @@ import { PublicAlloggiatiReferenceProvider } from "@/lib/integrations/alloggiati
 import { validateBookingGuestsForAlloggiati } from "@/lib/integrations/alloggiati-web/validate-booking-guests";
 import { classifyAndPersistBookingGuests } from "@/lib/integrations/soggiorniamo/fiscal-classification-service";
 import { PrismaSoggiorniamoFiscalClassificationRepository } from "@/lib/integrations/soggiorniamo/prisma-fiscal-classification-repository";
+import {
+  ROSS1000_TOURISM_TYPES,
+  ROSS1000_TRANSPORT_TYPES,
+  type Ross1000TourismType,
+  type Ross1000TransportType,
+} from "@/lib/integrations/ross1000/movement-types";
 import { prisma } from "@/lib/prisma";
 import {
   consumeRateLimit,
@@ -88,11 +94,26 @@ function parseDate(
   value: string,
   language: GuestCheckInLanguage,
 ) {
+  const isCanonicalDate =
+    /^\d{4}-\d{2}-\d{2}$/.test(value);
   const date = new Date(
     `${value}T00:00:00.000Z`,
   );
+  const today = new Date();
+  const todayUtc = new Date(
+    Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate(),
+    ),
+  );
 
-  if (Number.isNaN(date.getTime())) {
+  if (
+    !isCanonicalDate ||
+    Number.isNaN(date.getTime()) ||
+    date.toISOString().slice(0, 10) !== value ||
+    date > todayUtc
+  ) {
     throw new Error(
       guestCheckInServerError(
         language,
@@ -144,6 +165,54 @@ function parseRole(
 
   return value;
 }
+
+function parseRoss1000TourismType(
+  value: string,
+  language: GuestCheckInLanguage,
+): Ross1000TourismType {
+  if (!ROSS1000_TOURISM_TYPES.some((item) => item === value)) {
+    throw new Error(
+      guestCheckInServerError(language, "required"),
+    );
+  }
+
+  return value as Ross1000TourismType;
+}
+
+function parseRoss1000TransportType(
+  value: string,
+  language: GuestCheckInLanguage,
+): Ross1000TransportType {
+  if (!ROSS1000_TRANSPORT_TYPES.some((item) => item === value)) {
+    throw new Error(
+      guestCheckInServerError(language, "required"),
+    );
+  }
+
+  return value as Ross1000TransportType;
+}
+function parseRoss1000RoomsOccupied(
+  value: string,
+  roomsAvailable: number,
+  language: GuestCheckInLanguage,
+): number {
+  if (!/^\d+$/.test(value)) {
+    throw new Error(guestCheckInServerError(language, "required"));
+  }
+
+  const roomsOccupied = Number(value);
+
+  if (
+    !Number.isInteger(roomsOccupied) ||
+    roomsOccupied < 1 ||
+    roomsOccupied > roomsAvailable
+  ) {
+    throw new Error(guestCheckInServerError(language, "required"));
+  }
+
+  return roomsOccupied;
+}
+
 
 function normalizeIdentityText(value: string) {
   return value
@@ -240,6 +309,16 @@ export async function saveGuestCheckInAction(
             guests: true,
             checkIn: true,
             checkOut: true,
+            property: {
+              select: {
+                ross1000Property: {
+                  select: {
+                    id: true,
+                    roomsAvailable: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -260,6 +339,23 @@ export async function saveGuestCheckInAction(
     );
   }
 
+  const ross1000BookingData = link.booking.property.ross1000Property
+    ? {
+        tourismType: parseRoss1000TourismType(
+          requiredString(formData, "ross1000TourismType", language),
+          language,
+        ),
+        transportType: parseRoss1000TransportType(
+          requiredString(formData, "ross1000TransportType", language),
+          language,
+        ),
+        roomsOccupied: parseRoss1000RoomsOccupied(
+          requiredString(formData, "ross1000RoomsOccupied", language),
+          link.booking.property.ross1000Property.roomsAvailable,
+          language,
+        ),
+      }
+    : null;
   const guestCount = link.booking.guests;
   const guests: GuestInput[] = [];
 
@@ -504,6 +600,21 @@ export async function saveGuestCheckInAction(
           ),
         );
       }
+
+      if (
+        await resolver.isItaly(
+          guest.documentIssueCountry,
+        )
+      ) {
+        if (!guest.documentIssueCity) {
+          throw new Error(
+            guestCheckInServerError(
+              language,
+              "documentIssueCity",
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -538,12 +649,20 @@ export async function saveGuestCheckInAction(
         );
       }
 
-      const confirmedTransmission =
+      const blockingTransmission =
         await transaction.alloggiatiWebTransmission.findFirst(
           {
             where: {
               bookingId: link.booking.id,
-              status: "CONFIRMED",
+              status: {
+                in: [
+                  "PREPARED",
+                  "SENDING",
+                  "CONFIRMED",
+                  "PARTIALLY_CONFIRMED",
+                  "OUTCOME_UNKNOWN",
+                ],
+              },
             },
             select: {
               id: true,
@@ -551,7 +670,7 @@ export async function saveGuestCheckInAction(
           },
         );
 
-      if (confirmedTransmission) {
+      if (blockingTransmission) {
         throw new Error(
           guestCheckInServerError(
             language,
@@ -663,6 +782,24 @@ export async function saveGuestCheckInAction(
         repository: fiscalRepository,
       });
 
+      if (ross1000BookingData) {
+        await transaction.ross1000BookingData.upsert({
+          where: {
+            bookingId: link.booking.id,
+          },
+          create: {
+            bookingId: link.booking.id,
+            tourismType: ross1000BookingData.tourismType,
+            transportType: ross1000BookingData.transportType,
+            roomsOccupied: ross1000BookingData.roomsOccupied,
+          },
+          update: {
+            tourismType: ross1000BookingData.tourismType,
+            transportType: ross1000BookingData.transportType,
+            roomsOccupied: ross1000BookingData.roomsOccupied,
+          },
+        });
+      }
       const consumedLink =
         await transaction.guestCheckInLink.updateMany({
           where: {

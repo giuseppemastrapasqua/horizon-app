@@ -10,7 +10,7 @@ import { getPropertyRevenueAnalysis } from "@/lib/revenue/get-property-revenue-a
 
 export async function saveCalendarPeriodAction(formData: FormData) {
   const propertyId = requiredText(formData, "propertyId");
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const month = requiredText(formData, "month");
   const from = parseDate(requiredText(formData, "from"));
@@ -97,7 +97,7 @@ export async function applyRevenueAiAction(
   const propertyId =
     requiredText(formData, "propertyId");
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const month =
     requiredText(formData, "month");
@@ -169,7 +169,7 @@ export async function applyRevenueRecommendationAction(
   const propertyId =
     requiredText(formData, "propertyId");
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const month =
     requiredText(formData, "month");

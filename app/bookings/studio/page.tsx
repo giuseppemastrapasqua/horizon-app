@@ -1,3 +1,5 @@
+import { OwnerBookings } from "@/components/owner/OwnerPortal";
+import { requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 import { Navigation } from "@/components/Navigation";
@@ -5,6 +7,8 @@ import { AppShell } from "@/components/AppShell";
 import { BookingsStudioClient } from "./BookingsStudioClient";
 
 export default async function BookingsStudioPage() {
+  const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerBookings />;
   const accessiblePropertyIds = await getAccessiblePropertyIds();
 
   const bookings = await prisma.booking.findMany({

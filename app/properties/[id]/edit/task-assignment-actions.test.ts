@@ -103,7 +103,7 @@ describe("updatePropertyTaskAssignmentsAction", () => {
       requirePropertyRoleMock,
     ).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
   });
 

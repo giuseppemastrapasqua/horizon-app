@@ -1,3 +1,4 @@
+import { processRoss1000SubmissionJob } from "@/lib/job/handlers/process-ross1000-submission-job";
 import type {
   BackgroundJob,
   BackgroundJobType,
@@ -56,6 +57,9 @@ const backgroundJobHandlers = {
 
   ALLOGGIATI_WEB_SUBMISSION:
     processAlloggiatiWebSubmissionJob,
+
+  ROSS1000_SUBMISSION:
+    processRoss1000SubmissionJob,
 
   FINANCE_REPORT_GENERATION:
     createUnsupportedJobHandler(

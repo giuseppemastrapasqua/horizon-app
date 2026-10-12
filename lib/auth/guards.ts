@@ -113,6 +113,9 @@ export async function hasPropertyRole(
     return true;
   }
 
+  if (user.role === "OWNER" && !roles.includes("OWNER")) return false;
+  if (user.role === "OPERATOR" && !roles.includes("OPERATOR")) return false;
+
   const property = await prisma.property.findFirst({
     where: {
       id: propertyId,

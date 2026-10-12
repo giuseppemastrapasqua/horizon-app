@@ -93,6 +93,11 @@ export default async function GuestCheckInPage({
               initialGuests={initialGuests}
               countries={countries}
               documentTypes={documentTypes}
+              ross1000Enabled={Boolean(booking.property.ross1000Property)}
+              initialRoss1000TourismType={booking.ross1000BookingData?.tourismType ?? ""}
+              initialRoss1000TransportType={booking.ross1000BookingData?.transportType ?? ""}
+              initialRoss1000RoomsOccupied={booking.ross1000BookingData?.roomsOccupied ?? 1}
+              ross1000RoomsAvailable={booking.property.ross1000Property?.roomsAvailable ?? 0}
             />
           </div>
         </div>

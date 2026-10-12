@@ -20,6 +20,8 @@ const mocks = vi.hoisted(() => ({
   fiscalFindUnique: vi.fn(),
   fiscalUpsert: vi.fn(),
 
+
+  ross1000BookingDataUpsert: vi.fn(),
   transaction: vi.fn(),
 
   resolveCountryCode: vi.fn(),
@@ -82,6 +84,9 @@ function validFormData() {
 
   formData.set("language", "it");
   formData.set("token", "guest-token");
+  formData.set("ross1000TourismType", "Culturale");
+  formData.set("ross1000TransportType", "Auto");
+  formData.set("ross1000RoomsOccupied", "1");
 
   formData.set(
     "guests.0.role",
@@ -162,6 +167,9 @@ describe(
         revokedAt: null,
         booking: {
           id: "booking-1",
+          property: {
+            ross1000Property: null,
+          },
           guests: 1,
           checkIn: new Date(
             "2026-09-16T00:00:00.000Z",
@@ -249,6 +257,9 @@ describe(
               deleteMany:
                 mocks.bookingGuestDeleteMany,
             },
+            ross1000BookingData: {
+              upsert: mocks.ross1000BookingDataUpsert,
+            },
             soggiorniamoFiscalClassification: {
               findUnique:
                 mocks.fiscalFindUnique,
@@ -259,6 +270,55 @@ describe(
       );
     });
 
+    it.each([
+      ["formato non canonico", "01/01/1990"],
+      ["data inesistente", "1990-02-31"],
+      ["data futura", "2999-01-01"],
+    ])(
+      "rifiuta la data di nascita: %s",
+      async (_caseName, birthDate) => {
+        const formData = validFormData();
+        formData.set(
+          "guests.0.birthDate",
+          birthDate,
+        );
+
+        await expect(
+          saveGuestCheckInAction(formData),
+        ).rejects.toThrow();
+
+        expect(
+          mocks.transaction,
+        ).not.toHaveBeenCalled();
+        expect(
+          mocks.bookingGuestCreate,
+        ).not.toHaveBeenCalled();
+      },
+    );
+
+    it(
+      "richiede il comune di rilascio per un documento rilasciato in Italia",
+      async () => {
+        const formData = validFormData();
+        formData.set(
+          "guests.0.documentIssueCountry",
+          "ITALIA",
+        );
+
+        await expect(
+          saveGuestCheckInAction(formData),
+        ).rejects.toThrow(
+          "Per un documento rilasciato in Italia è obbligatorio il comune di rilascio.",
+        );
+
+        expect(
+          mocks.transaction,
+        ).not.toHaveBeenCalled();
+        expect(
+          mocks.bookingGuestCreate,
+        ).not.toHaveBeenCalled();
+      },
+    );
     it(
       "blocca tentativi ripetuti prima del lookup del link",
       async () => {
@@ -515,6 +575,139 @@ describe(
       },
     );
 
+    it("consente la correzione dei dati dopo una trasmissione REJECTED", async () => {
+      mocks.confirmedTransmissionFindFirst.mockResolvedValue(null);
+
+      await expect(
+        saveGuestCheckInAction(validFormData()),
+      ).resolves.toEqual({
+        success: true,
+      });
+
+      expect(mocks.confirmedTransmissionFindFirst).toHaveBeenCalledWith({
+        where: {
+          bookingId: "booking-1",
+          status: {
+            in: [
+              "PREPARED",
+              "SENDING",
+              "CONFIRMED",
+              "PARTIALLY_CONFIRMED",
+              "OUTCOME_UNKNOWN",
+            ],
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+    });
+
+    it.each([
+      "PREPARED",
+      "SENDING",
+      "PARTIALLY_CONFIRMED",
+      "OUTCOME_UNKNOWN",
+    ])("blocca le modifiche se la trasmissione è %s", async (status) => {
+      mocks.confirmedTransmissionFindFirst.mockResolvedValue({
+        id: "transmission-1",
+        status,
+      });
+
+      await expect(
+        saveGuestCheckInAction(validFormData()),
+      ).rejects.toThrow(
+        "La schedina è già stata trasmessa ad Alloggiati Web e i dati non possono più essere modificati.",
+      );
+
+      expect(mocks.bookingGuestFindMany).not.toHaveBeenCalled();
+      expect(mocks.bookingGuestUpdate).not.toHaveBeenCalled();
+      expect(mocks.bookingGuestCreate).not.toHaveBeenCalled();
+      expect(mocks.bookingGuestDeleteMany).not.toHaveBeenCalled();
+      expect(mocks.fiscalUpsert).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["motivo soggiorno mancante", "ross1000TourismType", ""],
+      ["mezzo di trasporto non valido", "ross1000TransportType", "TELETRASPORTO"],
+      ["camere occupate zero", "ross1000RoomsOccupied", "0"],
+      ["camere occupate oltre la capacità", "ross1000RoomsOccupied", "3"],
+      ["camere occupate non intere", "ross1000RoomsOccupied", "1.5"],
+    ])("rifiuta dati ROSS1000 mancanti o non validi: %s", async (_caseName, field, value) => {
+      mocks.linkFindUnique.mockResolvedValue({
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        revokedAt: null,
+        booking: {
+          id: "booking-1",
+          guests: 1,
+          checkIn: new Date("2026-09-16T00:00:00.000Z"),
+          checkOut: new Date("2026-09-19T00:00:00.000Z"),
+          property: {
+            ross1000Property: {
+              id: "ross-property-1",
+              roomsAvailable: 2,
+            },
+          },
+        },
+      });
+
+      const formData = validFormData();
+      formData.set(field, value);
+
+      await expect(
+        saveGuestCheckInAction(formData),
+      ).rejects.toThrow();
+
+      expect(mocks.transaction).not.toHaveBeenCalled();
+      expect(mocks.ross1000BookingDataUpsert).not.toHaveBeenCalled();
+      expect(mocks.bookingGuestCreate).not.toHaveBeenCalled();
+    });
+    it("salva motivo del soggiorno e mezzo di trasporto per una struttura ROSS1000", async () => {
+      const currentLink = await mocks.linkFindUnique.mock.results[0]?.value;
+      void currentLink;
+
+      mocks.linkFindUnique.mockResolvedValue({
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        revokedAt: null,
+        booking: {
+          id: "booking-1",
+          guests: 1,
+          checkIn: new Date("2026-09-16T00:00:00.000Z"),
+          checkOut: new Date("2026-09-19T00:00:00.000Z"),
+          property: {
+            ross1000Property: {
+              id: "ross-property-1",
+              roomsAvailable: 2,
+            },
+          },
+        },
+      });
+
+      await expect(
+        saveGuestCheckInAction(validFormData()),
+      ).resolves.toEqual({
+        success: true,
+      });
+
+      expect(
+        mocks.ross1000BookingDataUpsert,
+      ).toHaveBeenCalledWith({
+        where: {
+          bookingId: "booking-1",
+        },
+        create: {
+          bookingId: "booking-1",
+          tourismType: "Culturale",
+          transportType: "Auto",
+          roomsOccupied: 1,
+        },
+        update: {
+          tourismType: "Culturale",
+          transportType: "Auto",
+          roomsOccupied: 1,
+        },
+      });
+    });
     it(
       "blocca le modifiche se la schedina è già CONFIRMED",
       async () => {
@@ -536,7 +729,15 @@ describe(
         ).toHaveBeenCalledWith({
           where: {
             bookingId: "booking-1",
-            status: "CONFIRMED",
+            status: {
+              in: [
+                "PREPARED",
+                "SENDING",
+                "CONFIRMED",
+                "PARTIALLY_CONFIRMED",
+                "OUTCOME_UNKNOWN",
+              ],
+            },
           },
           select: {
             id: true,
@@ -566,3 +767,4 @@ describe(
     );
   },
 );
+

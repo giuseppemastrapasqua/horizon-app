@@ -4,7 +4,7 @@ import {
 } from "@/lib/pdf/commission-invoice";
 import { resolveBillingIssuerLogo } from "@/lib/invoices/resolve-billing-issuer-logo";
 import { prisma } from "@/lib/prisma";
-import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requirePropertyAccess, requireUser } from "@/lib/auth/guards";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,6 +19,8 @@ export async function GET(
   _request: Request,
   context: RouteContext
 ) {
+  const user = await requireUser();
+  if (!["SUPER_ADMIN", "MANAGER", "FINANCE_ADMIN", "OWNER"].includes(user.role)) return new Response("Accesso non autorizzato.", { status: 403 });
   const { invoiceId } = await context.params;
   const normalizedInvoiceId = invoiceId.trim();
 
@@ -62,6 +64,8 @@ export async function GET(
   }
 
   await requirePropertyAccess(invoice.propertyId);
+
+  if (user.role === "OWNER" && !["FINAL", "ISSUED"].includes(invoice.status)) return new Response("Fattura non trovata.", { status: 404 });
 
   const snapshot = parseSnapshot(invoice.content);
 

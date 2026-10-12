@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -22,6 +22,8 @@ import {
 
 import { UserMenu } from "@/components/auth/UserMenu";
 import { HorizonLogo } from "@/components/ui/HorizonLogo";
+
+import { navigationForRole } from "@/lib/auth/navigation-policy";
 
 const navigationItems = [
   {
@@ -82,12 +84,12 @@ const navigationItems = [
 
 export function Navigation() {
   const pathname = usePathname();
+  return <NavigationContent key={pathname} pathname={pathname} />;
+}
+
+function NavigationContent({ pathname }: { pathname: string }) {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   const homeHref =
     session?.user?.role === "OPERATOR"
@@ -95,11 +97,7 @@ export function Navigation() {
       : "/dashboard";
 
   const visibleNavigationItems = [
-    ...navigationItems.filter(
-      (item) =>
-        session?.user?.role !== "OPERATOR" ||
-        item.operatorVisible,
-    ),
+    ...navigationForRole(navigationItems, session?.user?.role),
     ...(session?.user?.role === "SUPER_ADMIN"
       ? [
           {
@@ -178,7 +176,7 @@ export function Navigation() {
         </nav>
 
         <div className="relative shrink-0 border-t border-white/[0.07] px-3 pb-2 pt-2">
-          {session?.user?.role !== "OPERATOR" ? (
+          {session?.user?.role && !["OWNER", "OPERATOR"].includes(session.user.role) ? (
             <Link
               href="/settings"
               className="mb-1 flex h-[36px] items-center gap-3 rounded-xl border border-transparent px-3.5 text-[12px] font-medium text-[#8493A1] transition hover:border-white/[0.05] hover:bg-white/[0.04] hover:text-white"
@@ -288,7 +286,7 @@ export function Navigation() {
             </nav>
 
             <div className="relative shrink-0 border-t border-white/[0.07] px-3 pb-4 pt-3">
-              {session?.user?.role !== "OPERATOR" ? (
+              {session?.user?.role && !["OWNER", "OPERATOR"].includes(session.user.role) ? (
                 <Link
                   href="/settings"
                   onClick={() => setMobileOpen(false)}

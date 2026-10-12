@@ -6,6 +6,8 @@ export type IcalBookingEvent = {
   start: Date;
   end: Date;
 
+  created?: Date;
+
   status?: string;
 
   description?: string;

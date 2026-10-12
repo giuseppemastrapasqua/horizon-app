@@ -9,7 +9,7 @@ export default function TouristTaxPaymentSuccessPage() {
         </h1>
 
         <p className="mt-3 text-sm text-muted-foreground">
-          Il pagamento dell'imposta di soggiorno è stato
+          Il pagamento dell&apos;imposta di soggiorno è stato
           completato. Horizon aggiornerà lo stato tramite la
           conferma sicura del provider di pagamento.
         </p>

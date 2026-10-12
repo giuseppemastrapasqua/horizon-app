@@ -1,3 +1,4 @@
+import { OwnerDashboard } from "@/components/owner/OwnerPortal";
 import Link from "next/link";
 import { BookingOperationalStatus, TaskStatus, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -8,6 +9,7 @@ import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/auth/guards";
 export default async function OwnersPage() {
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerDashboard />;
 
   if (user.role === "OPERATOR") {
     throw new Error("Accesso non autorizzato.");
