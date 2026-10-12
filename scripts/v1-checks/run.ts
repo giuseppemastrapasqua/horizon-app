@@ -1,3 +1,8 @@
+import { rm } from "node:fs/promises";
+import {
+  seedPrivateDocuments,
+  verifyPrivateDocuments,
+} from "./private-documents";
 import { verifyPersonalUse } from "./personal-use";
 import { hash } from "bcryptjs";
 import { verifyTransmissionConcurrency } from "./transmission-concurrency";
@@ -18,6 +23,7 @@ async function main() {
   const prisma = new PrismaClient();
   let server: ReturnType<typeof spawn> | undefined;
   const checks: string[] = [];
+  let privateStorageRoot: string | undefined;
   const privateAlpha = [
     "PRIVATE_GUEST_ALPHA",
     "private.alpha@example.com",
@@ -31,6 +37,7 @@ async function main() {
   ];
   try {
     await seedIsolatedData(prisma);
+    privateStorageRoot = await seedPrivateDocuments(prisma);
     await verifyTransmissionConcurrency(prisma);
     checks.push(
       "PostgreSQL serializable transmission claims prevent duplicate, unknown and confirmed re-sends",
@@ -72,6 +79,10 @@ async function main() {
       clients.set(name, client);
       checks.push(`login ${name}`);
     }
+    await verifyPrivateDocuments(clients);
+    checks.push(
+      "private encrypted attachments: allowed owner contract, denied identity/other/foreign/anonymous access, manager access and corruption handling",
+    );
     const a = clients.get("ownerA")!;
     for (const path of [
       "/dashboard",
@@ -104,9 +115,20 @@ async function main() {
       a,
       "/documents",
       ["V1_REPORT_ALPHA"],
-      ["V1_DRAFT_ALPHA", ...beta],
+      [
+        "V1_DRAFT_ALPHA",
+        "V1_PRIVATE_FILE_identity-alpha",
+        "V1_PRIVATE_FILE_other-alpha",
+        "V1_PRIVATE_FILE_contract-beta",
+        "PRIVATE_DOCUMENT_INTERNAL_NOTE",
+        ...beta,
+      ],
     );
-    const foreignCalendar = await expectStatus(a, `/calendar?propertyId=${propertyB}`, [404]);
+    const foreignCalendar = await expectStatus(
+      a,
+      `/calendar?propertyId=${propertyB}`,
+      [404],
+    );
     const foreignCalendarBody = await foreignCalendar.text();
     for (const marker of beta) assert.ok(!foreignCalendarBody.includes(marker));
     await expectPage(a, `/bookings?propertyId=${propertyB}`, [], beta);
@@ -233,6 +255,8 @@ async function main() {
     const forceStop = setTimeout(() => server?.kill("SIGKILL"), 1000);
     forceStop.unref();
     await prisma.$disconnect();
+    if (privateStorageRoot)
+      await rm(privateStorageRoot, { recursive: true, force: true });
   }
 }
 

@@ -31,10 +31,15 @@ export async function GET(
     });
   }
 
-  const user = await requirePropertyRole(propertyId, [
-    "OWNER",
-    "MANAGER",
-  ]);
+  let user;
+  try {
+    user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Permessi insufficienti per modificare la struttura.") {
+      return new Response("Documento non trovato.", { status: 404 });
+    }
+    throw error;
+  }
 
   const document =
     await prisma.propertyDocument.findFirst({
