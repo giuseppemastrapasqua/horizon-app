@@ -3,7 +3,7 @@ on:
   pull_request:
   push:
     branches:
-      - 'codex/horizon-v1-*'
+      - "codex/horizon-v1-*"
 permissions:
   contents: read
 jobs:
@@ -13,15 +13,15 @@ jobs:
     env:
       DATABASE_URL: postgresql://validation:validation@127.0.0.1:5432/validation
       AUTH_SECRET: horizon-ci-verification-only-not-for-production
-      AUTH_TRUST_HOST: 'true'
-      NEXT_TELEMETRY_DISABLED: '1'
-      HORIZON_ROSS1000_SEND_ENABLED: 'false'
-      HORIZON_ROSS1000_EVENT_PREPARATION_ENABLED: 'false'
+      AUTH_TRUST_HOST: "true"
+      NEXT_TELEMETRY_DISABLED: "1"
+      HORIZON_ROSS1000_SEND_ENABLED: "false"
+      HORIZON_ROSS1000_EVENT_PREPARATION_ENABLED: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: "24"
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npx prisma generate
@@ -29,3 +29,45 @@ jobs:
       - run: npm test -- --maxWorkers=2
       - run: npm run lint
       - run: npm run build
+
+  isolated-database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: horizon_v1_test
+          POSTGRES_USER: horizon_test
+          POSTGRES_PASSWORD: isolated-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U horizon_test -d horizon_v1_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://horizon_test:isolated-test-only@127.0.0.1:5432/horizon_v1_test
+      AUTH_SECRET: horizon-ci-isolated-session-test-only
+      AUTH_TRUST_HOST: "true"
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3101
+      NEXT_TELEMETRY_DISABLED: "1"
+      HORIZON_V1_ISOLATED_TEST: "true"
+      HORIZON_ROSS1000_SEND_ENABLED: "false"
+      HORIZON_ROSS1000_EVENT_PREPARATION_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx prisma generate
+      - name: Apply committed migrations to the empty isolated database
+        run: npx prisma migrate deploy
+      - name: Verify migrated database matches the Prisma schema
+        run: npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
+      - run: npm run build
+      - name: Verify credentials login, owner isolation, APIs, PDFs and session revocation
+        run: npx tsx scripts/v1-checks/run.ts

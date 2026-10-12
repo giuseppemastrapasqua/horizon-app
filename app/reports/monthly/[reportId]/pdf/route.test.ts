@@ -143,13 +143,14 @@ describe("saved report PDF", () => {
   });
   it("checks property authorization before producing the PDF", async () => {
     mocks.report.mockResolvedValue(report({ type: "HORIZON_STANDARD" }));
-    mocks.access.mockRejectedValue(new Error("foreign property"));
-    await expect(
-      GET(
-        new Request("https://example.test/reports/monthly/report-1/pdf"),
-        context,
-      ),
-    ).rejects.toThrow("foreign property");
+    mocks.access.mockRejectedValue(
+      new Error("Accesso alla struttura non autorizzato."),
+    );
+    const response = await GET(
+      new Request("https://example.test/reports/monthly/report-1/pdf"),
+      context,
+    );
+    expect(response.status).toBe(404);
     expect(mocks.pdf).not.toHaveBeenCalled();
   });
 });

@@ -63,7 +63,14 @@ export async function GET(
     });
   }
 
-  await requirePropertyAccess(invoice.propertyId);
+  try {
+    await requirePropertyAccess(invoice.propertyId);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Accesso alla struttura non autorizzato.") {
+      return new Response("Fattura non trovata.", { status: 404 });
+    }
+    throw error;
+  }
 
   if (user.role === "OWNER" && !["FINAL", "ISSUED"].includes(invoice.status)) return new Response("Fattura non trovata.", { status: 404 });
 

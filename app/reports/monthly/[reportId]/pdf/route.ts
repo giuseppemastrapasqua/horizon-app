@@ -130,7 +130,14 @@ export async function GET(
     );
   }
 
-  await requirePropertyAccess(report.property.id);
+  try {
+    await requirePropertyAccess(report.property.id);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Accesso alla struttura non autorizzato.") {
+      return new Response("Rendiconto non trovato.", { status: 404 });
+    }
+    throw error;
+  }
 
   const monthStart = new Date(
     Date.UTC(
