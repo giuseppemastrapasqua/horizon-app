@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
@@ -72,18 +73,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           },
         });
 
-        if (
-          !user ||
-          !user.passwordHash ||
-          user.status !== "ACTIVE"
-        ) {
+        if (!user || !user.passwordHash || user.status !== "ACTIVE") {
           return null;
         }
 
-        const passwordIsValid = await compare(
-          password,
-          user.passwordHash,
-        );
+        const passwordIsValid = await compare(password, user.passwordHash);
 
         if (!passwordIsValid) {
           return null;
@@ -94,6 +88,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.fullName,
           email: user.email,
           role: user.role,
+          credentialVersion: createHash("sha256")
+            .update(user.passwordHash)
+            .digest("hex"),
         };
       },
     }),
@@ -104,14 +101,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.credentialVersion = user.credentialVersion;
       }
 
       if (typeof token.id !== "string") return null;
       const currentUser = await prisma.user.findUnique({
         where: { id: token.id },
-        select: { id: true, role: true, status: true, fullName: true, email: true },
+        select: {
+          id: true,
+          role: true,
+          status: true,
+          fullName: true,
+          email: true,
+          passwordHash: true,
+        },
       });
-      if (!currentUser || currentUser.status !== "ACTIVE") return null;
+      if (
+        !currentUser ||
+        currentUser.status !== "ACTIVE" ||
+        !currentUser.passwordHash
+      )
+        return null;
+      const currentCredentialVersion = createHash("sha256")
+        .update(currentUser.passwordHash)
+        .digest("hex");
+      if (token.credentialVersion !== currentCredentialVersion) return null;
       token.role = currentUser.role;
       token.name = currentUser.fullName;
       token.email = currentUser.email;

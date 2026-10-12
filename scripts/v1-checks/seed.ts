@@ -14,6 +14,10 @@ export const users: Record<string, UserRole> = {
 };
 
 export function assertIsolatedDatabase() {
+  if (process.env.HORIZON_V1_ISOLATED_TEST !== "true")
+    throw new Error(
+      "Smoke tests require the dedicated local horizon_v1_test database.",
+    );
   const url = new URL(process.env.DATABASE_URL ?? "");
   if (
     process.env.HORIZON_V1_ISOLATED_TEST !== "true" ||

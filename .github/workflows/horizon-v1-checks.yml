@@ -70,4 +70,4 @@ jobs:
         run: npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
       - run: npm run build
       - name: Verify credentials login, owner isolation, APIs, PDFs and session revocation
-        run: npx tsx scripts/v1-checks/run.ts
+        run: node --import tsx scripts/v1-checks/run.ts
