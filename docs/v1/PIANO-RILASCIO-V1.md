@@ -1,3 +1,7 @@
+# Stato aggiornato al 12 ottobre 2026
+
+**Superati:** 924 test unitari, TypeScript, lint/build, 100 migrazioni su PostgreSQL isolato senza drift e 24 gruppi di controlli autenticati, inclusa la revoca al reset password. Dettagli e limiti in [VERIFICHE-ISOLATE.md](VERIFICHE-ISOLATE.md). I gate di questo documento relativi a fixture mancante, primo setup DB vuoto e test HTTP OWNER sono ora completati nell’ambiente di test; restano i pilot esterni e il confronto con il database operativo. Le sezioni sotto conservano l’audit e il piano iniziali.
+
 # Piano di completamento e rilascio V1
 
 ## Obiettivo
@@ -43,3 +47,4 @@ Sorgenti completi della patch, differenze, impronte, installer, ripristino, audi
 
 
 Aggiornamento GitHub 12/10/2026: remoto main confermato a df78ea0092664512ff087c710e01542842377880. Fixture iCal originale recuperata dal medesimo commit e impronta Git verificata. Suite completa: 918/918 test, 165 file, nessuna esclusione. I riferimenti alle esclusioni sopra descrivono il controllo precedente al collegamento GitHub. Repository pubblico, autorizzato dall’utente; nessun dato DB o segreto incluso.
+

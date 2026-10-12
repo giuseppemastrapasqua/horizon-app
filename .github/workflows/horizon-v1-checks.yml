@@ -1,9 +1,6 @@
 name: Horizon V1 checks
 on:
   pull_request:
-  push:
-    branches:
-      - "codex/horizon-v1-*"
 permissions:
   contents: read
 jobs:
