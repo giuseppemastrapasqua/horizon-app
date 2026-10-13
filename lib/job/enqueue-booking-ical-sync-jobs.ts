@@ -24,17 +24,16 @@ export async function enqueueBookingIcalSyncJobs(): Promise<number> {
       },
     });
 
-  const bookingConnections = connections.filter(
-    (connection) =>
-      getJsonString(connection.config, "channel") ===
-      BookingChannel.BOOKING,
-  );
-
-  for (const connection of bookingConnections) {
+  let scheduledConnections = 0;
+  for (const connection of connections) {
+    const channel = getJsonString(connection.config, "channel");
+    if (channel !== BookingChannel.BOOKING && channel !== BookingChannel.AIRBNB) {
+      continue;
+    }
     await enqueueBackgroundJob({
       type: "BOOKING_SYNC",
       payload: {
-        provider: "BOOKING_COM",
+        provider: channel === BookingChannel.AIRBNB ? "AIRBNB" : "BOOKING_COM",
         connectionId: connection.connectionId,
         propertyId: connection.propertyId,
         pageLimit: 50,
@@ -43,9 +42,10 @@ export async function enqueueBookingIcalSyncJobs(): Promise<number> {
       deduplicationKey:
         `booking-sync:ical:${connection.connectionId}:${connection.propertyId}`,
     });
+    scheduledConnections += 1;
   }
 
-  return bookingConnections.length;
+  return scheduledConnections;
 }
 
 function getJsonString(

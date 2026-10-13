@@ -29,7 +29,7 @@ describe("enqueueBookingIcalSyncJobs", () => {
     enqueueBackgroundJobMock.mockReset();
   });
 
-  it("accoda soltanto le connessioni iCal Booking abilitate restituite dalla query", async () => {
+  it("accoda Booking e Airbnb con provider e identità distinti", async () => {
     findManyMock.mockResolvedValue([
       {
         connectionId: "connection-booking",
@@ -49,9 +49,17 @@ describe("enqueueBookingIcalSyncJobs", () => {
 
     const count = await enqueueBookingIcalSyncJobs();
 
-    expect(count).toBe(1);
+    expect(count).toBe(2);
 
-    expect(enqueueBackgroundJobMock).toHaveBeenCalledOnce();
+    expect(enqueueBackgroundJobMock).toHaveBeenCalledTimes(2);
+    expect(findManyMock).toHaveBeenCalledWith(expect.objectContaining({
+      where: { connection: { connectorKey: "ical", transport: "ICAL", enabled: true } },
+    }));
+    expect(enqueueBackgroundJobMock).toHaveBeenNthCalledWith(2, {
+      type: "BOOKING_SYNC",
+      payload: { provider: "AIRBNB", connectionId: "connection-other", propertyId: "property-2", pageLimit: 50, maxPages: 20 },
+      deduplicationKey: "booking-sync:ical:connection-other:property-2",
+    });
 
     expect(enqueueBackgroundJobMock).toHaveBeenCalledWith({
       type: "BOOKING_SYNC",
@@ -65,5 +73,26 @@ describe("enqueueBookingIcalSyncJobs", () => {
       deduplicationKey:
         "booking-sync:ical:connection-booking:property-1",
     });
+  });
+
+  it("ignora configurazioni mancanti, malformate e canali non supportati", async () => {
+    findManyMock.mockResolvedValue([null, [], {}, { channel: 7 }, { channel: "VRBO" }].map(config => ({
+      connectionId: "connection-invalid", propertyId: "property-1", config,
+    })));
+    expect(await enqueueBookingIcalSyncJobs()).toBe(0);
+    expect(enqueueBackgroundJobMock).not.toHaveBeenCalled();
+  });
+
+  it("mantiene chiavi stabili e distinte per due proprietà della stessa connessione", async () => {
+    findManyMock.mockResolvedValue(["property-1", "property-2"].map(propertyId => ({
+      connectionId: "connection-airbnb", propertyId, config: { channel: "AIRBNB" },
+    })));
+    await enqueueBookingIcalSyncJobs();
+    await enqueueBookingIcalSyncJobs();
+    const keys = enqueueBackgroundJobMock.mock.calls.map(([input]) => input.deduplicationKey);
+    expect(keys).toEqual([
+      "booking-sync:ical:connection-airbnb:property-1", "booking-sync:ical:connection-airbnb:property-2",
+      "booking-sync:ical:connection-airbnb:property-1", "booking-sync:ical:connection-airbnb:property-2",
+    ]);
   });
 });
