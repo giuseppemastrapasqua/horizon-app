@@ -10,6 +10,7 @@ type RunBackgroundJobWorkerInput = {
   processNextJob?: () => Promise<boolean>;
   wait?: (milliseconds: number) => Promise<void>;
   onError?: (error: unknown) => void;
+  beforePoll?: () => Promise<void>;
 };
 
 export async function runBackgroundJobWorker({
@@ -19,12 +20,14 @@ export async function runBackgroundJobWorker({
   processNextJob = processNextBackgroundJob,
   wait = waitForDelay,
   onError = () => undefined,
+  beforePoll = async () => undefined,
 }: RunBackgroundJobWorkerInput): Promise<void> {
   validateDelay(idleDelayMs, "idleDelayMs");
   validateDelay(errorDelayMs, "errorDelayMs");
 
   while (!isShutdownRequested()) {
     try {
+      await beforePoll();
       const processed = await processNextJob();
 
       if (!processed) {

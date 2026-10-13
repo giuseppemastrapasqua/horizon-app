@@ -65,6 +65,8 @@ jobs:
         run: npx prisma migrate deploy
       - name: Verify migrated database matches the Prisma schema
         run: npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --exit-code
+      - name: Verify iCal scheduling, worker concurrency, batch limits and retries
+        run: npx vitest run scripts/v1-checks/ical-worker.integration.test.ts --maxWorkers=1
       - run: npm run build
       - name: Verify credentials login, owner isolation, APIs, PDFs and session revocation
         run: node --import tsx scripts/v1-checks/run.ts
