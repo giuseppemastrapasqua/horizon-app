@@ -154,7 +154,11 @@ export function PropertyOwnerInvitesSection({
   }
 
   async function copyLink(link: string) {
-    await navigator.clipboard.writeText(link);
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      setError("Impossibile copiare il link: selezionalo e copialo manualmente.");
+    }
   }
 
   function handleCreate(
@@ -769,7 +773,7 @@ export function PropertyOwnerInvitesSection({
 
       {latestLink ? (
         <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-          <p className="text-sm font-semibold text-emerald-800">
+          <p role="status" aria-live="polite" className="text-sm font-semibold text-emerald-800">
             {inviteNotice}
           </p>
 
@@ -777,6 +781,7 @@ export function PropertyOwnerInvitesSection({
             <input
               readOnly
               value={latestLink}
+              aria-label="Link di attivazione proprietario"
               className="min-w-0 flex-1 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-700"
             />
 
