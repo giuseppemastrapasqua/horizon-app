@@ -21,6 +21,12 @@ jobs:
           node-version: "24"
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify isolated cloud clock
+        working-directory: workers/ical-clock
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm test
+          npm run build
       - run: npx prisma generate
       - run: npx tsc --noEmit
       - run: npm test -- --maxWorkers=2
