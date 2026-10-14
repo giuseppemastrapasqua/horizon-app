@@ -37,14 +37,14 @@ const PROVIDERS: Array<{
     value: "BOOKING_COM",
     label: "Booking.com",
     description:
-      "Importa le prenotazioni dal calendario iCal esportato da Booking.com.",
+      "Aggiorna le date occupate dal calendario esportato da Booking.com.",
     synchronizationAvailable: true,
   },
   {
     value: "AIRBNB",
     label: "Airbnb",
     description:
-      "Importa le prenotazioni dal calendario iCal esportato da Airbnb.",
+      "Aggiorna le date occupate dal calendario esportato da Airbnb.",
     synchronizationAvailable: true,
   },
   {
@@ -111,8 +111,8 @@ export async function PropertyIntegrationsSection({
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
               Collega la struttura ai servizi esterni utilizzati da Horizon.
-              Booking.com e Airbnb utilizzano il calendario iCal per
-              importare le prenotazioni.
+              Booking.com e Airbnb aggiornano le disponibilità tramite il calendario iCal.
+              Nomi degli ospiti, importi e schede prenotazione non vengono importati da questo collegamento.
             </p>
           </div>
 

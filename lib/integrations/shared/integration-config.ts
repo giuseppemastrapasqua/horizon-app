@@ -37,7 +37,7 @@ export const integrationConfig = {
       false,
     ),
 
-    useMock: optionalBoolean(
+    useMock: process.env.NODE_ENV !== "production" && optionalBoolean(
       "BOOKING_COM_USE_MOCK",
       true,
     ),
