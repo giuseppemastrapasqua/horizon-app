@@ -51,8 +51,8 @@ const navigationItems = [
     operatorVisible: true,
   },
   {
-    href: "/revenue-ai",
-    label: "Revenue AI",
+    href: "/revenue-ai/daily",
+    label: "Prezzi consigliati",
     icon: Sparkles,
     operatorVisible: false,
   },
