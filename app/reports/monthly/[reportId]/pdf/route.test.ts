@@ -119,15 +119,26 @@ describe("saved report PDF", () => {
     expect(mocks.breakdown).not.toHaveBeenCalled();
     expect(mocks.commissions).not.toHaveBeenCalled();
   });
-  it("does not reconstruct legacy OWNER detail from live guest data", async () => {
+  it("shows scoped anonymous legacy OWNER detail with a reconstruction warning and saved totals", async () => {
     mocks.report.mockResolvedValue(report({ type: "HORIZON_STANDARD" }));
+    mocks.bookings.mockResolvedValue([{
+      id: "booking-1", guestName: "Private guest", checkIn: new Date("2026-10-01"),
+      checkOut: new Date("2026-10-03"), nights: 2, guests: 2,
+      channel: "BOOKING", currency: "EUR", grossAmount: 600,
+    }]);
+    mocks.breakdown.mockResolvedValue({ grossBooking: 600, cleaningCost: 70, netProperty: 300 });
     await GET(
       new Request("https://example.test/reports/monthly/report-1/pdf"),
       context,
     );
-    expect(mocks.bookings).not.toHaveBeenCalled();
-    expect(mocks.pdf.mock.calls[0][0].bookings).toEqual([]);
-    expect(mocks.pdf.mock.calls[0][0].template.showBookingDetails).toBe(false);
+    expect(mocks.bookings.mock.calls[0][0].where.propertyId).toBe("own");
+    const input = mocks.pdf.mock.calls[0][0];
+    expect(input.bookings[0]).toMatchObject({ guestName: "Prenotazione OOKING-1", grossBooking: 600 });
+    expect(JSON.stringify(input.bookings)).not.toContain("Private guest");
+    expect(input.template.showBookingDetails).toBe(true);
+    expect(input.template.footerText).toContain("impostazioni attuali");
+    expect(input.grossRevenue).toBe(500);
+    expect(input.finalAmount).toBe(245.7);
   });
   it("denies OPERATOR before loading a report", async () => {
     mocks.user.mockResolvedValue({ id: "operator", role: "OPERATOR" });
@@ -151,6 +162,7 @@ describe("saved report PDF", () => {
       context,
     );
     expect(response.status).toBe(404);
+    expect(mocks.bookings).not.toHaveBeenCalled();
     expect(mocks.pdf).not.toHaveBeenCalled();
   });
 });

@@ -156,7 +156,7 @@ export async function GET(
   );
 
   const savedBookings = readReportBookingSnapshot(report.formulaSnapshot);
-  const bookings = savedBookings ?? (user.role === "OWNER" ? [] :
+  const bookings = savedBookings ?? (
     await prisma.booking.findMany({
       where: {
         propertyId: report.property.id,
@@ -352,7 +352,12 @@ export async function GET(
   };
   const pdfInput: FinanceReportPdfInput = {
     template: { ...resolvedPdfTemplate,
-      ...(user.role === "OWNER" && !savedBookings ? { showBookingDetails: false, showCategorySummary: false, footerText: "Rendiconto storico: totali salvati; dettaglio per prenotazione non disponibile." } : {}),
+      ...(!savedBookings ? {
+        footerText: [
+          "Totali salvati. Dettaglio ricostruito da prenotazioni e impostazioni attuali; può differire dal rendiconto originario.",
+          resolvedPdfTemplate.footerText,
+        ].filter(Boolean).join(" "),
+      } : {}),
     },
 
     title: report.title,
@@ -407,7 +412,7 @@ export async function GET(
         }
       : null,
 
-    bookings: (user.role === "OWNER" && !savedBookings ? [] : bookings).map(
+    bookings: bookings.map(
       (booking) => {
         const breakdown =
           bookingBreakdownById.get(
