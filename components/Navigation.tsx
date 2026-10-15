@@ -27,6 +27,12 @@ import { navigationForRole } from "@/lib/auth/navigation-policy";
 
 const navigationItems = [
   {
+    href: "/reports/tourist-tax",
+    label: "Tassa di soggiorno",
+    icon: ReceiptText,
+    operatorVisible: false,
+  },
+  {
     href: "/reports/cleaning",
     label: "Rendiconto pulizie",
     icon: ClipboardCheck,
