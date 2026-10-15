@@ -1390,6 +1390,20 @@ function drawFooter({
   font: PDFFont;
   input: FinanceReportPdfInput;
 }) {
+  if (input.template.footerText) {
+    page.drawText(truncateText({
+      text: normalizePdfText(input.template.footerText),
+      font,
+      size: 6.5,
+      maxWidth: CONTENT_WIDTH,
+    }), {
+      x: PAGE_MARGIN,
+      y: PAGE_MARGIN + 8,
+      size: 6.5,
+      font,
+      color: rgb(0.5, 0.35, 0.15),
+    });
+  }
   const footerText =
     `Generato il ${formatDateTime(
       new Date()

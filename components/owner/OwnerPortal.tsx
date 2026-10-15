@@ -1,3 +1,5 @@
+import { OwnerReportBookingDetails } from "./OwnerReportBookingDetails";
+import { ownerBookingPeriod } from "@/lib/owners/booking-period";
 import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
 import type { BookingFinanceBreakdown } from "@/lib/finance/calculations/build-booking-finance-breakdown";
 import {
@@ -197,12 +199,15 @@ export async function OwnerDashboard() {
   );
 }
 
-export async function OwnerBookings({ propertyId }: { propertyId?: string }) {
+export async function OwnerBookings({ propertyId, from, to }: { propertyId?: string; from?: string; to?: string }) {
   const ids = await ownerScope();
-  const bookings = await prisma.booking.findMany({
-    where: { propertyId: scopedPropertyFilter(ids, propertyId) },
+  let period: ReturnType<typeof ownerBookingPeriod> = {};
+  let periodError = "";
+  try { period = ownerBookingPeriod(from, to); } catch (error) { periodError = error instanceof Error ? error.message : "Periodo non valido."; }
+  const results = periodError ? [] : await prisma.booking.findMany({
+    where: { propertyId: scopedPropertyFilter(ids, propertyId), ...period },
     orderBy: { checkIn: "desc" },
-    take: 200,
+    take: 201,
     select: {
       id: true,
       checkIn: true,
@@ -216,11 +221,20 @@ export async function OwnerBookings({ propertyId }: { propertyId?: string }) {
       property: { select: { name: true } },
     },
   });
+  const bookings = results.slice(0, 200);
   return (
     <Frame title="Prenotazioni">
+      <form method="get" className="flex flex-wrap items-end gap-4">
+        {propertyId ? <input type="hidden" name="propertyId" value={propertyId} /> : null}
+        <label className="text-sm">Dal<input type="date" name="from" defaultValue={from ?? ""} className="mt-2 block rounded-xl bg-[#152330] p-3" /></label>
+        <label className="text-sm">Al<input type="date" name="to" defaultValue={to ?? ""} className="mt-2 block rounded-xl bg-[#152330] p-3" /></label>
+        <button className="rounded-xl border border-[#D8B367]/40 px-5 py-3">Filtra</button>
+        <Link className="py-3 text-sm text-[#D8B367]" href={propertyId ? `/bookings?propertyId=${encodeURIComponent(propertyId)}` : "/bookings"}>Reimposta</Link>
+      </form>
+      {periodError ? <p role="alert" className="text-amber-200">{periodError}</p> : null}
       <p className="text-sm text-white/60">
-        Ultime 200 prenotazioni. Gli ospiti sono identificati con un riferimento
-        anonimo.
+        Soggiorni presenti nel periodo scelto, inclusi quelli iniziati prima di Dal. Il giorno di check-out è escluso. Gli ospiti sono identificati con un riferimento anonimo.
+        {results.length > 200 ? " Mostrate le prime 200 prenotazioni: restringi il periodo per visualizzare le altre." : ` ${bookings.length} prenotazioni.`}
       </p>
       {bookings.length ? (
         <>
@@ -489,6 +503,7 @@ export async function OwnerReport({ id }: { id: string }) {
     where: { id, propertyId: { in: ids } },
     select: {
       id: true,
+      propertyId: true,
       title: true,
       referenceMonth: true,
       currency: true,
@@ -576,6 +591,7 @@ export async function OwnerReport({ id }: { id: string }) {
           rettifiche.
         </p>
       </section>
+      <OwnerReportBookingDetails propertyId={report.propertyId} month={report.referenceMonth} currency={report.currency} grossRevenue={Number(report.grossRevenue)} saved={savedBookings} />
     </Frame>
   );
 }

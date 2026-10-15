@@ -59,7 +59,7 @@ export default async function BookingsPage({
     await searchParams;
 
   const user = await requireUser();
-  if (user.role === "OWNER") return <OwnerBookings propertyId={typeof params.propertyId === "string" ? params.propertyId : undefined} />;
+  if (user.role === "OWNER") return <OwnerBookings propertyId={typeof params.propertyId === "string" ? params.propertyId : undefined} from={typeof params.from === "string" ? params.from : undefined} to={typeof params.to === "string" ? params.to : undefined} />;
   const isOperator = user.role === "OPERATOR";
 
   const propertyId =

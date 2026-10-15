@@ -71,6 +71,14 @@ describe("OWNER server data projections", () => {
       "internalNotes",
     );
   });
+  it("combines owner scope with an overlapping stay period", async () => {
+    await OwnerBookings({ propertyId: "owned-property", from: "2026-10-01", to: "2026-10-31" });
+    expect(mocks.bookings.mock.calls[0][0].where).toEqual({ propertyId: { in: ["owned-property"], equals: "owned-property" }, checkOut: { gt: new Date("2026-10-01T00:00:00Z") }, checkIn: { lt: new Date("2026-11-01T00:00:00Z") } });
+  });
+  it("does not query bookings for an invalid period", async () => {
+    await OwnerBookings({ from: "2026-10-31", to: "2026-10-01" });
+    expect(mocks.bookings).not.toHaveBeenCalled();
+  });
   it("returns 404 for a booking outside the OWNER portfolio", async () => {
     mocks.booking.mockResolvedValue(null);
     await expect(OwnerBookingDetail({ id: "foreign-booking" })).rejects.toThrow(
