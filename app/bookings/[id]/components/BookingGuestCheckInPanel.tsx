@@ -266,6 +266,7 @@ export function BookingGuestCheckInPanel({
       }
     >
       <SectionTitle
+        dark
         compact
         title="Check-in & Alloggiati"
         subtitle={

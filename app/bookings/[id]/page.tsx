@@ -7,7 +7,6 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { Panel } from "@/components/ui/Panel";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { WorkspaceGrid } from "@/components/ui/WorkspaceGrid";
 import { WorkspaceTopBar } from "@/components/ui/WorkspaceTopBar";
 import { requireUser } from "@/lib/auth/guards";
 import { getBookingWorkspace } from "@/lib/bookings/get-booking-workspace";
@@ -59,7 +58,7 @@ export default async function BookingPage({
             backHref="/bookings"
           />
 
-          <Panel>
+          <Panel dark>
             <div
               style={{
                 display: "grid",
@@ -91,7 +90,7 @@ export default async function BookingPage({
                   </h1>
 
                   <div style={{ opacity: 0.7 }}>
-                    {booking.property.name} Ã‚Â·{" "}
+                    {booking.property.name} ·{" "}
                     {booking.property.zone ?? booking.property.city}
                   </div>
                 </div>
@@ -180,12 +179,12 @@ export default async function BookingPage({
             </div>
           </Panel>
 
-          <WorkspaceGrid
-            left={
-              <Panel>
+          <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-2 [&>section]:h-full">
+              <Panel dark>
                 <SectionTitle
+                  dark
                   title="Task prenotazione"
-                  subtitle="AttivitÃƒÂ  operative collegate al soggiorno."
+                  subtitle="Attività operative collegate al soggiorno."
                 />
 
                 {tasks.length === 0 ? (
@@ -248,8 +247,6 @@ export default async function BookingPage({
                   </div>
                 )}
               </Panel>
-            }
-            right={
               <BookingGuestCheckInPanel
                 bookingId={booking.id}
                 guestEmail={booking.guestEmail}
@@ -257,8 +254,7 @@ export default async function BookingPage({
                 initialLink={booking.guestCheckInLink}
                 canSubmitToAlloggiati={false}
               />
-            }
-          />
+          </div>
         </AppShell>
       </>
     );
@@ -450,7 +446,7 @@ function OperationalDetail({
         {label}
       </div>
 
-      <div>{value}</div>
+      <div className="break-words">{value}</div>
     </div>
   );
 }
