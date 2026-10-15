@@ -1,3 +1,4 @@
+import { OwnerDashboard } from "@/components/owner/OwnerPortal";
 import { notFound } from "next/navigation";
 import { Navigation } from "@/components/Navigation";
 import { AppShell } from "@/components/AppShell";
@@ -24,10 +25,9 @@ export default async function OwnerDetailPage({
   const { id } = await params;
 
   const user = await requireUser();
+  if (user.role === "OPERATOR") throw new Error("Accesso non autorizzato.");
+  if (user.role === "OWNER") return <OwnerDashboard />;
 
-  if (user.role === "OWNER" && user.id !== id) {
-    notFound();
-  }
 
   const workspace = await getOwnerWorkspace(id);
 

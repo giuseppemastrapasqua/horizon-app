@@ -83,6 +83,7 @@ model User {
   createdAvailabilityBlocks PropertyAvailabilityBlock[] @relation("PropertyAvailabilityBlockCreatedBy")
   alloggiatiWebAccounts     AlloggiatiWebAccount[]
   soggiorniamoAccounts      SoggiorniamoAccount[]
+  ross1000Accounts          Ross1000Account[]
   ownerBillingProfile       OwnerBillingProfile?
 
   @@index([role])
@@ -222,7 +223,9 @@ model Property {
   financeReportTemplate                  FinanceReportTemplate?
   alloggiatiWebProperty                  AlloggiatiWebProperty?
   soggiorniamoProperty                   SoggiorniamoProperty?
+  ross1000Property                       Ross1000Property?
   alloggiatiWebTransmissions             AlloggiatiWebTransmission[]
+  ross1000Transmissions                  Ross1000Transmission[]
 
   @@index([ownerId])
   @@index([status])
@@ -571,6 +574,9 @@ model Booking {
   ownerId                    String
   channel                    BookingChannel
   externalBookingId          String?
+  ross1000Idswh              String?                     @unique
+  bookedAt                   DateTime?
+  roomsBooked                Int?
   guestName                  String
   guestEmail                 String?
   guestPhone                 String?
@@ -597,6 +603,7 @@ model Booking {
   bookingGuests              BookingGuest[]
   alloggiatiWebTransmissions AlloggiatiWebTransmission[]
   guestCheckInLink           GuestCheckInLink?
+  ross1000BookingData        Ross1000BookingData?
   touristTaxPayments         TouristTaxPayment[]
 
   @@unique([integrationConnectionId, externalBookingId])
@@ -662,6 +669,8 @@ model BookingGuest {
   documentIssueCity    String?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
+  ross1000Idswh        String?            @unique
+  bookedAt             DateTime?
 
   booking                          Booking                           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   soggiorniamoFiscalClassification SoggiorniamoFiscalClassification?
@@ -1235,6 +1244,7 @@ enum BackgroundJobType {
   BOOKING_SYNC
   BOOKING_T48_OPERATOR_ALERT
   ALLOGGIATI_WEB_SUBMISSION
+  ROSS1000_SUBMISSION
   FINANCE_REPORT_GENERATION
   REVENUE_AI_ANALYSIS
   STORAGE_OBJECT_DELETE
@@ -1560,6 +1570,89 @@ model AlloggiatiWebTransmission {
   @@index([status])
   @@index([bookingId])
   @@index([preparedAt])
+}
+
+enum Ross1000TransmissionStatus {
+  PREPARED
+  SENDING
+  CONFIRMED
+  OUTCOME_UNKNOWN
+  REJECTED
+}
+
+model Ross1000BookingData {
+  id            String   @id @default(cuid())
+  bookingId     String   @unique
+  tourismType   String
+  transportType String
+  roomsOccupied Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model Ross1000Transmission {
+  id               String                     @id @default(cuid())
+  propertyId       String
+  movementDate     DateTime
+  status           Ross1000TransmissionStatus @default(PREPARED)
+  payloadHash      String
+  payloadXml       String
+  responseSuccess  Boolean?
+  responseError    String?
+  preparedAt       DateTime                   @default(now())
+  sendStartedAt    DateTime?
+  confirmedAt      DateTime?
+  outcomeUnknownAt DateTime?
+  rejectedAt       DateTime?
+  lastError        String?
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, movementDate, payloadHash])
+  @@index([propertyId])
+  @@index([movementDate])
+  @@index([status])
+  @@index([preparedAt])
+}
+
+model Ross1000Account {
+  id                String   @id @default(cuid())
+  ownerId           String
+  name              String
+  usernameEncrypted String
+  passwordEncrypted String
+  keyVersion        Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  properties Ross1000Property[]
+
+  @@index([ownerId])
+}
+
+model Ross1000Property {
+  id             String   @id @default(cuid())
+  accountId      String
+  propertyId     String   @unique
+  structureCode  String
+  roomsAvailable Int
+  bedsAvailable  Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  account  Ross1000Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  property Property        @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, structureCode])
+  @@index([accountId])
+  @@index([propertyId])
 }
 
 model AlloggiatiWebAccount {

@@ -62,7 +62,7 @@ describe("createTask", () => {
     propertyFindUniqueMock.mockResolvedValue(null);
   });
 
-  it("richiede OWNER o MANAGER per creare un task", async () => {
+  it("richiede MANAGER per creare un task", async () => {
     const formData = new FormData();
 
     formData.set(
@@ -80,7 +80,7 @@ describe("createTask", () => {
       requirePropertyRoleMock,
     ).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
   });
 

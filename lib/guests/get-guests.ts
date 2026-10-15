@@ -1,7 +1,9 @@
+import { requireRoles } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { getAccessiblePropertyIds } from "@/lib/auth/guards";
 
 export async function getGuests() {
+  await requireRoles(["SUPER_ADMIN", "MANAGER", "OPERATOR"]);
   const accessiblePropertyIds = await getAccessiblePropertyIds();
 
   const guests = await prisma.guest.findMany({

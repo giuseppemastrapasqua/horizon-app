@@ -127,6 +127,7 @@ export async function getBookingWorkspace(bookingId: string) {
       checkOut: booking.checkOut,
       nights: booking.nights,
       guests: booking.guests,
+      roomsBooked: booking.roomsBooked,
       grossAmount: Number(booking.grossAmount),
       currency: booking.currency,
       bookingStatus: booking.bookingStatus,

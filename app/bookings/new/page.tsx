@@ -18,7 +18,7 @@ export default async function NewBookingPage({
 }: NewBookingPageProps) {
   const user = await requireUser();
 
-  if (user.role === "OPERATOR") {
+  if (["OPERATOR", "OWNER"].includes(user.role)) {
     throw new Error("Accesso non autorizzato.");
   }
   const params = await searchParams;
@@ -133,6 +133,17 @@ export default async function NewBookingPage({
                 type="number"
                 min={1}
                 defaultValue={2}
+                required
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Camere prenotate
+              <input
+                name="roomsBooked"
+                type="number"
+                min={1}
                 required
                 style={inputStyle}
               />

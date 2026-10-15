@@ -11,7 +11,7 @@ describe("finance report template permissions", () => {
     );
 
     expect(source).toContain(
-      'requirePropertyRole(propertyId, ["OWNER", "MANAGER", "FINANCE"])',
+      'requirePropertyRole(propertyId, ["MANAGER", "FINANCE"])',
     );
 
     expect(source).not.toContain(

@@ -36,12 +36,13 @@ export async function createTask(
   formData: FormData,
 ): Promise<void> {
   const user = await requireUser();
+  if (user.role === "OWNER") throw new Error("Operazione non autorizzata.");
 
   const propertyId = String(
     formData.get("propertyId") || "",
   );
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const bookingIdRaw = String(
     formData.get("bookingId") || "",

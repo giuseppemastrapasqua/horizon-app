@@ -1,8 +1,10 @@
+import { requireRoles } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 export async function getImperiumMonitorEvent(
   eventId: string
 ) {
+  await requireRoles(["SUPER_ADMIN"]);
   return prisma.systemEvent.findUnique({
     where: {
       id: eventId,

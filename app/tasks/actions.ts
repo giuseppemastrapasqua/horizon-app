@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { AUDIT_ENTITY_TYPES } from "@/lib/audit/constants";
 import { prisma } from "@/lib/prisma";
 import { requirePropertyAccess } from "@/lib/auth/guards";
+import { requireTaskOperator } from "@/lib/auth/management";
 import { AuditService } from "@/services/audit/AuditService";
 
 export async function markTaskDone(
@@ -37,6 +38,7 @@ async function updateTaskStatus(
   newStatus: "TODO" | "DONE",
   description: string,
 ): Promise<void> {
+  await requireTaskOperator();
   const target = await prisma.task.findUnique({
     where: { id: taskId },
     select: { propertyId: true },

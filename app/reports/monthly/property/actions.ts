@@ -1,7 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getAccessiblePropertyIds, requirePropertyAccess, requireUser } from "@/lib/auth/guards";
+import { getAccessiblePropertyIds } from "@/lib/auth/guards";
+
+import { requireFinanceManager, requireFinanceProperty } from "@/lib/auth/management";
 
 import { createFinanceReport } from "@/lib/finance/create-finance-report";
 import { prisma } from "@/lib/prisma";
@@ -9,13 +11,14 @@ import { prisma } from "@/lib/prisma";
 export async function generateFinanceReportAction(
   formData: FormData
 ) {
+  await requireFinanceManager();
   const propertyId =
     getRequiredString(
       formData,
       "propertyId"
     );
 
-  await requirePropertyAccess(propertyId);
+  await requireFinanceProperty(propertyId);
 
   const referenceMonthValue =
     getRequiredString(
@@ -56,6 +59,7 @@ export async function generateFinanceReportAction(
 export async function generateFinanceReportsBatchAction(
   formData: FormData
 ) {
+  await requireFinanceManager();
   const referenceMonthValue =
     getRequiredString(
       formData,
@@ -129,6 +133,7 @@ export async function generateFinanceReportsBatchAction(
         property.name
       );
 
+      await requireFinanceProperty(property.id);
       const existingReport =
         await prisma.financeReport.findFirst({
           where: {

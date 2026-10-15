@@ -1,4 +1,5 @@
-﻿import { getDashboardFinanceCharts } from "@/lib/finance/get-dashboard-finance-charts";
+import { OwnerDashboard } from "@/components/owner/OwnerPortal";
+import { getDashboardFinanceCharts } from "@/lib/finance/get-dashboard-finance-charts";
 import { DashboardFinanceCharts } from "@/components/dashboard/DashboardFinanceCharts";
 import Link from "next/link";
 
@@ -32,6 +33,7 @@ import {
 
 export default async function Home() {
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerDashboard />;
 
   if (user.role === "OPERATOR") {
     throw new Error("Accesso non autorizzato.");
@@ -140,11 +142,11 @@ export default async function Home() {
     >
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6F7E8B]">
+          <p className="text-[12px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6F7E8B]">
             Portfolio overview
           </p>
 
-          <p className="mt-1 text-[13px] text-[#A4AFB8]">
+          <p className="mt-2 text-[15px] leading-6 sm:mt-1 sm:text-[13px] sm:leading-normal text-[#A4AFB8]">
             {"Una vista unica sulle attivit\u00E0 che richiedono attenzione oggi."}
           </p>
         </div>
@@ -216,16 +218,16 @@ export default async function Home() {
                   className="text-[#D8B367]"
                 />
 
-                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
+                <p className="text-[11px] sm:text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
                   Horizon Intelligence
                 </p>
               </div>
 
-              <h2 className="mt-1.5 font-serif text-[20px] font-medium tracking-[-0.025em] text-[#FFF8EA]">
+              <h2 className="mt-1.5 font-serif text-[24px] sm:text-[20px] font-medium tracking-[-0.025em] text-[#FFF8EA]">
                 {"Priorit\u00E0 del portfolio"}
               </h2>
 
-              <p className="mt-1 max-w-2xl text-[11px] leading-5 text-[#7F8D99]">
+              <p className="mt-2 max-w-2xl text-[14px] leading-6 sm:mt-1 sm:text-[11px] sm:leading-5 text-[#7F8D99]">
                 {"Segnali ordinati per severit\u00E0, impatto economico e rilevanza temporale."}
                 {intelligence.portfolio.totalInsights > intelligence.insights.length ? (
                   <>
@@ -266,7 +268,7 @@ export default async function Home() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={[
-                          "rounded-full border px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.08em]",
+                          "rounded-full border px-2.5 py-1.5 text-[10px] sm:py-1 sm:text-[8px] font-black uppercase tracking-[0.08em]",
                           insight.severity === "CRITICAL"
                             ? "border-rose-400/20 bg-rose-400/10 text-rose-300"
                             : insight.severity === "WARNING"
@@ -285,16 +287,16 @@ export default async function Home() {
                               : "Informazione"}
                       </span>
 
-                      <span className="text-[9px] font-semibold text-[#667582]">
+                      <span className="text-[11px] sm:text-[9px] font-semibold text-[#667582]">
                         {insight.propertyName}
                       </span>
                     </div>
 
-                    <h3 className="mt-2.5 text-[13px] font-semibold text-[#F7F1E7]">
+                    <h3 className="mt-2.5 text-[16px] sm:text-[13px] font-semibold text-[#F7F1E7]">
                       {insight.title}
                     </h3>
 
-                    <p className="mt-1 text-[10px] leading-5 text-[#84929E]">
+                    <p className="mt-2 text-[14px] leading-6 sm:mt-1 sm:text-[10px] sm:leading-5 text-[#84929E]">
                       {insight.explanation}
                     </p>
                   </div>
@@ -317,7 +319,7 @@ export default async function Home() {
       <section className="overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#09131C] shadow-[0_20px_55px_rgba(0,0,0,0.18)]">
         <div className="flex items-center justify-between border-b border-white/[0.07] px-6 py-5">
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
+            <p className="text-[11px] sm:text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
               Portfolio
             </p>
 
@@ -496,11 +498,11 @@ function MetricCard({
         : "text-[#FFF8EA]";
 
   return (
-    <article className="rounded-[18px] border border-white/[0.08] bg-[#0B1721] px-5 py-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+    <article className="rounded-[18px] border border-white/[0.08] bg-[#0B1721] px-5 py-5 sm:py-3.5 shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
       <div className="flex items-center gap-3">
         <span
           className={[
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border",
+            "flex h-12 w-12 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-2xl border",
             icon === "properties"
               ? "border-sky-400/15 bg-sky-400/[0.08] text-sky-300"
               : icon === "available"
@@ -521,17 +523,17 @@ function MetricCard({
           )}
         </span>
 
-        <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#647480]">
+        <p className="text-[11px] sm:text-[9px] font-bold uppercase tracking-[0.16em] text-[#647480]">
           {label}
         </p>
       </div>
 
       <div className="mt-2 flex items-end justify-between gap-4">
-        <p className={`text-[26px] font-semibold tracking-[-0.04em] ${valueClass}`}>
+        <p className={`text-[34px] sm:text-[26px] font-semibold tracking-[-0.04em] ${valueClass}`}>
           {value}
         </p>
 
-        <p className="pb-1 text-[9px] text-[#687784]">
+        <p className="pb-1 text-[12px] sm:text-[9px] text-[#687784]">
           {helper}
         </p>
       </div>
@@ -557,7 +559,7 @@ function PortfolioBadge({
         : "border-emerald-400/20 bg-emerald-400/10 text-emerald-300";
 
   return (
-    <span className={`rounded-full border px-3 py-1.5 text-[9px] font-bold ${classes}`}>
+    <span className={`rounded-full border px-3 py-2 text-[11px] sm:py-1.5 sm:text-[9px] font-bold ${classes}`}>
       {label}
     </span>
   );

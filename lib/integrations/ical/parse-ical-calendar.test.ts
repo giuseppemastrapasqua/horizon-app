@@ -51,6 +51,44 @@ describe("parseIcalCalendar", () => {
     );
   });
 
+  it("legge CREATED senza usare DTSTAMP come fallback", () => {
+    const body = `
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Horizon//Test//EN
+BEGIN:VEVENT
+UID:with-created@example.com
+DTSTAMP:20260811T070000Z
+CREATED:20260810T083000Z
+DTSTART;VALUE=DATE:20260820
+DTEND;VALUE=DATE:20260821
+SUMMARY:With created
+END:VEVENT
+BEGIN:VEVENT
+UID:without-created@example.com
+DTSTAMP:20260812T090000Z
+DTSTART;VALUE=DATE:20260822
+DTEND;VALUE=DATE:20260823
+SUMMARY:Without created
+END:VEVENT
+END:VCALENDAR
+`;
+
+    const events =
+      parseIcalCalendar(body);
+
+    expect(events).toHaveLength(2);
+
+    expect(events[0]?.created).toEqual(
+      new Date(
+        "2026-08-10T08:30:00.000Z",
+      ),
+    );
+
+    expect(
+      events[1]?.created,
+    ).toBeUndefined();
+  });
   it("ordina gli eventi per data di inizio", () => {
     const body =
       fs.readFileSync(

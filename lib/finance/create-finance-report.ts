@@ -1,3 +1,4 @@
+import { createReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
 import { AuditAction } from "@prisma/client";
 
 import {
@@ -332,7 +333,7 @@ export async function createFinanceReport({
               formula?.name ??
               HORIZON_STANDARD_NAME,
 
-            formulaSnapshot,
+            formulaSnapshot: { ...formulaSnapshot, bookingDetail: createReportBookingSnapshot(bookings, bookingBreakdowns) },
 
             rules: {
               create:

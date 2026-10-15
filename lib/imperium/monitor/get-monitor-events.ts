@@ -1,6 +1,8 @@
+import { requireRoles } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 
 export async function getImperiumMonitorEvents() {
+  await requireRoles(["SUPER_ADMIN"]);
   const events = await prisma.systemEvent.findMany({
     orderBy: {
       createdAt: "desc",

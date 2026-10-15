@@ -1,3 +1,4 @@
+import { OwnerCalendar } from "@/components/owner/OwnerPortal";
 import { CalendarRangeController } from "@/components/calendar/CalendarRangeController";
 import { CalendarPeriodEditor } from "./components/CalendarPeriodEditor";
 import Link from "next/link";
@@ -103,6 +104,10 @@ export default async function CalendarPage({
   searchParams,
 }: CalendarPageProps) {
   const user = await requireUser();
+  if (user.role === "OWNER") {
+    const ownerParams = await searchParams;
+    return <OwnerCalendar propertyId={typeof ownerParams.propertyId === "string" ? ownerParams.propertyId : undefined} month={typeof ownerParams.month === "string" ? ownerParams.month : undefined} />;
+  }
   const isOperator = user.role === "OPERATOR";
 
   const params =
@@ -381,6 +386,7 @@ export default async function CalendarPage({
                 source: true,
                 note: true,
                 externalEventId: true,
+                externalSummary: true,
                 integrationConnectionProperty: {
                   select: {
                     connectionId: true,
@@ -466,6 +472,7 @@ export default async function CalendarPage({
                 source: true,
                 note: true,
                 externalEventId: true,
+                externalSummary: true,
                 integrationConnectionProperty: {
                   select: {
                     connectionId: true,
@@ -1069,7 +1076,6 @@ return (
       const displayBooking =
         bookings[0] ??
         checkIns[0] ??
-        checkOuts[0] ??
         null;
 
       const isToday =
@@ -1143,7 +1149,7 @@ return (
                 </p>
 
                 <p className="mt-1 text-[12px] text-[#82909C]">
-                  Disponibilit├á bloccata
+                  Disponibilità bloccata
                 </p>
               </>
             ) : (
@@ -1339,10 +1345,25 @@ return (
                       day.getDay() === 6;
 
 
+                    const integrationConfig =
+                      block?.integrationConnectionProperty?.config;
+
+                    const integrationChannel =
+                      integrationConfig &&
+                      typeof integrationConfig === "object" &&
+                      !Array.isArray(integrationConfig) &&
+                      typeof integrationConfig.channel === "string"
+                        ? integrationConfig.channel
+                        : null;
+
+                    const airbnbReservationBlock =
+                      block?.source === "INTEGRATION" &&
+                      block.externalSummary?.trim().toLowerCase() === "reserved" &&
+                      integrationChannel === "AIRBNB";
+
                     const displayBooking =
                       bookings[0] ??
                       checkIns[0] ??
-                      checkOuts[0] ??
                       null;
                     return (
                       <div
@@ -1417,6 +1438,32 @@ return (
                                   </span>
                                 ) : null}
                               </Link>
+                            ) : airbnbReservationBlock && block ? (
+                              <div
+                                title="Airbnb · Prenotazione Airbnb"
+                                className={`relative z-[2] mt-4 -mx-3.5 flex h-7 w-[calc(100%+1.75rem)] items-center px-4 text-left text-[12px] font-semibold text-[#07111A] shadow-sm ${getBookingChannelBarClass("AIRBNB")}`}
+                                style={{
+                                  clipPath:
+                                    isSameDay(day, block.startDate)
+                                      ? "polygon(16px 0, 100% 0, 100% 100%, 0 100%)"
+                                      : isSameDay(day, block.endDate)
+                                        ? "polygon(0 0, 100% 0, calc(100% - 16px) 100%, 0 100%)"
+                                        : undefined,
+                                }}
+                              >
+                                {isSameDay(day, block.startDate) ? (
+                                  <span className="flex min-w-0 items-center gap-2 text-[#07111A]">
+                                    <ChannelLogo
+                                      channel="AIRBNB"
+                                      size={18}
+                                      variant="brand"
+                                    />
+                                    <span className="truncate text-[#07111A]">
+                                      Prenotazione Airbnb
+                                    </span>
+                                  </span>
+                                ) : null}
+                              </div>
                             ) : block ? (
                               isOperator ? (
                                 <div className="mt-4 rounded-lg border border-white/[0.06] bg-white/[0.035] px-2 py-1.5 text-[9px] font-bold text-[#82909C]">
@@ -1689,7 +1736,7 @@ function getBookingChannelBarClass(channel?: string) {
     case "BOOKING":
       return "bg-blue-500";
     case "AIRBNB":
-      return "bg-rose-500";
+      return "bg-[#D8B367]";
     case "HORIZON":
       return "bg-sky-500";
     case "VRBO":

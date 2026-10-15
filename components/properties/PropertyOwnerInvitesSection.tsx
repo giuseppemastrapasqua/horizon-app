@@ -130,6 +130,7 @@ export function PropertyOwnerInvitesSection({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [latestLink, setLatestLink] = useState("");
+  const [inviteNotice, setInviteNotice] = useState("");
   const [billingOpen, setBillingOpen] = useState(false);
   const [billingType, setBillingType] = useState<
     "PRIVATE" | "VAT_REGISTERED"
@@ -153,7 +154,11 @@ export function PropertyOwnerInvitesSection({
   }
 
   async function copyLink(link: string) {
-    await navigator.clipboard.writeText(link);
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      setError("Impossibile copiare il link: selezionalo e copialo manualmente.");
+    }
   }
 
   function handleCreate(
@@ -175,7 +180,11 @@ export function PropertyOwnerInvitesSection({
         const link = makeAbsoluteLink(result.invitePath);
 
         setLatestLink(link);
-        await copyLink(link);
+        setInviteNotice(result.emailStatus === "sent"
+          ? "Invito inviato via email. Il link è disponibile anche qui."
+          : result.emailStatus === "not_configured"
+            ? "Invito creato. Invio email non configurato: copia e condividi il link."
+            : "Invito creato, ma l’email non è stata inviata. Copia il link oppure riprova l’invio.");
 
         form.reset();
         router.refresh();
@@ -206,7 +215,11 @@ export function PropertyOwnerInvitesSection({
         const link = makeAbsoluteLink(result.invitePath);
 
         setLatestLink(link);
-        await copyLink(link);
+        setInviteNotice(result.emailStatus === "sent"
+          ? "Invito inviato via email. Il link è disponibile anche qui."
+          : result.emailStatus === "not_configured"
+            ? "Invito creato. Invio email non configurato: copia e condividi il link."
+            : "Invito creato, ma l’email non è stata inviata. Copia il link oppure riprova l’invio.");
 
         router.refresh();
       } catch (error) {
@@ -753,21 +766,22 @@ export function PropertyOwnerInvitesSection({
             disabled={isPending}
             className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? "Operazione..." : "Crea invito"}
+            {isPending ? "Operazione..." : "Crea e invia invito"}
           </button>
         </div>
       </form>
 
       {latestLink ? (
         <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-          <p className="text-sm font-semibold text-emerald-800">
-            Nuovo link copiato negli appunti
+          <p role="status" aria-live="polite" className="text-sm font-semibold text-emerald-800">
+            {inviteNotice}
           </p>
 
           <div className="mt-3 flex gap-2">
             <input
               readOnly
               value={latestLink}
+              aria-label="Link di attivazione proprietario"
               className="min-w-0 flex-1 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-700"
             />
 
@@ -847,7 +861,7 @@ export function PropertyOwnerInvitesSection({
                           }
                           className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                         >
-                          Rigenera link
+                          Rigenera e invia email
                         </button>
 
                         <button

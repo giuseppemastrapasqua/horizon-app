@@ -118,7 +118,7 @@ describe(
           mocks.requirePropertyRole,
         ).toHaveBeenCalledWith(
           "property-1",
-          ["OWNER", "MANAGER"],
+          ["MANAGER"],
         );
 
         expect(

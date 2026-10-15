@@ -1,3 +1,4 @@
+import { requireFinanceProperty } from "@/lib/auth/management";
 import {
   FinanceFormulaScope,
   Prisma,
@@ -20,6 +21,7 @@ const GLOBAL_ROLES = [
 
 export async function GET(request: Request) {
   const session = await auth();
+  if (session?.user && ["OWNER", "OPERATOR", "SYSTEM_AI"].includes(session.user.role)) return NextResponse.json({ error: "Accesso non autorizzato." }, { status: 403 });
 
   if (!session?.user?.id) {
     return NextResponse.json(
@@ -117,6 +119,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await auth();
+  if (session?.user && ["OWNER", "OPERATOR", "SYSTEM_AI"].includes(session.user.role)) return NextResponse.json({ error: "Accesso non autorizzato." }, { status: 403 });
 
   if (!session?.user?.id) {
     return NextResponse.json(
@@ -187,6 +190,11 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
+  }
+
+  if (data.scope !== FinanceFormulaScope.ALL_PROPERTIES) {
+    try { await requireFinanceProperty(data.propertyId ?? ""); }
+    catch { return NextResponse.json({ error: "Modifica della formula non autorizzata." }, { status: 403 }); }
   }
 
   try {

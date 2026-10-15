@@ -1,3 +1,4 @@
+import { searchOwnerPortal } from "@/lib/owners/search-portal";
 import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
@@ -35,6 +36,10 @@ export async function GET(request: NextRequest) {
   try {
     const accessiblePropertyIds =
       await getAccessiblePropertyIds();
+
+    if (session.user.role === "OWNER") {
+      return NextResponse.json({ results: await searchOwnerPortal(accessiblePropertyIds ?? [], query) });
+    }
 
     const globalAccess =
       accessiblePropertyIds === null;

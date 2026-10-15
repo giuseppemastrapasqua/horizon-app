@@ -1,3 +1,4 @@
+import { OwnerTasks } from "@/components/owner/OwnerPortal";
 import Link from "next/link";
 
 import {
@@ -63,6 +64,7 @@ export default async function TasksPage({
     await searchParams;
 
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerTasks />;
   const isOperator = user.role === "OPERATOR";
 
   const accessiblePropertyIds =

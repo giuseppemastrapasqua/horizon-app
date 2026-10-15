@@ -285,7 +285,7 @@ export function CollaboratorsManager({
 
         <p className="mt-1 text-sm leading-6 text-[#82909C]">
           Invia un accesso operativo per una struttura.
-          L'email viene inviata automaticamente e Horizon
+          L&apos;email viene inviata automaticamente e Horizon
           genera anche un link di fallback.
         </p>
 

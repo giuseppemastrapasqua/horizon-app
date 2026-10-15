@@ -1,3 +1,6 @@
+import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
+import { OwnerReport } from "@/components/owner/OwnerPortal";
+import { requireUser } from "@/lib/auth/guards";
 import type { CSSProperties } from "react";
 
 import Link from "next/link";
@@ -39,6 +42,10 @@ export default async function FinanceReportDetailPage({
   if (!reportId) {
     notFound();
   }
+
+  const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerReport id={reportId} />;
+  if (user.role === "OPERATOR") throw new Error("Accesso non autorizzato.");
 
   const report =
     await prisma.financeReport.findUnique({
@@ -158,7 +165,8 @@ export default async function FinanceReportDetailPage({
       ),
     );
 
-  const bookings =
+  const savedBookings = readReportBookingSnapshot(report.formulaSnapshot);
+  const bookings = savedBookings ??
     await prisma.booking.findMany({
       where: {
         propertyId:
@@ -196,7 +204,7 @@ export default async function FinanceReportDetailPage({
       },
     });
 
-  const otaCommissionByChannel =
+  const otaCommissionByChannel = savedBookings ? new Map() :
     await getPropertyOtaCommissionByChannel(
       report.property.id,
     );
@@ -205,7 +213,7 @@ export default async function FinanceReportDetailPage({
     await Promise.all(
       bookings.map(
         async (booking) => {
-          const breakdown =
+          const breakdown = savedBookings?.find((item) => item.id === booking.id)?.breakdown ??
             await buildBookingFinanceBreakdown({
               formulaId: report.formula?.id ?? null,
 

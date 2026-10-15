@@ -67,7 +67,7 @@ export async function applyManualSoggiorniamoFiscalDecisionAction(
 
   await requirePropertyRole(
     bookingGuest.booking.propertyId,
-    ["OWNER", "MANAGER"],
+    ["MANAGER"],
   );
 
   const repository: ManualFiscalDecisionRepository = {

@@ -1,3 +1,4 @@
+import { ownerPropertyDocumentTypes } from "@/lib/owners/portal-policy";
 import { requirePropertyRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { decryptDocument } from "@/lib/security/document-crypto";
@@ -30,16 +31,22 @@ export async function GET(
     });
   }
 
-  await requirePropertyRole(propertyId, [
-    "OWNER",
-    "MANAGER",
-  ]);
+  let user;
+  try {
+    user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  } catch (error) {
+    if (error instanceof Error && error.message === "Permessi insufficienti per modificare la struttura.") {
+      return new Response("Documento non trovato.", { status: 404 });
+    }
+    throw error;
+  }
 
   const document =
     await prisma.propertyDocument.findFirst({
       where: {
         id: normalizedDocumentId,
         propertyId,
+        ...(user.role === "OWNER" ? { type: { in: ownerPropertyDocumentTypes } } : {}),
       },
       select: {
         storageKey: true,

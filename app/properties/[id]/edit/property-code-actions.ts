@@ -52,7 +52,7 @@ export async function updatePropertyCodesAction(
   }
 
   const user =
-    await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+    await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const cin = normalizePropertyCode(
     formData.get("cin"),

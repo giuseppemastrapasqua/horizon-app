@@ -47,7 +47,7 @@ export async function saveRateTypesAction(
       "propertyId",
       "Struttura",
     );
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const property =
     await assertProperty(
@@ -449,7 +449,7 @@ export async function createCustomRateAction(
       "propertyId",
       "Struttura",
     );
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const name =
     readRequiredText(
@@ -635,7 +635,7 @@ export async function updateCustomRateAction(
       "propertyId",
       "Struttura",
     );
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const ratePlanId =
     readRequiredText(
@@ -840,7 +840,7 @@ export async function deleteCustomRateAction(
       "propertyId",
       "Struttura",
     );
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const ratePlanId =
     readRequiredText(

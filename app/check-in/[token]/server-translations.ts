@@ -13,7 +13,8 @@ export type GuestCheckInServerErrorKey =
   | "italyBirthPlace"
   | "municipality"
   | "documentType"
-  | "documentIssueCountry";
+  | "documentIssueCountry"
+  | "documentIssueCity";
 
 const messages: Record<GuestCheckInLanguage, Record<GuestCheckInServerErrorKey, string>> = {
   it: {
@@ -30,6 +31,7 @@ const messages: Record<GuestCheckInLanguage, Record<GuestCheckInServerErrorKey, 
     municipality: "Comune di nascita non riconosciuto: {value}.",
     documentType: "Tipo documento non riconosciuto.",
     documentIssueCountry: "Paese di rilascio del documento non riconosciuto.",
+    documentIssueCity: "Per un documento rilasciato in Italia è obbligatorio il comune di rilascio.",
   },
   en: {
     required: "Please complete all required fields.",
@@ -45,6 +47,7 @@ const messages: Record<GuestCheckInLanguage, Record<GuestCheckInServerErrorKey, 
     municipality: "City of birth not recognized: {value}.",
     documentType: "Document type not recognized.",
     documentIssueCountry: "Document country of issue not recognized.",
+    documentIssueCity: "For a document issued in Italy, the city of issue is required.",
   },
   es: {
     required: "Completa todos los campos obligatorios.",
@@ -60,6 +63,7 @@ const messages: Record<GuestCheckInLanguage, Record<GuestCheckInServerErrorKey, 
     municipality: "Municipio de nacimiento no reconocido: {value}.",
     documentType: "Tipo de documento no reconocido.",
     documentIssueCountry: "País de expedición del documento no reconocido.",
+    documentIssueCity: "Para un documento expedido en Italia, el municipio de expedición es obligatorio.",
   },
   fr: {
     required: "Veuillez remplir tous les champs obligatoires.",
@@ -75,6 +79,7 @@ const messages: Record<GuestCheckInLanguage, Record<GuestCheckInServerErrorKey, 
     municipality: "Commune de naissance non reconnue : {value}.",
     documentType: "Type de document non reconnu.",
     documentIssueCountry: "Pays de délivrance du document non reconnu.",
+    documentIssueCity: "Pour un document délivré en Italie, la commune de délivrance est obligatoire.",
   },
   pt: {
     required: "Preencha todos os campos obrigatórios.",
@@ -90,6 +95,7 @@ const messages: Record<GuestCheckInLanguage, Record<GuestCheckInServerErrorKey, 
     municipality: "Município de nascimento não reconhecido: {value}.",
     documentType: "Tipo de documento não reconhecido.",
     documentIssueCountry: "País de emissão do documento não reconhecido.",
+    documentIssueCity: "Para um documento emitido em Itália, o município de emissão é obrigatório.",
   },
 };
 

@@ -1,3 +1,5 @@
+import { OwnerTasks } from "@/components/owner/OwnerPortal";
+import { requireUser } from "@/lib/auth/guards";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -35,6 +37,9 @@ export default async function TaskDetailPage({
 }: TaskDetailPageProps) {
   const { id } =
     await params;
+
+  const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerTasks id={id} />;
 
   const taskReference =
     await prisma.task.findUnique({

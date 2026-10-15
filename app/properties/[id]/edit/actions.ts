@@ -17,7 +17,7 @@ export async function updatePropertyAction(
   ).trim();
 
   const user =
-    await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+    await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const name = String(
     formData.get("name") ?? "",

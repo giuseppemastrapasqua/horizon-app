@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireRoles } from "@/lib/auth/guards";
 import { createOwnerInviteToken } from "@/lib/auth/property-owner-invite-token";
 import { prisma } from "@/lib/prisma";
+import { sendOwnerInviteEmail } from "@/lib/notifications/email/send-owner-invite";
 
 const ownerBillingProfileSchema = z.object({
   propertyId: z.string().min(1),
@@ -149,6 +150,7 @@ export async function createPropertyOwnerInviteAction(
   revalidateProperty(propertyId);
 
   return {
+    emailStatus: await sendOwnerInviteEmail({ email, fullName, invitePath: `/invite/owner/${token}` }),
     inviteId: invite.id,
     invitePath: `/invite/owner/${token}`,
     expiresAt: invite.expiresAt,
@@ -301,6 +303,8 @@ export async function resendPropertyOwnerInviteAction(
       },
       select: {
         id: true,
+        email: true,
+        fullName: true,
         acceptedAt: true,
         revokedAt: true,
       },
@@ -338,6 +342,7 @@ export async function resendPropertyOwnerInviteAction(
   revalidateProperty(propertyId);
 
   return {
+    emailStatus: await sendOwnerInviteEmail({ email: invite.email, fullName: invite.fullName, invitePath: `/invite/owner/${token}` }),
     inviteId,
     invitePath: `/invite/owner/${token}`,
     expiresAt,

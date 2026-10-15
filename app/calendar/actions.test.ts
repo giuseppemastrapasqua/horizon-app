@@ -123,7 +123,7 @@ describe("applyRevenueRecommendationAction", () => {
 
     expect(requirePropertyRoleMock).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
 
     expect(getPropertyRevenueAnalysisMock).toHaveBeenCalledWith(

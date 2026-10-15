@@ -1,3 +1,4 @@
+import { OwnerDashboard } from "@/components/owner/OwnerPortal";
 ﻿import {
   PropertyPerformanceChart,
 } from "./components/PropertyPerformanceChart";
@@ -43,6 +44,7 @@ export default async function PropertyDetailPage({
   params,
 }: PropertyDetailPageProps) {
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerDashboard />;
 
   if (user.role === "OPERATOR") {
     throw new Error("Accesso non autorizzato.");

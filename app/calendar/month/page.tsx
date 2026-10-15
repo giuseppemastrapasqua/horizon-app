@@ -1,3 +1,5 @@
+import { OwnerCalendar } from "@/components/owner/OwnerPortal";
+import { requireUser } from "@/lib/auth/guards";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getAccessiblePropertyIds } from "@/lib/auth/guards";
@@ -22,6 +24,8 @@ export default async function MonthlyCalendarPage({
   searchParams,
 }: MonthlyCalendarPageProps) {
   const params = await searchParams;
+  const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerCalendar month={params?.month} />;
   const accessiblePropertyIds = await getAccessiblePropertyIds();
   const selectedMonth = parseMonth(params?.month);
 

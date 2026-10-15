@@ -1,3 +1,4 @@
+import { requireFinanceProperty } from "@/lib/auth/management";
 import {
   AuditAction,
   FinanceFormulaScope,
@@ -56,6 +57,7 @@ export async function GET(
   context: RouteContext,
 ) {
   const session = await auth();
+  if (session?.user && ["OWNER", "OPERATOR", "SYSTEM_AI"].includes(session.user.role)) return NextResponse.json({ error: "Accesso non autorizzato." }, { status: 403 });
 
   if (!session?.user?.id) {
     return NextResponse.json(
@@ -164,6 +166,7 @@ export async function PUT(
   context: RouteContext,
 ) {
   const session = await auth();
+  if (session?.user && ["OWNER", "OPERATOR", "SYSTEM_AI"].includes(session.user.role)) return NextResponse.json({ error: "Accesso non autorizzato." }, { status: 403 });
 
   if (!session?.user?.id) {
     return NextResponse.json(
@@ -280,6 +283,11 @@ export async function PUT(
       );
     }
 
+    try {
+      if (currentFormula.scope !== FinanceFormulaScope.ALL_PROPERTIES) await requireFinanceProperty(currentFormula.propertyId ?? "");
+      if (data.scope !== FinanceFormulaScope.ALL_PROPERTIES) await requireFinanceProperty(data.propertyId ?? "");
+    } catch { return NextResponse.json({ error: "Modifica della formula non autorizzata." }, { status: 403 }); }
+
     const result =
       await updateFinanceFormula(
         formulaId,
@@ -347,6 +355,7 @@ export async function DELETE(
   context: RouteContext,
 ) {
   const session = await auth();
+  if (session?.user && ["OWNER", "OPERATOR", "SYSTEM_AI"].includes(session.user.role)) return NextResponse.json({ error: "Accesso non autorizzato." }, { status: 403 });
 
   if (!session?.user?.id) {
     return NextResponse.json(
@@ -431,6 +440,11 @@ export async function DELETE(
         },
         { status: 403 },
       );
+    }
+
+    if (formula.scope !== FinanceFormulaScope.ALL_PROPERTIES) {
+      try { await requireFinanceProperty(formula.propertyId ?? ""); }
+      catch { return NextResponse.json({ error: "Eliminazione della formula non autorizzata." }, { status: 403 }); }
     }
 
     await prisma.$transaction(

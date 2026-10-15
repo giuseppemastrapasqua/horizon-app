@@ -32,6 +32,7 @@ export const financePreviewPropertySelect = {
       checkIn: true,
       checkOut: true,
       nights: true,
+      guests: true,
       grossAmount: true,
       currency: true,
       bookingStatus: true,

@@ -66,7 +66,7 @@ export default async function LoginPage() {
     }
 
     if (session.user.role === "OWNER") {
-      redirect(`/owners/${session.user.id}`);
+      redirect("/dashboard");
     }
 
     redirect("/dashboard");

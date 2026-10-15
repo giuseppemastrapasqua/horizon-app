@@ -6,6 +6,7 @@ dotenv.config({
 
 import { runBackgroundJobWorker } from "@/lib/job/run-background-job-worker";
 import { prisma } from "@/lib/prisma";
+import { createPeriodicIcalScheduler } from "@/lib/job/create-periodic-ical-scheduler";
 
 let shutdownRequested = false;
 
@@ -36,6 +37,9 @@ console.log(
 
 runBackgroundJobWorker({
   isShutdownRequested: () => shutdownRequested,
+  beforePoll: createPeriodicIcalScheduler({
+    onError: () => console.error("Accodamento periodico iCal fallito; nuovo tentativo programmato."),
+  }),
 
   onError: (error) => {
     console.error(

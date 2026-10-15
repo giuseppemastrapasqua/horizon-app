@@ -10,6 +10,7 @@ import { copyToClipboard } from "@/lib/browser/copy-to-clipboard";
 import {
   createTouristTaxCheckoutAction,
   getTouristTaxPaymentStatusAction,
+  sendTouristTaxPaymentEmailAction,
 } from "../tourist-tax-payment-actions";
 
 type PaymentState =
@@ -95,6 +96,19 @@ export function BookingTouristTaxPaymentControl({
     }
   }
 
+  async function handleSendPaymentLink() {
+    setWorking(true);
+    setMessage(null);
+    try {
+      await sendTouristTaxPaymentEmailAction(bookingId);
+      setMessage("Email con il link di pagamento inviata all’ospite.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Invio email non riuscito.");
+    } finally {
+      setWorking(false);
+    }
+  }
+
   async function handleCopyPaymentLink() {
     if (!paymentUrl) return;
 
@@ -153,6 +167,13 @@ export function BookingTouristTaxPaymentControl({
       </div>
 
       <div style={actionsStyle}>
+        <ActionButton
+          label={working ? "Attendi..." : "Invia email all’ospite"}
+          variant="secondary"
+          compact
+          disabled={working}
+          onClick={() => void handleSendPaymentLink()}
+        />
         {paymentUrl ? (
           <>
             <ActionButton

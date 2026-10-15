@@ -1,3 +1,4 @@
+import { OwnerBookingDetail } from "@/components/owner/OwnerPortal";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/AppShell";
@@ -6,7 +7,6 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { Panel } from "@/components/ui/Panel";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { WorkspaceGrid } from "@/components/ui/WorkspaceGrid";
 import { WorkspaceTopBar } from "@/components/ui/WorkspaceTopBar";
 import { requireUser } from "@/lib/auth/guards";
 import { getBookingWorkspace } from "@/lib/bookings/get-booking-workspace";
@@ -15,6 +15,7 @@ import { formatDate } from "@/lib/format/date";
 
 import { BookingDocuments } from "./components/BookingDocuments";
 import { BookingEditForm } from "./components/BookingEditForm";
+import { BookingTouristTaxPaymentControl } from "./components/BookingTouristTaxPaymentControl";
 import { BookingGuestCheckInPanel } from "./components/BookingGuestCheckInPanel";
 import { BookingHero } from "./components/BookingHero";
 import { BookingKPIs } from "./components/BookingKPIs";
@@ -34,6 +35,7 @@ export default async function BookingPage({
 }: BookingPageProps) {
   const { id } = await params;
   const user = await requireUser();
+  if (user.role === "OWNER") return <OwnerBookingDetail id={id} />;
 
   if (user.role === "OPERATOR") {
     const workspace = await getOperatorBookingWorkspace(id);
@@ -57,7 +59,7 @@ export default async function BookingPage({
             backHref="/bookings"
           />
 
-          <Panel>
+          <Panel dark>
             <div
               style={{
                 display: "grid",
@@ -89,7 +91,7 @@ export default async function BookingPage({
                   </h1>
 
                   <div style={{ opacity: 0.7 }}>
-                    {booking.property.name} Ã‚Â·{" "}
+                    {booking.property.name} ·{" "}
                     {booking.property.zone ?? booking.property.city}
                   </div>
                 </div>
@@ -178,12 +180,12 @@ export default async function BookingPage({
             </div>
           </Panel>
 
-          <WorkspaceGrid
-            left={
-              <Panel>
+          <div className="mt-6 grid items-stretch gap-6 lg:grid-cols-2 [&>section]:h-full">
+              <Panel dark>
                 <SectionTitle
+                  dark
                   title="Task prenotazione"
-                  subtitle="AttivitÃƒÂ  operative collegate al soggiorno."
+                  subtitle="Attività operative collegate al soggiorno."
                 />
 
                 {tasks.length === 0 ? (
@@ -246,8 +248,6 @@ export default async function BookingPage({
                   </div>
                 )}
               </Panel>
-            }
-            right={
               <BookingGuestCheckInPanel
                 bookingId={booking.id}
                 guestEmail={booking.guestEmail}
@@ -255,8 +255,13 @@ export default async function BookingPage({
                 initialLink={booking.guestCheckInLink}
                 canSubmitToAlloggiati={false}
               />
-            }
-          />
+          </div>
+          <div className="mt-6">
+            <Panel dark>
+              <SectionTitle dark title="Tassa di soggiorno" subtitle="Crea il link di pagamento e invialo all’ospite. L’importo richiede i dati ospiti e la classificazione fiscale completa." />
+              <BookingTouristTaxPaymentControl enabled />
+            </Panel>
+          </div>
         </AppShell>
       </>
     );
@@ -448,7 +453,7 @@ function OperationalDetail({
         {label}
       </div>
 
-      <div>{value}</div>
+      <div className="break-words">{value}</div>
     </div>
   );
 }

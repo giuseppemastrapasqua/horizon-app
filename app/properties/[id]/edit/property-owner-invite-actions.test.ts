@@ -16,6 +16,10 @@ vi.mock("@/lib/auth/property-owner-invite-token", () => ({
   })),
 }));
 
+vi.mock("@/lib/notifications/email/send-owner-invite", () => ({
+  sendOwnerInviteEmail: vi.fn(async () => "sent"),
+}));
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     property: {
@@ -41,6 +45,7 @@ vi.mock("@/lib/prisma", () => ({
 
 import { requireRoles } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
+import { sendOwnerInviteEmail } from "@/lib/notifications/email/send-owner-invite";
 
 import {
   createPropertyOwnerInviteAction,
@@ -130,6 +135,10 @@ describe("property owner invite actions", () => {
       },
     });
 
+    expect(sendOwnerInviteEmail).toHaveBeenCalledWith({
+      email: "mario@example.com", fullName: "Mario Rossi", invitePath: "/invite/owner/public-token",
+    });
+    expect(result.emailStatus).toBe("sent");
     expect(result.invitePath).toBe(
       "/invite/owner/public-token",
     );
@@ -405,6 +414,8 @@ describe("property owner invite actions", () => {
   it("rotates token and expiry when resending", async () => {
     mockedInviteFindFirst.mockResolvedValue({
       id: "invite-1",
+      email: "stored-owner@example.com",
+      fullName: "Stored Owner",
       acceptedAt: null,
       revokedAt: null,
     } as never);
@@ -414,6 +425,7 @@ describe("property owner invite actions", () => {
         makeFormData({
           propertyId: "property-1",
           inviteId: "invite-1",
+          email: "untrusted-other@example.com",
         }),
       );
 
@@ -427,6 +439,9 @@ describe("property owner invite actions", () => {
       },
     });
 
+    expect(sendOwnerInviteEmail).toHaveBeenCalledWith({
+      email: "stored-owner@example.com", fullName: "Stored Owner", invitePath: "/invite/owner/public-token",
+    });
     expect(result.invitePath).toBe(
       "/invite/owner/public-token",
     );

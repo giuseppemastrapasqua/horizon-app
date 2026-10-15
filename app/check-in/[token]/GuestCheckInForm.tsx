@@ -1,6 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore, useState } from "react";
+
+import { ROSS1000_TOURISM_TYPES, ROSS1000_TRANSPORT_TYPES } from "@/lib/integrations/ross1000/movement-types";
+
+import { resolveGuestLanguage } from "@/lib/browser/resolve-guest-language";
 
 import { saveGuestCheckInAction } from "./actions";
 import { guestCheckInLanguageLabels, guestCheckInLanguages, guestCheckInTranslations, isGuestCheckInLanguage, type GuestCheckInLanguage } from "./translations";
@@ -38,31 +42,37 @@ type Props = {
   initialGuests: InitialGuest[];
   countries: ReferenceOption[];
   documentTypes: ReferenceOption[];
+  ross1000Enabled: boolean;
+  initialRoss1000TourismType: string;
+  initialRoss1000TransportType: string;
+  initialRoss1000RoomsOccupied: number;
+  ross1000RoomsAvailable: number;
 };
 
-export function GuestCheckInForm({ token, propertyName, guestName, checkIn, checkOut, guestCount, initialGuests, countries, documentTypes }: Props) {
-  const [language, setLanguage] = useState<GuestCheckInLanguage>("it");
+const languageStorageKey = "horizon-guest-check-in-language";
+function subscribeLanguage(onChange: () => void) {
+  const listener = (event: StorageEvent) => { if (event.key === languageStorageKey) onChange(); };
+  window.addEventListener("storage", listener);
+  return () => window.removeEventListener("storage", listener);
+}
+function readLanguage() {
+  let stored: string | null = null;
+  try { stored = window.localStorage.getItem(languageStorageKey); } catch { /* Storage may be disabled by the browser. */ }
+  return resolveGuestLanguage(stored, window.navigator.language);
+}
+
+export function GuestCheckInForm({ token, propertyName, guestName, checkIn, checkOut, guestCount, initialGuests, countries, documentTypes, ross1000Enabled, initialRoss1000TourismType, initialRoss1000TransportType, initialRoss1000RoomsOccupied, ross1000RoomsAvailable }: Props) {
+  const [selectedLanguage, setSelectedLanguage] = useState<GuestCheckInLanguage | null>(null);
+  const detectedLanguage = useSyncExternalStore(subscribeLanguage, readLanguage, () => "it" as GuestCheckInLanguage);
+  const language = selectedLanguage ?? detectedLanguage;
   const t = guestCheckInTranslations[language];
   const locale = { it: "it-IT", en: "en-GB", es: "es-ES", fr: "fr-FR", pt: "pt-PT" }[language];
   const formatStayDate = (value: string) => new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00.000Z`));
 
-  useEffect(() => {
-    const stored = window.localStorage.getItem("horizon-guest-check-in-language");
-    if (stored && isGuestCheckInLanguage(stored)) {
-      setLanguage(stored);
-      return;
-    }
-
-    const browserLanguage = window.navigator.language.toLowerCase().split("-")[0];
-    if (isGuestCheckInLanguage(browserLanguage)) {
-      setLanguage(browserLanguage);
-    }
-  }, []);
-
   function changeLanguage(value: string) {
     if (!isGuestCheckInLanguage(value)) return;
-    setLanguage(value);
-    window.localStorage.setItem("horizon-guest-check-in-language", value);
+    setSelectedLanguage(value);
+    try { window.localStorage.setItem(languageStorageKey, value); } catch { /* Keep the selected language for this form when storage is disabled. */ }
   }
   const initialLeader = initialGuests[0]?.role;
   const [groupType, setGroupType] = useState<"FAMILY" | "GROUP">(
@@ -166,6 +176,37 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         </fieldset>
       ) : null}
 
+      {ross1000Enabled ? (
+        <fieldset className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A] p-5 shadow-sm">
+          <legend className="px-2 text-sm font-semibold text-[#C8D1D8]">ROSS1000</legend>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <Field label={t.ross1000TourismType}>
+              <select required name="ross1000TourismType" defaultValue={initialRoss1000TourismType} className={inputClass}>
+                <option value="">{t.select}</option>
+                {ROSS1000_TOURISM_TYPES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </Field>
+            <Field label={t.ross1000TransportType}>
+              <select required name="ross1000TransportType" defaultValue={initialRoss1000TransportType} className={inputClass}>
+                <option value="">{t.select}</option>
+                {ROSS1000_TRANSPORT_TYPES.map((item) => <option key={item} value={item}>{item}</option>)}
+              </select>
+            </Field>
+            <Field label={t.ross1000RoomsOccupied}>
+              <input
+                required
+                type="number"
+                name="ross1000RoomsOccupied"
+                min={1}
+                max={ross1000RoomsAvailable}
+                step={1}
+                defaultValue={initialRoss1000RoomsOccupied}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+        </fieldset>
+      ) : null}
       {Array.from({ length: guestCount }, (_, index) => {
         const guest = initialGuests[index];
         const isLeader = index === 0;
@@ -179,7 +220,7 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
               <Field label={t.firstName}><input required name={`guests.${index}.firstName`} defaultValue={guest?.firstName ?? ""} className={inputClass} /></Field>
               <Field label={t.lastName}><input required name={`guests.${index}.lastName`} defaultValue={guest?.lastName ?? ""} className={inputClass} /></Field>
               <Field label={t.gender}><select required name={`guests.${index}.gender`} defaultValue={guest?.gender ?? ""} className={inputClass}><option value="">{t.select}</option><option value="MALE">{t.male}</option><option value="FEMALE">{t.female}</option></select></Field>
-              <Field label={t.birthDate}><input required type="date" name={`guests.${index}.birthDate`} defaultValue={guest?.birthDate ?? ""} className={inputClass} /></Field>
+              <Field label={t.birthDate}><input required type="date" max={new Date().toISOString().slice(0, 10)} name={`guests.${index}.birthDate`} defaultValue={guest?.birthDate ?? ""} className={inputClass} /></Field>
               <Field label={t.birthCountry}><CountrySelect required name={`guests.${index}.birthCountry`} value={guest?.birthCountry ?? ""} countries={countries} selectLabel={t.select} /></Field>
               <Field label={t.citizenship}><CountrySelect required name={`guests.${index}.citizenship`} value={guest?.citizenship ?? ""} countries={countries} selectLabel={t.select} /></Field>
               <Field label="Paese di residenza"><CountrySelect required name={`guests.${index}.residenceCountry`} value={guest?.residenceCountry ?? ""} countries={countries} selectLabel={t.select} /></Field>

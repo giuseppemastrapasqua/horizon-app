@@ -48,7 +48,7 @@ export async function updatePropertyRatePlanAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   if (!name) {
     throw new Error(

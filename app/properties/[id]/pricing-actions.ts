@@ -68,7 +68,7 @@ export async function savePropertyPricingOverrideAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   if (
     !startDateValue ||

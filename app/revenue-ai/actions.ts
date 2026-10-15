@@ -90,7 +90,6 @@ export async function runRevenueAiWorkspaceAnalysisAction(
   await requirePropertyRole(
     propertyId,
     [
-      "OWNER",
       "MANAGER",
     ],
   );

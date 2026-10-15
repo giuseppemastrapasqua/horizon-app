@@ -44,7 +44,7 @@ export async function updatePropertyChannelPricingAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   if (
     channelText !== "BOOKING" &&

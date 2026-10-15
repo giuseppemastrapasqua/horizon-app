@@ -30,7 +30,7 @@ export async function updatePropertyHouseRulesAction(
     );
   }
 
-  await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const property =
     await prisma.property.findUnique({

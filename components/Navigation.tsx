@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -23,6 +23,8 @@ import {
 import { UserMenu } from "@/components/auth/UserMenu";
 import { HorizonLogo } from "@/components/ui/HorizonLogo";
 
+import { navigationForRole } from "@/lib/auth/navigation-policy";
+
 const navigationItems = [
   {
     href: "/dashboard",
@@ -43,8 +45,8 @@ const navigationItems = [
     operatorVisible: true,
   },
   {
-    href: "/revenue-ai",
-    label: "Revenue AI",
+    href: "/revenue-ai/daily",
+    label: "Prezzi consigliati",
     icon: Sparkles,
     operatorVisible: false,
   },
@@ -78,16 +80,28 @@ const navigationItems = [
     icon: BarChart3,
     operatorVisible: false,
   },
+  {
+    href: "/reports/tourist-tax",
+    label: "Tassa di soggiorno",
+    icon: ReceiptText,
+    operatorVisible: false,
+  },
+  {
+    href: "/reports/cleaning",
+    label: "Rendiconto pulizie",
+    icon: ClipboardCheck,
+    operatorVisible: true,
+  },
 ];
 
 export function Navigation() {
   const pathname = usePathname();
+  return <NavigationContent key={pathname} pathname={pathname} />;
+}
+
+function NavigationContent({ pathname }: { pathname: string }) {
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   const homeHref =
     session?.user?.role === "OPERATOR"
@@ -95,11 +109,7 @@ export function Navigation() {
       : "/dashboard";
 
   const visibleNavigationItems = [
-    ...navigationItems.filter(
-      (item) =>
-        session?.user?.role !== "OPERATOR" ||
-        item.operatorVisible,
-    ),
+    ...navigationForRole(navigationItems, session?.user?.role),
     ...(session?.user?.role === "SUPER_ADMIN"
       ? [
           {
@@ -110,7 +120,10 @@ export function Navigation() {
           },
         ]
       : []),
-  ];
+  ].sort((a, b) => {
+    const bottom = ["/reports/tourist-tax", "/reports/cleaning"];
+    return Number(bottom.includes(a.href)) - Number(bottom.includes(b.href));
+  });
 
   const isActive = (href: string) =>
     href === "/dashboard"
@@ -120,10 +133,10 @@ export function Navigation() {
 
   return (
     <>
-      <aside className="fixed inset-y-0 left-0 z-50 hidden w-[220px] flex-col overflow-hidden border-r border-white/[0.06] bg-[#07111A] text-[#FFF8EA] shadow-[18px_0_45px_rgba(0,0,0,0.28)] lg:flex">
+      <aside className="fixed inset-y-0 left-0 z-50 hidden h-dvh w-[220px] flex-col overflow-hidden border-r border-white/[0.06] bg-[#07111A] text-[#FFF8EA] shadow-[18px_0_45px_rgba(0,0,0,0.28)] lg:flex">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(216,179,103,0.10),transparent_32%)]" />
 
-        <div className="relative flex h-[104px] shrink-0 items-center border-b border-white/[0.07] px-5">
+        <div className="relative flex h-[76px] shrink-0 items-center border-b border-white/[0.07] px-5">
           <Link
             href={homeHref}
             aria-label="Horizon Dashboard"
@@ -133,12 +146,12 @@ export function Navigation() {
           </Link>
         </div>
 
-        <nav className="relative min-h-0 flex-1 overflow-y-auto px-3 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.22em] text-[#D8B367]/60">
+        <nav className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]">
+          <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.22em] text-[#D8B367]/60">
             Workspace
           </p>
 
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {visibleNavigationItems.map((item) => {
               const active = isActive(item.href);
               const Icon = item.icon;
@@ -149,7 +162,7 @@ export function Navigation() {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "group relative flex h-[39px] items-center gap-3 overflow-hidden rounded-xl px-3.5 text-[12px] font-semibold transition-all duration-200",
+                    "group relative flex h-9 items-center gap-3 overflow-hidden rounded-xl px-3.5 text-[12px] font-semibold transition-all duration-200",
                     active
                       ? "border border-[#D8B367]/20 bg-[#D8B367]/[0.10] text-[#FFF8EA] shadow-[0_8px_24px_rgba(0,0,0,0.18)]"
                       : "border border-transparent text-[#AAB6C2] hover:border-white/[0.05] hover:bg-white/[0.04] hover:text-white",
@@ -178,7 +191,7 @@ export function Navigation() {
         </nav>
 
         <div className="relative shrink-0 border-t border-white/[0.07] px-3 pb-2 pt-2">
-          {session?.user?.role !== "OPERATOR" ? (
+          {session?.user?.role && !["OWNER", "OPERATOR"].includes(session.user.role) ? (
             <Link
               href="/settings"
               className="mb-1 flex h-[36px] items-center gap-3 rounded-xl border border-transparent px-3.5 text-[12px] font-medium text-[#8493A1] transition hover:border-white/[0.05] hover:bg-white/[0.04] hover:text-white"
@@ -244,7 +257,7 @@ export function Navigation() {
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(216,179,103,0.10),transparent_34%)]" />
 
             <nav className="relative min-h-0 flex-1 overflow-y-auto px-3 py-5">
-              <p className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.22em] text-[#D8B367]/60">
+              <p className="mb-2 px-3 text-[9px] font-bold uppercase tracking-[0.22em] text-[#D8B367]/60">
                 Workspace
               </p>
 
@@ -288,7 +301,7 @@ export function Navigation() {
             </nav>
 
             <div className="relative shrink-0 border-t border-white/[0.07] px-3 pb-4 pt-3">
-              {session?.user?.role !== "OPERATOR" ? (
+              {session?.user?.role && !["OWNER", "OPERATOR"].includes(session.user.role) ? (
                 <Link
                   href="/settings"
                   onClick={() => setMobileOpen(false)}

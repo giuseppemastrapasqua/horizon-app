@@ -1,3 +1,4 @@
+import { requireUser } from "@/lib/auth/guards";
 import { notFound } from "next/navigation";
 
 import {
@@ -18,6 +19,7 @@ import { WorkspaceTopBar } from "@/components/ui/WorkspaceTopBar";
 import { PropertyIntegrationsSection } from "@/components/properties/PropertyIntegrationsSection";
 import { PropertyIcalExportSection } from "@/components/properties/PropertyIcalExportSection";
 import { PropertyAlloggiatiCredentialsSection } from "@/components/properties/PropertyAlloggiatiCredentialsSection";
+import { PropertyRoss1000CredentialsSection } from "@/components/properties/PropertyRoss1000CredentialsSection";
 import { PropertyChannelPricingSettings } from "@/components/properties/PropertyChannelPricingSettings";
 import { getPropertyChannelPricingSettings } from "@/lib/pricing/get-property-channel-pricing-settings";
 import { getPropertyWorkspace } from "@/lib/properties/get-property-workspace";
@@ -49,6 +51,10 @@ import {
   listAlloggiatiApartmentsAction,
   saveAlloggiatiCredentialsAction,
 } from "./alloggiati-credential-actions";
+import {
+  linkExistingRoss1000AccountAction,
+  saveRoss1000CredentialsAction,
+} from "./ross1000-credential-actions";
 import { updatePropertyChannelPricingAction } from "./channel-pricing-actions";
 import { updatePropertyAction } from "./actions";
 import { updatePropertyRatePlanAction } from "./rate-plan-actions";
@@ -87,6 +93,8 @@ const revenueAiCapabilities = [
 export default async function PropertyEditPage({
   params,
 }: PropertyEditPageProps) {
+  const viewer = await requireUser();
+  if (viewer.role === "OWNER") throw new Error("Accesso non autorizzato.");
   const { id } = await params;
 
   const currentUser = await requirePropertyAccess(id);
@@ -96,7 +104,7 @@ export default async function PropertyEditPage({
 
   const canManageProperty = await hasPropertyRole(
     id,
-    ["OWNER", "MANAGER"],
+    ["MANAGER"],
   );
 
   const workspace = await getPropertyWorkspace(id);
@@ -230,6 +238,8 @@ export default async function PropertyEditPage({
   const [
     alloggiatiConnection,
     alloggiatiAccounts,
+    ross1000Connection,
+    ross1000Accounts,
   ] =
     currentUser.role === "SUPER_ADMIN"
       ? await Promise.all([
@@ -260,8 +270,38 @@ export default async function PropertyEditPage({
               name: true,
             },
           }),
+
+          prisma.ross1000Property.findUnique({
+            where: {
+              propertyId: property.id,
+            },
+            select: {
+              structureCode: true,
+              roomsAvailable: true,
+              bedsAvailable: true,
+              updatedAt: true,
+              account: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          }),
+
+          prisma.ross1000Account.findMany({
+            where: {
+              ownerId: property.owner.id,
+            },
+            orderBy: {
+              name: "asc",
+            },
+            select: {
+              id: true,
+              name: true,
+            },
+          }),
         ])
-      : [null, []];
+      : [null, [], null, []];
   const [
     propertyFinanceTemplate,
     defaultFinanceTemplate,
@@ -732,7 +772,7 @@ export default async function PropertyEditPage({
       <div>
         <label htmlFor="cleaningCost" className="mb-2 block text-sm font-semibold text-slate-700">{"Costo pulizia per prenotazione (\u20AC)"}</label>
         <input id="cleaningCost" name="cleaningCost" type="number" min="0" step="0.01" required defaultValue={Number(property.cleaningCost)} className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base text-slate-950 shadow-sm outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-500/10" />
-        <p className="mt-2 text-xs leading-5 text-slate-500">Costo fisso applicato alla pulizia tra un soggiorno e l'altro.</p>
+        <p className="mt-2 text-xs leading-5 text-slate-500">Costo fisso applicato alla pulizia tra un soggiorno e l&apos;altro.</p>
       </div>
 
       <div>
@@ -1030,6 +1070,34 @@ export default async function PropertyEditPage({
   />
 ) : null}
 
+{currentUser.role === "SUPER_ADMIN" ? (
+  <PropertyRoss1000CredentialsSection
+    propertyId={property.id}
+    connection={
+      ross1000Connection
+        ? {
+            accountName:
+              ross1000Connection.account.name,
+            structureCode:
+              ross1000Connection.structureCode,
+            roomsAvailable:
+              ross1000Connection.roomsAvailable,
+            bedsAvailable:
+              ross1000Connection.bedsAvailable,
+            updatedAt:
+              ross1000Connection.updatedAt,
+          }
+        : null
+    }
+    accounts={ross1000Accounts}
+    createAccountAction={
+      saveRoss1000CredentialsAction
+    }
+    linkAccountAction={
+      linkExistingRoss1000AccountAction
+    }
+  />
+) : null}
 <PropertyChannelPricingSettings
   propertyId={property.id}
   settings={

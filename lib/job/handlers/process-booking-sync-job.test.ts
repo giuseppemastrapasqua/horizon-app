@@ -47,13 +47,13 @@ describe("processBookingSyncJob", () => {
     synchronizeExternalBookingsMock.mockReset();
   });
 
-  it("sincronizza direttamente la connessione iCal quando connectionId e propertyId sono presenti", async () => {
+  it.each(["BOOKING_COM", "AIRBNB"])("sincronizza direttamente iCal %s senza usare il client API", async (provider) => {
     await processBookingSyncJob({
       id: "job-1",
       type: "BOOKING_SYNC",
       status: "RUNNING",
       payload: {
-        provider: "BOOKING_COM",
+        provider,
         connectionId: "connection-1",
         propertyId: "property-1",
         pageLimit: 50,

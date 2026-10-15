@@ -22,6 +22,13 @@ export async function resolveGuestCheckInLink(token: string) {
           checkIn: true,
           checkOut: true,
           guests: true,
+          ross1000BookingData: {
+            select: {
+              tourismType: true,
+              transportType: true,
+            roomsOccupied: true,
+            },
+          },
           bookingGuests: {
             orderBy: {
               createdAt: "asc",
@@ -49,6 +56,12 @@ export async function resolveGuestCheckInLink(token: string) {
           property: {
             select: {
               name: true,
+              ross1000Property: {
+                select: {
+                  id: true,
+                  roomsAvailable: true,
+                },
+              },
             },
           },
         },

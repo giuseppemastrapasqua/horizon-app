@@ -58,6 +58,7 @@ function escapeHtml(value: string) {
 
 async function prepareGuestCheckInLink(bookingId: string) {
   const user = await requireUser();
+  if (user.role === "OWNER") throw new Error("Operazione non autorizzata.");
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -100,6 +101,28 @@ async function persistGuestCheckInLink(
   prepared: Awaited<ReturnType<typeof prepareGuestCheckInLink>>,
 ) {
   await prisma.$transaction(async (transaction) => {
+    const blockingTransmission =
+      await transaction.alloggiatiWebTransmission.findFirst({
+        where: {
+          bookingId: prepared.booking.id,
+          status: {
+            in: [
+              "PREPARED",
+              "SENDING",
+              "CONFIRMED",
+              "PARTIALLY_CONFIRMED",
+              "OUTCOME_UNKNOWN",
+            ],
+          },
+        },
+        select: { id: true },
+      });
+
+    if (blockingTransmission) {
+      throw new Error(
+        "Esiste già una trasmissione Alloggiati Web in corso o con esito da verificare. Il link schedina ospiti non può essere generato o rigenerato.",
+      );
+    }
     const previous = await transaction.guestCheckInLink.findUnique({
       where: { bookingId: prepared.booking.id },
       select: { id: true },
@@ -221,6 +244,7 @@ export async function verifyGuestCheckInWithAlloggiatiAction(
   bookingId: string,
 ) {
   const user = await requireUser();
+  if (user.role === "OWNER") throw new Error("Operazione non autorizzata.");
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -254,7 +278,7 @@ export async function verifyGuestCheckInWithAlloggiatiAction(
     throw new Error("Prenotazione non trovata.");
   }
 
-  await requirePropertyRole(booking.propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(booking.propertyId, ["MANAGER"]);
 
   const connection = await prisma.alloggiatiWebProperty.findUnique({
     where: { propertyId: booking.propertyId },
@@ -322,6 +346,7 @@ export async function enqueueGuestCheckInAlloggiatiSubmissionAction(
   bookingId: string,
 ) {
   const user = await requireUser();
+  if (user.role === "OWNER") throw new Error("Operazione non autorizzata.");
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -340,7 +365,7 @@ export async function enqueueGuestCheckInAlloggiatiSubmissionAction(
     throw new Error("Prenotazione non trovata.");
   }
 
-  await requirePropertyRole(booking.propertyId, ["OWNER", "MANAGER"]);
+  await requirePropertyRole(booking.propertyId, ["MANAGER"]);
 
   assertAlloggiatiSubmissionWindowOpen(booking.checkIn);
 
@@ -365,18 +390,32 @@ export async function enqueueGuestCheckInAlloggiatiSubmissionAction(
     );
   }
 
-  const confirmedTransmission =
+  const blockingTransmission =
     await prisma.alloggiatiWebTransmission.findFirst({
       where: {
         bookingId: booking.id,
-        status: "CONFIRMED",
+        status: {
+          in: [
+            "PREPARED",
+            "SENDING",
+            "CONFIRMED",
+            "PARTIALLY_CONFIRMED",
+            "OUTCOME_UNKNOWN",
+          ],
+        },
       },
-      select: { id: true },
+      select: { id: true, status: true },
     });
 
-  if (confirmedTransmission) {
+  if (blockingTransmission) {
+    if (blockingTransmission.status === "CONFIRMED") {
+      throw new Error(
+        "La schedina è già stata trasmessa e confermata da Alloggiati Web.",
+      );
+    }
+
     throw new Error(
-      "La schedina è già stata trasmessa e confermata da Alloggiati Web.",
+      "Esiste già una trasmissione Alloggiati Web in corso o con esito da verificare. Non è consentito un nuovo invio.",
     );
   }
 
@@ -413,6 +452,7 @@ export async function enqueueGuestCheckInAlloggiatiSubmissionAction(
 
 export async function revokeGuestCheckInLinkAction(bookingId: string) {
   const user = await requireUser();
+  if (user.role === "OWNER") throw new Error("Operazione non autorizzata.");
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -456,3 +496,4 @@ export async function revokeGuestCheckInLinkAction(bookingId: string) {
 
   return { success: true as const };
 }
+

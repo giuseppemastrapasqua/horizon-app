@@ -8,6 +8,7 @@ type BookingEditFormProps = {
     guestEmail: string | null;
     guestPhone: string | null;
     guests: number;
+    roomsBooked: number | null;
     grossAmount: number;
     currency: string;
   };
@@ -66,6 +67,18 @@ export function BookingEditForm({
               min={1}
               step={1}
               defaultValue={booking.guests}
+              required
+              style={inputStyle}
+            />
+          </Field>
+
+          <Field label="Camere prenotate">
+            <input
+              type="number"
+              name="roomsBooked"
+              min={1}
+              step={1}
+              defaultValue={booking.roomsBooked ?? ""}
               required
               style={inputStyle}
             />

@@ -83,7 +83,7 @@ describe("booking permissions", () => {
     });
   });
 
-  it("richiede OWNER o MANAGER per creare una prenotazione", async () => {
+  it("richiede MANAGER per creare una prenotazione", async () => {
     const formData = new FormData();
 
     formData.set("propertyId", "property-1");
@@ -101,7 +101,7 @@ describe("booking permissions", () => {
       requirePropertyRoleMock,
     ).toHaveBeenCalledWith(
       "property-1",
-      ["OWNER", "MANAGER"],
+      ["MANAGER"],
     );
 
     expect(

@@ -1,0 +1,11 @@
+{
+  "name": "horizon-ical-clock",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test clock.node-test.mjs",
+    "build": "esbuild index.mjs --bundle --platform=node --target=node24 --format=esm --outfile=dist/index.mjs"
+  },
+  "dependencies": { "@neon/functions": "0.11.0" },
+  "devDependencies": { "esbuild": "0.28.2" }
+}

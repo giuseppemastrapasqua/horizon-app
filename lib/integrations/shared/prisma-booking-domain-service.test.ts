@@ -242,6 +242,10 @@ describe("PrismaBookingDomainService", () => {
         guestEmail: true,
         guestPhone: true,
 
+        bookedAt: true,
+
+        roomsBooked: true,
+
         checkIn: true,
         checkOut: true,
 
@@ -308,6 +312,12 @@ describe("PrismaBookingDomainService", () => {
 
         guestPhone:
           "+39 333 1234567",
+
+        bookedAt:
+          null,
+
+        roomsBooked:
+          null,
 
         checkIn: new Date(
           "2026-09-10T14:00:00.000Z",
@@ -556,6 +566,12 @@ describe("PrismaBookingDomainService", () => {
         guestPhone:
           "+39 333 1234567",
 
+        bookedAt:
+          null,
+
+        roomsBooked:
+          null,
+
         checkIn:
           new Date(
             "2026-09-10T14:00:00.000Z",
@@ -675,7 +691,7 @@ describe("PrismaBookingDomainService", () => {
         },
 
         idempotencyKey:
-          "BOOKING_UPDATED:booking-1:537a82b6b02d1f4683c9b18cef3977e2758a1806214cbd5172d497bbfa0e78e9",
+          "BOOKING_UPDATED:booking-1:3d390b3a7cc3d9ab1677e742fd356140e7fde9499cf891cde156086d5b814c1d",
       },
       transactionClient,
     );
@@ -815,6 +831,12 @@ describe("PrismaBookingDomainService", () => {
 
         guestPhone:
           "+39 333 1234567",
+
+        bookedAt:
+          null,
+
+        roomsBooked:
+          null,
 
         checkIn:
           new Date(
@@ -1001,6 +1023,13 @@ describe("PrismaBookingDomainService", () => {
         guestPhone:
           true,
 
+        bookedAt:
+          true,
+
+
+        roomsBooked:
+          true,
+
         checkIn:
           true,
 
@@ -1025,11 +1054,11 @@ describe("PrismaBookingDomainService", () => {
         operationalStatus:
           true,
 
-        guestDataManuallyEdited:
-          true,
+    guestDataManuallyEdited:
+      true,
 
-        pricingDataManuallyEdited:
-          true,
+    pricingDataManuallyEdited:
+      true,
       },
     });
 
@@ -1079,11 +1108,11 @@ describe("PrismaBookingDomainService", () => {
       currency:
         "EUR",
 
-      guestDataManuallyEdited:
-        true,
+    guestDataManuallyEdited:
+      true,
 
-      pricingDataManuallyEdited:
-        true,
+    pricingDataManuallyEdited:
+      true,
     });
 
     bookingUpdateMock.mockResolvedValueOnce({
@@ -1239,6 +1268,143 @@ describe("PrismaBookingDomainService", () => {
       emitEventMock,
     ).not.toHaveBeenCalled();
   });
+  it("salva bookedAt quando una nuova prenotazione lo fornisce", async () => {
+    const bookedAt =
+      new Date("2026-08-20T09:30:00.000Z");
+
+    bookingFindFirstMock.mockResolvedValueOnce(null);
+
+    bookingCreateMock.mockResolvedValueOnce({
+      id: "booking-1",
+      checkIn: new Date("2026-09-10T14:00:00.000Z"),
+      checkOut: new Date("2026-09-13T10:00:00.000Z"),
+    });
+
+    const service =
+      new PrismaBookingDomainService(
+        createPropertyResolver(),
+      );
+
+    const result =
+      await service.upsertBooking(
+        createBookingInput({
+          bookedAt,
+        }),
+      );
+
+    expect(result).toEqual({
+      inserted: 1,
+      updated: 0,
+      skipped: 0,
+    });
+
+    expect(
+      bookingCreateMock,
+    ).toHaveBeenCalledWith({
+      data:
+        expect.objectContaining({
+          bookedAt,
+        }),
+    });
+  });
+
+  it("acquisisce bookedAt quando la prenotazione esistente non lo ha ancora", async () => {
+    const bookedAt =
+      new Date("2026-08-20T09:30:00.000Z");
+
+    bookingFindFirstMock.mockResolvedValueOnce({
+      ...createExistingBooking(),
+      bookedAt: null,
+    });
+
+    findOrCreateGuestMock.mockResolvedValueOnce({
+      guest: {
+        id: "guest-1",
+      },
+      created: false,
+    });
+
+    bookingUpdateMock.mockResolvedValueOnce({
+      id: "booking-1",
+    });
+
+    const service =
+      new PrismaBookingDomainService(
+        createPropertyResolver(),
+      );
+
+    const result =
+      await service.upsertBooking(
+        createBookingInput({
+          bookedAt,
+        }),
+      );
+
+    expect(result).toEqual({
+      inserted: 0,
+      updated: 1,
+      skipped: 0,
+    });
+
+    expect(
+      bookingUpdateMock,
+    ).toHaveBeenCalledWith({
+      where: {
+        id: "booking-1",
+      },
+      data:
+        expect.objectContaining({
+          bookedAt,
+        }),
+    });
+  });
+
+  it("non sovrascrive bookedAt quando la prenotazione esistente lo ha già", async () => {
+    const existingBookedAt =
+      new Date("2026-08-18T08:00:00.000Z");
+
+    const incomingBookedAt =
+      new Date("2026-08-20T09:30:00.000Z");
+
+    bookingFindFirstMock.mockResolvedValueOnce({
+      ...createExistingBooking(),
+      bookedAt: existingBookedAt,
+      guests: 1,
+    });
+
+    findOrCreateGuestMock.mockResolvedValueOnce({
+      guest: {
+        id: "guest-1",
+      },
+      created: false,
+    });
+
+    bookingUpdateMock.mockResolvedValueOnce({
+      id: "booking-1",
+    });
+
+    const service =
+      new PrismaBookingDomainService(
+        createPropertyResolver(),
+      );
+
+    const result =
+      await service.upsertBooking(
+        createBookingInput({
+          bookedAt: incomingBookedAt,
+        }),
+      );
+
+    expect(result).toEqual({
+      inserted: 0,
+      updated: 0,
+      skipped: 1,
+    });
+
+    expect(
+      bookingUpdateMock,
+    ).not.toHaveBeenCalled();
+  });
 });
 
 function createPropertyResolver(): ExternalPropertyResolver {
@@ -1280,6 +1446,9 @@ function createExistingBooking() {
     guestPhone:
       "+39 333 1234567",
 
+    bookedAt:
+      null,
+
     checkIn:
       new Date(
         "2026-09-10T14:00:00.000Z",
@@ -1308,11 +1477,11 @@ function createExistingBooking() {
     operationalStatus:
       BookingOperationalStatus.OK,
 
-        guestDataManuallyEdited:
-          true,
+    guestDataManuallyEdited:
+      true,
 
-        pricingDataManuallyEdited:
-          true,
+    pricingDataManuallyEdited:
+      true,
   };
 }
 

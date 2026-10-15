@@ -183,7 +183,7 @@ export async function createPropertyDocumentAction(
     "Immobile non specificato.",
   );
 
-  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  const user = await requirePropertyRole(propertyId, ["MANAGER"]);
 
   await ensurePropertyExists(propertyId);
 
@@ -311,7 +311,7 @@ export async function updatePropertyDocumentAction(
   formData: FormData,
 ): Promise<void> {
   const propertyId = getRequiredString(formData, "propertyId", "Immobile non specificato.");
-  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  const user = await requirePropertyRole(propertyId, ["MANAGER"]);
   const documentId = getRequiredString(formData, "documentId", "Documento non specificato.");
 
   const document = await prisma.propertyDocument.findFirst({
@@ -420,7 +420,7 @@ export async function retryPropertyDocumentOcrAction(
     "Immobile non specificato.",
   );
 
-  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  const user = await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const documentId = getRequiredString(
     formData,
@@ -572,7 +572,7 @@ export async function deletePropertyDocumentAction(
     "Documento non specificato.",
   );
 
-  const user = await requirePropertyRole(propertyId, ["OWNER", "MANAGER"]);
+  const user = await requirePropertyRole(propertyId, ["MANAGER"]);
 
   const document =
     await prisma.propertyDocument.findFirst({

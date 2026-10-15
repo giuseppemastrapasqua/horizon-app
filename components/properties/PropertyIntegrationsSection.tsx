@@ -37,28 +37,21 @@ const PROVIDERS: Array<{
     value: "BOOKING_COM",
     label: "Booking.com",
     description:
-      "Importa le prenotazioni dal calendario iCal esportato da Booking.com.",
+      "Aggiorna le date occupate dal calendario esportato da Booking.com.",
     synchronizationAvailable: true,
   },
   {
     value: "AIRBNB",
     label: "Airbnb",
     description:
-      "Collega il listing Airbnb all'immobile Horizon.",
-    synchronizationAvailable: false,
+      "Aggiorna le date occupate dal calendario esportato da Airbnb.",
+    synchronizationAvailable: true,
   },
   {
     value: "VRBO",
     label: "VRBO",
     description:
       "Collega il listing VRBO all'immobile Horizon.",
-    synchronizationAvailable: false,
-  },
-  {
-    value: "ISTAT",
-    label: "ISTAT",
-    description:
-      "Configura il collegamento per i flussi statistici.",
     synchronizationAvailable: false,
   },
   {
@@ -91,10 +84,14 @@ export async function PropertyIntegrationsSection({
       ]),
     );
 
-  const bookingIcal =
-    await loadBookingIcal(
-      propertyId,
-    );
+  const bookingIcal = await loadIcal(
+    propertyId,
+    BookingChannel.BOOKING,
+  );
+  const airbnbIcal = await loadIcal(
+    propertyId,
+    BookingChannel.AIRBNB,
+  );
 
   return (
     <section
@@ -114,8 +111,8 @@ export async function PropertyIntegrationsSection({
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
               Collega la struttura ai servizi esterni utilizzati da Horizon.
-              Booking.com utilizza il calendario iCal per
-              importare le prenotazioni.
+              Booking.com e Airbnb aggiornano le disponibilità tramite il calendario iCal.
+              Nomi degli ospiti, importi e schede prenotazione non vengono importati da questo collegamento.
             </p>
           </div>
 
@@ -135,12 +132,22 @@ export async function PropertyIntegrationsSection({
           const isBooking =
             provider.value ===
             "BOOKING_COM";
+          const isAirbnb =
+            provider.value ===
+            "AIRBNB";
+          const isIcalProvider =
+            isBooking || isAirbnb;
+          const ical = isBooking
+            ? bookingIcal
+            : isAirbnb
+              ? airbnbIcal
+              : null;
 
           const connected =
-            isBooking
+            isIcalProvider
               ? Boolean(
                   mapping &&
-                    bookingIcal?.feedUrl,
+                    ical?.feedUrl,
                 )
               : Boolean(mapping);
 
@@ -210,22 +217,22 @@ export async function PropertyIntegrationsSection({
                   />
                 </div>
 
-                {isBooking ? (
+                {isIcalProvider ? (
                   <div className="mt-5">
                     <label
-                      htmlFor="booking-feed-url"
+                      htmlFor={`ical-feed-url-${provider.value}`}
                       className="mb-2 block text-sm font-medium text-slate-700"
                     >
-                      URL calendario Booking.com
+                      URL calendario {provider.label}
                     </label>
 
                     <input
-                      id="booking-feed-url"
+                      id={`ical-feed-url-${provider.value}`}
                       name="feedUrl"
                       type="url"
                       required
                       defaultValue={
-                        bookingIcal?.feedUrl ??
+                        ical?.feedUrl ??
                         ""
                       }
                       placeholder="https://...calendar.ics"
@@ -233,7 +240,7 @@ export async function PropertyIntegrationsSection({
                     />
 
                     <p className="mt-2 text-xs leading-5 text-slate-500">
-                      Incolla l'URL iCal esportato dal calendario della struttura su Booking.com.
+                      Incolla l&apos;URL iCal esportato dal calendario della struttura su {provider.label}.
                     </p>
                   </div>
                 ) : null}
@@ -247,35 +254,35 @@ export async function PropertyIntegrationsSection({
                   </p>
                 ) : null}
 
-                {isBooking &&
-                bookingIcal?.activeSyncStatus ? (
+                {isIcalProvider &&
+                ical?.activeSyncStatus ? (
                   <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
-                    {bookingIcal.activeSyncStatus ===
+                    {ical.activeSyncStatus ===
                     BackgroundJobStatus.RUNNING
                       ? "Sincronizzazione in corso"
                       : "Sincronizzazione in coda"}
                   </div>
                 ) : null}
 
-                {isBooking &&
-                bookingIcal?.lastSyncAt ? (
+                {isIcalProvider &&
+                ical?.lastSyncAt ? (
                   <div className="mt-3 text-xs leading-5 text-slate-500">
                     <p>
                       Ultima sincronizzazione:{" "}
-                      {bookingIcal.lastSyncAt.toLocaleString(
+                      {ical.lastSyncAt.toLocaleString(
                         "it-IT",
                       )}
                     </p>
 
                     <p>
                       Stato:{" "}
-                      {bookingIcal.lastSyncStatus ??
+                      {ical.lastSyncStatus ??
                         "—"}
                     </p>
 
-                    {bookingIcal.lastSyncError ? (
+                    {ical.lastSyncError ? (
                       <p className="text-red-600">
-                        {bookingIcal.lastSyncError}
+                        {ical.lastSyncError}
                       </p>
                     ) : null}
                   </div>
@@ -327,8 +334,9 @@ export async function PropertyIntegrationsSection({
   );
 }
 
-async function loadBookingIcal(
+async function loadIcal(
   propertyId: string,
+  channel: BookingChannel,
 ): Promise<{
   feedUrl: string;
   lastSyncAt: Date | null;
@@ -359,22 +367,22 @@ async function loadBookingIcal(
       },
     });
 
-  const booking =
+  const matching =
     connections.find(
       (item) =>
         getJsonString(
           item.config,
           "channel",
-        ) === BookingChannel.BOOKING,
+        ) === channel,
     );
 
-  if (!booking) {
+  if (!matching) {
     return null;
   }
 
   const feedUrl =
     getJsonString(
-      booking.config,
+      matching.config,
       "feedUrl",
     );
 
@@ -402,7 +410,7 @@ async function loadBookingIcal(
           {
             payload: {
               path: ["connectionId"],
-              equals: booking.connectionId,
+              equals: matching.connectionId,
             },
           },
         ],
@@ -418,11 +426,11 @@ async function loadBookingIcal(
   return {
     feedUrl,
     lastSyncAt:
-      booking.connection.lastSyncAt,
+      matching.connection.lastSyncAt,
     lastSyncStatus:
-      booking.connection.lastSyncStatus,
+      matching.connection.lastSyncStatus,
     lastSyncError:
-      booking.connection.lastSyncError,
+      matching.connection.lastSyncError,
     activeSyncStatus:
       activeSyncJob?.status ?? null,
   };

@@ -49,9 +49,11 @@ export type NormalizedExternalBooking = {
   checkOut: Date;
 
   guests: number;
+  roomsBooked?: number;
   grossAmount: number;
   currency: string;
 
+  bookedAt?: Date;
   updatedAt?: Date;
   rawPayload: unknown;
 };

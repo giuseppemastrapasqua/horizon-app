@@ -250,6 +250,9 @@ export function BookingGuestCheckInPanel({
     guestRegistration.status === "READY" &&
     guestRegistration.completedGuests ===
       guestRegistration.expectedGuests;
+  const canCollectGuestData =
+    guestRegistration.status === "TO_COMPLETE" ||
+    guestRegistration.status === "REJECTED";
 
   return (
     <Panel
@@ -263,6 +266,7 @@ export function BookingGuestCheckInPanel({
       }
     >
       <SectionTitle
+        dark
         compact
         title="Check-in & Alloggiati"
         subtitle={
@@ -321,7 +325,7 @@ export function BookingGuestCheckInPanel({
               />
             ) : null}
 
-            {!isGuestRegistrationComplete &&
+            {canCollectGuestData &&
             guestEmail ? (
               <ActionButton
                 label="Invia email"
@@ -334,7 +338,7 @@ export function BookingGuestCheckInPanel({
               />
             ) : null}
 
-            {!isGuestRegistrationComplete ? (
+            {canCollectGuestData ? (
               <ActionButton
                 label={
                   status === "ACTIVE"
@@ -540,3 +544,4 @@ const messageStyle = {
   fontSize: uiTokens.fontSize.xs,
   lineHeight: 1.35,
 };
+

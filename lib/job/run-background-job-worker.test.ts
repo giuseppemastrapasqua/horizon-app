@@ -14,6 +14,16 @@ vi.mock(
 import { runBackgroundJobWorker } from "./run-background-job-worker";
 
 describe("runBackgroundJobWorker", () => {
+  it("esegue il pianificatore prima di processare la coda", async () => {
+    let stop = false;
+    const order: string[] = [];
+    await runBackgroundJobWorker({
+      isShutdownRequested: () => stop,
+      beforePoll: async () => { order.push("schedule"); },
+      processNextJob: async () => { order.push("process"); stop = true; return true; },
+    });
+    expect(order).toEqual(["schedule", "process"]);
+  });
   it("termina subito quando lo shutdown è già richiesto", async () => {
     const processNextJob = vi.fn();
     const wait = vi.fn();

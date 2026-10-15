@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  useEffect,
+  useSyncExternalStore,
   useState,
 } from "react";
 
@@ -43,6 +43,8 @@ type SortablePhotoGridProps = {
   ) => void;
 };
 
+const subscribeHydration = () => () => {};
+
 export function SortablePhotoGrid(
   props: SortablePhotoGridProps,
 ) {
@@ -66,8 +68,7 @@ function SortablePhotoGridContent({
   reorderAction,
   onOrderChange,
 }: SortablePhotoGridProps) {
-  const [mounted, setMounted] =
-    useState(false);
+  const mounted = useSyncExternalStore(subscribeHydration, () => true, () => false);
 
   const [items, setItems] =
     useState(images);
@@ -78,9 +79,6 @@ function SortablePhotoGridContent({
   const [saveError, setSaveError] =
     useState<string | null>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {

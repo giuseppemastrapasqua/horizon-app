@@ -16,6 +16,27 @@ import {
   type IntegrationProvider,
 } from "@/lib/integrations/shared/types";
 
+type IcalProviderConfig = {
+  provider: IntegrationProvider;
+  channel: BookingChannel;
+  label: string;
+};
+
+const ICAL_PROVIDERS: Partial<
+  Record<IntegrationProvider, IcalProviderConfig>
+> = {
+  [INTEGRATION_PROVIDERS.BOOKING_COM]: {
+    provider: INTEGRATION_PROVIDERS.BOOKING_COM,
+    channel: BookingChannel.BOOKING,
+    label: "Booking.com",
+  },
+  [INTEGRATION_PROVIDERS.AIRBNB]: {
+    provider: INTEGRATION_PROVIDERS.AIRBNB,
+    channel: BookingChannel.AIRBNB,
+    label: "Airbnb",
+  },
+};
+
 function isIntegrationProvider(
   value: string,
 ): value is IntegrationProvider {
@@ -47,7 +68,7 @@ export async function updatePropertyIntegrationAction(
 
   await requirePropertyRole(
     propertyId,
-    ["OWNER", "MANAGER"],
+    ["MANAGER"],
   );
 
   if (
@@ -74,32 +95,42 @@ export async function updatePropertyIntegrationAction(
     );
   }
 
-  await upsertIntegrationPropertyMapping({
-    provider: providerValue,
-    propertyId,
-    externalPropertyId,
-  });
+  const icalProvider =
+    ICAL_PROVIDERS[providerValue];
 
-  if (
-    providerValue ===
-    INTEGRATION_PROVIDERS.BOOKING_COM
-  ) {
+  if (icalProvider) {
     const feedUrl = String(
       formData.get("feedUrl") ?? "",
     ).trim();
 
     if (!feedUrl) {
       throw new Error(
-        "Inserisci l'URL del calendario iCal esportato da Booking.com.",
+        `Inserisci l'URL del calendario iCal esportato da ${icalProvider.label}.`,
       );
     }
 
-    validateFeedUrl(feedUrl);
+    validateFeedUrl(
+      feedUrl,
+      icalProvider.label,
+    );
 
-    await saveBookingIcalConnection({
+    await upsertIntegrationPropertyMapping({
+      provider: providerValue,
+      propertyId,
+      externalPropertyId,
+    });
+
+    await saveIcalConnection({
       propertyId,
       externalPropertyId,
       feedUrl,
+      provider: icalProvider,
+    });
+  } else {
+    await upsertIntegrationPropertyMapping({
+      provider: providerValue,
+      propertyId,
+      externalPropertyId,
     });
   }
 
@@ -125,7 +156,7 @@ export async function synchronizePropertyIntegrationAction(
 
   await requirePropertyRole(
     propertyId,
-    ["OWNER", "MANAGER"],
+    ["MANAGER"],
   );
 
   if (!isIntegrationProvider(providerValue)) {
@@ -134,10 +165,10 @@ export async function synchronizePropertyIntegrationAction(
     );
   }
 
-  if (
-    providerValue !==
-    INTEGRATION_PROVIDERS.BOOKING_COM
-  ) {
+  const icalProvider =
+    ICAL_PROVIDERS[providerValue];
+
+  if (!icalProvider) {
     throw new Error(
       `La sincronizzazione per "${providerValue}" non è ancora disponibile.`,
     );
@@ -160,24 +191,24 @@ export async function synchronizePropertyIntegrationAction(
       },
     });
 
-  const bookingConnection =
+  const providerConnection =
     connections.find(
       (connection) =>
         getJsonString(
           connection.config,
           "channel",
-        ) === BookingChannel.BOOKING,
+        ) === icalProvider.channel,
     );
 
-  if (!bookingConnection) {
+  if (!providerConnection) {
     throw new Error(
-      "Calendario iCal Booking.com non configurato per questo immobile.",
+      `Calendario iCal ${icalProvider.label} non configurato per questo immobile.`,
     );
   }
 
   await synchronizeIcalConnectionProperty({
     connectionId:
-      bookingConnection.connectionId,
+      providerConnection.connectionId,
     propertyId,
     pageLimit: 50,
     maxPages: 20,
@@ -186,14 +217,16 @@ export async function synchronizePropertyIntegrationAction(
   revalidatePropertyPaths(propertyId);
 }
 
-async function saveBookingIcalConnection({
+async function saveIcalConnection({
   propertyId,
   externalPropertyId,
   feedUrl,
+  provider,
 }: {
   propertyId: string;
   externalPropertyId: string;
   feedUrl: string;
+  provider: IcalProviderConfig;
 }): Promise<void> {
   const property =
     await prisma.property.findUnique({
@@ -236,13 +269,12 @@ async function saveBookingIcalConnection({
         getJsonString(
           item.config,
           "channel",
-        ) === BookingChannel.BOOKING,
+        ) === provider.channel,
     );
 
   const config: Prisma.InputJsonObject = {
     feedUrl,
-    channel:
-      BookingChannel.BOOKING,
+    channel: provider.channel,
   };
 
   if (existing) {
@@ -254,7 +286,7 @@ async function saveBookingIcalConnection({
         data: {
           enabled: true,
           name:
-            `Booking.com iCal · ${property.name}`,
+            `${provider.label} iCal · ${property.name}`,
         },
       }),
       prisma.integrationConnectionProperty.update({
@@ -278,7 +310,7 @@ async function saveBookingIcalConnection({
       transport:
         IntegrationTransport.ICAL,
       name:
-        `Booking.com iCal · ${property.name}`,
+        `${provider.label} iCal · ${property.name}`,
       enabled: true,
       properties: {
         create: {
@@ -293,6 +325,7 @@ async function saveBookingIcalConnection({
 
 function validateFeedUrl(
   value: string,
+  providerLabel: string,
 ): void {
   let url: URL;
 
@@ -300,7 +333,7 @@ function validateFeedUrl(
     url = new URL(value);
   } catch {
     throw new Error(
-      "L'URL del calendario Booking.com non è valido.",
+      `L'URL del calendario ${providerLabel} non è valido.`,
     );
   }
 
@@ -309,7 +342,7 @@ function validateFeedUrl(
     url.protocol !== "http:"
   ) {
     throw new Error(
-      "Il calendario Booking.com deve utilizzare un URL HTTP o HTTPS.",
+      `Il calendario ${providerLabel} deve utilizzare un URL HTTP o HTTPS.`,
     );
   }
 }
