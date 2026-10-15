@@ -645,7 +645,7 @@ export default async function FinanceReportsPage({
                     key={insight.id}
                     className={`rounded-2xl border p-5 ${severityClass}`}
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full bg-[#07111A]/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#A4AFB8]">
@@ -669,7 +669,7 @@ export default async function FinanceReportsPage({
                       {insight.action?.href ? (
                         <Link
                           href={insight.action.href}
-                          className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#2563EB] px-4 text-sm font-bold text-white no-underline transition hover:bg-blue-700"
+                          className="inline-flex min-h-10 max-w-full shrink-0 items-center justify-center rounded-xl bg-[#2563EB] px-4 py-2 text-center text-sm font-bold text-white no-underline transition hover:bg-blue-700"
                         >
                           {insight.action.label}
                         </Link>
