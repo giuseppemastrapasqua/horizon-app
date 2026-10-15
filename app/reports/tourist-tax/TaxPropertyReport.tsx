@@ -13,6 +13,7 @@ export function TaxPropertyReport({ report, year }: { report: ReturnType<typeof 
         <p className="mt-2 text-xl text-[#D8B367]">{row.reviewGuestNights ? "Da completare" : euro(row.managerCents)}</p>
         <dl className="mt-3 space-y-2 text-sm">
           <div className="flex justify-between gap-2"><dt>Quota gestore calcolata</dt><dd>{euro(row.managerCents)}</dd></div>
+          <div className="flex justify-between gap-2"><dt>Numero ospiti</dt><dd>{row.guestCount}</dd></div>
           <div className="flex justify-between gap-2"><dt>Presenze-notte totali</dt><dd>{row.guestNights}</dd></div>
           <div className="flex justify-between gap-2"><dt>Imponibili gestore</dt><dd>{row.taxableGuestNights}</dd></div>
           <div className="flex justify-between gap-2"><dt>Esenti / escluse</dt><dd>{row.exemptGuestNights}</dd></div>

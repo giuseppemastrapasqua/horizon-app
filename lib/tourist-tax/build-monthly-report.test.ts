@@ -20,6 +20,7 @@ describe("monthly tourist tax", () => {
     const october = buildMonthlyTaxReport(2026, property, [stay({ guests: 2, classifications: [] })])[0].months[9];
     expect(october.managerCents).toBe(0);
     expect(october.reviewGuestNights).toBe(4);
+    expect(october.guestCount).toBe(2);
     expect(october.estimateCents).toBe(3800);
   });
   it("separates documented portal classifications without inferring handling from channel", () => {

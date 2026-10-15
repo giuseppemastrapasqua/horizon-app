@@ -9,7 +9,7 @@ const cents = (value: number) => Math.round((value + Number.EPSILON) * 100);
 export function buildMonthlyTaxReport(year: number, properties: TaxProperty[], stays: TaxStay[]) {
   if (!Number.isInteger(year) || year < 2020 || year > 2100) throw new Error("Anno non valido.");
   return properties.map((property) => {
-    const months = Array.from({ length: 12 }, (_, month) => ({ month: month + 1, guestNights: 0, taxableGuestNights: 0, exemptGuestNights: 0, portalGuestNights: 0, managerCents: 0, portalCents: 0, reviewGuestNights: 0, estimateCents: 0, estimateUnavailable: false, bookingIds: [] as string[] }));
+    const months = Array.from({ length: 12 }, (_, month) => ({ month: month + 1, guestCount: 0, guestNights: 0, taxableGuestNights: 0, exemptGuestNights: 0, portalGuestNights: 0, managerCents: 0, portalCents: 0, reviewGuestNights: 0, estimateCents: 0, estimateUnavailable: false, bookingIds: [] as string[] }));
     const details: { bookingId: string; month: number; channel: string; nights: number; expectedGuests: number; managerCents: number; reviewGuestNights: number }[] = [];
     for (const stay of stays.filter((item) => item.propertyId === property.id)) {
       const start = day(stay.checkIn), end = day(stay.checkOut);
@@ -27,6 +27,7 @@ export function buildMonthlyTaxReport(year: number, properties: TaxProperty[], s
         if (!overlap) continue;
         const row = months[month];
         row.bookingIds.push(stay.id);
+        row.guestCount += slots;
         row.guestNights += overlap * slots;
         const taxableEnd = policy ? Math.min(end, start + policy.maximumTaxableNights * ms) : end;
         const taxableOverlap = Math.max(0, (Math.min(taxableEnd, monthEnd) - Math.max(start, monthStart)) / ms);
