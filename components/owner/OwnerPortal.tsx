@@ -716,7 +716,7 @@ export async function OwnerCalendar({
           );
           return (
             <div
-              className={`min-h-20 min-w-0 overflow-hidden rounded-lg border p-1 sm:min-h-24 sm:p-2 ${booking ? "border-[#D8B367]/40 bg-[#D8B367]/10" : blocked ? "border-white/15 bg-white/10" : "border-white/10"}`}
+              className={`min-h-20 min-w-0 overflow-hidden rounded-lg border p-1 sm:min-h-24 sm:p-2 ${booking ? "border-[#D8B367]/70 bg-[#D8B367]/30 sm:border-[#D8B367]/40 sm:bg-[#D8B367]/10" : blocked ? "border-white/15 bg-white/10" : "border-emerald-400/50 bg-emerald-500/20 sm:border-white/10 sm:bg-transparent"}`}
               key={day.toISOString()}
             >
               <p>{day.getUTCDate()}</p>
