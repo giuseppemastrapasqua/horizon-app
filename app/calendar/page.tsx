@@ -1734,7 +1734,7 @@ function addCalendarDays(
 function getBookingChannelBarClass(channel?: string) {
   switch (channel) {
     case "BOOKING":
-      return "bg-blue-500";
+      return "bg-[#D8B367]";
     case "AIRBNB":
       return "bg-[#D8B367]";
     case "HORIZON":
