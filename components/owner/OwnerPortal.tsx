@@ -52,10 +52,10 @@ async function ownerScope() {
   return (await getAccessiblePropertyIds()) ?? [];
 }
 
-function Frame({ title, children }: { title: string; children: ReactNode }) {
+function Frame({ title, children, navigation = true }: { title: string; children: ReactNode; navigation?: boolean }) {
   return (
     <>
-      <Navigation />
+      {navigation ? <Navigation /> : null}
       <AppShell
         title={title}
         subtitle="Il tuo patrimonio, con una visione chiara di soggiorni, risultati e documenti."
@@ -112,7 +112,7 @@ export async function OwnerDashboard() {
       (amounts.get(booking.currency) ?? 0) + Number(booking.grossAmount),
     );
   return (
-    <Frame title="Il tuo portfolio">
+    <Frame title="Il tuo portfolio" navigation={false}>
       <Link href="/performance" className="text-sm text-[#D8B367]">
         Analisi delle performance del mese →
       </Link>
@@ -223,7 +223,25 @@ export async function OwnerBookings({ propertyId }: { propertyId?: string }) {
         anonimo.
       </p>
       {bookings.length ? (
-        <div className={`${card} overflow-x-auto`}>
+        <>
+        <div className="space-y-3 md:hidden">
+          {bookings.map((booking) => (
+            <article className={`${card} min-w-0`} key={booking.id}>
+              <Link className="block break-words font-semibold text-[#D8B367]" href={`/bookings/${booking.id}`}>
+                {booking.property.name}
+                <span className="mt-1 block text-xs font-normal text-white/60">{ownerBookingLabel(booking.id)}</span>
+              </Link>
+              <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                <div className="col-span-2"><dt className="text-white/60">Soggiorno</dt><dd>{date(booking.checkIn)} – {date(booking.checkOut)} · {booking.nights} notti</dd></div>
+                <div><dt className="text-white/60">Ospiti</dt><dd>{booking.guests}</dd></div>
+                <div><dt className="text-white/60">Canale</dt><dd>{channelNames[booking.channel] ?? booking.channel}</dd></div>
+                <div><dt className="text-white/60">Stato</dt><dd>{bookingStates[booking.bookingStatus] ?? booking.bookingStatus}</dd></div>
+                <div><dt className="text-white/60">Lordo</dt><dd>{money(booking.grossAmount, booking.currency)}</dd></div>
+              </dl>
+            </article>
+          ))}
+        </div>
+        <div className={`${card} hidden overflow-x-auto md:block`}>
           <table className="w-full text-left text-sm">
             <thead>
               <tr>
@@ -274,6 +292,7 @@ export async function OwnerBookings({ propertyId }: { propertyId?: string }) {
             </tbody>
           </table>
         </div>
+        </>
       ) : (
         <Empty>Nessuna prenotazione disponibile.</Empty>
       )}
@@ -507,7 +526,7 @@ export async function OwnerReport({ id }: { id: string }) {
   );
   return (
     <Frame title={report.title}>
-      <div className="flex justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
         <Link href="/documents">← Documenti</Link>
         <Link
           href={`/reports/monthly/${report.id}/pdf`}
@@ -631,10 +650,10 @@ export async function OwnerCalendar({
   return (
     <Frame title="Calendario">
       <form className={`${card} flex flex-wrap items-end gap-4`} method="get">
-        <label className="text-sm">
+        <label className="min-w-0 max-w-full text-sm">
           Struttura
           <select
-            className="mt-2 block rounded-lg bg-[#152330] p-3"
+            className="mt-2 block w-full min-w-0 max-w-full rounded-lg bg-[#152330] p-3"
             name="propertyId"
             defaultValue={selected.id}
           >
@@ -658,7 +677,7 @@ export async function OwnerCalendar({
           Mostra
         </button>
       </form>
-      <div className="flex justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
         <Link
           href={`/calendar?propertyId=${selected.id}&month=${adjacent(-1)}`}
         >
@@ -697,23 +716,26 @@ export async function OwnerCalendar({
           );
           return (
             <div
-              className={`min-h-24 rounded-lg border p-2 ${booking ? "border-[#D8B367]/40 bg-[#D8B367]/10" : blocked ? "border-white/15 bg-white/10" : "border-white/10"}`}
+              className={`min-h-20 min-w-0 overflow-hidden rounded-lg border p-1 sm:min-h-24 sm:p-2 ${booking ? "border-[#D8B367]/40 bg-[#D8B367]/10" : blocked ? "border-white/15 bg-white/10" : "border-white/10"}`}
               key={day.toISOString()}
             >
               <p>{day.getUTCDate()}</p>
               {booking ? (
                 <Link
-                  className="mt-2 block break-words text-[10px] sm:text-xs"
+                  className="mt-2 block min-w-0 text-[9px] sm:text-xs"
                   href={`/bookings/${booking.id}`}
+                  aria-label={`${ownerBookingLabel(booking.id)} · ${channelNames[booking.channel] ?? booking.channel}`}
                 >
-                  {ownerBookingLabel(booking.id)}
-                  <span className="block text-white/60">
+                  <span className="sm:hidden">Sogg.</span>
+                  <span className="hidden break-words sm:block">{ownerBookingLabel(booking.id)}</span>
+                  <span className="sr-only sm:not-sr-only sm:block sm:text-white/60">
                     {channelNames[booking.channel] ?? booking.channel}
                   </span>
                 </Link>
               ) : (
                 <p className="mt-2 text-[10px] text-white/60 sm:text-xs">
-                  {blocked ? "Non disponibile" : "Disponibile"}
+                  <span className="sm:hidden">{blocked ? "Blocco" : "Libero"}</span>
+                  <span className="hidden sm:inline">{blocked ? "Non disponibile" : "Disponibile"}</span>
                 </p>
               )}
             </div>
