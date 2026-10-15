@@ -27,6 +27,12 @@ import { navigationForRole } from "@/lib/auth/navigation-policy";
 
 const navigationItems = [
   {
+    href: "/reports/cleaning",
+    label: "Rendiconto pulizie",
+    icon: ClipboardCheck,
+    operatorVisible: true,
+  },
+  {
     href: "/dashboard",
     label: "Dashboard",
     icon: Home,

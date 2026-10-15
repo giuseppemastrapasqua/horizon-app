@@ -15,5 +15,8 @@ export function navigationForRole<
       items.filter((item) => item.href === path),
     );
   }
-  return items.filter((item) => role !== "OPERATOR" || item.operatorVisible);
+  return items.filter((item) =>
+    (role !== "OPERATOR" || item.operatorVisible) &&
+    (item.href !== "/reports/cleaning" || ["SUPER_ADMIN", "MANAGER", "OPERATOR"].includes(role)),
+  );
 }
