@@ -1,4 +1,5 @@
 import { OwnerReportBookingDetails } from "./OwnerReportBookingDetails";
+import { OwnerDashboardCharts } from "./OwnerDashboardCharts";
 import { ownerBookingPeriod } from "@/lib/owners/booking-period";
 import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
 import type { BookingFinanceBreakdown } from "@/lib/finance/calculations/build-booking-finance-breakdown";
@@ -9,7 +10,7 @@ import {
 import { ownerPersonalUseNote } from "@/lib/owners/personal-use-policy";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Navigation } from "@/components/Navigation";
 import { getAccessiblePropertyIds, requireRoles } from "@/lib/auth/guards";
@@ -140,6 +141,9 @@ export async function OwnerDashboard() {
           </p>
         </div>
       </div>
+      <Suspense fallback={<p className="text-sm text-white/60">Caricamento grafici del portfolio…</p>}>
+        <OwnerDashboardCharts propertyIds={ids} now={now} />
+      </Suspense>
       <section className={card}>
         <h2 className="mb-4 text-xl">Le tue strutture</h2>
         <div className="grid gap-3 md:grid-cols-2">
