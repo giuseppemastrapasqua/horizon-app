@@ -127,6 +127,21 @@ describe("guest check-in actions", () => {
     vi.useRealTimers();
   });
 
+  it("allows a concierge to email the guest link on an assigned property", async () => {
+    requireUserMock.mockResolvedValue({ id: "operator-1", role: "OPERATOR" });
+    await sendGuestCheckInEmailAction("booking-1");
+    expect(requirePropertyAccessMock).toHaveBeenCalledWith("property-1");
+    expect(sendEmailMock).toHaveBeenCalledOnce();
+    expect(enqueueBackgroundJobMock).not.toHaveBeenCalled();
+  });
+
+  it("denies a concierge email for a foreign property", async () => {
+    requireUserMock.mockResolvedValue({ id: "operator-1", role: "OPERATOR" });
+    requirePropertyAccessMock.mockRejectedValueOnce(new Error("denied"));
+    await expect(sendGuestCheckInEmailAction("booking-1")).rejects.toThrow("denied");
+    expect(sendEmailMock).not.toHaveBeenCalled();
+  });
+
   it("invia l'email del check-in e persiste il link usato nell'email", async () => {
     await expect(
       sendGuestCheckInEmailAction("booking-1"),

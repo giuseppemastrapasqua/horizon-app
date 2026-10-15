@@ -15,6 +15,7 @@ import { formatDate } from "@/lib/format/date";
 
 import { BookingDocuments } from "./components/BookingDocuments";
 import { BookingEditForm } from "./components/BookingEditForm";
+import { BookingTouristTaxPaymentControl } from "./components/BookingTouristTaxPaymentControl";
 import { BookingGuestCheckInPanel } from "./components/BookingGuestCheckInPanel";
 import { BookingHero } from "./components/BookingHero";
 import { BookingKPIs } from "./components/BookingKPIs";
@@ -254,6 +255,12 @@ export default async function BookingPage({
                 initialLink={booking.guestCheckInLink}
                 canSubmitToAlloggiati={false}
               />
+          </div>
+          <div className="mt-6">
+            <Panel dark>
+              <SectionTitle dark title="Tassa di soggiorno" subtitle="Crea il link di pagamento e invialo all’ospite. L’importo richiede i dati ospiti e la classificazione fiscale completa." />
+              <BookingTouristTaxPaymentControl enabled />
+            </Panel>
           </div>
         </AppShell>
       </>

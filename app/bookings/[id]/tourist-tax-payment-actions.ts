@@ -2,16 +2,17 @@
 
 import {
   requirePropertyRole,
-  requireUser,
+  requireRoles,
 } from "@/lib/auth/guards";
 import { createBookingTouristTaxPayment } from "@/lib/payments/tourist-tax/booking-payment-service";
 import { PrismaBookingTaxSnapshotRepository } from "@/lib/payments/tourist-tax/prisma-booking-tax-snapshot-repository";
 import { PrismaTouristTaxPaymentRepository } from "@/lib/payments/tourist-tax/prisma-tourist-tax-payment-repository";
 import { createStripeTouristTaxPaymentProvider } from "@/lib/payments/tourist-tax/stripe-provider";
+import { sendEmail } from "@/lib/notifications/email/send-email";
 import { prisma } from "@/lib/prisma";
 
 async function requireBookingAccess(bookingId: string) {
-  await requireUser();
+  await requireRoles(["SUPER_ADMIN", "MANAGER", "OPERATOR"]);
 
   if (
     typeof bookingId !== "string" ||
@@ -36,7 +37,7 @@ async function requireBookingAccess(bookingId: string) {
 
   await requirePropertyRole(
     booking.propertyId,
-    ["MANAGER"],
+    ["MANAGER", "OPERATOR"],
   );
 
   return booking;
@@ -141,4 +142,23 @@ export async function createTouristTaxCheckoutAction(
     status: "PENDING" as const,
     paymentUrl: result.payment.paymentUrl,
   };
+}
+
+export async function sendTouristTaxPaymentEmailAction(bookingId: string) {
+  const reference = await requireBookingAccess(bookingId);
+  const booking = await prisma.booking.findUnique({
+    where: { id: reference.id },
+    select: { guestEmail: true, property: { select: { name: true } } },
+  });
+  const to = booking?.guestEmail?.trim();
+  if (!to) throw new Error("La prenotazione non contiene un indirizzo email ospite.");
+  const result = await createTouristTaxCheckoutAction(reference.id);
+  if (result.status === "PAID") throw new Error("Imposta già pagata: nessuna email inviata.");
+  const escape = (value: string) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  await sendEmail({
+    to,
+    subject: `Imposta di soggiorno - ${booking!.property.name}`,
+    html: `<p>Per il soggiorno presso <strong>${escape(booking!.property.name)}</strong>, puoi pagare l’imposta di soggiorno tramite il seguente link sicuro.</p><p><a href="${escape(result.paymentUrl)}">Paga l’imposta di soggiorno</a></p>`,
+  });
+  return { success: true as const };
 }
