@@ -157,6 +157,7 @@ model AuditLog {
 }
 
 model Property {
+  activation                             PropertyActivation?
   horizonCommissionPercent               Decimal                             @default(0) @db.Decimal(5, 2)
   id                                     String                              @id @default(cuid())
   name                                   String
@@ -234,6 +235,16 @@ model Property {
   @@index([cin])
   @@index([cir])
   @@index([codeVerificationStatus])
+}
+
+model PropertyActivation {
+  id         String   @id @default(cuid())
+  propertyId String   @unique
+  config     Json
+  version    Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 model PropertyOwnerInvite {

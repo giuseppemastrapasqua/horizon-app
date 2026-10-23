@@ -45,6 +45,12 @@ const navigationItems = [
     operatorVisible: true,
   },
   {
+    href: "/activation",
+    label: "Attivazione alloggi",
+    icon: Home,
+    operatorVisible: false,
+  },
+  {
     href: "/revenue-ai/daily",
     label: "Prezzi consigliati",
     icon: Sparkles,

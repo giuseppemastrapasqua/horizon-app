@@ -1,0 +1,5 @@
+.activation-theme main[data-horizon-theme="app"] { --hz-bg: #171819; --hz-surface: #1b1e20; --hz-surface-deep: #171819; --hz-surface-soft: #202325; background: #171819; }
+.activation-theme main[data-horizon-theme="app"] > .pointer-events-none { display: none; }
+.activation-theme > aside, .activation-theme > header { background: #171819; }
+.activation-theme input, .activation-theme select, .activation-theme textarea { color-scheme: dark; }
+.activation-theme button:focus-visible, .activation-theme a:focus-visible, .activation-theme summary:focus-visible { outline: 2px solid #d8b367; outline-offset: 3px; }

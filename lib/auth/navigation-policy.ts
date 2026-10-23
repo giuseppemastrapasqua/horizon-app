@@ -16,6 +16,7 @@ export function navigationForRole<
     );
   }
   return items.filter((item) =>
+    (item.href !== "/activation" || ["SUPER_ADMIN", "MANAGER"].includes(role)) &&
     (role !== "OPERATOR" || item.operatorVisible) &&
     (item.href !== "/reports/cleaning" || ["SUPER_ADMIN", "MANAGER", "OPERATOR"].includes(role)),
   );

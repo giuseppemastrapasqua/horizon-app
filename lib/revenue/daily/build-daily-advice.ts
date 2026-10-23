@@ -4,7 +4,7 @@ export type MarketDay = { date: Date; capturedAt: Date; provider: string; curren
 export type DailyAdviceInput = {
   from: Date; to: Date; now: Date; baseForTwo: number | null;
   floor: number | null; ceiling: number | null; extraGuestFee: number;
-  guests: number; maxGuests: number; calendarComplete?: boolean; stays: Stay[]; blocks: Block[]; market: MarketDay[];
+  guests: number; maxGuests: number; calendarComplete?: boolean; today?: string; stays: Stay[]; blocks: Block[]; market: MarketDay[];
 };
 const dayMs = 86400000;
 const key = (date: Date) => date.toISOString().slice(0, 10);
@@ -20,7 +20,7 @@ export function buildDailyAdvice(input: DailyAdviceInput) {
   const hasStay = (time: number) => input.stays.some((stay) => stay.checkIn.getTime() <= time && stay.checkOut.getTime() > time);
   const hasBlock = (time: number) => input.blocks.some((block) => block.startDate.getTime() <= time && utc(block.endDate).getTime() >= time);
   const occupied = (time: number) => hasStay(time) || hasBlock(time);
-  const today = utc(now).getTime();
+  const today = input.today ? utc(new Date(`${input.today}T00:00:00Z`)).getTime() : utc(now).getTime();
   const pickup = input.stays.filter((stay) => stay.bookedAt && stay.bookedAt.getTime() >= now.getTime() - 7 * dayMs && stay.bookedAt <= now && stay.checkOut.getTime() > today).length;
   const rows = [];
   for (let time = from.getTime(); time <= to.getTime(); time += dayMs) {
