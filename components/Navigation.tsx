@@ -75,6 +75,12 @@ const navigationItems = [
     operatorVisible: false,
   },
   {
+    href: "/business-accounting",
+    label: "La mia attività",
+    icon: ReceiptText,
+    operatorVisible: false,
+  },
+  {
     href: "/rate-types",
     label: "Tipologie tariffe",
     icon: Tags,
