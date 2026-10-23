@@ -4,9 +4,9 @@ import { useState } from "react";
 import { movementKinds, movementSchema, type Movement } from "@/lib/business-accounting/config";
 import { buttonClass, inputClass, panelClass } from "./AccountingSettings";
 
-export function MovementForm({ year, onSave, editing, onCancel }: { year: number; onSave: (value: Movement) => void; editing?: Movement; onCancel: () => void }) {
+export function MovementForm({ year, onSave, editing, onCancel, allowedKinds }: { year: number; onSave: (value: Movement) => void; editing?: Movement; onCancel: () => void; allowedKinds?: Movement["kind"][] }) {
   const [error, setError] = useState("");
-  const [kind, setKind] = useState<Movement["kind"]>(editing?.kind ?? "INCOME");
+  const [kind, setKind] = useState<Movement["kind"]>(editing?.kind ?? allowedKinds?.[0] ?? "INCOME");
   return <form className={panelClass} onSubmit={(event) => {
     event.preventDefault();
     const values = new FormData(event.currentTarget);
@@ -24,7 +24,7 @@ export function MovementForm({ year, onSave, editing, onCancel }: { year: number
   }}>
     <h2 className="font-serif text-xl">{editing ? "Modifica movimento" : "Nuovo movimento"}</h2>
     <div className="mt-4 grid gap-4 md:grid-cols-3">
-      <label className="text-sm">Tipo<select className={inputClass} value={kind} onChange={(e) => setKind(e.target.value as Movement["kind"])}>{Object.entries(movementKinds).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+      <label className="text-sm">Tipo<select className={inputClass} value={kind} onChange={(e) => setKind(e.target.value as Movement["kind"])}>{Object.entries(movementKinds).filter(([key]) => !allowedKinds || allowedKinds.includes(key as Movement["kind"]) || key === editing?.kind).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       <label className="text-sm">Data pagamento o scadenza<input className={inputClass} name="date" type="date" min={`${year}-01-01`} max={`${year}-12-31`} defaultValue={editing?.date ?? `${year}-01-01`} required /></label>
       <label className="text-sm">Importo totale (€)<input className={inputClass} name="amount" type="number" min="0.01" max="100000000" step="0.01" defaultValue={editing ? editing.amount / 100 : ""} required /></label>
       <label className="text-sm">Descrizione<input className={inputClass} name="description" maxLength={200} defaultValue={editing?.description} placeholder="Es. compenso gestione Duomo" required /></label>

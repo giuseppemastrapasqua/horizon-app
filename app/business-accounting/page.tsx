@@ -5,6 +5,7 @@ import { requireRoles } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { accountingSchema, initialAccounting } from "@/lib/business-accounting/config";
 import { AccountingWorkspace } from "./AccountingWorkspace";
+import { loadAutomaticAccounting } from "@/lib/business-accounting/load-automatic";
 
 export default async function BusinessAccountingPage({ searchParams }: { searchParams: Promise<{ year?: string }> }) {
   const user = await requireRoles(["SUPER_ADMIN"]);
@@ -21,9 +22,10 @@ export default async function BusinessAccountingPage({ searchParams }: { searchP
     else throw error;
   }
   const parsed = record ? accountingSchema.safeParse(record.config) : null;
+  const automatic = unavailable ? null : await loadAutomaticAccounting(year);
   return <><Navigation /><AppShell title="La mia attività" subtitle="Contabilità e netto · ditta individuale in regime forfettario">
     {unavailable ? <p role="alert">La contabilità è in preparazione: occorre completare l’aggiornamento del database.</p> :
       parsed && !parsed.success ? <p role="alert">Dati salvati non leggibili. Contatta l’amministratore prima di modificarli.</p> :
-        <AccountingWorkspace key={year} year={year} initial={parsed?.success ? parsed.data : initialAccounting} initialVersion={record?.version ?? 0} />}
+        <AccountingWorkspace key={year} year={year} automatic={automatic!} initial={parsed?.success ? parsed.data : initialAccounting} initialVersion={record?.version ?? 0} />}
   </AppShell></>;
 }
