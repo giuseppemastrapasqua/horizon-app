@@ -85,9 +85,23 @@ model User {
   soggiorniamoAccounts      SoggiorniamoAccount[]
   ross1000Accounts          Ross1000Account[]
   ownerBillingProfile       OwnerBillingProfile?
+  businessAccounting        BusinessAccounting[]
 
   @@index([role])
   @@index([status])
+}
+
+model BusinessAccounting {
+  id        String   @id @default(cuid())
+  userId    String
+  year      Int
+  config    Json
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year])
 }
 
 model PasswordResetToken {
@@ -157,6 +171,7 @@ model AuditLog {
 }
 
 model Property {
+  activation                             PropertyActivation?
   horizonCommissionPercent               Decimal                             @default(0) @db.Decimal(5, 2)
   id                                     String                              @id @default(cuid())
   name                                   String
@@ -234,6 +249,16 @@ model Property {
   @@index([cin])
   @@index([cir])
   @@index([codeVerificationStatus])
+}
+
+model PropertyActivation {
+  id         String   @id @default(cuid())
+  propertyId String   @unique
+  config     Json
+  version    Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 }
 
 model PropertyOwnerInvite {

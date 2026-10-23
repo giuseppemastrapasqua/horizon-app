@@ -45,6 +45,12 @@ const navigationItems = [
     operatorVisible: true,
   },
   {
+    href: "/activation",
+    label: "Attivazione alloggi",
+    icon: Home,
+    operatorVisible: false,
+  },
+  {
     href: "/revenue-ai/daily",
     label: "Prezzi consigliati",
     icon: Sparkles,
@@ -65,6 +71,12 @@ const navigationItems = [
   {
     href: "/invoices",
     label: "Fatture",
+    icon: ReceiptText,
+    operatorVisible: false,
+  },
+  {
+    href: "/business-accounting",
+    label: "La mia attività",
     icon: ReceiptText,
     operatorVisible: false,
   },
