@@ -15,6 +15,8 @@ import {
 import { sendEmail } from "@/lib/notifications/email/send-email";
 import { prisma } from "@/lib/prisma";
 
+class OwnerInviteValidationError extends Error {}
+
 const acceptInviteSchema = z
   .object({
     token: z.string().min(1),
@@ -56,7 +58,7 @@ export async function acceptPropertyOwnerInviteAction(
   });
 
   if (!parsed.success) {
-    throw new Error(
+    throw new OwnerInviteValidationError(
       parsed.error.issues[0]?.message ||
         "Dati di attivazione non validi.",
     );
@@ -83,7 +85,7 @@ export async function acceptPropertyOwnerInviteAction(
     });
 
   if (!invite || !isOwnerInviteUsable(invite, now)) {
-    throw new Error(
+    throw new OwnerInviteValidationError(
       "Invito non valido, scaduto o già utilizzato.",
     );
   }
@@ -112,7 +114,7 @@ export async function acceptPropertyOwnerInviteAction(
         !currentInvite ||
         !isOwnerInviteUsable(currentInvite, now)
       ) {
-        throw new Error(
+        throw new OwnerInviteValidationError(
           "Invito non valido, scaduto o già utilizzato.",
         );
       }
@@ -133,7 +135,7 @@ export async function acceptPropertyOwnerInviteAction(
 
 
 if (existingUser?.role === UserRole.SUPER_ADMIN) {
-        throw new Error(
+        throw new OwnerInviteValidationError(
           "Il Super Admin dispone già di accesso globale e non può accettare un invito proprietario.",
         );
       }
@@ -142,7 +144,7 @@ if (existingUser?.role === UserRole.SUPER_ADMIN) {
         existingUser &&
         existingUser.role !== UserRole.OWNER
       ) {
-        throw new Error(
+        throw new OwnerInviteValidationError(
           "L'account associato a questa email non è un account proprietario e richiede una verifica amministrativa.",
         );
       }
@@ -174,7 +176,7 @@ if (existingUser?.role === UserRole.SUPER_ADMIN) {
             RecordStatus.INACTIVE &&
             existingUser.passwordHash)
         ) {
-          throw new Error(
+          throw new OwnerInviteValidationError(
             "L'account associato a questa email richiede una verifica amministrativa.",
           );
         }
@@ -229,7 +231,7 @@ if (existingUser?.role === UserRole.SUPER_ADMIN) {
         });
 
       if (accepted.count !== 1) {
-        throw new Error(
+        throw new OwnerInviteValidationError(
           "Invito non valido, scaduto o già utilizzato.",
         );
       }
@@ -281,4 +283,27 @@ if (existingUser?.role === UserRole.SUPER_ADMIN) {
   }
 
   return result;
+}
+
+// Return expected validation failures as data so production React preserves them.
+export async function activatePropertyOwnerInviteAction(formData: FormData) {
+  try {
+    await acceptPropertyOwnerInviteAction(formData);
+    return { ok: true as const };
+  } catch (error) {
+    if (error instanceof OwnerInviteValidationError) {
+      return { ok: false as const, message: error.message };
+    }
+    // Never log the form, password, invite token or database error contents.
+    console.error("Owner invite activation failed", {
+      name: error instanceof Error ? error.name : "unknown",
+      code: error && typeof error === "object" && "code" in error
+        && typeof error.code === "string" && /^P[0-9]{4}$/.test(error.code)
+        ? error.code : undefined,
+    });
+    return {
+      ok: false as const,
+      message: "Impossibile completare l'attivazione. Riprova; se il problema persiste contatta l'amministratore Horizon.",
+    };
+  }
 }

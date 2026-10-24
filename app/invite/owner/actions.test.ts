@@ -49,6 +49,7 @@ import { prisma } from "@/lib/prisma";
 
 import {
   acceptPropertyOwnerInviteAction,
+  activatePropertyOwnerInviteAction,
 } from "./actions";
 
 const outerInviteFindUnique =
@@ -319,5 +320,51 @@ describe("accept property owner invite", () => {
     );
 
     consoleError.mockRestore();
+  });
+});
+
+
+describe("activation form response", () => {
+  it("returns mismatched passwords as readable data before querying the database", async () => {
+    vi.clearAllMocks();
+    const data = form();
+    data.set("confirmPassword", "DifferentPassword!");
+    expect(await activatePropertyOwnerInviteAction(data)).toEqual({
+      ok: false, message: "Le password non coincidono.",
+    });
+    expect(outerInviteFindUnique).not.toHaveBeenCalled();
+  });
+
+  it("returns an invalid or expired invite as readable data without granting access", async () => {
+    vi.clearAllMocks();
+    outerInviteFindUnique.mockResolvedValueOnce(null);
+    expect(await activatePropertyOwnerInviteAction(form())).toEqual({
+      ok: false, message: "Invito non valido, scaduto o già utilizzato.",
+    });
+    expect(tx.propertyAccess.upsert).not.toHaveBeenCalled();
+  });
+
+  it("returns success only after the account transaction completes", async () => {
+    outerInviteFindUnique.mockResolvedValueOnce(invite() as never);
+    tx.propertyOwnerInvite.findUnique.mockResolvedValueOnce(invite());
+    tx.user.findUnique.mockResolvedValueOnce(null);
+    tx.user.create.mockResolvedValueOnce({ id: "new-owner" });
+    tx.propertyOwnerInvite.updateMany.mockResolvedValueOnce({ count: 1 });
+    expect(await activatePropertyOwnerInviteAction(form())).toEqual({ ok: true });
+  });
+
+  it("keeps unexpected database details out of the response and logs", async () => {
+    const error = new Error("private database details and public-token");
+    Object.assign(error, { code: "P2028" });
+    outerInviteFindUnique.mockRejectedValueOnce(error);
+    const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const result = await activatePropertyOwnerInviteAction(form());
+      expect(result).toMatchObject({ ok: false });
+      expect(JSON.stringify(result)).not.toContain("private database");
+      expect(log).toHaveBeenCalledWith("Owner invite activation failed", { name: "Error", code: "P2028" });
+      expect(JSON.stringify(log.mock.calls)).not.toContain("public-token");
+      expect(JSON.stringify(log.mock.calls)).not.toContain("Password123!");
+    } finally { log.mockRestore(); }
   });
 });
