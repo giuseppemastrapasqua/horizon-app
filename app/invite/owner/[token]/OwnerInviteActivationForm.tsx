@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { acceptPropertyOwnerInviteAction } from "../actions";
+import { activatePropertyOwnerInviteAction } from "../actions";
+import { ActivationPasswordField } from "./ActivationPasswordField";
 
 type Props = {
   token: string;
@@ -31,15 +32,20 @@ export function OwnerInviteActivationForm({
     try {
       const formData = new FormData(event.currentTarget);
 
-      await acceptPropertyOwnerInviteAction(formData);
+      if (formData.get("password") !== formData.get("confirmPassword")) {
+        setError("Le password non coincidono. Controlla entrambi i campi.");
+        return;
+      }
+
+      const result = await activatePropertyOwnerInviteAction(formData);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
 
       setCompleted(true);
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Impossibile completare l'attivazione.",
-      );
+    } catch {
+      setError("Impossibile completare l'attivazione. Riprova; se il problema persiste contatta l'amministratore Horizon.");
     } finally {
       setPending(false);
     }
@@ -101,52 +107,11 @@ export function OwnerInviteActivationForm({
         />
       </div>
 
-      <div>
-        <label
-          htmlFor="password"
-          className="text-sm font-medium text-[#FFF8EA]"
-        >
-          Crea la tua password
-        </label>
-
-        <input
-          id="password"
-          name="password"
-          type="password"
-          minLength={10}
-          maxLength={128}
-          required
-          autoComplete="new-password"
-          className="mt-2 w-full rounded-xl border border-white/15 bg-[#0D1923] px-4 py-3 outline-none focus:border-[#D8B367] focus:ring-2 focus:ring-[#D8B367]/15"
-        />
-
-        <p className="mt-2 text-xs text-[#8EA0AE]">
-          Almeno 10 caratteri.
-        </p>
-      </div>
-
-      <div>
-        <label
-          htmlFor="confirmPassword"
-          className="text-sm font-medium text-[#FFF8EA]"
-        >
-          Conferma password
-        </label>
-
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          minLength={10}
-          maxLength={128}
-          required
-          autoComplete="new-password"
-          className="mt-2 w-full rounded-xl border border-white/15 bg-[#0D1923] px-4 py-3 outline-none focus:border-[#D8B367] focus:ring-2 focus:ring-[#D8B367]/15"
-        />
-      </div>
+      <ActivationPasswordField name="password" label="Crea la tua password" />
+      <ActivationPasswordField name="confirmPassword" label="Conferma password" />
 
       {error ? (
-        <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </p>
       ) : null}
