@@ -18,6 +18,7 @@ const breakdownSchema = z.object({
 });
 const bookingSchema = z.object({
   id: z.string().min(1),
+  externalBookingId: z.string().nullable().optional(),
   checkIn: z.string().datetime(),
   checkOut: z.string().datetime(),
   nights: z.number().int().nonnegative(),
@@ -33,6 +34,7 @@ const snapshotSchema = z.object({
 
 type BookingInput = {
   id: string;
+  externalBookingId?: string | null;
   checkIn: Date;
   checkOut: Date;
   nights: number;
@@ -51,6 +53,7 @@ export function createReportBookingSnapshot(
     version: 1,
     bookings: bookings.map((booking, index) => ({
       id: booking.id,
+      externalBookingId: booking.externalBookingId ?? null,
       checkIn: booking.checkIn.toISOString(),
       checkOut: booking.checkOut.toISOString(),
       nights: booking.nights,
