@@ -28,6 +28,7 @@ export const financePreviewPropertySelect = {
     select: {
       id: true,
       guestName: true,
+      externalBookingId: true,
       channel: true,
       checkIn: true,
       checkOut: true,

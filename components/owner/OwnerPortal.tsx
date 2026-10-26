@@ -467,6 +467,17 @@ export async function OwnerDocuments() {
         )}
       </section>
       <section className={card}>
+        <h2 className="mb-3 text-xl">Documenti commercialista</h2>
+        <p className="mb-3 text-sm text-white/60">Rendiconto mensile proprietà: prenotazioni, incasso, F24 e saldo spettante.</p>
+        {reports.map((report) => (
+          <Link key={report.id} href={`/reports/monthly/${report.id}/property-statement/pdf`} className="flex flex-wrap justify-between gap-3 border-t border-white/10 py-3">
+            <span>{report.property.name} · {report.title}</span>
+            <span className="text-[#D8B367]">Scarica PDF commercialista</span>
+          </Link>
+        ))}
+        {!reports.length && <p className="text-white/60">Disponibili dopo il salvataggio del rendiconto mensile.</p>}
+      </section>
+      <section className={card}>
         <h2 className="mb-3 text-xl">Fatture</h2>
         {invoices.map((invoice) => (
           <Link
@@ -552,6 +563,9 @@ export async function OwnerReport({ id }: { id: string }) {
           className="text-[#D8B367]"
         >
           Scarica PDF
+        </Link>
+        <Link href={`/reports/monthly/${report.id}/property-statement/pdf`} className="text-[#D8B367]">
+          Documenti commercialista (PDF)
         </Link>
       </div>
       <section className={card}>

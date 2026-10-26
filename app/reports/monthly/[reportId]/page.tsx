@@ -370,6 +370,9 @@ export default async function FinanceReportDetailPage({
             >
               Scarica PDF
             </a>
+            <a href={`/reports/monthly/${report.id}/property-statement/pdf`} download style={secondaryLinkStyle}>
+              Documenti commercialista
+            </a>
           </div>
 
           <span style={savedBadgeStyle}>
