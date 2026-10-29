@@ -1,3 +1,4 @@
+import { readRevenueSplit, recipientIndex, splitStatement } from "@/lib/finance/report-revenue-split";
 import { requirePropertyAccess, requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
@@ -48,11 +49,16 @@ export async function GET(_request: Request, context: { params: Promise<{ report
   } catch {
     return new Response("Dettaglio salvato non valido. Richiedere una verifica del rendiconto originale.", { status: 422, headers });
   }
+  const shareKey = new URL(_request.url).searchParams.get("share");
+  const split = readRevenueSplit(report.formulaSnapshot, report.referenceMonth);
+  const shareIndex = shareKey ? recipientIndex(split, shareKey) : -1;
+  if (shareKey && (user.role === "OWNER" || !split || shareIndex < 0)) return new Response("Quota non disponibile.", { status: 404, headers });
+  if (shareKey && split) statement = splitStatement(statement, split, shareIndex);
   const bytes = await buildPropertyMonthlyStatementPdf(statement);
   const period = report.referenceMonth.toISOString().slice(0, 7);
   const safeId = report.id.replace(/[^a-zA-Z0-9-]/g, "");
   return new Response(Buffer.from(bytes), { headers: {
     ...headers, "Content-Type": "application/pdf",
-    "Content-Disposition": `attachment; filename="rendiconto-mensile-proprieta-${period}-${safeId}.pdf"`,
+    "Content-Disposition": `attachment; filename="${shareKey ? `quota-${shareKey}-` : ""}rendiconto-mensile-proprieta-${period}-${safeId}.pdf"`,
   } });
 }

@@ -1,3 +1,4 @@
+import { readRevenueSplit } from "@/lib/finance/report-revenue-split";
 import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
 import { OwnerReport } from "@/components/owner/OwnerPortal";
 import { requireUser } from "@/lib/auth/guards";
@@ -373,6 +374,12 @@ export default async function FinanceReportDetailPage({
             <a href={`/reports/monthly/${report.id}/property-statement/pdf`} download style={secondaryLinkStyle}>
               Documenti commercialista
             </a>
+            {readRevenueSplit(report.formulaSnapshot, report.referenceMonth)?.recipients.map(recipient => (
+              <div key={recipient.key} style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                <a href={`/reports/monthly/${report.id}/pdf?share=${encodeURIComponent(recipient.key)}`} download style={secondaryLinkStyle}>Rendiconto {recipient.name} · {recipient.basisPoints/100}%</a>
+                <a href={`/reports/monthly/${report.id}/property-statement/pdf?share=${encodeURIComponent(recipient.key)}`} download style={secondaryLinkStyle}>Commercialista {recipient.name}</a>
+              </div>
+            ))}
           </div>
 
           <span style={savedBadgeStyle}>

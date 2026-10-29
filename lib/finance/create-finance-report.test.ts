@@ -21,6 +21,7 @@ vi.mock("@/lib/finance/get-property-ota-commissions", () => ({
 
 vi.mock("@/lib/prisma", () => ({
   prisma: {
+    financeReport: { findMany: vi.fn().mockResolvedValue([]) },
     property: {
       findUnique: propertyFindUniqueMock,
     },

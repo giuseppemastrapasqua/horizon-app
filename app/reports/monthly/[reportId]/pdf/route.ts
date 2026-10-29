@@ -1,3 +1,4 @@
+import { readRevenueSplit, recipientIndex, splitFinancePdf } from "@/lib/finance/report-revenue-split";
 import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
 import { ownerBookingLabel } from "@/lib/owners/portal-policy";
 import {
@@ -508,13 +509,18 @@ export async function GET(
   };
 
 
+  const shareKey = new URL(_request.url).searchParams.get("share");
+  const split = readRevenueSplit(report.formulaSnapshot, report.referenceMonth);
+  const shareIndex = shareKey ? recipientIndex(split, shareKey) : -1;
+  if (shareKey && (user.role === "OWNER" || !split || shareIndex < 0)) return new Response("Quota non disponibile.", { status: 404 });
+
   const pdfBytes =
     await buildFinanceReportPdf(
-      pdfInput
+      shareKey && split ? splitFinancePdf(pdfInput, split, shareIndex) : pdfInput
     );
 
   const filename =
-    createPdfFilename({
+    (shareKey ? `quota-${shareKey}-` : "") + createPdfFilename({
       propertyName:
         report.property.name,
       referenceMonth:

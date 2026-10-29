@@ -1,3 +1,4 @@
+import { readRevenueSplit } from "@/lib/finance/report-revenue-split";
 import { createReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
 import { AuditAction } from "@prisma/client";
 
@@ -291,6 +292,13 @@ export async function createFinanceReport({
             ),
         };
 
+  // Carry forward the saved ownership policy without creating additional accounting reports.
+  const previousReports = await prisma.financeReport.findMany({
+    where: { propertyId: property.id, referenceMonth: { lte: monthStart } },
+    orderBy: { referenceMonth: "desc" }, select: { formulaSnapshot: true },
+  });
+  const revenueSplit = previousReports.map(r => readRevenueSplit(r.formulaSnapshot, monthStart)).find(Boolean);
+
   const reportRules =
     calculation?.rules ?? [];
 
@@ -333,7 +341,7 @@ export async function createFinanceReport({
               formula?.name ??
               HORIZON_STANDARD_NAME,
 
-            formulaSnapshot: { ...formulaSnapshot, bookingDetail: createReportBookingSnapshot(bookings, bookingBreakdowns) },
+            formulaSnapshot: { ...formulaSnapshot, ...(revenueSplit ? { revenueSplit } : {}), bookingDetail: createReportBookingSnapshot(bookings, bookingBreakdowns) },
 
             rules: {
               create:
