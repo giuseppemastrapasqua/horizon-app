@@ -49,6 +49,8 @@ vi.mock("@/lib/prisma", () => ({
       callback({
         property: {
           update: propertyUpdateMock,
+          findUnique: propertyFindUniqueMock,
+          delete: propertyDeleteMock,
         },
       }),
     ),
@@ -73,6 +75,7 @@ import {
   archivePropertyAction,
   checkPermanentPropertyDeletionAction,
   permanentlyDeletePropertyAction,
+  deletePropertyWithFeedbackAction,
 } from "./property-lifecycle-actions";
 
 function emptyCounts() {
@@ -173,7 +176,7 @@ describe("property lifecycle actions", () => {
         formData,
       ),
     ).rejects.toThrow(
-      "La struttura deve essere archiviata prima dell'eliminazione definitiva.",
+      "Archivia prima la struttura per poterla eliminare definitivamente.",
     );
   });
 
@@ -306,4 +309,34 @@ describe("property lifecycle actions", () => {
       "/properties",
     );
   });
+
+it("returns protected-history feedback instead of a page-level exception", async () => {
+  propertyFindUniqueMock.mockResolvedValue({ id: "p1", name: "Bovisa Apartment", status: "ARCHIVED", _count: { ...emptyCounts(), financeReports: 1, documents: 1 } });
+  const form = new FormData(); form.set("propertyId", "p1"); form.set("confirmation", "Bovisa Apartment");
+  propertyDeleteMock.mockClear();
+  const state = await deletePropertyWithFeedbackAction({ message: "" }, form);
+  expect(state.message).toContain("Rendiconti proprietari: 1");
+  expect(state.message).toContain("Documenti: 1");
+  expect(propertyDeleteMock).not.toHaveBeenCalled();
+});
+it("returns confirmation feedback without deleting any record", async () => {
+  propertyFindUniqueMock.mockResolvedValue({ id: "p1", name: "Casa Demo", status: "ARCHIVED", _count: emptyCounts() });
+  const form = new FormData(); form.set("propertyId", "p1"); form.set("confirmation", "wrong");
+  propertyDeleteMock.mockClear();
+  expect((await deletePropertyWithFeedbackAction({ message: "" }, form)).message).toContain("Conferma non valida");
+  expect(propertyDeleteMock).not.toHaveBeenCalled();
+});
+it("does not catch the successful navigation redirect", async () => {
+  propertyFindUniqueMock.mockResolvedValue({ id: "p1", name: "Casa Demo", status: "ARCHIVED", _count: emptyCounts() });
+  propertyDeleteMock.mockResolvedValue({}); auditLogMock.mockResolvedValue({});
+  redirectMock.mockImplementationOnce(() => { throw new Error("NEXT_REDIRECT"); });
+  const form = new FormData(); form.set("propertyId", "p1"); form.set("confirmation", "Casa Demo");
+  await expect(deletePropertyWithFeedbackAction({ message: "" }, form)).rejects.toThrow("NEXT_REDIRECT");
+});
+it("denies unauthorized requests before touching the database", async () => {
+  requireRolesMock.mockRejectedValueOnce(new Error("Forbidden")); propertyFindUniqueMock.mockClear();
+  await expect(deletePropertyWithFeedbackAction({ message: "" }, new FormData())).rejects.toThrow("Forbidden");
+  expect(propertyFindUniqueMock).not.toHaveBeenCalled();
+});
+
 });

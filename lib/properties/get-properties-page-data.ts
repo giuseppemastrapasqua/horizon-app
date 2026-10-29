@@ -11,17 +11,20 @@ export type PropertySortOption =
 type GetPropertiesPageDataOptions = {
   search?: string;
   sort?: PropertySortOption;
+  view?: "current" | "archived" | "all";
 };
 
 export async function getPropertiesPageData({
   search = "",
   sort = "newest",
+  view = "current",
 }: GetPropertiesPageDataOptions = {}) {
   const accessiblePropertyIds = await getAccessiblePropertyIds();
   const query = search.trim();
 
   return prisma.property.findMany({
     where: {
+      ...(view === "archived" ? { status: "ARCHIVED" as const } : view === "all" ? {} : { status: { not: "ARCHIVED" as const } }),
       ...(accessiblePropertyIds !== null
         ? { id: { in: accessiblePropertyIds } }
         : {}),
@@ -89,7 +92,7 @@ function getPropertyOrderBy(sort: PropertySortOption) {
 
   if (sort === "score-desc") {
     return {
-      score: "desc" as const,
+      currentScore: "desc" as const,
     };
   }
 
