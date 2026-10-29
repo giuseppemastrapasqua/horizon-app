@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   user: vi.fn(),
   access: vi.fn(),
   report: vi.fn(),
+  reports: vi.fn(),
   bookings: vi.fn(),
   template: vi.fn(),
   pdf: vi.fn(),
@@ -16,7 +17,7 @@ vi.mock("@/lib/auth/guards", () => ({
 }));
 vi.mock("@/lib/prisma", () => ({
   prisma: {
-    financeReport: { findUnique: mocks.report },
+    financeReport: { findUnique: mocks.report, findMany: mocks.reports },
     booking: { findMany: mocks.bookings },
     financeReportTemplate: { findFirst: mocks.template },
   },
@@ -64,6 +65,7 @@ function report(snapshot: unknown) {
 }
 describe("saved report PDF", () => {
   beforeEach(() => {
+    mocks.reports.mockResolvedValue([]);
     vi.clearAllMocks();
     mocks.user.mockResolvedValue({ id: "owner-1", role: "OWNER" });
     mocks.access.mockResolvedValue({ id: "owner-1" });
