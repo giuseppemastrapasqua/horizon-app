@@ -16,7 +16,8 @@ export function statementFixture(): StatementReport {
 describe("property monthly statement", () => {
   it("projects saved amounts to cents, includes VAT once and does not recalculate F24", () => {
     const result = buildPropertyMonthlyStatement(statementFixture());
-    expect(result.rows[0]).toMatchObject({ reference: "6480809347", gross: 50000, otaNet: 40000, cleaning: 5000, managementBase: 7000, managementVat: 1540, management: 8540, f24: 5557, other: 0, net: 20903 });
+    expect(result.rows[0]).toMatchObject({ reference: "6480809347", gross: 50000, otaNet: 40000, income: 26460, cleaning: 5000, managementBase: 7000, managementVat: 1540, management: 8540, f24: 5557, other: 0, net: 20903 });
+    expect(result.totals.income).toBe(26460);
     expect(result.payable).toBe(20903);
     expect(result.incomplete).toBe(false);
   });
@@ -48,7 +49,7 @@ describe("property monthly statement", () => {
   });
   it("does not convert unknown tax or OTA amounts to zero", () => {
     const result = buildPropertyMonthlyStatement({ ...statementFixture(), formulaSnapshot: { bookingDetail: createReportBookingSnapshot([booking], [{ ...breakdown, taxAmount: null, otaCommission: null }]) } });
-    expect(result.totals.f24).toBeNull(); expect(result.rows[0].otaNet).toBeNull(); expect(result.incomplete).toBe(true);
+    expect(result.totals.income).toBeNull(); expect(result.rows[0].income).toBeNull(); expect(result.totals.f24).toBeNull(); expect(result.rows[0].otaNet).toBeNull(); expect(result.incomplete).toBe(true);
   });
   it("rejects corrupt snapshots and mixed currencies", () => {
     expect(() => buildPropertyMonthlyStatement({ ...statementFixture(), formulaSnapshot: { bookingDetail: { version: 9 } } })).toThrow();

@@ -38,6 +38,7 @@ export function buildPropertyMonthlyStatement(report: StatementReport, reference
       gross,
       ota,
       otaNet: ota === null ? null : gross - ota,
+      income: b.otaCommission === null ? null : cents(b.grossBooking - b.otaCommission - b.cleaningCost - b.managementCommissionTotal),
       cleaning: cents(b.cleaningCost),
       managementBase: cents(b.managementCommissionTaxableBase),
       managementVat: cents(b.managementCommissionVat),
@@ -47,10 +48,11 @@ export function buildPropertyMonthlyStatement(report: StatementReport, reference
       net: cents(b.netProperty),
     };
   });
-  const sum = (key: "gross" | "ota" | "otaNet" | "cleaning" | "managementBase" | "managementVat" | "management" | "f24" | "other" | "net") =>
+  const sum = (key: "gross" | "ota" | "otaNet" | "income" | "cleaning" | "managementBase" | "managementVat" | "management" | "f24" | "other" | "net") =>
     saved === null || rows.some((row) => row[key] === null)
       ? null : rows.reduce((total, row) => total + (row[key] ?? 0), 0);
   const totals = {
+    income: saved === null || rows.some((row) => row.income === null) ? null : cents((saved ?? []).reduce((total, booking) => total + booking.breakdown.grossBooking - (booking.breakdown.otaCommission ?? 0) - booking.breakdown.cleaningCost - booking.breakdown.managementCommissionTotal, 0)),
     gross: sum("gross"), ota: sum("ota"), otaNet: sum("otaNet"), cleaning: sum("cleaning"),
     managementBase: sum("managementBase"), managementVat: sum("managementVat"),
     management: sum("management"), f24: sum("f24"), other: sum("other"), net: sum("net"),

@@ -80,13 +80,13 @@ export async function buildPropertyMonthlyStatementPdf(data: PropertyMonthlyStat
     text(row.channel, starts[0] + 10, y - referenceLines.length * 11, 7, false, muted);
     text(date(row.checkIn), starts[1] + 10, y, 8);
     text(date(row.checkOut), starts[1] + 10, y - 12, 8);
-    amounts([row.otaNet, row.f24, row.net], y);
+    amounts([row.income, row.f24, row.net], y);
     y -= height;
   });
   if (y - 32 < 48) { page = pdf.addPage([842, 595]); header(); tableHeader(); }
   page.drawLine({ start: { x: 36, y: y + 12 }, end: { x: 806, y: y + 12 }, color: gold, thickness: 1 });
   text("TOTALE DETTAGLIO", 46, y, 9, true);
-  amounts([totals.otaNet, totals.f24, totals.net], y, true);
+  amounts([totals.income, totals.f24, totals.net], y, true);
   y -= 28;
   if (data.adjustments.length) {
     paragraph("COSTI ESTERNI E RETTIFICHE", true);
@@ -99,7 +99,7 @@ export async function buildPropertyMonthlyStatementPdf(data: PropertyMonthlyStat
     const amount = safe(money(value, report.currency));
     text(amount, columnRight(4) - (strong ? bold : regular).widthOfTextAtSize(amount, 10), y, 10, strong); y -= 24;
   };
-  summary("Incasso", totals.otaNet);
+  summary("Incasso", totals.income);
   summary("F24", totals.f24);
   if (data.difference) summary("Scostamento totale salvato / dettaglio", data.difference);
   if (data.adjustments.length) {
