@@ -1,7 +1,7 @@
 import type { FinanceReportPdfInput } from "@/lib/pdf/finance-report";
 import type { PropertyMonthlyStatement } from "./property-monthly-statement";
 
-export type RevenueSplit = { effectiveFrom: string; recipients: { key: string; name: string; basisPoints: number }[] };
+export type RevenueSplit = { effectiveFrom: string; recipients: { key: string; name: string; basisPoints: number; userId?: string }[] };
 export function readRevenueSplit(snapshot: unknown, month: Date): RevenueSplit | null {
   const split = (snapshot as { revenueSplit?: RevenueSplit } | null)?.revenueSplit;
   if (!split) return null;

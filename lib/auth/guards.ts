@@ -1,3 +1,4 @@
+import { quotaOnlyPropertyIds } from "@/lib/owners/revenue-share-access";
 import type { PropertyAccessRole } from "@prisma/client";
 import { redirect } from "next/navigation";
 
@@ -44,6 +45,7 @@ export async function requirePropertyAccess(propertyId: string) {
   }
 
   if (user.role === "OWNER") {
+    if ((await quotaOnlyPropertyIds(user.id)).includes(propertyId)) throw new Error("Accesso alla struttura non autorizzato.");
     const property = await prisma.property.findFirst({
       where: {
         id: propertyId,
@@ -200,7 +202,8 @@ export async function getAccessiblePropertyIds() {
       select: { id: true },
     });
 
-    return properties.map((property) => property.id);
+    const restricted = new Set(await quotaOnlyPropertyIds(user.id));
+    return properties.map((property) => property.id).filter(id => !restricted.has(id));
   }
 
   const properties = await prisma.property.findMany({

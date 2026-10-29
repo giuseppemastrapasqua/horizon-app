@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
-const mocks = vi.hoisted(() => ({ user: vi.fn(), access: vi.fn(), report: vi.fn(), bookings: vi.fn(), pdf: vi.fn() }));
+const mocks = vi.hoisted(() => ({ user: vi.fn(), access: vi.fn(), report: vi.fn(), bookings: vi.fn(), pdf: vi.fn(), reports: vi.fn() }));
 vi.mock("@/lib/auth/guards", () => ({ requireUser: mocks.user, requirePropertyAccess: mocks.access }));
-vi.mock("@/lib/prisma", () => ({ prisma: { financeReport: { findUnique: mocks.report }, booking: { findMany: mocks.bookings } } }));
+vi.mock("@/lib/prisma", () => ({ prisma: { financeReport: { findUnique: mocks.report, findMany: mocks.reports }, booking: { findMany: mocks.bookings } } }));
 vi.mock("@/lib/pdf/property-monthly-statement", () => ({ buildPropertyMonthlyStatementPdf: mocks.pdf }));
 import { GET } from "./route";
 const context = { params: Promise.resolve({ reportId: "r1" }) };
 const request = () => new Request("https://example.test/reports/monthly/r1/property-statement/pdf");
 const report = () => ({ id: "r1", referenceMonth: new Date("2026-10-01"), createdAt: new Date("2026-11-01"), currency: "EUR", grossRevenue: 500, finalAmount: 200, formulaSnapshot: {}, property: { id: "p1", name: "Own property", address: "Address", city: "Milano" }, owner: { fullName: "Owner" }, adjustments: [] });
-beforeEach(() => { vi.resetAllMocks(); mocks.user.mockResolvedValue({ id: "owner1", role: "OWNER" }); mocks.access.mockResolvedValue({}); mocks.report.mockResolvedValue(report()); mocks.pdf.mockResolvedValue(new Uint8Array([1, 2])); });
+beforeEach(() => { vi.resetAllMocks(); mocks.reports.mockResolvedValue([]); mocks.user.mockResolvedValue({ id: "owner1", role: "OWNER" }); mocks.access.mockResolvedValue({}); mocks.report.mockResolvedValue(report()); mocks.pdf.mockResolvedValue(new Uint8Array([1, 2])); });
 describe("property statement access", () => {
   it.each(["OWNER", "SUPER_ADMIN", "MANAGER", "FINANCE_ADMIN"])("allows a scoped %s and marks legacy details incomplete", async (role) => {
     mocks.user.mockResolvedValue({ id: "u1", role });
@@ -40,3 +40,11 @@ describe("property statement access", () => {
     expect(mocks.pdf.mock.calls[0][0].rows[0].reference).toBe("6480809347");
   });
 });
+
+ it("automatically selects own quota and rejects another recipient", async()=>{
+   const r={...report(), formulaSnapshot: {} as Record<string, unknown>}; r.formulaSnapshot={revenueSplit:{effectiveFrom:"2026-10-01",recipients:[{key:"silvia",name:"Silvia",basisPoints:7500,userId:"other"},{key:"flavio",name:"Flavio",basisPoints:2500,userId:"owner1"}]}};
+   mocks.report.mockResolvedValue(r);mocks.reports.mockImplementation(async(args)=>args.select.propertyId?[{propertyId:"p1"}]:[{...r,ownerId:"other"}]);
+   expect((await GET(request(),context)).status).toBe(200);
+   expect(mocks.pdf.mock.calls.at(-1)?.[0].payable).toBe(5000);
+   expect((await GET(new Request(request().url+"?share=silvia"),context)).status).toBe(404);
+ });

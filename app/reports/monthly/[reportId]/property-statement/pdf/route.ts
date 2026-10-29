@@ -1,3 +1,4 @@
+import { ownerShareKey, ownerQuotaReports } from "@/lib/owners/revenue-share-access";
 import { readRevenueSplit, recipientIndex, splitStatement } from "@/lib/finance/report-revenue-split";
 import { requirePropertyAccess, requireUser } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
@@ -26,7 +27,8 @@ export async function GET(_request: Request, context: { params: Promise<{ report
     },
   });
   if (!report) return new Response("Rendiconto non trovato.", { status: 404, headers });
-  try { await requirePropertyAccess(report.property.id); }
+  const allowedQuota = user.role === "OWNER" && (await ownerQuotaReports(user.id)).some(r => r.id === report.id);
+  try { if (!allowedQuota) await requirePropertyAccess(report.property.id); }
   catch (error) {
     if (error instanceof Error && error.message === "Accesso alla struttura non autorizzato.")
       return new Response("Rendiconto non trovato.", { status: 404, headers });
@@ -49,10 +51,13 @@ export async function GET(_request: Request, context: { params: Promise<{ report
   } catch {
     return new Response("Dettaglio salvato non valido. Richiedere una verifica del rendiconto originale.", { status: 422, headers });
   }
-  const shareKey = new URL(_request.url).searchParams.get("share");
+  const requestedShareKey = new URL(_request.url).searchParams.get("share");
+  const ownShareKey = user.role === "OWNER" ? ownerShareKey(report.formulaSnapshot, report.referenceMonth, user.id) : null;
+  if (user.role === "OWNER" && requestedShareKey && requestedShareKey !== ownShareKey) return new Response("Quota non disponibile.", {status:404});
+  const shareKey = user.role === "OWNER" ? ownShareKey : requestedShareKey;
   const split = readRevenueSplit(report.formulaSnapshot, report.referenceMonth);
   const shareIndex = shareKey ? recipientIndex(split, shareKey) : -1;
-  if (shareKey && (user.role === "OWNER" || !split || shareIndex < 0)) return new Response("Quota non disponibile.", { status: 404, headers });
+  if (shareKey && (!split || shareIndex < 0)) return new Response("Quota non disponibile.", { status: 404, headers });
   if (shareKey && split) statement = splitStatement(statement, split, shareIndex);
   const bytes = await buildPropertyMonthlyStatementPdf(statement);
   const period = report.referenceMonth.toISOString().slice(0, 7);

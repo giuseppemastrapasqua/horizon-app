@@ -1,3 +1,4 @@
+import { ownerShareKey, ownerQuotaReports } from "@/lib/owners/revenue-share-access";
 import { readRevenueSplit, recipientIndex, splitFinancePdf } from "@/lib/finance/report-revenue-split";
 import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
 import { ownerBookingLabel } from "@/lib/owners/portal-policy";
@@ -131,8 +132,9 @@ export async function GET(
     );
   }
 
+  const allowedQuota = user.role === "OWNER" && (await ownerQuotaReports(user.id)).some(r => r.id === report.id);
   try {
-    await requirePropertyAccess(report.property.id);
+    if (!allowedQuota) await requirePropertyAccess(report.property.id);
   } catch (error) {
     if (error instanceof Error && error.message === "Accesso alla struttura non autorizzato.") {
       return new Response("Rendiconto non trovato.", { status: 404 });
@@ -509,10 +511,13 @@ export async function GET(
   };
 
 
-  const shareKey = new URL(_request.url).searchParams.get("share");
+  const requestedShareKey = new URL(_request.url).searchParams.get("share");
+  const ownShareKey = user.role === "OWNER" ? ownerShareKey(report.formulaSnapshot, report.referenceMonth, user.id) : null;
+  if (user.role === "OWNER" && requestedShareKey && requestedShareKey !== ownShareKey) return new Response("Quota non disponibile.", {status:404});
+  const shareKey = user.role === "OWNER" ? ownShareKey : requestedShareKey;
   const split = readRevenueSplit(report.formulaSnapshot, report.referenceMonth);
   const shareIndex = shareKey ? recipientIndex(split, shareKey) : -1;
-  if (shareKey && (user.role === "OWNER" || !split || shareIndex < 0)) return new Response("Quota non disponibile.", { status: 404 });
+  if (shareKey && (!split || shareIndex < 0)) return new Response("Quota non disponibile.", { status: 404 });
 
   const pdfBytes =
     await buildFinanceReportPdf(

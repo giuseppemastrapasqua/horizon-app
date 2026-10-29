@@ -1,3 +1,5 @@
+import { OwnerQuotaReports } from "./OwnerQuotaReports";
+import { ownerQuotaReports } from "@/lib/owners/revenue-share-access";
 import { OwnerReportBookingDetails } from "./OwnerReportBookingDetails";
 import { OwnerDashboardCharts } from "./OwnerDashboardCharts";
 import { ownerBookingPeriod } from "@/lib/owners/booking-period";
@@ -74,6 +76,9 @@ function Empty({ children }: { children: ReactNode }) {
 }
 
 export async function OwnerDashboard() {
+  const quotaUser = await requireRoles(["OWNER"]);
+  const quotaReports = await ownerQuotaReports(quotaUser.id);
+  if (quotaReports.length) return <Frame title="I tuoi rendiconti"><OwnerQuotaReports userId={quotaUser.id} /></Frame>;
   const ids = await ownerScope();
   const now = new Date();
   const month = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -402,6 +407,9 @@ export async function OwnerTasks({ id }: { id?: string }) {
 }
 
 export async function OwnerDocuments() {
+  const quotaUser = await requireRoles(["OWNER"]);
+  const quotaReports = await ownerQuotaReports(quotaUser.id);
+  if (quotaReports.length) return <Frame title="I tuoi rendiconti"><OwnerQuotaReports userId={quotaUser.id} /></Frame>;
   const ids = await ownerScope();
   const [reports, invoices, contracts] = await Promise.all([
     prisma.financeReport.findMany({
@@ -513,6 +521,8 @@ export async function OwnerDocuments() {
 }
 
 export async function OwnerReport({ id }: { id: string }) {
+  const quotaUser = await requireRoles(["OWNER"]);
+  if ((await ownerQuotaReports(quotaUser.id)).some(r=>r.id===id)) return <Frame title="Il tuo rendiconto"><OwnerQuotaReports userId={quotaUser.id} reportId={id} /></Frame>;
   const ids = await ownerScope();
   const report = await prisma.financeReport.findFirst({
     where: { id, propertyId: { in: ids } },
