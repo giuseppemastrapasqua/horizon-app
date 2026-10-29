@@ -8,6 +8,7 @@ type Booking = {
   grossAmount: unknown;
   checkIn: Date;
   checkOut: Date;
+  accountingMonth?: Date | null;
   nights: number;
   bookingStatus: BookingStatus;
   operationalStatus: BookingOperationalStatus;
@@ -57,8 +58,8 @@ export function buildPropertyMetrics({
 
   const currentMonthBookings = bookings.filter(
     (booking) =>
-      booking.checkOut >= monthStart &&
-      booking.checkOut < monthEnd,
+      (booking.accountingMonth ?? booking.checkOut) >= monthStart &&
+      (booking.accountingMonth ?? booking.checkOut) < monthEnd,
   );
 
   const currentMonthRevenue =

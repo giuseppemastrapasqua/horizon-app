@@ -9,7 +9,9 @@ export function buildBookingAccountingPeriodWhere({
 }: BookingAccountingPeriodInput) {
   return {
     OR: [
+      { accountingMonth: { gte: monthStart, lt: nextMonthStart } },
       {
+        accountingMonth: null,
         channel: "BOOKING" as const,
         checkOut: {
           gte: monthStart,
@@ -17,6 +19,7 @@ export function buildBookingAccountingPeriodWhere({
         },
       },
       {
+        accountingMonth: null,
         channel: {
           not: "BOOKING" as const,
         },

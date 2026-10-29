@@ -13,3 +13,10 @@ describe("property metrics", () => {
     expect(buildPropertyMetrics({ ...input, bookings: [...input.bookings, { ...crossing, grossAmount: 9000, bookingStatus: BookingStatus.CANCELLED, operationalStatus: BookingOperationalStatus.DOCUMENTS_PENDING }] })).toEqual(expected);
   });
 });
+
+it("attributes an overridden cross-month booking only to its accounting month",()=>{
+ const booking={grossAmount:408.24,checkIn:new Date("2026-10-30"),checkOut:new Date("2026-11-01"),accountingMonth:new Date("2026-10-01"),nights:2,bookingStatus:BookingStatus.CONFIRMED,operationalStatus:BookingOperationalStatus.OK};
+ const input={bookings:[booking],tasks:[],documents:[]};
+ expect(buildPropertyMetrics({...input,now:new Date("2026-10-29")}).currentMonthRevenue).toBe(408.24);
+ expect(buildPropertyMetrics({...input,now:new Date("2026-11-02")}).currentMonthRevenue).toBe(0);
+});

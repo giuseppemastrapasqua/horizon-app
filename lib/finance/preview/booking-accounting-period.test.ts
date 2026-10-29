@@ -14,7 +14,9 @@ describe("buildBookingAccountingPeriodWhere", () => {
       })
     ).toEqual({
       OR: [
+        { accountingMonth: { gte: monthStart, lt: nextMonthStart } },
         {
+          accountingMonth: null,
           channel: "BOOKING",
           checkOut: {
             gte: monthStart,
@@ -22,6 +24,7 @@ describe("buildBookingAccountingPeriodWhere", () => {
           },
         },
         {
+          accountingMonth: null,
           channel: {
             not: "BOOKING",
           },

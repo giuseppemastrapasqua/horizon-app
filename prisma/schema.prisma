@@ -600,6 +600,7 @@ model Booking {
   channel                    BookingChannel
   externalBookingId          String?
   ross1000Idswh              String?                     @unique
+  accountingMonth            DateTime?                   @db.Date
   bookedAt                   DateTime?
   roomsBooked                Int?
   guestName                  String
