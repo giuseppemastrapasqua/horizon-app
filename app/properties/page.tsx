@@ -16,6 +16,7 @@ type PropertiesPageProps = {
   searchParams: Promise<{
     search?: string;
     sort?: PropertySortOption;
+    view?: "current" | "archived" | "all";
   }>;
 };
 
@@ -31,11 +32,13 @@ export default async function PropertiesPage({
   const {
     search = "",
     sort = "newest",
+    view = "current",
   } = await searchParams;
 
   const properties = await getPropertiesPageData({
     search,
     sort,
+    view,
   });
 
   return (
@@ -72,12 +75,22 @@ export default async function PropertiesPage({
             </div>
 
             <PropertySortSelect defaultValue={sort} />
+            <label className="text-sm text-[#82909C]">
+              <span className="sr-only">Mostra alloggi</span>
+              <select name="view" defaultValue={["current", "archived", "all"].includes(view) ? view : "current"} className="h-11 rounded-xl border border-white/10 bg-[#09131C] px-4 text-sm text-[#E8E1D5] [color-scheme:dark]">
+                <option value="current">In gestione</option>
+                <option value="archived">Archiviati</option>
+                <option value="all">Tutti gli alloggi</option>
+              </select>
+            </label>
           </form>
 
           <Link href="/properties/new" style={primaryButtonStyle}>
             + Nuovo immobile
           </Link>
         </div>
+
+        <p className="mb-5 text-sm text-[#82909C]">Gli alloggi archiviati sono conservati nello storico. Per consultarli, seleziona “Archiviati” e premi Cerca.</p>
 
         {properties.length === 0 ? (
           <div

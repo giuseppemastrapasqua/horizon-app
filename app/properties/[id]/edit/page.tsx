@@ -1,3 +1,5 @@
+import { PropertyPermanentDeletion } from "@/components/properties/PropertyPermanentDeletion";
+import { propertyDeletionCountSelect } from "@/lib/properties/permanent-deletion-policy";
 import { requireUser } from "@/lib/auth/guards";
 import { notFound } from "next/navigation";
 
@@ -31,7 +33,6 @@ import { PropertyOwnerInvitesSection } from "@/components/properties/PropertyOwn
 import { updatePropertyAccessAction } from "./property-access-actions";
 import {
   archivePropertyAction,
-  permanentlyDeletePropertyAction,
 } from "./property-lifecycle-actions";
 import { PropertyFinanceReportSettings } from "@/components/properties/PropertyFinanceReportSettings";
 import {
@@ -234,6 +235,10 @@ export default async function PropertyEditPage({
     propertyDocuments,
     revenueRatePlan,
   } = workspace;
+
+  const deletionStatus = currentUser.role === "SUPER_ADMIN"
+    ? await prisma.property.findUnique({ where: { id }, select: { _count: { select: propertyDeletionCountSelect } } })
+    : null;
 
   const [
     alloggiatiConnection,
@@ -1402,59 +1407,8 @@ export default async function PropertyEditPage({
                 )}
               </div>
 
-              {currentUser.role === "SUPER_ADMIN" && (
-                <div className="mt-8 rounded-2xl border border-red-200 bg-red-50 p-6">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-red-700">
-                    Zona pericolosa
-                  </p>
-
-                  <h3 className="mt-2 text-lg font-semibold text-[#FFF8EA] text-red-950">
-                    Eliminazione definitiva
-                  </h3>
-
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-red-800">
-                    Disponibile solo per strutture archiviate e senza storico operativo
-                protetto. L&apos;operazione non pu\u00F2 essere annullata.
-                  </p>
-
-                  {property.status === "ARCHIVED" ? (
-                    <form
-                      action={permanentlyDeletePropertyAction}
-                      className="mt-5 max-w-xl"
-                    >
-                      <input
-                        type="hidden"
-                        name="propertyId"
-                        value={property.id}
-                      />
-
-                      <label className="block text-sm font-medium text-red-950">
-                        Per confermare, scrivi esattamente:
-                        <span className="ml-1 font-bold">
-                          {property.name}
-                        </span>
-                      </label>
-
-                      <input
-                        name="confirmation"
-                        required
-                        autoComplete="off"
-                        className="mt-3 w-full rounded-xl border border-red-300 bg-white px-3 py-2.5 text-sm text-slate-900"
-                      />
-
-                      <button
-                        type="submit"
-                        className="mt-4 rounded-xl bg-red-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-800"
-                      >
-                        Elimina definitivamente
-                      </button>
-                    </form>
-                  ) : (
-                    <p className="mt-4 text-sm font-medium text-red-800">
-                      Archivia prima la struttura per abilitare questa operazione.
-                    </p>
-                  )}
-                </div>
+              {currentUser.role === "SUPER_ADMIN" && deletionStatus && (
+                <PropertyPermanentDeletion propertyId={property.id} name={property.name} archived={property.status === "ARCHIVED"} counts={deletionStatus._count} />
               )}
             </div>
           </section>
