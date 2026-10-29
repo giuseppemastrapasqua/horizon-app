@@ -34,6 +34,10 @@ export function buildPropertyMetrics({
   documents,
   now = new Date(),
 }: BuildPropertyMetricsInput) {
+  bookings = bookings.filter(
+    (booking) => booking.bookingStatus !== BookingStatus.CANCELLED,
+  );
+
   const monthStart = new Date(
     now.getFullYear(),
     now.getMonth(),
@@ -53,8 +57,8 @@ export function buildPropertyMetrics({
 
   const currentMonthBookings = bookings.filter(
     (booking) =>
-      booking.checkIn >= monthStart &&
-      booking.checkIn < monthEnd,
+      booking.checkOut >= monthStart &&
+      booking.checkOut < monthEnd,
   );
 
   const currentMonthRevenue =
@@ -92,8 +96,11 @@ export function buildPropertyMetrics({
       BookingOperationalStatus.OK,
   );
 
-  const soldNights = currentMonthBookings.reduce(
-    (sum, booking) => sum + booking.nights,
+  const soldNights = bookings.reduce(
+    (sum, booking) => sum + Math.max(0, Math.round(
+      (Math.min(booking.checkOut.getTime(), monthEnd.getTime()) -
+       Math.max(booking.checkIn.getTime(), monthStart.getTime())) / 86_400_000,
+    )),
     0,
   );
 
