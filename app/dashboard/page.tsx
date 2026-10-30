@@ -1,8 +1,5 @@
-import { AdminMonthlyForecast } from "@/components/dashboard/AdminMonthlyForecast";
-import { loadAdminMonthlyForecast } from "@/lib/finance/load-admin-monthly-forecast";
+import { dashboardDay, operationalBookings, bookedTonight } from "@/lib/dashboard/today";
 import { OwnerDashboard } from "@/components/owner/OwnerPortal";
-import { getDashboardFinanceCharts } from "@/lib/finance/get-dashboard-finance-charts";
-import { DashboardFinanceCharts } from "@/components/dashboard/DashboardFinanceCharts";
 import Link from "next/link";
 
 import {
@@ -51,40 +48,12 @@ export default async function Home() {
     getDashboardIntelligence(),
   ]);
 
-  const forecastYear=Number(new Intl.DateTimeFormat("en",{year:"numeric",timeZone:"Europe/Rome"}).format(new Date()));
-  const forecast=user.role==="SUPER_ADMIN"?await loadAdminMonthlyForecast(forecastYear):null;
-  const financeCharts =
-    await getDashboardFinanceCharts(
-      properties.map((property) => ({
-        id: property.id,
-        name: property.name,
-        city: property.city,
-        zone: property.zone,
-      })),
-    );
-
-  const now =
-    new Date();
-
-  const startOfToday =
-    new Date(now);
-
-  startOfToday.setHours(
-    0,
-    0,
-    0,
-    0,
-  );
-
-  const endOfToday =
-    new Date(now);
-
-  endOfToday.setHours(
-    23,
-    59,
-    59,
-    999,
-  );
+  const {start:startOfToday,end:endOfToday} = dashboardDay(new Date());
+  const priorities = intelligence.insights.filter(insight =>
+    ["OPERATIONS", "DOCUMENTS"].includes(insight.category) &&
+    ["CRITICAL", "WARNING"].includes(insight.severity) && insight.action?.href &&
+    properties.some(property => property.id === insight.propertyId && property.status === "ACTIVE")
+  ).slice(0,3);
 
   const portfolioToday =
     properties.reduce(
@@ -93,11 +62,7 @@ export default async function Home() {
         property,
       ) => {
         const validBookings =
-          property.bookings.filter(
-            (booking) =>
-              booking.bookingStatus !==
-              "CANCELLED",
-          );
+          operationalBookings(property.bookings);
 
         totals.arrivals +=
           validBookings.filter(
@@ -119,6 +84,7 @@ export default async function Home() {
 
         if (
           property.status === "ACTIVE" &&
+          !bookedTonight(property.bookings, startOfToday, endOfToday) &&
           !property.availabilityBlocks.some(
             (block) =>
               block.startDate <=
@@ -141,13 +107,13 @@ export default async function Home() {
 
   return (
     <AppShell
-      title="Le tue strutture"
+      title="Dashboard operativa"
       subtitle={"Stato operativo, movimenti di giornata e priorit\u00E0 del portfolio Horizon."}
     >
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-[12px] sm:text-[10px] font-semibold uppercase tracking-[0.18em] text-[#6F7E8B]">
-            Portfolio overview
+            Oggi in Horizon
           </p>
 
           <p className="mt-2 text-[15px] leading-6 sm:mt-1 sm:text-[13px] sm:leading-normal text-[#A4AFB8]">
@@ -169,7 +135,7 @@ export default async function Home() {
             className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#D8B367] bg-[#D8B367] px-5 text-[12px] font-bold !text-[#081018] shadow-[0_10px_30px_rgba(216,179,103,0.15)] transition hover:bg-[#E3C57E]"
           >
             <ChartNoAxesCombined size={17} />
-            Performance giornaliera
+            Performance
           </Link>
         </div>
       </div>
@@ -183,9 +149,9 @@ export default async function Home() {
         />
 
         <MetricCard
-          label="Prenotabili"
+          label="Notti libere"
           value={portfolioToday.available}
-          helper="disponibili oggi"
+          helper="stanotte · calendario registrato"
           icon="available"
         />
 
@@ -206,14 +172,14 @@ export default async function Home() {
         />
       </section>
 
-      {forecast && <AdminMonthlyForecast rows={forecast} year={forecastYear} />}
-      <DashboardFinanceCharts
-        trend={financeCharts.trend}
-        channels={financeCharts.channels}
-        performance={financeCharts.performance}
-      />
+      <div className="mb-6 flex flex-wrap gap-3">
+        {user.role === "SUPER_ADMIN" ? <Link href="/business-accounting" className="rounded-xl border border-white/15 px-4 py-3 text-sm text-[#E3C57E]">La mia attività · contabilità</Link> : null}
+        {["SUPER_ADMIN", "MANAGER"].includes(user.role) ? <Link href="/revenue-ai/control" className="rounded-xl border border-white/15 px-4 py-3 text-sm text-[#E3C57E]">Controllo revenue</Link> : null}
+        <Link href="/tasks" className="rounded-xl border border-white/15 px-4 py-3 text-sm text-[#E3C57E]">Tutte le attività</Link>
+      </div>
+      <p className="mb-6 text-xs text-[#A4AFB8]">Le notti libere escludono soggiorni confermati e blocchi registrati. Verifica la completezza dei calendari sui portali prima di venderle.</p>
 
-      {intelligence.insights.length > 0 ? (
+      {priorities.length > 0 ? (
         <section className="mb-6 overflow-hidden rounded-[22px] border border-white/[0.09] bg-[#0B1721] shadow-[0_20px_55px_rgba(0,0,0,0.24)]">
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/[0.07] bg-[linear-gradient(135deg,rgba(216,179,103,0.09),transparent_55%)] px-5 py-4">
             <div>
@@ -224,46 +190,23 @@ export default async function Home() {
                 />
 
                 <p className="text-[11px] sm:text-[9px] font-bold uppercase tracking-[0.18em] text-[#D8B367]">
-                  Horizon Intelligence
+                  Azioni da verificare
                 </p>
               </div>
 
               <h2 className="mt-1.5 font-serif text-[24px] sm:text-[20px] font-medium tracking-[-0.025em] text-[#FFF8EA]">
-                {"Priorit\u00E0 del portfolio"}
+                {"Tre priorit\u00E0 operative"}
               </h2>
 
               <p className="mt-2 max-w-2xl text-[14px] leading-6 sm:mt-1 sm:text-[11px] sm:leading-5 text-[#7F8D99]">
-                {"Segnali ordinati per severit\u00E0, impatto economico e rilevanza temporale."}
-                {intelligence.portfolio.totalInsights > intelligence.insights.length ? (
-                  <>
-                    {" "}
-                    Mostrate {intelligence.insights.length} {"priorit\u00E0"} su{" "}
-                    {intelligence.portfolio.totalInsights} segnalazioni.
-                  </>
-                ) : null}
+                Attività e documenti con una segnalazione concreta. Apri il dettaglio per verificare responsabile e scadenza.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <PortfolioBadge
-                label={`${intelligence.portfolio.criticalInsights} critici`}
-                tone="critical"
-              />
-
-              <PortfolioBadge
-                label={`${intelligence.portfolio.warnings} attenzioni`}
-                tone="warning"
-              />
-
-              <PortfolioBadge
-                label={`${intelligence.portfolio.opportunities} opportunit\u00E0`}
-                tone="opportunity"
-              />
-            </div>
           </div>
 
           <div className="grid gap-3 p-3.5 xl:grid-cols-2">
-            {intelligence.insights.map((insight) => (
+            {priorities.map((insight) => (
               <article
                 key={insight.id}
                 className="rounded-2xl border border-white/[0.07] bg-[#0D1A24] p-3.5 transition hover:border-white/[0.13] hover:bg-[#101E29]"
@@ -371,11 +314,7 @@ export default async function Home() {
                   index,
                 ) => {
                   const validBookings =
-                    property.bookings.filter(
-                      (booking) =>
-                        booking.bookingStatus !==
-                        "CANCELLED",
-                    );
+                    operationalBookings(property.bookings);
 
                   const arrivalsToday =
                     validBookings.filter(
@@ -429,6 +368,7 @@ export default async function Home() {
                       <PropertyAvailability
                         status={property.status}
                         closedToday={closedToday}
+                        occupiedTonight={bookedTonight(property.bookings, startOfToday, endOfToday)}
                       />
 
                       <MovementCount
@@ -546,29 +486,6 @@ function MetricCard({
   );
 }
 
-function PortfolioBadge({
-  label,
-  tone,
-}: {
-  label: string;
-  tone:
-    | "critical"
-    | "warning"
-    | "opportunity";
-}) {
-  const classes =
-    tone === "critical"
-      ? "border-rose-400/20 bg-rose-400/10 text-rose-300"
-      : tone === "warning"
-        ? "border-amber-400/20 bg-amber-400/10 text-amber-300"
-        : "border-emerald-400/20 bg-emerald-400/10 text-emerald-300";
-
-  return (
-    <span className={`rounded-full border px-3 py-2 text-[11px] sm:py-1.5 sm:text-[9px] font-bold ${classes}`}>
-      {label}
-    </span>
-  );
-}
 
 function PropertyIdentity({
   id,
@@ -618,9 +535,11 @@ function PropertyIdentity({
 function PropertyAvailability({
   status,
   closedToday,
+  occupiedTonight,
 }: {
   status: string;
   closedToday: boolean;
+  occupiedTonight: boolean;
 }) {
   if (
     status !== "ACTIVE"
@@ -643,10 +562,12 @@ function PropertyAvailability({
     );
   }
 
+  if (occupiedTonight) return <span className="inline-flex w-fit rounded-full border border-[#D8B367]/25 bg-[#D8B367]/10 px-2.5 py-1.5 text-[9px] font-semibold text-[#E3C57E]">Occupata stanotte</span>;
+
   return (
     <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5 text-[9px] font-semibold text-emerald-300">
       <CircleCheck size={11} />
-      Prenotabile
+      Libera stanotte
     </span>
   );
 }
