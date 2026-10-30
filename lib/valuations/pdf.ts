@@ -17,6 +17,16 @@ export async function buildValuationPdf(s:ValuationSnapshot,version:number,full=
  text(s.result.missing.length?'BOZZA - DATI DA COMPLETARE':'PROIEZIONE INDICATIVA - RIFERIMENTI INSERITI DAL GESTORE',10,true);
  text(`Valutazione salvata il ${new Date(s.savedAt).toLocaleString('it-IT',{timeZone:'Europe/Rome'})}. Motore ${s.result.engine}.`);
  if(s.input.ownerName)text(`Proposta per: ${s.input.ownerName}`,10,true);
+ heading('La proposta in sintesi');
+ const totals=s.result.scenarios.map(c=>({label:c.label,gross:c.months.every(m=>m.gross!==null)?c.months.reduce((a,m)=>a+m.gross!,0):null,net:c.months.every(m=>m.ownerNet!==null)?c.months.reduce((a,m)=>a+m.ownerNet!,0):null}));
+ table(['Scenario','Ricavo annuo EUR','Netto operativo EUR'],totals.map(t=>[t.label,amount(t.gross),amount(t.net)]),[130,180,usable-310]);
+ text('Netto prima delle imposte del proprietario. Non e una garanzia: dipende dalle notti vendute e dalle ipotesi documentate.');
+ text(`Costi ipotizzati: pulizie ${amount(s.input.cleaningCost)} EUR/soggiorno; gestione ${s.input.management}%, IVA ${s.input.vat}% ${s.input.vatMode==='INCLUDED'?'inclusa':s.input.vatMode==='EXCLUDED'?'aggiunta':'non applicata'}; altri costi ${amount(s.input.otherMonthly)} EUR/mese. OTA ${s.input.channels.find(c=>c.code===s.input.forecastChannel)?.commission??'n.d.'}%.`);
+ text(`Ipotesi: ${s.input.forecastChannel}, ${s.input.forecastGuests} ospiti, soggiorno medio ${s.input.averageStay} notti. Occupazione mensile centrale: ${s.input.monthlyOccupancy.join(' / ')}%.`);
+ text(`Affidabilita: ${s.result.evidence?.label??'Riferimenti inseriti dal gestore; controllo strutturato non disponibile in questa versione'}.`);
+ if(s.input.limits)text(`Punti da migliorare o verificare: ${s.input.limits}`);
+ text(`Verifiche aperte: ${s.result.missing.length}. Fonti, costi e condizioni sono dettagliati nelle pagine successive.`);
+ newPage();
  heading('Immobile e posizionamento');
  text(`${s.input.address||'Indirizzo da completare'}, ${s.input.city} - ${s.input.zone||'zona da precisare'}`);
  text(`Superficie: ${s.input.sqm??'n.d.'} m2 | Camere: ${s.input.bedrooms??'n.d.'} | Bagni: ${s.input.bathrooms??'n.d.'} | Capienza: ${s.input.maxGuests} ospiti | Piano: ${s.input.floor||'n.d.'} | Ascensore: ${{YES:'si',NO:'no',UNKNOWN:'da verificare'}[s.input.elevator]}`);
@@ -37,6 +47,8 @@ export async function buildValuationPdf(s:ValuationSnapshot,version:number,full=
  if(s.input.launchFrom)text(`Lancio: ${s.input.launchFrom} - ${s.input.launchTo}, sconto ${s.input.launchDiscount}%.`);
  if(s.input.existingListing){heading('Annunci e recensioni');text(s.input.existingListing);}
  heading('Riferimenti e affidabilita');text(s.result.confidence);text(s.input.source||'Fonti e confronti ancora da inserire.');
+ if(s.result.evidence){heading('Controllo strutturato dei confronti');text(`Verifica al ${s.result.evidence.asOf}. ${s.result.evidence.label}.`);text(s.result.evidence.note);for(const gap of s.result.evidence.gaps)text('- '+gap,8);for(const o of s.result.evidence.observations){text(`${o.name} | ${o.zone} | ${o.sqm} m2 | ${o.guests} ospiti | ${o.from} - ${o.to} | rilevato ${o.observedOn}`,8,true);text(`${o.kind==='ASKING'?'Pubblicizzato':'Prenotato documentato'}: totale ${amount(o.total)} EUR, pulizie ${amount(o.cleaning)} EUR; prezzo notte senza pulizie ${amount(o.nightly)} EUR. ${o.usable?'Utilizzabile':o.reasons.join('; ')}.`,8);text(`Condizioni: ${o.conditions}. Fonte: ${o.url}`,8);}}
+ if(s.result.floors){heading('Soglie economiche al soggiorno minimo');text('Prezzo pubblico per notte dopo gli sconti, pulizie separate. Pareggio e obiettivo includono OTA, gestione, pulizie e altri costi ripartiti sulle notti ipotizzate. Imposte escluse; nessun adeguamento automatico.');table(['Mese','Notti ipotizzate','Pareggio EUR','Obiettivo EUR'],s.result.floors.map(f=>[monthNames[f.month],String(f.nights),amount(f.stays[0]?.breakEven??null),amount(f.stays[0]?.target??null)]),[110,130,130,usable-370]);}
  if(s.result.missing.length){heading('Verifiche ancora aperte');for(const m of s.result.missing)text('- '+m);}
  heading('Ipotesi di calcolo');for(const a of s.result.assumptions)text('- '+a,8);
  if(s.input.events.length){heading('Eventi inseriti dal gestore');for(const e of s.input.events)text(`${e.from} - ${e.to}: ${e.label}, ${e.percent}%. Fonte: ${e.source}`,8);}

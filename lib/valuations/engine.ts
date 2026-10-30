@@ -1,3 +1,4 @@
+import {analyzeValuationEvidence,economicFloors,romeDay} from './evidence';
 import {valuationSchema,type ValuationInput} from './model';
 export const VALUATION_ENGINE='valuation-v1';
 const round=(n:number)=>Math.round((n+Number.EPSILON)*100)/100;
@@ -14,7 +15,7 @@ export function valuationMissing(v:ValuationInput){
  if(v.averageStay<v.minimumStay)m.push('La durata media deve essere compatibile con il soggiorno minimo.');
  return m;
 }
-export function buildValuation(raw:ValuationInput){
+export function buildValuation(raw:ValuationInput,now=new Date()){
  const v=valuationSchema.parse(raw),missing=valuationMissing(v);
  const rows:ValuationDay[]=[];
  for(let t=Date.UTC(v.year,0,1);t<Date.UTC(v.year+1,0,1);t+=86400000){
@@ -47,7 +48,7 @@ export function buildValuation(raw:ValuationInput){
   const management=round(managementBase*v.management/100*(v.vatMode==='EXCLUDED'?1+v.vat/100:1));
   return {month,occupancy,nights,stays,gross,ota,cleaning,management,ownerNet:round(gross-ota-cleaning-management-v.otherMonthly),adr:round(avg)};
  })}));
- return {engine:VALUATION_ENGINE,missing,rows,scenarios,confidence:'Scenario basato sui riferimenti inseriti dal gestore; nessun dato di mercato acquisito automaticamente.',assumptions:['Prezzi per notte, pulizie separate e tassa di soggiorno esclusa.','Riferimento mensile: prezzo diretto per gli ospiti inclusi, prima di pulizie e gestione.','Prezzi OTA maggiorati per compensare commissioni e promozioni indicate; le promozioni sono ipotizzate sulla sola quota pernottamento.','Il minimo e massimo proteggono il riferimento per gli ospiti inclusi; i supplementi si aggiungono dopo.','Eventi sovrapposti: si applica una sola variazione, quella con percentuale maggiore. Le correzioni manuali sostituiscono gli altri adeguamenti, rispettando minimo e massimo.','Occupazione ipotizzata sull’intero calendario mensile, senza sottrarre automaticamente periodi di uso personale o indisponibilità: inserirne l’effetto nelle ipotesi di occupazione.',
+ return {engine:VALUATION_ENGINE,missing,rows,scenarios,evidence:analyzeValuationEvidence(v,romeDay(now)) as ReturnType<typeof analyzeValuationEvidence>|undefined,floors:economicFloors(v) as ReturnType<typeof economicFloors>|undefined,confidence:'Scenario basato sui riferimenti inseriti dal gestore; nessun dato di mercato acquisito automaticamente.',assumptions:['Prezzi per notte, pulizie separate e tassa di soggiorno esclusa.','Riferimento mensile: prezzo diretto per gli ospiti inclusi, prima di pulizie e gestione.','Prezzi OTA maggiorati per compensare commissioni e promozioni indicate; le promozioni sono ipotizzate sulla sola quota pernottamento.','Il minimo e massimo proteggono il riferimento per gli ospiti inclusi; i supplementi si aggiungono dopo.','Eventi sovrapposti: si applica una sola variazione, quella con percentuale maggiore. Le correzioni manuali sostituiscono gli altri adeguamenti, rispettando minimo e massimo.','Occupazione ipotizzata sull’intero calendario mensile, senza sottrarre automaticamente periodi di uso personale o indisponibilità: inserirne l’effetto nelle ipotesi di occupazione.',
  'Scenari: occupazione centrale inserita per mese, prudente -15 punti e favorevole +15 punti, entro 0-100%. Notti arrotondate; soggiorni stimati arrotondati per eccesso in ogni mese.','Gestione calcolata sul lordo meno OTA e pulizie; altri costi mensili sottratti successivamente. Netto operativo prima delle imposte del proprietario.','Proiezioni indicative, non garanzie di incasso. Disponibilità, condizioni effettive dei portali e domanda devono essere verificate.']};
 }
 export type ValuationResult=ReturnType<typeof buildValuation>;

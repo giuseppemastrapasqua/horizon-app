@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import {ActualComparison} from '../ActualComparison';
 import {notFound} from 'next/navigation';
 import {Navigation} from '@/components/Navigation';
 import {AppShell} from '@/components/AppShell';
@@ -15,5 +16,6 @@ export default async function ValuationPage({params,searchParams}:{params:Promis
   {q.saved==='1'&&!historic&&<p role="status" className="mb-5 text-emerald-300">Valutazione salvata. Il PDF e lo storico fanno riferimento a questa versione.</p>}
   <details className="mb-6 rounded-2xl border border-white/10 p-4"><summary className="cursor-pointer text-[#E3C57E]">Storico delle revisioni ({document.versions.length})</summary><ul className="mt-3 space-y-2 text-sm">{document.versions.map(v=><li key={v.version}><Link className="underline" href={`/valuations/${id}?version=${v.version}`}>Versione {v.version}</Link> · {v.createdAt.toLocaleString('it-IT',{timeZone:'Europe/Rome'})} · {v.note}</li>)}</ul></details>
   {historic?<><p className="mb-5 rounded-xl border border-amber-300/30 p-4">Versione storica in sola lettura. <Link className="underline" href={`/valuations/${id}`}>Torna alla versione corrente</Link>.</p><ValuationResults result={snapshot.result} input={snapshot.input}/></>:<ValuationEditor initial={snapshot.input} id={id} version={document.currentVersion}/>}
+  <ActualComparison snapshot={snapshot}/>
  </AppShell></>;
 }
