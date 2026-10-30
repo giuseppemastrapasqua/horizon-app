@@ -1,3 +1,4 @@
+import { revealBilling } from "@/lib/security/billing-crypto";
 import { PropertyPermanentDeletion } from "@/components/properties/PropertyPermanentDeletion";
 import { propertyDeletionCountSelect } from "@/lib/properties/permanent-deletion-policy";
 import { requireUser } from "@/lib/auth/guards";
@@ -833,7 +834,7 @@ export default async function PropertyEditPage({
             <>
               <PropertyOwnerInvitesSection
                 propertyId={property.id}
-                ownerBillingProfile={ownerBillingProfile}
+                ownerBillingProfile={ownerBillingProfile ? revealBilling(ownerBillingProfile) : null}
                 activeOwners={propertyAccesses
                   .filter((access) => access.role === "OWNER")
                   .map((access) => ({

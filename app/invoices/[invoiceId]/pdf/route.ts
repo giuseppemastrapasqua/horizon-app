@@ -1,3 +1,4 @@
+import { revealInvoice } from "@/lib/security/billing-crypto";
 import {
   buildCommissionInvoicePdf,
   type CommissionInvoicePdfInput,
@@ -74,7 +75,7 @@ export async function GET(
 
   if (user.role === "OWNER" && !["FINAL", "ISSUED"].includes(invoice.status)) return new Response("Fattura non trovata.", { status: 404 });
 
-  const snapshot = parseSnapshot(invoice.content);
+  const snapshot = parseSnapshot(revealInvoice(invoice.content));
 
   if (!snapshot) {
     return new Response("Snapshot fattura non valido.", {

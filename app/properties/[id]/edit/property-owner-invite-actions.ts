@@ -1,5 +1,7 @@
 "use server";
 
+import { protectBilling } from "@/lib/security/billing-crypto";
+
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -454,7 +456,8 @@ export async function upsertOwnerBillingProfileAction(
     throw new Error("Immobile non trovato.");
   }
 
-  const { propertyId, ...profile } = parsed.data;
+  const { propertyId, ...plainProfile } = parsed.data;
+  const profile = protectBilling(plainProfile);
 
   await prisma.ownerBillingProfile.upsert({
     where: { ownerId: property.ownerId },

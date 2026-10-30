@@ -1,3 +1,4 @@
+import { protectBilling, revealBilling, revealInvoice } from "@/lib/security/billing-crypto";
 import {
   DocumentStatus,
   DocumentType,
@@ -51,7 +52,7 @@ export async function upsertCommissionInvoiceDraft({
     );
   }
 
-  const [issuer, recipient] =
+  const [issuer, storedRecipient] =
     await Promise.all([
       prisma.billingIssuerProfile.findUnique({
         where: {
@@ -72,6 +73,7 @@ export async function upsertCommissionInvoiceDraft({
     });
   }
 
+  const recipient = storedRecipient ? revealBilling(storedRecipient) : null;
   if (!recipient) {
     throw new CommissionInvoicePrerequisiteError({
       code: "OWNER_BILLING_PROFILE_MISSING",
@@ -117,7 +119,7 @@ export async function upsertCommissionInvoiceDraft({
       pec: issuer.pec,
       logoPath: issuer.logoPath,
     },
-    recipient: {
+    recipient: protectBilling({
       ownerId: recipient.ownerId,
       entityType: recipient.entityType,
       firstName: recipient.firstName,
@@ -134,7 +136,7 @@ export async function upsertCommissionInvoiceDraft({
       pec: recipient.pec,
       recipientCode:
         recipient.recipientCode,
-    },
+    }),
     commission: {
       percent: Number(
         report.property
@@ -218,7 +220,7 @@ export async function upsertCommissionInvoiceDraft({
         });
       }
 
-      if (normalizeJson(existing.content) === normalizeJson(content)) {
+      if (normalizeJson(revealInvoice(existing.content)) === normalizeJson(revealInvoice(content))) {
         return transaction.document.findUniqueOrThrow({
           where: {
             id: existing.id,
