@@ -1,10 +1,11 @@
+import { companyMpmAmounts } from "@/lib/business-accounting/mpm-vat";
 import type { ForecastMonth } from "@/lib/finance/admin-monthly-forecast";
 import { automaticTotals, type AutomaticAccounting } from "@/lib/business-accounting/automatic";
 import { euro, type Accounting } from "@/lib/business-accounting/config";
 import { panelClass } from "./AccountingSettings";
 export function FiscalOverview({source, data, year, forecast}: {source: AutomaticAccounting; data: Accounting; year: number; forecast: ForecastMonth[]}) {
  const t=automaticTotals(source);
- const income=Math.round(forecast.reduce((n,r)=>n+r.management,0)*100);
+ const income=forecast.reduce((n,r)=>n+companyMpmAmounts(r).net,0);
  const collaborators=Math.round(forecast.reduce((n,r)=>n+r.cleaning,0)*100);
  const partial=forecast.some(r=>r.missing.length>0);
  const extra=data.movements.filter(m=>!m.archived && m.paid && m.kind==="EXPENSE" && m.date.startsWith(`${year}-`)).reduce((n,m)=>n+m.amount,0);

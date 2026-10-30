@@ -1,10 +1,11 @@
+import { companyMpmAmounts } from "@/lib/business-accounting/mpm-vat";
 import type { ForecastMonth } from "@/lib/finance/admin-monthly-forecast";
 import type { Accounting } from "@/lib/business-accounting/config";
 import { euro } from "@/lib/business-accounting/config";
 import { splitFourInstallments } from "@/lib/business-accounting/inps-plan";
 import { panelClass } from "./AccountingSettings";
 export function InpsInstallments({rows,data,year}:{rows:ForecastMonth[];data:Accounting;year:number}){
- const compensation=Math.round(rows.reduce((n,r)=>n+r.management,0)*100);
+ const compensation=rows.reduce((n,r)=>n+companyMpmAmounts(r).net,0);
  const base=Math.round(compensation*data.coefficient/100);
  const total=data.contributionEstimate??(year===2026?Math.round(Math.min(base,12229500)*.2607):null);
  const quarters=splitFourInstallments(total);
