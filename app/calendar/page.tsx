@@ -1,3 +1,4 @@
+import { SectionLinks } from "@/components/SectionLinks";
 import { OwnerCalendar } from "@/components/owner/OwnerPortal";
 import { CalendarRangeController } from "@/components/calendar/CalendarRangeController";
 import { CalendarPeriodEditor } from "./components/CalendarPeriodEditor";
@@ -713,6 +714,7 @@ return (
         title="Calendario"
         subtitle={selectedProperty?.name ?? "Disponibilit\u00E0, prenotazioni e pricing."}
       >
+<SectionLinks label="Viste calendario" items={[{href:buildCalendarUrl({month:formatMonthParam(monthStart),propertyId:selectedProperty?.id??""}),label:"Disponibilità",active:true},{href:`/calendar/month?month=${formatMonthParam(monthStart)}`,label:"Agenda operativa"}]} />
 <section className="mb-4 md:hidden">
   <div className="rounded-[22px] border border-white/[0.07] bg-[#09131C]/95 p-4 shadow-[0_14px_34px_rgba(0,0,0,0.20)]">
     <div className="flex items-center justify-between gap-3">

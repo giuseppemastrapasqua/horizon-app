@@ -356,7 +356,7 @@ export default async function TasksPage({
       <Navigation />
 
       <AppShell
-        title="Task operativi"
+        title="Attività"
         subtitle={"Pulizie, manutenzioni e attivit\u00E0 operative collegate a immobili e prenotazioni."}
       >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

@@ -1,3 +1,4 @@
+import { SectionLinks } from "@/components/SectionLinks";
 import { PropertyAccessRole, UserRole } from "@prisma/client";
 
 import { AppShell } from "@/components/AppShell";
@@ -116,6 +117,8 @@ export default async function CollaboratorsPage() {
         title="Collaboratori"
         subtitle="Gestisci i collaboratori operativi e le strutture a cui possono accedere."
       >
+        <SectionLinks label="Gestione collaboratori" items={[{href:"/collaborators",label:"Anagrafiche e accessi",active:true},{href:"/reports/cleaning",label:"Rendiconti pulizie"},{href:"/tasks?type=CLEANING",label:"Attività di pulizia"}]} />
+        <p className="mb-5 text-sm text-[#A4AFB8]">I rendiconti usano il costo pulizie configurato per alloggio. Non costituiscono un compenso personale concordato o una conferma di pagamento.</p>
         <CollaboratorsManager
           properties={properties}
           collaborators={serializedCollaborators}

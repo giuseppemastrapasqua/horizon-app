@@ -6,16 +6,13 @@ import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 import {
-  BarChart3,
   CalendarDays,
   ClipboardCheck,
   FileText,
   Home,
   Menu,
   ReceiptText,
-  Settings,
   Sparkles,
-  Tags,
   Users,
   X,
 } from "lucide-react";
@@ -23,87 +20,19 @@ import {
 import { UserMenu } from "@/components/auth/UserMenu";
 import { HorizonLogo } from "@/components/ui/HorizonLogo";
 
-import { navigationForRole } from "@/lib/auth/navigation-policy";
+import { navigationForRole, navigationSection } from "@/lib/auth/navigation-policy";
 
 const navigationItems = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: Home,
-    operatorVisible: false,
-  },
-  {
-    href: "/bookings",
-    label: "Prenotazioni",
-    icon: CalendarDays,
-    operatorVisible: true,
-  },
-  {
-    href: "/calendar",
-    label: "Calendario",
-    icon: CalendarDays,
-    operatorVisible: true,
-  },
-  {
-    href: "/activation",
-    label: "Attivazione alloggi",
-    icon: Home,
-    operatorVisible: false,
-  },
-  {
-    href: "/revenue-ai/daily",
-    label: "Prezzi consigliati",
-    icon: Sparkles,
-    operatorVisible: false,
-  },
-  {
-    href: "/tasks",
-    label: "Task",
-    icon: ClipboardCheck,
-    operatorVisible: true,
-  },
-  {
-    href: "/documents",
-    label: "Documenti",
-    icon: FileText,
-    operatorVisible: false,
-  },
-  {
-    href: "/invoices",
-    label: "Fatture",
-    icon: ReceiptText,
-    operatorVisible: false,
-  },
-  {
-    href: "/business-accounting",
-    label: "La mia attività",
-    icon: ReceiptText,
-    operatorVisible: false,
-  },
-  {
-    href: "/rate-types",
-    label: "Tipologie tariffe",
-    icon: Tags,
-    operatorVisible: false,
-  },
-  {
-    href: "/reports/finance",
-    label: "Rendiconto",
-    icon: BarChart3,
-    operatorVisible: false,
-  },
-  {
-    href: "/reports/tourist-tax",
-    label: "Tassa di soggiorno",
-    icon: ReceiptText,
-    operatorVisible: false,
-  },
-  {
-    href: "/reports/cleaning",
-    label: "Rendiconto pulizie",
-    icon: ClipboardCheck,
-    operatorVisible: true,
-  },
+  {href:"/dashboard",label:"Dashboard",icon:Home,operatorVisible:false},
+  {href:"/calendar",label:"Calendario",icon:CalendarDays,operatorVisible:true},
+  {href:"/bookings",label:"Prenotazioni",icon:CalendarDays,operatorVisible:true},
+  {href:"/properties",label:"Alloggi",icon:Home,operatorVisible:false},
+  {href:"/tasks",label:"Attività",icon:ClipboardCheck,operatorVisible:true},
+  {href:"/accounting",label:"Contabilità",icon:ReceiptText,operatorVisible:false},
+  {href:"/revenue-ai",label:"Revenue",icon:Sparkles,operatorVisible:false},
+  {href:"/management",label:"Gestione",icon:Users,operatorVisible:false},
+  {href:"/documents",label:"Documenti",icon:FileText,operatorVisible:false},
+  {href:"/reports/cleaning",label:"Rendiconto pulizie",icon:ClipboardCheck,operatorVisible:true},
 ];
 
 export function Navigation() {
@@ -120,28 +49,16 @@ function NavigationContent({ pathname }: { pathname: string }) {
       ? "/bookings"
       : "/dashboard";
 
-  const visibleNavigationItems = [
-    ...navigationForRole(navigationItems, session?.user?.role),
-    ...(session?.user?.role === "SUPER_ADMIN"
-      ? [
-          {
-            href: "/collaborators",
-            label: "Collaboratori",
-            icon: Users,
-            operatorVisible: false,
-          },
-        ]
-      : []),
-  ].sort((a, b) => {
-    const bottom = ["/reports/tourist-tax", "/reports/cleaning"];
-    return Number(bottom.includes(a.href)) - Number(bottom.includes(b.href));
-  });
+  const visibleNavigationItems = navigationForRole(navigationItems, session?.user?.role).map(item =>
+    item.href === "/tasks" && ["OWNER", "OPERATOR"].includes(session?.user?.role ?? "") ? {...item,label:"Task"} : item
+  );
+  const activeSection = navigationSection(pathname, session?.user?.role);
 
   const isActive = (href: string) =>
     href === "/dashboard"
-      ? pathname === href
-      : pathname === href ||
-        pathname.startsWith(`${href}/`);
+      ? activeSection === href
+      : activeSection === href ||
+        activeSection.startsWith(`${href}/`);
 
   return (
     <>
@@ -203,20 +120,7 @@ function NavigationContent({ pathname }: { pathname: string }) {
         </nav>
 
         <div className="relative shrink-0 border-t border-white/[0.07] px-3 pb-2 pt-2">
-          {session?.user?.role && !["OWNER", "OPERATOR"].includes(session.user.role) ? (
-            <Link
-              href="/settings"
-              className="mb-1 flex h-[36px] items-center gap-3 rounded-xl border border-transparent px-3.5 text-[12px] font-medium text-[#8493A1] transition hover:border-white/[0.05] hover:bg-white/[0.04] hover:text-white"
-            >
-              <Settings
-                size={16}
-                strokeWidth={1.7}
-                className="shrink-0 text-[#667685]"
-              />
 
-              <span>Impostazioni</span>
-            </Link>
-          ) : null}
 
           <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-1">
             <UserMenu
@@ -313,20 +217,7 @@ function NavigationContent({ pathname }: { pathname: string }) {
             </nav>
 
             <div className="relative shrink-0 border-t border-white/[0.07] px-3 pb-4 pt-3">
-              {session?.user?.role && !["OWNER", "OPERATOR"].includes(session.user.role) ? (
-                <Link
-                  href="/settings"
-                  onClick={() => setMobileOpen(false)}
-                  className="mb-2 flex h-[44px] items-center gap-3 rounded-xl px-3.5 text-[13px] font-medium text-[#8493A1] transition hover:bg-white/[0.04] hover:text-white"
-                >
-                  <Settings
-                    size={17}
-                    strokeWidth={1.7}
-                    className="shrink-0 text-[#667685]"
-                  />
-                  <span>Impostazioni</span>
-                </Link>
-              ) : null}
+
 
               <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-1">
                 <UserMenu

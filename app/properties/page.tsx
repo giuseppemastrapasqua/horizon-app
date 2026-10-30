@@ -46,8 +46,8 @@ export default async function PropertiesPage({
       <Navigation />
 
       <AppShell
-        title="Immobili Horizon"
-        subtitle="Portafoglio appartamenti, score e performance iniziale."
+        title="Alloggi"
+        subtitle="Schede degli alloggi, configurazione e stato operativo."
       >
         <div
           style={{
@@ -90,6 +90,7 @@ export default async function PropertiesPage({
           </Link>
         </div>
 
+        <div className="mb-5 flex flex-wrap gap-3 text-sm"><Link className="text-[#D8B367] underline" href="/properties/readiness">Controlla dati e collegamenti</Link>{["SUPER_ADMIN","MANAGER"].includes(user.role)?<Link className="text-[#D8B367] underline" href="/activation">Attivazione e lancio alloggi</Link>:null}</div>
         <p className="mb-5 text-sm text-[#82909C]">Gli alloggi archiviati sono conservati nello storico. Per consultarli, seleziona “Archiviati” e premi Cerca.</p>
 
         {properties.length === 0 ? (

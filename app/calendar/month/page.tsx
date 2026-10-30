@@ -1,3 +1,4 @@
+import { SectionLinks } from "@/components/SectionLinks";
 import { OwnerCalendar } from "@/components/owner/OwnerPortal";
 import { requireUser } from "@/lib/auth/guards";
 import Link from "next/link";
@@ -154,6 +155,7 @@ export default async function MonthlyCalendarPage({
         title="Calendario mensile"
         subtitle="Vista mensile di check-in, check-out e task operativi."
       >
+      <SectionLinks label="Viste calendario" items={[{href:`/calendar?month=${year}-${String(monthIndex+1).padStart(2,"0")}`,label:"Disponibilità"},{href:`/calendar/month?month=${year}-${String(monthIndex+1).padStart(2,"0")}`,label:"Agenda operativa",active:true}]} />
         <div
           style={{
             display: "flex",
