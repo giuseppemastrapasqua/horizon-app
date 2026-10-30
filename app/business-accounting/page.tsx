@@ -1,3 +1,4 @@
+import { loadAdminMonthlyForecast } from "@/lib/finance/load-admin-monthly-forecast";
 import { Prisma } from "@prisma/client";
 import { AppShell } from "@/components/AppShell";
 import { Navigation } from "@/components/Navigation";
@@ -23,9 +24,10 @@ export default async function BusinessAccountingPage({ searchParams }: { searchP
   }
   const parsed = record ? accountingSchema.safeParse(record.config) : null;
   const automatic = unavailable ? null : await loadAutomaticAccounting(year);
+  const forecast=unavailable?[]:await loadAdminMonthlyForecast(year);
   return <><Navigation /><AppShell title="La mia attività" subtitle="Contabilità e netto · ditta individuale in regime forfettario">
     {unavailable ? <p role="alert">La contabilità è in preparazione: occorre completare l’aggiornamento del database.</p> :
       parsed && !parsed.success ? <p role="alert">Dati salvati non leggibili. Contatta l’amministratore prima di modificarli.</p> :
-        <AccountingWorkspace key={year} year={year} automatic={automatic!} initial={parsed?.success ? parsed.data : initialAccounting} initialVersion={record?.version ?? 0} />}
+        <AccountingWorkspace forecast={forecast} key={year} year={year} automatic={automatic!} initial={parsed?.success ? parsed.data : initialAccounting} initialVersion={record?.version ?? 0} />}
   </AppShell></>;
 }

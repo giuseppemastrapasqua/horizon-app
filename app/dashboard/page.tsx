@@ -1,3 +1,5 @@
+import { AdminMonthlyForecast } from "@/components/dashboard/AdminMonthlyForecast";
+import { loadAdminMonthlyForecast } from "@/lib/finance/load-admin-monthly-forecast";
 import { OwnerDashboard } from "@/components/owner/OwnerPortal";
 import { getDashboardFinanceCharts } from "@/lib/finance/get-dashboard-finance-charts";
 import { DashboardFinanceCharts } from "@/components/dashboard/DashboardFinanceCharts";
@@ -49,6 +51,8 @@ export default async function Home() {
     getDashboardIntelligence(),
   ]);
 
+  const forecastYear=Number(new Intl.DateTimeFormat("en",{year:"numeric",timeZone:"Europe/Rome"}).format(new Date()));
+  const forecast=user.role==="SUPER_ADMIN"?await loadAdminMonthlyForecast(forecastYear):null;
   const financeCharts =
     await getDashboardFinanceCharts(
       properties.map((property) => ({
@@ -202,6 +206,7 @@ export default async function Home() {
         />
       </section>
 
+      {forecast && <AdminMonthlyForecast rows={forecast} year={forecastYear} />}
       <DashboardFinanceCharts
         trend={financeCharts.trend}
         channels={financeCharts.channels}
