@@ -11,6 +11,7 @@ export const workspaceSections:Record<'accounting'|'management',Section[]>={
   {href:'/owners',title:'Documenti per proprietario',description:'Apri il proprietario per consultare i suoi alloggi e i documenti mensili.',roles:staff},
  ],
  management:[
+  {href:'/valuations',title:'Valutazioni immobili',description:'Scheda, prezzi giornalieri, scenari economici e proposte PDF con storico.',roles:['SUPER_ADMIN','MANAGER']},
   {href:'/owners',title:'Proprietari',description:'Anagrafiche, alloggi e documenti per proprietario.',roles:staff},
   {href:'/collaborators',title:'Collaboratori',description:'Anagrafiche, inviti personali e alloggi assegnati.',roles:['SUPER_ADMIN']},
   {href:'/properties',title:'Alloggi',description:'Schede, collegamenti e configurazione degli immobili.',roles:staff},

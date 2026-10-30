@@ -15,6 +15,7 @@ export function navigationSection(pathname:string,role?:string){
  if(pathname==='/calendar/revenue-ai'||pathname.startsWith('/calendar/revenue-ai/'))return '/revenue-ai';
  if(pathname==='/rate-types'||pathname.startsWith('/rate-types/'))return role==='FINANCE_ADMIN'?'/management':'/revenue-ai';
  if(pathname.startsWith('/revenue-ai'))return '/revenue-ai';
+ if(pathname==='/valuations'||pathname.startsWith('/valuations/'))return '/properties';
  if(pathname==='/activation'||pathname.startsWith('/activation/'))return '/properties';
  return pathname;
 }

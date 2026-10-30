@@ -47,6 +47,8 @@ export default async function DocumentsPage({
     ? { AND: [{ propertyId: { in: accessiblePropertyIds } }] }
     : {};
 
+  where.documentKey = { not: { startsWith: "valuation:" } };
+
   if (typeFilter !== "all" && isDocumentType(typeFilter)) {
     where.type = typeFilter;
   }

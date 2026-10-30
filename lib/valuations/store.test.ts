@@ -1,0 +1,20 @@
+import {beforeEach,afterEach,describe,it,expect,vi} from 'vitest';
+const m=vi.hoisted(()=>({roles:vi.fn(),property:vi.fn(),find:vi.fn(),transaction:vi.fn(),update:vi.fn(),revision:vi.fn(),create:vi.fn()}));
+vi.mock('@/lib/auth/guards',()=>({requireRoles:m.roles,requirePropertyAccess:m.property}));
+vi.mock('next/navigation',()=>({notFound:()=>{throw new Error('404')}}));
+vi.mock('@/lib/prisma',()=>({prisma:{document:{findFirst:m.find},$transaction:m.transaction}}));
+import {loadValuation,saveValuation,valuationScope,packValuation,unpackValuation,valuationSearchTokens} from './store';
+import {emptyValuation} from './model';
+import {buildValuation} from './engine';
+describe('valuation access and immutable revisions',()=>{
+ beforeEach(()=>{vi.resetAllMocks();vi.stubEnv('HORIZON_BILLING_ENCRYPTION_KEY',Buffer.alloc(32,7).toString('base64'));m.roles.mockResolvedValue({id:'manager',name:'Manager',role:'MANAGER'});m.transaction.mockImplementation(async cb=>cb({document:{findFirst:m.find,updateMany:m.update,create:m.create},documentVersion:{create:m.revision}}));});
+ afterEach(()=>vi.unstubAllEnvs());
+ it('denies owners and operators before reading private valuations',async()=>{m.roles.mockRejectedValue(new Error('denied'));await expect(loadValuation('x')).rejects.toThrow('denied');expect(m.find).not.toHaveBeenCalled();});
+ it('limits managers to valuations they created',()=>{expect(valuationScope({id:'m',role:'MANAGER'})).toMatchObject({content:{path:['createdById'],equals:'m'}});expect(valuationScope({id:'a',role:'SUPER_ADMIN'})).not.toHaveProperty('content');});
+ it('returns 404 for another manager’s valuation',async()=>{m.find.mockResolvedValue(null);await expect(loadValuation('foreign')).rejects.toThrow('404');expect(m.find.mock.calls[0][0].where.content).toEqual({path:['createdById'],equals:'manager'});});
+ it('encrypts personal fields and snapshots and detects tampering',()=>{const input={...emptyValuation(),ownerName:'Private Owner',ownerEmail:'private@example.org'};const s={schemaVersion:1 as const,input,result:buildValuation(input),savedAt:'2026-10-30',authorName:'Manager'};const packed=packValuation(s,'manager');expect(JSON.stringify(packed)).not.toContain('Private Owner');expect(JSON.stringify(packed)).not.toContain('private@example.org');expect(unpackValuation(packed as never).input.ownerName).toBe('Private Owner');expect(()=>unpackValuation({...packed as object,payload:'bad'} as never)).toThrow();});
+ it('supports private prefix search without storing owner names in the search index',()=>{const input={...emptyValuation(),ownerName:'Silvia Rossi',address:'Via Verdi 12'};const packed=packValuation({schemaVersion:1,input,result:buildValuation(input),savedAt:'2026-10-30',authorName:'Manager'},'manager') as {searchTokens:string[]};expect(packed.searchTokens).toEqual(expect.arrayContaining(valuationSearchTokens('Silv Verd')));expect(JSON.stringify(packed.searchTokens)).not.toContain('Silvia');});
+ it('does not create a revision when optimistic concurrency fails',async()=>{m.find.mockResolvedValue({id:'x',currentVersion:2,content:{createdById:'manager'}});m.update.mockResolvedValue({count:0});await expect(saveValuation(emptyValuation(),'x',2)).rejects.toThrow('concorrente');expect(m.revision).not.toHaveBeenCalled();});
+ it('keeps original revision and appends the next version',async()=>{m.find.mockResolvedValue({id:'x',currentVersion:2,content:{createdById:'manager'}});m.update.mockResolvedValue({count:1});expect(await saveValuation(emptyValuation(),'x',2)).toEqual({id:'x',currentVersion:3});expect(m.revision.mock.calls[0][0].data.version).toBe(3);expect(m.update.mock.calls[0][0].where).toEqual({id:'x',currentVersion:2});});
+ it('blocks ready state with incomplete inputs and checks associated-property permissions',async()=>{await expect(saveValuation({...emptyValuation(),state:'READY'})).rejects.toThrow('Completa');m.property.mockRejectedValue(new Error('foreign property'));await expect(saveValuation({...emptyValuation(),propertyId:'foreign'})).rejects.toThrow('foreign property');expect(m.transaction).not.toHaveBeenCalled();});
+});
