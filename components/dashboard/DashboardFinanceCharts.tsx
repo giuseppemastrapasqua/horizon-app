@@ -18,6 +18,8 @@ type PropertyPerformancePoint = {
   grossRevenue: number;
   netProperty: number;
   changePercent: number | null;
+  reportCount?: number;
+  bookingGross?: number;
 };
 
 type DashboardFinanceChartsProps = {
@@ -122,11 +124,11 @@ function PropertyPerformance({
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div>
                     <p className="text-[11px] sm:text-[8px] font-medium text-[#667582]">
-                      Ricavi totali
+                      Lordo rendicontato · 12 mesi
                     </p>
 
                     <p className="mt-1 text-[17px] sm:text-[12px] font-semibold tabular-nums text-[#FFF8EA]">
-                      {formatMoney(property.grossRevenue)}
+                      {property.reportCount === 0 ? "Non rendicontato" : formatMoney(property.grossRevenue)}
                     </p>
                   </div>
 
@@ -136,15 +138,16 @@ function PropertyPerformance({
                     </p>
 
                     <p className="mt-1 text-[17px] sm:text-[12px] font-semibold tabular-nums text-[#FFF8EA]">
-                      {formatMoney(property.netProperty)}
+                      {property.reportCount === 0 ? "Da calcolare" : formatMoney(property.netProperty)}
                     </p>
                   </div>
                 </div>
 
+                {property.bookingGross !== undefined && <p className="mt-3 text-xs text-[#D8B367]">Lordo prenotazioni attive · 12 mesi: {formatMoney(property.bookingGross)}</p>}
                 <div className="mt-4 flex items-center justify-between gap-3">
                   {property.changePercent === null ? (
                     <span className="text-[9px] font-semibold text-[#667582]">
-                      Nuovo periodo
+                      Confronto precedente non disponibile
                     </span>
                   ) : (
                     <span

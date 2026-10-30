@@ -74,12 +74,14 @@ export async function getDashboardFinanceCharts(
           bookingStatus: {
             not: "CANCELLED",
           },
-          checkIn: {
-            gte: firstMonth,
-            lt: nextMonth,
-          },
+          guestName: { not: "CLOSED" },
+          OR: [
+            { accountingMonth: { gte: firstMonth, lt: nextMonth } },
+            { accountingMonth: null, checkOut: { gte: firstMonth, lt: nextMonth } },
+          ],
         },
         select: {
+          propertyId: true,
           channel: true,
           grossAmount: true,
         },
@@ -259,6 +261,8 @@ export async function getDashboardFinanceCharts(
           : null;
 
       return {
+        bookingGross: roundMoney(bookings.filter(b => b.propertyId === property.id).reduce((n,b) => n + Number(b.grossAmount), 0)),
+        reportCount: currentReports.length,
         id: property.id,
         name: property.name,
         city: property.city,
