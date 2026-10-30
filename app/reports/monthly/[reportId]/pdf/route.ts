@@ -85,6 +85,7 @@ export async function GET(
             address: true,
             city: true,
             zone: true,
+            f24Percent: true,
             cleaningCost: true,
             propertyManagementCommissionPercent: true,
             propertyManagementCommissionVatPercent: true,
@@ -239,6 +240,7 @@ export async function GET(
                     otaCommissionByChannel,
                 }),
 
+              f24Percent: Number(report.property.f24Percent ?? 21),
               currency:
                 booking.currency,
 

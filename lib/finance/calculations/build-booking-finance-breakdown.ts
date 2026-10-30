@@ -28,6 +28,7 @@ type Input = {
   propertyManagementCommissionPercent: number;
   propertyManagementCommissionVatPercent?: number;
   propertyManagementCommissionVatMode?: VatMode;
+  f24Percent?: number;
   currency: string;
   channel: BookingChannel;
 };
@@ -46,7 +47,7 @@ export type BookingFinanceBreakdown = {
   netProperty: number;
 };
 
-const F24_RATE = 0.21;
+
 
 export async function buildBookingFinanceBreakdown({
   formulaId,
@@ -56,6 +57,7 @@ export async function buildBookingFinanceBreakdown({
   propertyManagementCommissionPercent,
   propertyManagementCommissionVatPercent = 0,
   propertyManagementCommissionVatMode = "NONE",
+  f24Percent = 21,
   currency,
   channel,
 }: Input): Promise<BookingFinanceBreakdown> {
@@ -123,7 +125,7 @@ export async function buildBookingFinanceBreakdown({
     grossProperty - managementCommissionTotal,
   );
 
-  const taxAmount = f24Base * F24_RATE;
+  const taxAmount = f24Base * (Math.min(100, Math.max(0, f24Percent)) / 100);
   const otherSignedAmount = otherAmount ?? 0;
 
   const netProperty =

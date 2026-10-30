@@ -31,7 +31,7 @@ const HORIZON_STANDARD_NAME =
 const HORIZON_STANDARD_VERSION =
   1;
 
-const F24_PERCENT = 21;
+
 
 export async function createFinanceReport({
   propertyId,
@@ -104,6 +104,7 @@ export async function createFinanceReport({
         id: property.id,
       },
       select: {
+        f24Percent: true,
         cleaningCost: true,
         propertyManagementCommissionPercent:
           true,
@@ -164,6 +165,7 @@ export async function createFinanceReport({
             propertyManagementCommissionVatMode:
               financeSettings.propertyManagementCommissionVatMode,
 
+            f24Percent: Number(financeSettings.f24Percent ?? 21),
             currency:
               booking.currency,
 
@@ -285,7 +287,7 @@ export async function createFinanceReport({
           managementCommissionVatTotal,
           managementCommissionTotal,
           f24Percent:
-            F24_PERCENT,
+            Number(financeSettings.f24Percent ?? 21),
           otaCommissions:
             Object.fromEntries(
               otaCommissionByChannel,

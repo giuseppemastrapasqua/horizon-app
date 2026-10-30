@@ -87,6 +87,7 @@ export default async function FinanceReportDetailPage({
             address: true,
             city: true,
             zone: true,
+            f24Percent: true,
             cleaningCost: true,
             propertyManagementCommissionPercent: true,
             propertyManagementCommissionVatPercent: true,
@@ -243,6 +244,7 @@ export default async function FinanceReportDetailPage({
                   commissions: otaCommissionByChannel,
                 }),
 
+              f24Percent: Number(report.property.f24Percent ?? 21),
               currency: booking.currency,
               channel: booking.channel,
             });

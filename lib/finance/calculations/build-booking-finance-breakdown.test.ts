@@ -103,3 +103,9 @@ describe("buildBookingFinanceBreakdown", () => {
     expect(result.netProperty).toBeCloseTo(327.9448, 4);
   });
 });
+
+it("keeps Bilo F24 at zero without changing management or OTA", async () => {
+  const result = await buildBookingFinanceBreakdown({ ...baseInput, formulaId: null, grossRevenue: 5809.76, cleaningCost: 650, otaCommissionPercent: 18, f24Percent: 0 });
+  expect(result.taxAmount).toBe(0);
+  expect(result.netProperty).toBeCloseTo(3291.20256, 5);
+});

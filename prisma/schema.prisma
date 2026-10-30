@@ -194,6 +194,7 @@ model Property {
   createdAt                              DateTime                            @default(now())
   updatedAt                              DateTime                            @updatedAt
   ownerId                                String
+  f24Percent                             Decimal @default(21) @db.Decimal(5, 2)
   cleaningCost                           Decimal                             @default(0) @db.Decimal(10, 2)
   propertyManagementCommissionPercent    Decimal                             @default(0) @db.Decimal(5, 2)
   propertyManagementCommissionVatPercent Decimal                             @default(0) @db.Decimal(5, 2)
