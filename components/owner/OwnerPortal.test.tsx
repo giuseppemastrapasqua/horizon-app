@@ -113,4 +113,14 @@ describe("OWNER server data projections", () => {
       mocks.propertyDocuments.mock.calls[0][0].where.type.in,
     ).not.toContain("IDENTITY_DOCUMENT");
   });
+  it("computes totals over the full authorized period excluding cancelled and technical rows", async () => {
+    await OwnerBookings({ propertyId: "owned-property", from: "2026-10-01", to: "2026-10-31" });
+    const summary=mocks.bookings.mock.calls[1][0];
+    expect(summary.where.propertyId).toEqual({in:["owned-property"],equals:"owned-property"});
+    expect(summary.where.bookingStatus).toEqual({not:"CANCELLED"});
+    expect(summary.where.guestName).toEqual({not:"CLOSED"});
+    expect(summary).not.toHaveProperty("take");
+    expect(summary.select).not.toHaveProperty("guestEmail");
+  });
+
 });

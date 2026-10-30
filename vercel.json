@@ -4,6 +4,10 @@
     {
       "path": "/api/internal/background-jobs/process",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/internal/finance/monthly",
+      "schedule": "0 7 * * *"
     }
   ]
 }

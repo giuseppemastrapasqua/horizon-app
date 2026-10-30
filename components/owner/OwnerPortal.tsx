@@ -1,3 +1,4 @@
+import { buildBookingFinanceBreakdown } from "@/lib/finance/calculations/build-booking-finance-breakdown";
 import { OwnerQuotaReports } from "./OwnerQuotaReports";
 import { ownerQuotaReports } from "@/lib/owners/revenue-share-access";
 import { OwnerReportBookingDetails } from "./OwnerReportBookingDetails";
@@ -231,6 +232,23 @@ export async function OwnerBookings({ propertyId, from, to }: { propertyId?: str
     },
   });
   const bookings = results.slice(0, 200);
+  const financialBookings = periodError ? [] : await prisma.booking.findMany({
+    where: { propertyId: scopedPropertyFilter(ids, propertyId), ...period, bookingStatus: { not: "CANCELLED" }, guestName: { not: "CLOSED" } },
+    select: { grossAmount: true, currency: true, channel: true, property: { select: { cleaningCost: true, f24Percent: true, propertyManagementCommissionPercent: true, propertyManagementCommissionVatPercent: true, propertyManagementCommissionVatMode: true, channelCommissions: { select: { channel: true, commissionPercent: true } } } } },
+  });
+  const totals = new Map<string, { gross: number; net: number; incomplete: boolean }>();
+  for (const booking of financialBookings) {
+    const p = booking.property, ota=p.channelCommissions.find(c=>c.channel===booking.channel);
+    const total=totals.get(booking.currency) ?? {gross:0,net:0,incomplete:false};
+    total.gross+=Number(booking.grossAmount);
+    if ((!["DIRECT","OTHER"].includes(booking.channel) && !ota) || Number(p.propertyManagementCommissionPercent)<=0) total.incomplete=true;
+    else {
+      const b=await buildBookingFinanceBreakdown({grossRevenue:Number(booking.grossAmount),cleaningCost:Number(p.cleaningCost),otaCommissionPercent:Number(ota?.commissionPercent??0),propertyManagementCommissionPercent:Number(p.propertyManagementCommissionPercent),propertyManagementCommissionVatPercent:Number(p.propertyManagementCommissionVatPercent),propertyManagementCommissionVatMode:p.propertyManagementCommissionVatMode,f24Percent:Number(p.f24Percent),currency:booking.currency,channel:booking.channel});
+      total.net+=b.netProperty;
+    }
+    totals.set(booking.currency,total);
+  }
+
   return (
     <Frame title="Prenotazioni">
       <form method="get" className="flex flex-wrap items-end gap-4">
@@ -319,6 +337,7 @@ export async function OwnerBookings({ propertyId, from, to }: { propertyId?: str
       ) : (
         <Empty>Nessuna prenotazione disponibile.</Empty>
       )}
+      {!periodError && <section className={card}><h2 className="text-lg font-semibold">Totali del periodo selezionato</h2><p className="mt-2 text-sm text-white/60">Intero periodo, anche oltre le 200 righe visualizzate. Cancellate e blocchi tecnici esclusi.</p>{Array.from(totals,([currency,total])=><dl key={currency} className="mt-4 grid gap-4 sm:grid-cols-2"><div><dt>Totale lordo ricavato</dt><dd className="text-xl text-[#D8B367]">{money(total.gross,currency)}</dd></div><div><dt>Netto proprietario da bonificare · stima</dt><dd className="text-xl text-[#D8B367]">{total.incomplete ? "Configurazione da completare" : money(total.net,currency)}</dd></div></dl>)}<p className="mt-3 text-xs text-white/60">Calcolo con i parametri attuali. Il filtro segue i soggiorni; la competenza dei rendiconti può differire. Bonifici già eseguiti e rettifiche non sottratti: il saldo effettivo richiede il rendiconto chiuso e i pagamenti registrati.</p></section>}
     </Frame>
   );
 }

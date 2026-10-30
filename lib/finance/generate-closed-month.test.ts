@@ -1,0 +1,9 @@
+import { beforeEach, expect, it, vi } from "vitest";
+const mocks=vi.hoisted(()=>({properties:vi.fn(),report:vi.fn(),create:vi.fn()}));
+vi.mock("@/lib/prisma",()=>({prisma:{property:{findMany:mocks.properties},financeReport:{findUnique:mocks.report}}}));
+vi.mock("./create-finance-report",()=>({createFinanceReport:mocks.create}));
+import { previousRomeMonth,generateClosedMonth } from "./generate-closed-month";
+beforeEach(()=>{vi.resetAllMocks();mocks.properties.mockResolvedValue([{id:"p",propertyManagementCommissionPercent:20}]);mocks.report.mockResolvedValue(null);mocks.create.mockResolvedValue({});});
+it("closes October at the Rome November boundary and handles January",()=>{expect(previousRomeMonth(new Date("2026-10-31T23:00:00Z")).toISOString()).toBe("2026-10-01T00:00:00.000Z");expect(previousRomeMonth(new Date("2026-01-01T07:00:00Z")).toISOString()).toBe("2025-12-01T00:00:00.000Z");});
+it("regenerates a provisional report but skips an already closed one",async()=>{mocks.report.mockResolvedValue({id:"r",createdAt:new Date("2026-10-10Z"),updatedAt:new Date("2026-10-30Z")});await generateClosedMonth(new Date("2026-11-01Z"));expect(mocks.create).toHaveBeenCalledWith({propertyId:"p",referenceMonth:new Date("2026-10-01Z"),existingReportId:"r"});mocks.create.mockClear();mocks.report.mockResolvedValue({id:"r",updatedAt:new Date("2026-11-01T07:00Z")});await generateClosedMonth(new Date("2026-11-02Z"));expect(mocks.create).not.toHaveBeenCalled();});
+it("reports incomplete property configuration and retries missing reports",async()=>{mocks.properties.mockResolvedValue([{id:"bad",propertyManagementCommissionPercent:0},{id:"p",propertyManagementCommissionPercent:20}]);const r=await generateClosedMonth(new Date("2026-11-01Z"));expect(r.failed).toEqual(["bad"]);expect(r.created).toBe(1);});
