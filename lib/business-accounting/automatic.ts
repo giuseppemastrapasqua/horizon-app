@@ -2,7 +2,7 @@ import { z } from "zod";
 import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
 import type { Movement } from "./config";
 
-export type OwnerSource = { id: string; propertyId: string; propertyName: string; month: string; gross: number; ownerNet: number; ota: number | null; f24: number | null; cleaning: number | null };
+export type OwnerSource = { id: string; propertyId: string; propertyName: string; month: string; gross: number; ownerNet: number; management?: number | null; ota: number | null; f24: number | null; cleaning: number | null };
 export type InvoiceSource = { id: string; propertyName: string; month: string; status: string; base: number; vat: number; total: number };
 export type CleaningSource = { id: string; propertyName: string; date: string; amount: number };
 export type AutomaticAccounting = { reports: OwnerSource[]; invoices: InvoiceSource[]; cleaning: CleaningSource[]; warnings: string[]; loadedAt: string };
@@ -18,7 +18,7 @@ export function readInvoice(content: unknown) {
 export function readOwnerAmounts(snapshot: unknown, rules: { category: string; operation: string; calculatedAmount: number }[]) {
   const saved = readReportBookingSnapshot(snapshot);
   if (saved) {
-    const sum = (field: "otaCommission" | "taxAmount" | "cleaningCost") => saved.some((b) => b.breakdown[field] === null) ? null : saved.reduce((n, b) => n + cents(b.breakdown[field] ?? 0), 0);
+    const sum = (field: "otaCommission" | "taxAmount" | "cleaningCost") => saved.some((b) => b.breakdown[field] === null) ? null : cents(saved.reduce((n, b) => n + (b.breakdown[field] ?? 0), 0));
     return { ota: sum("otaCommission"), f24: sum("taxAmount"), cleaning: sum("cleaningCost") };
   }
   // Older reports: only use saved category totals, never today's percentages.

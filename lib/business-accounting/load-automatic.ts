@@ -1,3 +1,4 @@
+import { readReportBookingSnapshot } from "@/lib/finance/report-booking-snapshot";
 import { requireRoles } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { readInvoice, readOwnerAmounts, type AutomaticAccounting } from "./automatic";
@@ -33,10 +34,11 @@ export async function loadAutomaticAccounting(year: number): Promise<AutomaticAc
     const month = report.referenceMonth.toISOString().slice(0, 7);
     if (report.currency !== "EUR") { result.warnings.push(`Rendiconto ${report.id} in ${report.currency}: escluso dai totali EUR.`); continue; }
     let amounts = { ota: null as number | null, f24: null as number | null, cleaning: null as number | null };
-    try { amounts = readOwnerAmounts(report.formulaSnapshot, report.rules.map((r) => ({ ...r, calculatedAmount: Number(r.calculatedAmount) }))); }
+    let management: number | null = null;
+    try { const detail = readReportBookingSnapshot(report.formulaSnapshot); management = detail ? Math.round(detail.reduce((n, b) => n + b.breakdown.managementCommissionTaxableBase, 0) * 100) : null; amounts = readOwnerAmounts(report.formulaSnapshot, report.rules.map((r) => ({ ...r, calculatedAmount: Number(r.calculatedAmount) }))); }
     catch { result.warnings.push(`Dettaglio salvato non leggibile: ${report.property.name} · ${month}.`); }
     if (Object.values(amounts).some((v) => v === null)) result.warnings.push(`OTA, F24 o pulizie incompleti: ${report.property.name} · ${month}. Nessuna percentuale attuale applicata ai rendiconti storici.`);
-    result.reports.push({ id: report.id, propertyId: report.propertyId, propertyName: report.property.name, month, gross: Math.round(Number(report.grossRevenue) * 100), ownerNet: Math.round((Number(report.finalAmount) + report.adjustments.reduce((n, a) => n + Number(a.amount), 0)) * 100), ...amounts });
+    result.reports.push({ management, id: report.id, propertyId: report.propertyId, propertyName: report.property.name, month, gross: Math.round(Number(report.grossRevenue) * 100), ownerNet: Math.round((Number(report.finalAmount) + report.adjustments.reduce((n, a) => n + Number(a.amount), 0)) * 100), ...amounts });
     if (!seen.has(`${report.propertyId}:${month}`)) result.warnings.push(`Manca la fattura commissioni: ${report.property.name} · ${month}. Il compenso non viene inventato dal rendiconto.`);
   }
   result.cleaning = bookings.map((b) => ({ id: b.id, propertyName: b.property.name, date: b.checkOut.toISOString().slice(0, 10), amount: Math.round(Number(b.property.cleaningCost) * 100) }));
