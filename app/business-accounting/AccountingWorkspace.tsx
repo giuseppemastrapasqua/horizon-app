@@ -7,7 +7,8 @@ import type { Accounting, Movement } from "@/lib/business-accounting/config";
 import { accountingSchema } from "@/lib/business-accounting/config";
 import { saveAccounting } from "./actions";
 import { AccountingSettings, buttonClass } from "./AccountingSettings";
-import { AdminMonthlyForecast } from "@/components/dashboard/AdminMonthlyForecast";
+import { MonthlyActivityTable } from "./MonthlyActivityTable";
+import { InpsInstallments } from "./InpsInstallments";
 import type { ForecastMonth } from "@/lib/finance/admin-monthly-forecast";
 import { FiscalOverview } from "./FiscalOverview";
 import { AutomaticSummary } from "./AutomaticSummary";
@@ -50,8 +51,9 @@ export function AccountingWorkspace({ initial, initialVersion, year, automatic, 
     <div className="flex flex-wrap items-end gap-3"><form className="flex items-end gap-3" method="get" onSubmit={(e) => { if (dirty) { e.preventDefault(); setMessage("Salva le modifiche prima di cambiare anno."); } }}><label className="text-sm">Anno<input className="ml-3 w-24 rounded-lg border border-white/15 bg-[#07111A] p-2" type="number" min="2020" max="2100" name="year" defaultValue={year} required /></label><button className={buttonClass} type="submit">Apri anno</button></form><button type="button" className={buttonClass} disabled={pending} onClick={() => startTransition(() => { router.refresh(); })}>Aggiorna da Horizon</button></div>
     <p className="text-sm text-slate-400">Fatture e rendiconti collegati automaticamente · lettura {new Date(automatic.loadedAt).toLocaleString("it-IT", { timeZone: "Europe/Rome" })}. La previsione legge le prenotazioni già presenti, senza attendere il rendiconto. Fatture e rendiconti chiusi sono separati nel dettaglio documentale.</p>
     <fieldset disabled={pending} className="min-w-0 space-y-5">
-      <FiscalOverview source={automatic} forecast={forecast} data={data} year={year} />
-      <AdminMonthlyForecast rows={forecast} year={year} />
+      <MonthlyActivityTable rows={forecast} year={year} />
+      <InpsInstallments rows={forecast} data={data} year={year} />
+      <details className="rounded-2xl border border-white/10 p-5"><summary className="cursor-pointer text-[#D8B367]">Imposta sostitutiva e netto personale · dettaglio della stima</summary><div className="mt-4"><FiscalOverview source={automatic} forecast={forecast} data={data} year={year} /></div></details>
       <AccountingSettings data={data} update={update} />
       <details className="rounded-2xl border border-white/10 p-5"><summary className="cursor-pointer text-[#D8B367]">Contabilità documentale · fatture e rendiconti salvati</summary><div className="mt-5 space-y-5"><AutomaticSummary source={automatic} calculated={calculated} year={year} /></div></details>
       <details className="space-y-5 rounded-2xl border border-white/10 p-5"><summary className="cursor-pointer text-[#D8B367]">Solo eventuali spese extra e versamenti personali</summary><p className="mt-4 text-sm text-slate-400">Non ricopiare costi collaboratori, OTA o F24 proprietari: sono già collegati. Qui puoi aggiungere soltanto spese esterne, tua INPS e tua imposta. Eventuali ricavi inseriti nel vecchio registro manuale restano consultabili ma sono esclusi dal calcolo automatico per evitare duplicazioni.</p>
