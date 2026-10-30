@@ -51,6 +51,7 @@ export default async function DailyRevenuePage({ searchParams }: {
     { name: "ceiling", label: "Massimo €/notte per 2 ospiti", value: ceiling, min: "0.01" },
   ];
   return <><Navigation /><AppShell title="Prezzi consigliati giorno per giorno" subtitle="Simulazione interna per il gestore · nessuna modifica alle tariffe salvate o ai portali.">
+    <Link className="mb-5 inline-block text-[#D8B367] underline" href={`/revenue-ai/control?propertyId=${encodeURIComponent(property.id)}`}>Controllo revenue: priorità e qualità dei dati</Link>
     <p className="mb-5 rounded-xl border border-amber-300/25 bg-amber-300/5 p-4 text-sm leading-6">Stima interna a bassa affidabilità, non ancora calibrata sui risultati. Parti da un riferimento per 2 persone verificato da te. I valori inseriti valgono solo per questa simulazione. Festività, eventi, recensioni, stagionalità e competitor non verificati non modificano il prezzo.</p>
     <form method="get" className="mb-5 flex flex-wrap items-end gap-3">
       <label className="min-w-0 max-w-full text-sm">Alloggio<select name="propertyId" defaultValue={property.id} className={inputClass}>{data.properties.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>

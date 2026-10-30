@@ -52,6 +52,7 @@ export default async function RevenueAiPage({
 }: RevenueAiPageProps) {
   const user = await requireUser();
   if (user.role === "OWNER") return <OwnerDashboard />;
+  if (["SUPER_ADMIN", "MANAGER"].includes(user.role)) redirect("/revenue-ai/control");
 
   const params =
     await searchParams;
