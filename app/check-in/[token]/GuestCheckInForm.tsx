@@ -39,6 +39,8 @@ type Props = {
   checkIn: string;
   checkOut: string;
   guestCount: number;
+  confirmGuestCount?: boolean;
+  embedded?: boolean;
   initialGuests: InitialGuest[];
   countries: ReferenceOption[];
   documentTypes: ReferenceOption[];
@@ -61,7 +63,7 @@ function readLanguage() {
   return resolveGuestLanguage(stored, window.navigator.language);
 }
 
-export function GuestCheckInForm({ token, propertyName, guestName, checkIn, checkOut, guestCount, initialGuests, countries, documentTypes, ross1000Enabled, initialRoss1000TourismType, initialRoss1000TransportType, initialRoss1000RoomsOccupied, ross1000RoomsAvailable }: Props) {
+export function GuestCheckInForm({ token, propertyName, guestName, checkIn, checkOut, guestCount, confirmGuestCount = false, embedded = false, initialGuests, countries, documentTypes, ross1000Enabled, initialRoss1000TourismType, initialRoss1000TransportType, initialRoss1000RoomsOccupied, ross1000RoomsAvailable }: Props) {
   const [selectedLanguage, setSelectedLanguage] = useState<GuestCheckInLanguage | null>(null);
   const detectedLanguage = useSyncExternalStore(subscribeLanguage, readLanguage, () => "it" as GuestCheckInLanguage);
   const language = selectedLanguage ?? detectedLanguage;
@@ -79,13 +81,53 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
     initialLeader === "GROUP_HEAD" ? "GROUP" : "FAMILY",
   );
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [submission, setSubmission] = useState<Awaited<ReturnType<typeof saveGuestCheckInAction>> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [declaredCount, setDeclaredCount] = useState("");
+  const [guestStep, setGuestStep] = useState(0);
+  const countMatches = !confirmGuestCount || Number(declaredCount) === guestCount;
+  const countCopy = {
+    it: ["Quante persone sarete, bambini compresi?", "Il numero è diverso da quello della prenotazione. Contatta la struttura prima di proseguire.", "Dati ricevuti dalla struttura. Sarà il gestore a occuparsi della registrazione su Alloggiati Web."],
+    en: ["How many people are staying, including children?", "This does not match the booking. Contact your host before continuing.", "Your host has received your details and will handle the Alloggiati Web registration."],
+    es: ["¿Cuántas personas se alojan, incluidos los niños?", "El número no coincide con la reserva. Contacta con el alojamiento antes de continuar.", "El alojamiento ha recibido tus datos y se encargará del registro."],
+    fr: ["Combien de personnes séjournent, enfants compris ?", "Ce nombre ne correspond pas à la réservation. Contactez l’hébergement avant de continuer.", "L’hébergement a reçu vos données et se chargera de l’enregistrement."],
+    pt: ["Quantas pessoas vão ficar, incluindo crianças?", "O número não coincide com a reserva. Contacte o alojamento antes de continuar.", "O alojamento recebeu os seus dados e tratará do registo."],
+  }[language];
+
+  const stepCopy = {
+    it: ["Avanti", "Indietro", "Invia tutte le schede"],
+    en: ["Next", "Back", "Submit all guest details"],
+    es: ["Siguiente", "Atrás", "Enviar todos los datos"],
+    fr: ["Suivant", "Retour", "Envoyer toutes les fiches"],
+    pt: ["Seguinte", "Voltar", "Enviar todos os dados"],
+  }[language];
+
+  function validateWizardFields(form: HTMLFormElement) {
+    for (const field of form.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select")) {
+      if (!field.willValidate || field.validity.valid) continue;
+      const fieldStep = field.closest<HTMLElement>("[data-guest-step]");
+      if (guestStep < guestCount - 1 && fieldStep?.hidden) continue;
+      const step = field.closest<HTMLElement>("[data-guest-step]");
+      if (step?.hidden) {
+        setGuestStep(Number(step.dataset.guestStep));
+        requestAnimationFrame(() => field.reportValidity());
+      } else {
+        field.reportValidity();
+      }
+      return false;
+    }
+    return true;
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!countMatches || (confirmGuestCount && !validateWizardFields(event.currentTarget))) return;
+    if (confirmGuestCount && guestStep < guestCount - 1) {
+      setGuestStep(guestStep + 1);
+      return;
+    }
     setError(null);
-    setSuccess(false);
+    setSubmission(null);
     setIsSubmitting(true);
 
     try {
@@ -102,8 +144,11 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         formData.set(`guests.${index}.role`, role);
       }
 
-      await saveGuestCheckInAction(formData);
-      setSuccess(true);
+      const result = await saveGuestCheckInAction(formData);
+      setSubmission(result);
+      if (embedded && result.guideHref && window.parent !== window) {
+        window.parent.postMessage({ type: "horizon-guest-check-in-saved", guideHref: result.guideHref }, window.location.origin);
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t.genericError);
     } finally {
@@ -111,23 +156,58 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
     }
   }
 
-  if (success) {
+  const italian = language === "it";
+  if (submission) {
+    const tax = submission.touristTax;
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
-        <h2 className="font-bold text-emerald-950">{t.saved}</h2>
-        <p className="mt-2 text-sm leading-6 text-emerald-800">
-          {t.savedText}
-        </p>
+      <div className="space-y-4" aria-live="polite">
+        <section className="rounded-2xl border border-[#D8B367]/25 bg-[#07111A] p-6">
+          <h2 className="font-serif text-2xl text-[#FFF8EA]">{t.saved}</h2>
+          <p className="mt-2 text-sm leading-6 text-[#B9C6D1]">{confirmGuestCount ? countCopy[2] : t.savedText}</p>
+        </section>
+        <section className="rounded-2xl border border-[#D8B367]/25 bg-[#07111A] p-6" aria-labelledby="guest-tax-title">
+          <h2 id="guest-tax-title" className="font-serif text-2xl text-[#FFF8EA]">
+            {italian ? "Tassa di soggiorno" : "Tourist tax"}
+          </h2>
+          {tax.status === "READY" ? (
+            <>
+              <p className="mt-2 text-sm text-[#B9C6D1]">
+                {italian ? "Importo da pagare: " : "Amount due: "}
+                <strong className="text-[#FFF8EA]">{new Intl.NumberFormat(italian ? "it-IT" : "en-GB", { style: "currency", currency: "EUR" }).format(tax.amount)}</strong>
+              </p>
+              <a className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-[#D8B367] px-5 font-semibold text-[#050B11] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D8B367]" href={tax.url} target="_blank" rel="noopener noreferrer">
+                {italian ? "Paga su Stripe" : "Pay securely on Stripe"}
+              </a>
+            </>
+          ) : (
+            <p className="mt-2 text-sm leading-6 text-[#B9C6D1]">
+              {tax.status === "PAID"
+                ? (italian ? "Horizon ha già confermato il pagamento." : "Horizon has already confirmed the payment.")
+                : tax.status === "NOT_DUE"
+                  ? (italian ? "Non risulta alcun importo da pagare." : "No payment is due.")
+                  : (italian ? "Il pagamento online non è disponibile. Contatta la struttura per verificare l’eventuale saldo." : "Online payment is unavailable. Contact your host to check whether a balance is due.")}
+            </p>
+          )}
+        </section>
+        {submission.guideHref && (
+          <a href={submission.guideHref} className="inline-flex min-h-11 items-center rounded-xl border border-[#D8B367]/40 px-4 text-sm font-semibold text-[#D8B367]">
+            {italian ? "Apri e salva la guida ospiti" : "Open and bookmark the guest guide"}
+          </a>
+        )}
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} noValidate={confirmGuestCount} className="space-y-6">
       <div>
         <p className="text-sm font-semibold text-[#D8B367]">{propertyName}</p>
         <h1 className="mt-2 font-serif text-3xl font-normal text-[#FFF8EA]">{t.title}</h1>
         <p className="mt-3 text-sm leading-6 text-[#8EA0AE]">{t.intro}</p>
+        <ol className="mt-5 grid gap-2 text-sm text-[#B9C6D1] sm:grid-cols-2">
+          <li className="rounded-xl border border-[#D8B367]/25 bg-[#07111A] px-4 py-3"><strong className="text-[#D8B367]">01</strong> · {italian ? "Documenti degli ospiti" : "Guest document details"}</li>
+          <li className="rounded-xl border border-[#D8B367]/25 bg-[#07111A] px-4 py-3"><strong className="text-[#D8B367]">02</strong> · {italian ? "Tassa di soggiorno" : "Tourist tax"}</li>
+        </ol>
       </div>
 
       <div className="grid gap-4 rounded-2xl border border-white/10 bg-[#07111A] p-5 text-sm">
@@ -160,6 +240,20 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
           </select>
         </label>
       </div>
+      {confirmGuestCount && (
+        <div className="rounded-2xl border border-[#D8B367]/25 bg-[#07111A] p-5">
+          <Field label={countCopy[0]}>
+            <select required value={declaredCount}
+              onChange={(event) => { setDeclaredCount(event.target.value); setGuestStep(0); }} className={inputClass}>
+              <option value="">{t.select}</option>
+              {[1, 2, 3, 4, 5, 6].map((count) => <option key={count} value={count}>{count}</option>)}
+            </select>
+          </Field>
+          {declaredCount && !countMatches && <p role="status" className="mt-2 text-sm text-[#FFD199]">{countCopy[1]}</p>}
+        </div>
+      )}
+      <div hidden={!countMatches} className="space-y-6">
+      <fieldset disabled={!countMatches || isSubmitting} className="space-y-6">
       {guestCount > 1 ? (
         <fieldset className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A] p-5 shadow-sm">
           <legend className="px-2 text-sm font-semibold text-[#C8D1D8]">{t.stayType}</legend>
@@ -212,7 +306,7 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         const isLeader = index === 0;
 
         return (
-          <fieldset key={index} className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A] p-5 shadow-sm">
+          <fieldset key={index} data-guest-step={index} hidden={confirmGuestCount && guestStep !== index} className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A] p-5 shadow-sm">
             <legend className="px-2 font-semibold text-[#FFF8EA]">{t.guest} {index + 1}{isLeader ? ` - ${t.leader}` : ""}</legend>
             <input type="hidden" name={`guests.${index}.role`} />
 
@@ -247,9 +341,15 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
 
       {error ? <p className="rounded-xl bg-red-50 p-4 text-sm font-medium text-red-700">{error}</p> : null}
 
+      {confirmGuestCount && guestStep > 0 && (
+        <button type="button" className="rounded-xl border border-[#D8B367]/35 px-5 py-3 text-[#FFF8EA]"
+          onClick={() => setGuestStep(guestStep - 1)}>{stepCopy[1]}</button>
+      )}
       <button disabled={isSubmitting} type="submit" className="w-full rounded-xl bg-[#D8B367] px-5 py-3 font-bold text-[#07111A] disabled:opacity-50">
-        {isSubmitting ? t.saving : t.save}
+        {isSubmitting ? t.saving : confirmGuestCount ? (guestStep < guestCount - 1 ? stepCopy[0] : stepCopy[2]) : t.save}
       </button>
+      </fieldset>
+      </div>
     </form>
   );
 }
