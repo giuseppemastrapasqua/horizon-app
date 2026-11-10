@@ -84,18 +84,48 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
   const [submission, setSubmission] = useState<Awaited<ReturnType<typeof saveGuestCheckInAction>> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [declaredCount, setDeclaredCount] = useState("");
+  const [guestStep, setGuestStep] = useState(0);
   const countMatches = !confirmGuestCount || Number(declaredCount) === guestCount;
   const countCopy = {
-    it: ["Quante persone soggiornano, bambini compresi?", "Il numero è diverso da quello della prenotazione. Contatta la struttura prima di proseguire.", "Dati ricevuti dalla struttura. Sarà il gestore a occuparsi della registrazione su Alloggiati Web."],
+    it: ["Quante persone sarete, bambini compresi?", "Il numero è diverso da quello della prenotazione. Contatta la struttura prima di proseguire.", "Dati ricevuti dalla struttura. Sarà il gestore a occuparsi della registrazione su Alloggiati Web."],
     en: ["How many people are staying, including children?", "This does not match the booking. Contact your host before continuing.", "Your host has received your details and will handle the Alloggiati Web registration."],
     es: ["¿Cuántas personas se alojan, incluidos los niños?", "El número no coincide con la reserva. Contacta con el alojamiento antes de continuar.", "El alojamiento ha recibido tus datos y se encargará del registro."],
     fr: ["Combien de personnes séjournent, enfants compris ?", "Ce nombre ne correspond pas à la réservation. Contactez l’hébergement avant de continuer.", "L’hébergement a reçu vos données et se chargera de l’enregistrement."],
     pt: ["Quantas pessoas vão ficar, incluindo crianças?", "O número não coincide com a reserva. Contacte o alojamento antes de continuar.", "O alojamento recebeu os seus dados e tratará do registo."],
   }[language];
 
+  const stepCopy = {
+    it: ["Avanti", "Indietro", "Invia tutte le schede"],
+    en: ["Next", "Back", "Submit all guest details"],
+    es: ["Siguiente", "Atrás", "Enviar todos los datos"],
+    fr: ["Suivant", "Retour", "Envoyer toutes les fiches"],
+    pt: ["Seguinte", "Voltar", "Enviar todos os dados"],
+  }[language];
+
+  function validateWizardFields(form: HTMLFormElement) {
+    for (const field of form.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select")) {
+      if (!field.willValidate || field.validity.valid) continue;
+      const fieldStep = field.closest<HTMLElement>("[data-guest-step]");
+      if (guestStep < guestCount - 1 && fieldStep?.hidden) continue;
+      const step = field.closest<HTMLElement>("[data-guest-step]");
+      if (step?.hidden) {
+        setGuestStep(Number(step.dataset.guestStep));
+        requestAnimationFrame(() => field.reportValidity());
+      } else {
+        field.reportValidity();
+      }
+      return false;
+    }
+    return true;
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!countMatches) return;
+    if (!countMatches || (confirmGuestCount && !validateWizardFields(event.currentTarget))) return;
+    if (confirmGuestCount && guestStep < guestCount - 1) {
+      setGuestStep(guestStep + 1);
+      return;
+    }
     setError(null);
     setSubmission(null);
     setIsSubmitting(true);
@@ -169,7 +199,7 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} noValidate={confirmGuestCount} className="space-y-6">
       <div>
         <p className="text-sm font-semibold text-[#D8B367]">{propertyName}</p>
         <h1 className="mt-2 font-serif text-3xl font-normal text-[#FFF8EA]">{t.title}</h1>
@@ -213,8 +243,11 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
       {confirmGuestCount && (
         <div className="rounded-2xl border border-[#D8B367]/25 bg-[#07111A] p-5">
           <Field label={countCopy[0]}>
-            <input type="number" inputMode="numeric" required min={1} step={1} value={declaredCount}
-              onChange={(event) => setDeclaredCount(event.target.value)} className={inputClass} />
+            <select required value={declaredCount}
+              onChange={(event) => { setDeclaredCount(event.target.value); setGuestStep(0); }} className={inputClass}>
+              <option value="">{t.select}</option>
+              {[1, 2, 3, 4, 5, 6].map((count) => <option key={count} value={count}>{count}</option>)}
+            </select>
           </Field>
           {declaredCount && !countMatches && <p role="status" className="mt-2 text-sm text-[#FFD199]">{countCopy[1]}</p>}
         </div>
@@ -273,7 +306,7 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         const isLeader = index === 0;
 
         return (
-          <fieldset key={index} className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A] p-5 shadow-sm">
+          <fieldset key={index} data-guest-step={index} hidden={confirmGuestCount && guestStep !== index} className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A] p-5 shadow-sm">
             <legend className="px-2 font-semibold text-[#FFF8EA]">{t.guest} {index + 1}{isLeader ? ` - ${t.leader}` : ""}</legend>
             <input type="hidden" name={`guests.${index}.role`} />
 
@@ -308,8 +341,12 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
 
       {error ? <p className="rounded-xl bg-red-50 p-4 text-sm font-medium text-red-700">{error}</p> : null}
 
+      {confirmGuestCount && guestStep > 0 && (
+        <button type="button" className="rounded-xl border border-[#D8B367]/35 px-5 py-3 text-[#FFF8EA]"
+          onClick={() => setGuestStep(guestStep - 1)}>{stepCopy[1]}</button>
+      )}
       <button disabled={isSubmitting} type="submit" className="w-full rounded-xl bg-[#D8B367] px-5 py-3 font-bold text-[#07111A] disabled:opacity-50">
-        {isSubmitting ? t.saving : t.save}
+        {isSubmitting ? t.saving : confirmGuestCount ? (guestStep < guestCount - 1 ? stepCopy[0] : stepCopy[2]) : t.save}
       </button>
       </fieldset>
       </div>

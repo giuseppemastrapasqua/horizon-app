@@ -20,6 +20,7 @@ import {
   type Ross1000TransportType,
 } from "@/lib/integrations/ross1000/movement-types";
 import { prisma } from "@/lib/prisma";
+import { notifyGuestRegistration } from "@/lib/notifications/email/guest-registration-notice";
 import { createGuestGuideReceipt, DUOMO_BOUTIQUE_PROPERTY_ID } from "@/lib/bookings/guest-guide";
 import { resolveSubmittedGuestTouristTax } from "@/lib/payments/tourist-tax/guest-checkout-status";
 import {
@@ -315,6 +316,9 @@ export async function saveGuestCheckInAction(
             checkOut: true,
             property: {
               select: {
+                name: true,
+                address: true,
+                city: true,
                 ross1000Property: {
                   select: {
                     id: true,
@@ -832,6 +836,20 @@ export async function saveGuestCheckInAction(
       }
     },
   );
+
+  if (link.booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID) {
+    await notifyGuestRegistration({
+      bookingId: link.booking.id,
+      propertyName: link.booking.property.name,
+      address: [link.booking.property.address, link.booking.property.city].filter(Boolean).join(", "),
+      checkIn: link.booking.checkIn,
+      checkOut: link.booking.checkOut,
+      guestCount: guests.length,
+    }).catch(() => {
+      // The registration has already been saved; an email error must not turn it into a failed submission.
+      console.error("Horizon guest registration notification failed.");
+    });
+  }
 
   // The document link stays single-use. Only return checkout details in the
   // authenticated submission response, for the very same booking.
