@@ -40,6 +40,7 @@ type Props = {
   checkOut: string;
   guestCount: number;
   confirmGuestCount?: boolean;
+  embedded?: boolean;
   initialGuests: InitialGuest[];
   countries: ReferenceOption[];
   documentTypes: ReferenceOption[];
@@ -62,7 +63,7 @@ function readLanguage() {
   return resolveGuestLanguage(stored, window.navigator.language);
 }
 
-export function GuestCheckInForm({ token, propertyName, guestName, checkIn, checkOut, guestCount, confirmGuestCount = false, initialGuests, countries, documentTypes, ross1000Enabled, initialRoss1000TourismType, initialRoss1000TransportType, initialRoss1000RoomsOccupied, ross1000RoomsAvailable }: Props) {
+export function GuestCheckInForm({ token, propertyName, guestName, checkIn, checkOut, guestCount, confirmGuestCount = false, embedded = false, initialGuests, countries, documentTypes, ross1000Enabled, initialRoss1000TourismType, initialRoss1000TransportType, initialRoss1000RoomsOccupied, ross1000RoomsAvailable }: Props) {
   const [selectedLanguage, setSelectedLanguage] = useState<GuestCheckInLanguage | null>(null);
   const detectedLanguage = useSyncExternalStore(subscribeLanguage, readLanguage, () => "it" as GuestCheckInLanguage);
   const language = selectedLanguage ?? detectedLanguage;
@@ -115,6 +116,9 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
 
       const result = await saveGuestCheckInAction(formData);
       setSubmission(result);
+      if (embedded && result.guideHref && window.parent !== window) {
+        window.parent.postMessage({ type: "horizon-guest-check-in-saved", guideHref: result.guideHref }, window.location.origin);
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t.genericError);
     } finally {

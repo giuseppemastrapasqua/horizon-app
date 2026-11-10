@@ -61,6 +61,22 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
+      {
+        source: "/check-in/:token",
+        has: [{ type: "query", key: "embedded", value: "1" }],
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicyReportOnly.replace("frame-ancestors 'none'", "frame-ancestors 'self'") },
+        ],
+      },
+      {
+        source: "/check-in/:token/guide",
+        headers: [
+          { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicyReportOnly.replace("frame-src 'none'", "frame-src 'self'") },
+        ],
+      },
     ];
   },
 };

@@ -256,6 +256,7 @@ export default async function BookingPage({
                 guestRegistration={booking.guestRegistration}
                 initialLink={booking.guestCheckInLink}
                 canSubmitToAlloggiati={false}
+                shareGuestGuide={booking.property.id === DUOMO_BOUTIQUE_PROPERTY_ID}
               />
           </div>
           <div className="mt-6">
@@ -418,6 +419,7 @@ export default async function BookingPage({
               guestRegistration={booking.guestRegistration}
               initialLink={booking.guestCheckInLink}
               canSubmitToAlloggiati={booking.property.id !== DUOMO_BOUTIQUE_PROPERTY_ID}
+              shareGuestGuide={booking.property.id === DUOMO_BOUTIQUE_PROPERTY_ID}
             />
           </div>
 

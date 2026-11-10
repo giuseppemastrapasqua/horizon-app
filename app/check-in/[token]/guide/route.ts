@@ -40,7 +40,39 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
   if (!canSubmit && !verifyGuestGuideReceipt(new URL(request.url).searchParams.get("receipt"), tokenHash, link)) {
     return new Response("Guida non disponibile / Guide unavailable", { status: 404, headers });
   }
-  let html = guideHtml;
+  let html = guideHtml.replace(
+    '<a href="#soggiorno" data-nav="soggiorno">',
+    '<a href="#schedine" class="button">Schedine ospiti / Guest registration</a><a href="#soggiorno" data-nav="soggiorno">',
+  );
+  if (canSubmit) {
+    const formPath = `/check-in/${encodeURIComponent(token)}?embedded=1`;
+    html = html.replace(
+      /<article class="arrival-lock"><h2>Check-in online<\/h2>[\s\S]*?<\/article>/,
+      () => `<article id="schedine" class="arrival-lock"><h2>Schedine ospiti / Guest registration</h2><p>Indica quante persone soggiornano e compila una scheda per ciascuna. / Enter how many people are staying, then complete one form per person.</p><iframe id="guest-registration-form" title="Schedine ospiti / Guest registration" src="${formPath}" referrerpolicy="no-referrer" loading="lazy" style="display:block;width:100%;height:75vh;min-height:420px;border:0;border-radius:12px;background:#050b11"></iframe></article>`,
+    );
+    html = html.replace("</script>", `
+const guestFrame = document.getElementById("guest-registration-form");
+if (guestFrame) {
+  guestFrame.addEventListener("load", () => {
+    try {
+      const frameBody = guestFrame.contentDocument.body;
+      const resize = () => { guestFrame.style.height = Math.max(420, frameBody.scrollHeight) + "px"; };
+      new ResizeObserver(resize).observe(frameBody);
+      resize();
+    } catch {}
+  });
+  window.addEventListener("message", (event) => {
+    if (event.origin !== location.origin || event.source !== guestFrame.contentWindow ||
+        event.data?.type !== "horizon-guest-check-in-saved" || typeof event.data.guideHref !== "string") return;
+    const target = new URL(event.data.guideHref, location.origin);
+    if (target.origin !== location.origin || target.pathname !== location.pathname ||
+        !/^[A-Za-z0-9_-]{43}$/.test(target.searchParams.get("receipt") || "")) return;
+    target.hash = "schedine";
+    location.replace(target.href);
+  });
+}
+</script>`);
+  }
   if (!canSubmit) {
     const tax = await resolveSubmittedGuestTouristTax(link.booking.id, link.booking.guests)
       .catch(() => ({ status: "UNAVAILABLE" as const }));
@@ -53,7 +85,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     }
     html = html.replace(
       /<article class="arrival-lock"><h2>Check-in online<\/h2>[\s\S]*?<\/article>/,
-      () => `<article class="arrival-lock"><h2>Dati ricevuti dalla struttura / Details received by the host</h2><h3>Tassa di soggiorno / Tourist tax</h3>${taxDetails}</article>`,
+      () => `<article id="schedine" class="arrival-lock"><h2>Dati ricevuti dalla struttura / Details received by the host</h2><h3>Tassa di soggiorno / Tourist tax</h3>${taxDetails}</article>`,
     );
     if (tax.status === "PAID" || tax.status === "NOT_DUE") {
       const confirmed = await prisma.alloggiatiWebTransmission.findFirst({
@@ -90,7 +122,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     headers: {
       ...headers,
       "Content-Type": "text/html; charset=utf-8",
-      "Content-Security-Policy": "default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "Content-Security-Policy": "default-src 'none'; img-src data:; frame-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     },
   });
 }

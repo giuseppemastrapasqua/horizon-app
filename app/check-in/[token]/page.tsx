@@ -26,10 +26,13 @@ function formatInputDate(value: Date) {
 
 export default async function GuestCheckInPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ embedded?: string }>;
 }) {
   const { token } = await params;
+  const embedded = (await searchParams).embedded === "1";
   const link = await resolveGuestCheckInLink(token);
 
   if (!link) {
@@ -84,7 +87,7 @@ export default async function GuestCheckInPage({
         <div className="rounded-3xl border border-[#D8B367]/20 bg-[#09131C] p-6 shadow-xl shadow-black/30 sm:p-8">
           <div className="text-sm font-semibold uppercase tracking-[0.28em] text-[#D8B367]">Horizon</div>
 
-          {booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID && (
+          {!embedded && booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID && (
             <a className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-[#D8B367]/40 px-4 text-sm font-semibold text-[#D8B367]" href={`/check-in/${encodeURIComponent(token)}/guide`}>
               Guida ospiti / Guest guide
             </a>
@@ -97,6 +100,7 @@ export default async function GuestCheckInPage({
               checkIn={formatInputDate(booking.checkIn)}
               checkOut={formatInputDate(booking.checkOut)}
               guestCount={booking.guests}
+              embedded={embedded && booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID}
               confirmGuestCount={booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID}
               initialGuests={initialGuests}
               countries={countries}
