@@ -39,6 +39,7 @@ type Props = {
   checkIn: string;
   checkOut: string;
   guestCount: number;
+  confirmGuestCount?: boolean;
   initialGuests: InitialGuest[];
   countries: ReferenceOption[];
   documentTypes: ReferenceOption[];
@@ -61,7 +62,7 @@ function readLanguage() {
   return resolveGuestLanguage(stored, window.navigator.language);
 }
 
-export function GuestCheckInForm({ token, propertyName, guestName, checkIn, checkOut, guestCount, initialGuests, countries, documentTypes, ross1000Enabled, initialRoss1000TourismType, initialRoss1000TransportType, initialRoss1000RoomsOccupied, ross1000RoomsAvailable }: Props) {
+export function GuestCheckInForm({ token, propertyName, guestName, checkIn, checkOut, guestCount, confirmGuestCount = false, initialGuests, countries, documentTypes, ross1000Enabled, initialRoss1000TourismType, initialRoss1000TransportType, initialRoss1000RoomsOccupied, ross1000RoomsAvailable }: Props) {
   const [selectedLanguage, setSelectedLanguage] = useState<GuestCheckInLanguage | null>(null);
   const detectedLanguage = useSyncExternalStore(subscribeLanguage, readLanguage, () => "it" as GuestCheckInLanguage);
   const language = selectedLanguage ?? detectedLanguage;
@@ -81,9 +82,19 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
   const [error, setError] = useState<string | null>(null);
   const [submission, setSubmission] = useState<Awaited<ReturnType<typeof saveGuestCheckInAction>> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [declaredCount, setDeclaredCount] = useState("");
+  const countMatches = !confirmGuestCount || Number(declaredCount) === guestCount;
+  const countCopy = {
+    it: ["Quante persone soggiornano, bambini compresi?", "Il numero è diverso da quello della prenotazione. Contatta la struttura prima di proseguire.", "Dati ricevuti dalla struttura. Sarà il gestore a occuparsi della registrazione su Alloggiati Web."],
+    en: ["How many people are staying, including children?", "This does not match the booking. Contact your host before continuing.", "Your host has received your details and will handle the Alloggiati Web registration."],
+    es: ["¿Cuántas personas se alojan, incluidos los niños?", "El número no coincide con la reserva. Contacta con el alojamiento antes de continuar.", "El alojamiento ha recibido tus datos y se encargará del registro."],
+    fr: ["Combien de personnes séjournent, enfants compris ?", "Ce nombre ne correspond pas à la réservation. Contactez l’hébergement avant de continuer.", "L’hébergement a reçu vos données et se chargera de l’enregistrement."],
+    pt: ["Quantas pessoas vão ficar, incluindo crianças?", "O número não coincide com a reserva. Contacte o alojamento antes de continuar.", "O alojamento recebeu os seus dados e tratará do registo."],
+  }[language];
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!countMatches) return;
     setError(null);
     setSubmission(null);
     setIsSubmitting(true);
@@ -118,7 +129,7 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
       <div className="space-y-4" aria-live="polite">
         <section className="rounded-2xl border border-[#D8B367]/25 bg-[#07111A] p-6">
           <h2 className="font-serif text-2xl text-[#FFF8EA]">{t.saved}</h2>
-          <p className="mt-2 text-sm leading-6 text-[#B9C6D1]">{t.savedText}</p>
+          <p className="mt-2 text-sm leading-6 text-[#B9C6D1]">{confirmGuestCount ? countCopy[2] : t.savedText}</p>
         </section>
         <section className="rounded-2xl border border-[#D8B367]/25 bg-[#07111A] p-6" aria-labelledby="guest-tax-title">
           <h2 id="guest-tax-title" className="font-serif text-2xl text-[#FFF8EA]">
@@ -195,6 +206,17 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
           </select>
         </label>
       </div>
+      {confirmGuestCount && (
+        <div className="rounded-2xl border border-[#D8B367]/25 bg-[#07111A] p-5">
+          <Field label={countCopy[0]}>
+            <input type="number" inputMode="numeric" required min={1} step={1} value={declaredCount}
+              onChange={(event) => setDeclaredCount(event.target.value)} className={inputClass} />
+          </Field>
+          {declaredCount && !countMatches && <p role="status" className="mt-2 text-sm text-[#FFD199]">{countCopy[1]}</p>}
+        </div>
+      )}
+      <div hidden={!countMatches} className="space-y-6">
+      <fieldset disabled={!countMatches || isSubmitting} className="space-y-6">
       {guestCount > 1 ? (
         <fieldset className="rounded-2xl border border-[#D8B367]/15 bg-[#07111A] p-5 shadow-sm">
           <legend className="px-2 text-sm font-semibold text-[#C8D1D8]">{t.stayType}</legend>
@@ -285,6 +307,8 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
       <button disabled={isSubmitting} type="submit" className="w-full rounded-xl bg-[#D8B367] px-5 py-3 font-bold text-[#07111A] disabled:opacity-50">
         {isSubmitting ? t.saving : t.save}
       </button>
+      </fieldset>
+      </div>
     </form>
   );
 }

@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma";
+import { DUOMO_BOUTIQUE_PROPERTY_ID } from "@/lib/bookings/guest-guide";
 import { OwnerBookingDetail } from "@/components/owner/OwnerPortal";
 import { notFound } from "next/navigation";
 
@@ -281,6 +283,19 @@ export default async function BookingPage({
     timeline,
   } = workspace;
 
+  const manualGuestRegistration = booking.property.id === DUOMO_BOUTIQUE_PROPERTY_ID &&
+    (user.role === "SUPER_ADMIN" || user.role === "MANAGER");
+  const manualGuests = manualGuestRegistration ? await prisma.bookingGuest.findMany({
+    where: { bookingId: booking.id },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true, role: true, firstName: true, lastName: true, gender: true,
+      birthDate: true, birthCity: true, birthProvince: true, birthCountry: true,
+      citizenship: true, documentType: true, documentNumber: true,
+      documentIssueCountry: true, documentIssueCity: true,
+    },
+  }) : [];
+
   return (
     <>
       <Navigation />
@@ -402,9 +417,34 @@ export default async function BookingPage({
               guestEmail={booking.guestEmail}
               guestRegistration={booking.guestRegistration}
               initialLink={booking.guestCheckInLink}
-              canSubmitToAlloggiati
+              canSubmitToAlloggiati={booking.property.id !== DUOMO_BOUTIQUE_PROPERTY_ID}
             />
           </div>
+
+          {manualGuestRegistration && (
+            <Panel dark>
+              <SectionTitle dark title="Schedine da riportare su Alloggiati Web" subtitle="Dati ricevuti da Horizon. Inseriscili manualmente nel portale della Polizia di Stato." />
+              {manualGuests.length === 0 && <p className="mt-3 text-sm">Nessun dato ospite ricevuto.</p>}
+              {manualGuests.map((guest, index) => (
+                <details key={guest.id} className="mt-3 rounded-xl border border-white/10 p-4">
+                  <summary className="cursor-pointer font-semibold">Ospite {index + 1} · {guest.firstName} {guest.lastName}</summary>
+                  <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {[
+                      ["Tipo alloggiato", { SINGLE_GUEST: "Ospite singolo", FAMILY_HEAD: "Capofamiglia", FAMILY_MEMBER: "Familiare", GROUP_HEAD: "Capogruppo", GROUP_MEMBER: "Membro del gruppo" }[guest.role]],
+                      ["Sesso", guest.gender === "MALE" ? "Maschile" : "Femminile"],
+                      ["Data di nascita", guest.birthDate.toISOString().slice(0, 10)],
+                      ["Comune e provincia di nascita", [guest.birthCity, guest.birthProvince].filter(Boolean).join(" · ")],
+                      ["Paese di nascita", guest.birthCountry], ["Cittadinanza", guest.citizenship],
+                      ["Tipo documento", guest.documentType], ["Numero documento", guest.documentNumber],
+                      ["Luogo di rilascio", [guest.documentIssueCity, guest.documentIssueCountry].filter(Boolean).join(" · ")],
+                    ].map(([label, value]) => (
+                      <div key={label}><dt className="text-sm text-[#B9C6D1]">{label}</dt><dd>{value || "—"}</dd></div>
+                    ))}
+                  </dl>
+                </details>
+              ))}
+            </Panel>
+          )}
 
           <div className="booking-layout__soggiorniamo" style={{ marginTop: 24 }}>
             <BookingSoggiorniamoPanel

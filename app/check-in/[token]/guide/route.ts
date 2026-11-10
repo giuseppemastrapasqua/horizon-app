@@ -53,7 +53,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     }
     html = html.replace(
       /<article class="arrival-lock"><h2>Check-in online<\/h2>[\s\S]*?<\/article>/,
-      () => `<article class="arrival-lock"><h2>Documenti inviati / Documents submitted</h2><h3>Tassa di soggiorno / Tourist tax</h3>${taxDetails}</article>`,
+      () => `<article class="arrival-lock"><h2>Dati ricevuti dalla struttura / Details received by the host</h2><h3>Tassa di soggiorno / Tourist tax</h3>${taxDetails}</article>`,
     );
     if (tax.status === "PAID" || tax.status === "NOT_DUE") {
       const confirmed = await prisma.alloggiatiWebTransmission.findFirst({

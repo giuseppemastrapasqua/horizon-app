@@ -97,6 +97,7 @@ export default async function GuestCheckInPage({
               checkIn={formatInputDate(booking.checkIn)}
               checkOut={formatInputDate(booking.checkOut)}
               guestCount={booking.guests}
+              confirmGuestCount={booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID}
               initialGuests={initialGuests}
               countries={countries}
               documentTypes={documentTypes}
