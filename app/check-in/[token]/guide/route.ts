@@ -44,6 +44,21 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     '<a href="#soggiorno" data-nav="soggiorno">',
     '<a href="#schedine" class="button">Schedine ospiti / Guest registration</a><a href="#soggiorno" data-nav="soggiorno">',
   );
+  const homeActions = `<div style="display:grid;gap:12px;margin:16px 0">
+    <article class="arrival-lock"><h2>Compila le schedine</h2><p>Indica il numero di persone e compila una scheda per ciascun ospite.</p><a class="button" href="#schedine">${canSubmit ? "Apri le schedine" : "Vedi lo stato delle schedine"}</a></article>
+    <article class="arrival-lock"><h2>Paga la tassa di soggiorno</h2><p>${canSubmit ? "Prima compila le schedine. Poi potrai verificare l’importo." : "Controlla l’importo e paga se dovuto."}</p><a class="button" href="${canSubmit ? "#schedine" : "#tassa-soggiorno"}">Vai alla tassa di soggiorno</a></article>
+  </div>`;
+  html = html.replace('<article id="zona" class="arrival-lock">', () => homeActions + '<article id="zona" class="arrival-lock">');
+  html = html.replace("const texts=[];", `Object.assign(translations, {
+    "Compila le schedine": "Complete guest registration",
+    "Indica il numero di persone e compila una scheda per ciascun ospite.": "Enter the number of people and complete one form for each guest.",
+    "Apri le schedine": "Open guest registration",
+    "Vedi lo stato delle schedine": "View registration status",
+    "Paga la tassa di soggiorno": "Pay the tourist tax",
+    "Prima compila le schedine. Poi potrai verificare l’importo.": "Complete guest registration first, then check the amount.",
+    "Controlla l’importo e paga se dovuto.": "Check the amount and pay if due.",
+    "Vai alla tassa di soggiorno": "Go to tourist tax"
+  }); const texts=[];`);
   if (canSubmit) {
     const formPath = `/check-in/${encodeURIComponent(token)}?embedded=1`;
     html = html.replace(
@@ -85,7 +100,7 @@ if (guestFrame) {
     }
     html = html.replace(
       /<article class="arrival-lock"><h2>Check-in online<\/h2>[\s\S]*?<\/article>/,
-      () => `<article id="schedine" class="arrival-lock"><h2>Dati ricevuti dalla struttura / Details received by the host</h2><h3>Tassa di soggiorno / Tourist tax</h3>${taxDetails}</article>`,
+      () => `<article id="schedine" class="arrival-lock"><h2>Dati ricevuti dalla struttura / Details received by the host</h2><h3 id="tassa-soggiorno">Tassa di soggiorno / Tourist tax</h3>${taxDetails}</article>`,
     );
     if (tax.status === "PAID" || tax.status === "NOT_DUE") {
       const confirmed = await prisma.alloggiatiWebTransmission.findFirst({
