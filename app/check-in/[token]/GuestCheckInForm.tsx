@@ -79,13 +79,13 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
     initialLeader === "GROUP_HEAD" ? "GROUP" : "FAMILY",
   );
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [submission, setSubmission] = useState<Awaited<ReturnType<typeof saveGuestCheckInAction>> | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setSuccess(false);
+    setSubmission(null);
     setIsSubmitting(true);
 
     try {
@@ -102,8 +102,8 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         formData.set(`guests.${index}.role`, role);
       }
 
-      await saveGuestCheckInAction(formData);
-      setSuccess(true);
+      const result = await saveGuestCheckInAction(formData);
+      setSubmission(result);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t.genericError);
     } finally {
@@ -111,13 +111,44 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
     }
   }
 
-  if (success) {
+  const italian = language === "it";
+  if (submission) {
+    const tax = submission.touristTax;
     return (
-      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
-        <h2 className="font-bold text-emerald-950">{t.saved}</h2>
-        <p className="mt-2 text-sm leading-6 text-emerald-800">
-          {t.savedText}
-        </p>
+      <div className="space-y-4" aria-live="polite">
+        <section className="rounded-2xl border border-[#D8B367]/25 bg-[#07111A] p-6">
+          <h2 className="font-serif text-2xl text-[#FFF8EA]">{t.saved}</h2>
+          <p className="mt-2 text-sm leading-6 text-[#B9C6D1]">{t.savedText}</p>
+        </section>
+        <section className="rounded-2xl border border-[#D8B367]/25 bg-[#07111A] p-6" aria-labelledby="guest-tax-title">
+          <h2 id="guest-tax-title" className="font-serif text-2xl text-[#FFF8EA]">
+            {italian ? "Tassa di soggiorno" : "Tourist tax"}
+          </h2>
+          {tax.status === "READY" ? (
+            <>
+              <p className="mt-2 text-sm text-[#B9C6D1]">
+                {italian ? "Importo da pagare: " : "Amount due: "}
+                <strong className="text-[#FFF8EA]">{new Intl.NumberFormat(italian ? "it-IT" : "en-GB", { style: "currency", currency: "EUR" }).format(tax.amount)}</strong>
+              </p>
+              <a className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-[#D8B367] px-5 font-semibold text-[#050B11] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#D8B367]" href={tax.url} target="_blank" rel="noopener noreferrer">
+                {italian ? "Paga su Stripe" : "Pay securely on Stripe"}
+              </a>
+            </>
+          ) : (
+            <p className="mt-2 text-sm leading-6 text-[#B9C6D1]">
+              {tax.status === "PAID"
+                ? (italian ? "Horizon ha già confermato il pagamento." : "Horizon has already confirmed the payment.")
+                : tax.status === "NOT_DUE"
+                  ? (italian ? "Non risulta alcun importo da pagare." : "No payment is due.")
+                  : (italian ? "Il pagamento online non è disponibile. Contatta la struttura per verificare l’eventuale saldo." : "Online payment is unavailable. Contact your host to check whether a balance is due.")}
+            </p>
+          )}
+        </section>
+        {submission.guideHref && (
+          <a href={submission.guideHref} className="inline-flex min-h-11 items-center rounded-xl border border-[#D8B367]/40 px-4 text-sm font-semibold text-[#D8B367]">
+            {italian ? "Apri e salva la guida ospiti" : "Open and bookmark the guest guide"}
+          </a>
+        )}
       </div>
     );
   }
@@ -128,6 +159,10 @@ export function GuestCheckInForm({ token, propertyName, guestName, checkIn, chec
         <p className="text-sm font-semibold text-[#D8B367]">{propertyName}</p>
         <h1 className="mt-2 font-serif text-3xl font-normal text-[#FFF8EA]">{t.title}</h1>
         <p className="mt-3 text-sm leading-6 text-[#8EA0AE]">{t.intro}</p>
+        <ol className="mt-5 grid gap-2 text-sm text-[#B9C6D1] sm:grid-cols-2">
+          <li className="rounded-xl border border-[#D8B367]/25 bg-[#07111A] px-4 py-3"><strong className="text-[#D8B367]">01</strong> · {italian ? "Documenti degli ospiti" : "Guest document details"}</li>
+          <li className="rounded-xl border border-[#D8B367]/25 bg-[#07111A] px-4 py-3"><strong className="text-[#D8B367]">02</strong> · {italian ? "Tassa di soggiorno" : "Tourist tax"}</li>
+        </ol>
       </div>
 
       <div className="grid gap-4 rounded-2xl border border-white/10 bg-[#07111A] p-5 text-sm">

@@ -20,6 +20,8 @@ import {
   type Ross1000TransportType,
 } from "@/lib/integrations/ross1000/movement-types";
 import { prisma } from "@/lib/prisma";
+import { createGuestGuideReceipt, DUOMO_BOUTIQUE_PROPERTY_ID } from "@/lib/bookings/guest-guide";
+import { resolveSubmittedGuestTouristTax } from "@/lib/payments/tourist-tax/guest-checkout-status";
 import {
   consumeRateLimit,
   createRateLimitKey,
@@ -306,6 +308,8 @@ export async function saveGuestCheckInAction(
         booking: {
           select: {
             id: true,
+            propertyId: true,
+            bookingStatus: true,
             guests: true,
             checkIn: true,
             checkOut: true,
@@ -326,6 +330,8 @@ export async function saveGuestCheckInAction(
 
   if (
     !link ||
+    link.booking.bookingStatus === "CANCELLED" ||
+    link.booking.bookingStatus === "CHECKED_OUT" ||
     !isGuestCheckInLinkUsable({
       expiresAt: link.expiresAt,
       revokedAt: link.revokedAt,
@@ -618,6 +624,7 @@ export async function saveGuestCheckInAction(
     }
   }
 
+  const submittedAt = new Date();
   await prisma.$transaction(
     async (transaction) => {
       const currentLink =
@@ -811,7 +818,7 @@ export async function saveGuestCheckInAction(
             },
           },
           data: {
-            revokedAt: new Date(),
+            revokedAt: submittedAt,
           },
         });
 
@@ -826,7 +833,19 @@ export async function saveGuestCheckInAction(
     },
   );
 
+  // The document link stays single-use. Only return checkout details in the
+  // authenticated submission response, for the very same booking.
+  const touristTax = await resolveSubmittedGuestTouristTax(
+    link.booking.id,
+    guests.length,
+  ).catch(() => ({ status: "UNAVAILABLE" as const }));
+
+  const receipt = link.booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID
+    ? createGuestGuideReceipt(tokenHash, submittedAt) : null;
+
   return {
     success: true as const,
+    touristTax,
+    guideHref: receipt ? `/check-in/${encodeURIComponent(token)}/guide?receipt=${receipt}` : null,
   };
 }
