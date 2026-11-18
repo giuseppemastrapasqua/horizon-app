@@ -1,4 +1,5 @@
 import { updateBookingDetails } from "@/app/bookings/actions";
+import { cancelBooking } from "@/app/bookings/cancel-action";
 import { uiTokens } from "@/components/ui/tokens";
 
 type BookingEditFormProps = {
@@ -118,6 +119,12 @@ export function BookingEditForm({
         >
           Salva modifiche
         </button>
+      </form>
+      <form action={cancelBooking} style={formStyle}>
+        <input type="hidden" name="bookingId" value={booking.id} />
+        <p style={noteStyle}>La cancellazione conserva lo storico ed esclude il soggiorno dalle prenotazioni attive. Non cancella la prenotazione sul portale OTA. La sincronizzazione non la riattiverà automaticamente.</p>
+        <label><input type="checkbox" name="confirmCancellation" value="yes" required /> Confermo che la prenotazione è cancellata</label>
+        <button type="submit" style={buttonStyle}>Cancella prenotazione</button>
       </form>
     </details>
   );
