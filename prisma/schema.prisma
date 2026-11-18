@@ -618,6 +618,7 @@ model Booking {
   internalNotes              String?
   guestDataManuallyEdited    Boolean                     @default(false)
   pricingDataManuallyEdited  Boolean                     @default(false)
+  statusManuallyEdited       Boolean                     @default(false)
   createdAt                  DateTime                    @default(now())
   updatedAt                  DateTime                    @updatedAt
   guestId                    String?

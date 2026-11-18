@@ -259,6 +259,7 @@ describe("PrismaBookingDomainService", () => {
         operationalStatus: true,
         guestDataManuallyEdited: true,
         pricingDataManuallyEdited: true,
+        statusManuallyEdited: true,
       },
     });
 
@@ -1059,6 +1060,7 @@ describe("PrismaBookingDomainService", () => {
 
     pricingDataManuallyEdited:
       true,
+    statusManuallyEdited: true,
       },
     });
 
@@ -1079,6 +1081,22 @@ describe("PrismaBookingDomainService", () => {
     ).not.toHaveBeenCalled();
   });
 
+
+  it("non riattiva una cancellazione manuale quando il portale invia confirmed", async () => {
+    bookingFindFirstMock.mockResolvedValueOnce({
+      ...createExistingBooking(),
+      bookingStatus: BookingStatus.CANCELLED,
+      statusManuallyEdited: true,
+      pricingDataManuallyEdited: false,
+    });
+    bookingUpdateMock.mockResolvedValue({ id: "booking-1" });
+    const service = new PrismaBookingDomainService(createPropertyResolver());
+    await service.upsertBooking(createBookingInput({ grossAmount: 555 }));
+    expect(bookingUpdateMock).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ bookingStatus: BookingStatus.CANCELLED }),
+    }));
+    expect(emitEventMock).not.toHaveBeenCalledWith(expect.objectContaining({ eventType: "BOOKING_CREATED" }), expect.anything());
+  });
 
   it("preserva guest e pricing modificati manualmente durante il sync", async () => {
     const propertyResolver =
