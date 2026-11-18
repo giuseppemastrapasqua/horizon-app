@@ -129,11 +129,6 @@ export class PrismaBookingDomainService
         booking.checkOut,
       );
 
-    const bookingStatus =
-      mapExternalBookingStatus(
-        booking.externalStatus,
-      );
-
     const guestName =
       booking.guestFullName.trim();
 
@@ -245,6 +240,7 @@ export class PrismaBookingDomainService
 
                   pricingDataManuallyEdited:
                     true,
+                  statusManuallyEdited: true,
                 },
               })
             : await transaction.booking.findFirst({
@@ -319,8 +315,13 @@ export class PrismaBookingDomainService
 
                   pricingDataManuallyEdited:
                     true,
+                  statusManuallyEdited: true,
                 },
               });
+
+        const bookingStatus = existingBooking?.statusManuallyEdited
+          ? existingBooking.bookingStatus
+          : mapExternalBookingStatus(booking.externalStatus);
 
         const effectiveGuestName =
           existingBooking?.guestDataManuallyEdited
