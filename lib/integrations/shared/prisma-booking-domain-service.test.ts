@@ -259,6 +259,7 @@ describe("PrismaBookingDomainService", () => {
         operationalStatus: true,
         guestDataManuallyEdited: true,
         pricingDataManuallyEdited: true,
+        statusManuallyEdited: true,
       },
     });
 
@@ -1059,6 +1060,7 @@ describe("PrismaBookingDomainService", () => {
 
     pricingDataManuallyEdited:
       true,
+    statusManuallyEdited: true,
       },
     });
 
