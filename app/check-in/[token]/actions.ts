@@ -20,6 +20,9 @@ import {
   type Ross1000TransportType,
 } from "@/lib/integrations/ross1000/movement-types";
 import { prisma } from "@/lib/prisma";
+import { notifyGuestRegistration } from "@/lib/notifications/email/guest-registration-notice";
+import { createGuestGuideReceipt, DUOMO_BOUTIQUE_PROPERTY_ID } from "@/lib/bookings/guest-guide";
+import { resolveSubmittedGuestTouristTax } from "@/lib/payments/tourist-tax/guest-checkout-status";
 import {
   consumeRateLimit,
   createRateLimitKey,
@@ -306,11 +309,16 @@ export async function saveGuestCheckInAction(
         booking: {
           select: {
             id: true,
+            propertyId: true,
+            bookingStatus: true,
             guests: true,
             checkIn: true,
             checkOut: true,
             property: {
               select: {
+                name: true,
+                address: true,
+                city: true,
                 ross1000Property: {
                   select: {
                     id: true,
@@ -326,6 +334,8 @@ export async function saveGuestCheckInAction(
 
   if (
     !link ||
+    link.booking.bookingStatus === "CANCELLED" ||
+    link.booking.bookingStatus === "CHECKED_OUT" ||
     !isGuestCheckInLinkUsable({
       expiresAt: link.expiresAt,
       revokedAt: link.revokedAt,
@@ -618,6 +628,7 @@ export async function saveGuestCheckInAction(
     }
   }
 
+  const submittedAt = new Date();
   await prisma.$transaction(
     async (transaction) => {
       const currentLink =
@@ -811,7 +822,7 @@ export async function saveGuestCheckInAction(
             },
           },
           data: {
-            revokedAt: new Date(),
+            revokedAt: submittedAt,
           },
         });
 
@@ -826,7 +837,33 @@ export async function saveGuestCheckInAction(
     },
   );
 
+  if (link.booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID) {
+    await notifyGuestRegistration({
+      bookingId: link.booking.id,
+      propertyName: link.booking.property.name,
+      address: [link.booking.property.address, link.booking.property.city].filter(Boolean).join(", "),
+      checkIn: link.booking.checkIn,
+      checkOut: link.booking.checkOut,
+      guestCount: guests.length,
+    }).catch(() => {
+      // The registration has already been saved; an email error must not turn it into a failed submission.
+      console.error("Horizon guest registration notification failed.");
+    });
+  }
+
+  // The document link stays single-use. Only return checkout details in the
+  // authenticated submission response, for the very same booking.
+  const touristTax = await resolveSubmittedGuestTouristTax(
+    link.booking.id,
+    guests.length,
+  ).catch(() => ({ status: "UNAVAILABLE" as const }));
+
+  const receipt = link.booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID
+    ? createGuestGuideReceipt(tokenHash, submittedAt) : null;
+
   return {
     success: true as const,
+    touristTax,
+    guideHref: receipt ? `/check-in/${encodeURIComponent(token)}/guide?receipt=${receipt}` : null,
   };
 }

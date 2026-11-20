@@ -18,6 +18,7 @@ export async function resolveGuestCheckInLink(token: string) {
       booking: {
         select: {
           id: true,
+          propertyId: true,
           guestName: true,
           checkIn: true,
           checkOut: true,

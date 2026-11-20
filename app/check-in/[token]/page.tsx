@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DUOMO_BOUTIQUE_PROPERTY_ID } from "@/lib/bookings/guest-guide";
 
 import { resolveGuestCheckInLink } from "@/lib/bookings/resolve-guest-check-in-link";
 import { PublicAlloggiatiReferenceProvider } from "@/lib/integrations/alloggiati-web/public-reference-provider";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Schedina ospiti | Horizon",
+  referrer: "no-referrer",
   robots: {
     index: false,
     follow: false,
@@ -24,10 +26,13 @@ function formatInputDate(value: Date) {
 
 export default async function GuestCheckInPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ embedded?: string }>;
 }) {
   const { token } = await params;
+  const embedded = (await searchParams).embedded === "1";
   const link = await resolveGuestCheckInLink(token);
 
   if (!link) {
@@ -38,7 +43,7 @@ export default async function GuestCheckInPage({
             <div className="text-sm font-semibold uppercase tracking-[0.28em] text-[#D8B367]">Horizon</div>
             <h1 className="mt-5 font-serif text-3xl font-normal text-[#FFF8EA]">Link non disponibile</h1>
             <p className="mt-3 text-sm leading-6 text-[#8EA0AE]">
-              Questo link non Ã¨ valido oppure non Ã¨ piÃ¹ disponibile. Contatta la struttura per ricevere un nuovo link.
+              Questo link non è valido oppure non è più disponibile. Contatta la struttura per ricevere un nuovo link.
             </p>
           </div>
         </div>
@@ -77,11 +82,16 @@ export default async function GuestCheckInPage({
   }));
 
   return (
-    <main className="min-h-screen bg-[#050B11] px-4 py-12">
-      <div className="mx-auto w-full max-w-2xl">
+    <main className="min-h-screen bg-[#050B11] bg-[radial-gradient(ellipse_at_top,_#152635_0%,_#050B11_58%)] px-4 py-10 sm:py-14">
+      <div className="mx-auto w-full max-w-3xl">
         <div className="rounded-3xl border border-[#D8B367]/20 bg-[#09131C] p-6 shadow-xl shadow-black/30 sm:p-8">
           <div className="text-sm font-semibold uppercase tracking-[0.28em] text-[#D8B367]">Horizon</div>
 
+          {!embedded && booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID && (
+            <a className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-[#D8B367]/40 px-4 text-sm font-semibold text-[#D8B367]" href={`/check-in/${encodeURIComponent(token)}/guide`}>
+              Guida ospiti / Guest guide
+            </a>
+          )}
           <div className="mt-5">
             <GuestCheckInForm
               token={token}
@@ -90,6 +100,8 @@ export default async function GuestCheckInPage({
               checkIn={formatInputDate(booking.checkIn)}
               checkOut={formatInputDate(booking.checkOut)}
               guestCount={booking.guests}
+              embedded={embedded && booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID}
+              confirmGuestCount={booking.propertyId === DUOMO_BOUTIQUE_PROPERTY_ID}
               initialGuests={initialGuests}
               countries={countries}
               documentTypes={documentTypes}

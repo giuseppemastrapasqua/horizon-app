@@ -41,6 +41,7 @@ type BookingGuestCheckInPanelProps = {
     updatedAt: Date;
   } | null;
   canSubmitToAlloggiati?: boolean;
+  shareGuestGuide?: boolean;
 };
 
 export function BookingGuestCheckInPanel({
@@ -49,6 +50,7 @@ export function BookingGuestCheckInPanel({
   guestRegistration,
   initialLink,
   canSubmitToAlloggiati = true,
+  shareGuestGuide = false,
 }: BookingGuestCheckInPanelProps) {
   const [status, setStatus] =
     useState<GuestCheckInLinkStatus | "NONE">(
@@ -75,12 +77,14 @@ export function BookingGuestCheckInPanel({
       const result =
         await generateGuestCheckInLinkAction(bookingId);
 
-      setGeneratedUrl(result.url);
+      const url = new URL(result.url);
+      if (shareGuestGuide) url.pathname = url.pathname.replace(/\/$/, "") + "/guide";
+      setGeneratedUrl(url.toString());
       setExpiresAt(result.expiresAt);
       setStatus("ACTIVE");
 
       setMessage(
-        "Link schedina generato. Ora puoi copiarlo e condividerlo.",
+        shareGuestGuide ? "Link personale della guida pronto. Copialo e invialo all’ospite." : "Link schedina generato. Ora puoi copiarlo e condividerlo.",
       );
     } catch (error) {
       setMessage(
@@ -326,7 +330,7 @@ export function BookingGuestCheckInPanel({
             ) : null}
 
             {canCollectGuestData &&
-            guestEmail ? (
+            guestEmail && !shareGuestGuide ? (
               <ActionButton
                 label="Invia email"
                 variant="secondary"
@@ -341,7 +345,7 @@ export function BookingGuestCheckInPanel({
             {canCollectGuestData ? (
               <ActionButton
                 label={
-                  status === "ACTIVE"
+                  shareGuestGuide ? (status === "ACTIVE" ? "Rigenera link guida" : "Genera link guida") : status === "ACTIVE"
                     ? "Rigenera link"
                     : "Genera link"
                 }
@@ -394,7 +398,7 @@ export function BookingGuestCheckInPanel({
             </span>
 
             <ActionButton
-              label="Copia link"
+              label={shareGuestGuide ? "Copia link guida" : "Copia link"}
               variant="secondary"
               compact
               onClick={() => void handleCopy()}
